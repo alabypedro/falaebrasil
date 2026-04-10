@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_progress: {
+        Row: {
+          completed: boolean
+          course_id: string
+          created_at: string
+          id: string
+          module_index: number
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          completed?: boolean
+          course_id: string
+          created_at?: string
+          id?: string
+          module_index?: number
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          completed?: boolean
+          course_id?: string
+          created_at?: string
+          id?: string
+          module_index?: number
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -47,6 +80,51 @@ export type Database = {
           updated_at?: string
           user_id?: string
           xp?: number
+        }
+        Relationships: []
+      }
+      recordings: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          duration_seconds: number
+          fluency_score: number | null
+          grammar_score: number | null
+          id: string
+          mode: string
+          prompt_text: string | null
+          pronunciation_score: number | null
+          transcription: string | null
+          user_id: string
+          vocabulary_score: number | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          fluency_score?: number | null
+          grammar_score?: number | null
+          id?: string
+          mode: string
+          prompt_text?: string | null
+          pronunciation_score?: number | null
+          transcription?: string | null
+          user_id: string
+          vocabulary_score?: number | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number
+          fluency_score?: number | null
+          grammar_score?: number | null
+          id?: string
+          mode?: string
+          prompt_text?: string | null
+          pronunciation_score?: number | null
+          transcription?: string | null
+          user_id?: string
+          vocabulary_score?: number | null
         }
         Relationships: []
       }

@@ -2,7 +2,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import XPBadge from "@/components/XPBadge";
 
 interface AppLayoutProps {
@@ -11,6 +13,15 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { profile, signOut, user } = useAuth();
+  const navigate = useNavigate();
+
+  const displayName = profile?.display_name || user?.email || "Aluno";
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <SidebarProvider>
@@ -21,9 +32,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <SidebarTrigger className="ml-0" />
             <div className="flex items-center gap-3">
               <XPBadge xp={profile?.xp ?? 0} level={profile?.level ?? "A1"} compact />
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {profile?.display_name || user?.email}
-              </span>
+              <button
+                onClick={() => navigate("/profile")}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground hidden sm:inline">
+                  {displayName}
+                </span>
+              </button>
               <Button size="icon" variant="ghost" onClick={signOut} title="Sair">
                 <LogOut className="h-4 w-4" />
               </Button>
