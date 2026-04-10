@@ -1,0 +1,235 @@
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Mic, Square, RotateCcw } from "lucide-react";
+import FeedbackCard, { type FeedbackScores } from "@/components/FeedbackCard";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+
+const scriptedPrompts = [
+  {
+    id: "1",
+    level: "A2",
+    text: "Hello! My name is Maria and I'm from Brazil. I love learning English because it helps me connect with people from all over the world.",
+  },
+  {
+    id: "2",
+    level: "B1",
+    text: "Yesterday, I went to the supermarket to buy some groceries. I picked up fruits, vegetables, and a loaf of bread. The cashier was very friendly.",
+  },
+  {
+    id: "3",
+    level: "A1",
+    text: "Good morning! How are you? I am fine, thank you. What is your name?",
+  },
+];
+
+const unscriptedTopics = [
+  "Descreva seu fim de semana ideal em inglês.",
+  "Fale sobre um lugar que você gostaria de visitar.",
+  "Descreva sua rotina matinal.",
+  "Conte sobre seu hobby favorito.",
+];
+
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const s = (seconds % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+export default function VoiceLab() {
+  const [mode, setMode] = useState<"scripted" | "unscripted">("scripted");
+  const [selectedPrompt, setSelectedPrompt] = useState(scriptedPrompts[0]);
+  const [currentTopic, setCurrentTopic] = useState(unscriptedTopics[0]);
+  const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
+
+  const { isRecording, elapsed, recordings, startRecording, stopRecording } =
+    useAudioRecorder();
+
+  const handleStop = () => {
+    stopRecording();
+    // Mock feedback — will be replaced with real Whisper + analysis
+    setTimeout(() => {
+      setFeedback({
+        pronunciation: Math.floor(Math.random() * 30) + 65,
+        fluency: Math.floor(Math.random() * 30) + 60,
+        grammar: Math.floor(Math.random() * 30) + 55,
+        vocabulary: Math.floor(Math.random() * 25) + 70,
+      });
+    }, 1500);
+  };
+
+  const handleReset = () => {
+    setFeedback(null);
+    if (mode === "unscripted") {
+      const next = unscriptedTopics[Math.floor(Math.random() * unscriptedTopics.length)];
+      setCurrentTopic(next);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">
+          Laboratório de Pronúncia Transversal
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Pratique sua pronúncia e receba feedback detalhado.
+        </p>
+      </div>
+
+      <Tabs value={mode} onValueChange={(v) => { setMode(v as "scripted" | "unscripted"); setFeedback(null); }}>
+        <TabsList>
+          <TabsTrigger value="scripted">📖 Scripted</TabsTrigger>
+          <TabsTrigger value="unscripted">🎤 Unscripted</TabsTrigger>
+        </TabsList>
+
+        {/* SCRIPTED */}
+        <TabsContent value="scripted" className="space-y-6">
+          {/* Prompt selector */}
+          <div className="flex gap-2 flex-wrap">
+            {scriptedPrompts.map((p) => (
+              <Button
+                key={p.id}
+                variant={selectedPrompt.id === p.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setSelectedPrompt(p); setFeedback(null); }}
+              >
+                <Badge variant="secondary" className="mr-1.5 text-[10px]">{p.level}</Badge>
+                Texto {p.id}
+              </Button>
+            ))}
+          </div>
+
+          {/* Text to read */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Leia o texto abaixo em voz alta:</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg leading-relaxed text-foreground font-medium">
+                {selectedPrompt.text}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Record */}
+          <div className="flex flex-col items-center gap-3">
+            {isRecording ? (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-destructive/20 animate-pulse-recording" />
+                  <Button
+                    size="lg"
+                    variant="destructive"
+                    className="relative h-20 w-20 rounded-full"
+                    onClick={handleStop}
+                  >
+                    <Square className="h-7 w-7" />
+                  </Button>
+                </div>
+                <span className="text-sm font-mono text-destructive font-semibold">
+                  {formatTime(elapsed)}
+                </span>
+                <span className="text-xs text-muted-foreground">Gravando… clique para parar</span>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  className="h-20 w-20 rounded-full"
+                  onClick={startRecording}
+                >
+                  <Mic className="h-7 w-7" />
+                </Button>
+                <span className="text-xs text-muted-foreground">Clique para gravar</span>
+              </>
+            )}
+          </div>
+
+          {/* Latest recording playback */}
+          {recordings.length > 0 && (
+            <div className="rounded-lg border p-3">
+              <audio src={recordings[0].url} controls className="w-full h-9" />
+            </div>
+          )}
+        </TabsContent>
+
+        {/* UNSCRIPTED */}
+        <TabsContent value="unscripted" className="space-y-6">
+          <Card className="bg-accent/5 border-accent/20">
+            <CardContent className="p-6 text-center">
+              <p className="text-xs text-accent font-semibold uppercase tracking-wide mb-2">
+                Tema Sugerido
+              </p>
+              <p className="text-lg font-medium text-foreground">{currentTopic}</p>
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-col items-center gap-3">
+            {isRecording ? (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-destructive/20 animate-pulse-recording" />
+                  <Button
+                    size="lg"
+                    variant="destructive"
+                    className="relative h-20 w-20 rounded-full"
+                    onClick={handleStop}
+                  >
+                    <Square className="h-7 w-7" />
+                  </Button>
+                </div>
+                <span className="text-sm font-mono text-destructive font-semibold">
+                  {formatTime(elapsed)}
+                </span>
+                <span className="text-xs text-muted-foreground">Fale livremente… clique para parar</span>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  className="h-20 w-20 rounded-full"
+                  onClick={startRecording}
+                >
+                  <Mic className="h-7 w-7" />
+                </Button>
+                <span className="text-xs text-muted-foreground">Clique para gravar</span>
+              </>
+            )}
+          </div>
+
+          {recordings.length > 0 && (
+            <div className="rounded-lg border p-3">
+              <audio src={recordings[0].url} controls className="w-full h-9" />
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Feedback */}
+      <FeedbackCard
+        scores={feedback}
+        suggestions={
+          feedback
+            ? [
+                "Pratique a entonação nas frases interrogativas.",
+                "Reduza a velocidade em palavras com 'th' (the, this, that).",
+                "Trabalhe a ligação entre palavras (linking sounds).",
+              ]
+            : undefined
+        }
+      />
+
+      {feedback && (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={handleReset}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Nova Prática
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
