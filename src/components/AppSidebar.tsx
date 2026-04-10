@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ export default function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { profile } = useAuth();
 
   return (
     <Sidebar collapsible="icon">
@@ -83,11 +85,15 @@ export default function AppSidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <Zap className="h-3.5 w-3.5 text-xp" />
-                <span className="text-xs font-bold text-sidebar-foreground">1.250 XP</span>
+                <span className="text-xs font-bold text-sidebar-foreground">
+                  {profile?.xp ?? 0} XP
+                </span>
               </div>
-              <span className="text-[10px] text-sidebar-foreground/60">Nível A2</span>
+              <span className="text-[10px] text-sidebar-foreground/60">
+                Nível {profile?.level ?? "A1"}
+              </span>
             </div>
-            <Progress value={62} className="h-1.5 bg-sidebar-accent" />
+            <Progress value={((profile?.xp ?? 0) % 500) / 5} className="h-1.5 bg-sidebar-accent" />
           </div>
         )}
       </SidebarFooter>
