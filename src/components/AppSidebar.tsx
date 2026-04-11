@@ -5,10 +5,12 @@ import {
   Library,
   Users,
   Zap,
+  Shield,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Progress } from "@/components/ui/progress";
 import {
   Sidebar,
@@ -35,6 +37,7 @@ export default function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { profile } = useAuth();
+  const { isAdmin } = useAdmin();
 
   return (
     <Sidebar collapsible="icon">
@@ -74,6 +77,21 @@ export default function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/admin"
+                      className="hover:bg-sidebar-accent/50"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      {!collapsed && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

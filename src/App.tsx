@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useAdmin } from "@/hooks/useAdmin";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Courses from "@/pages/Courses";
@@ -14,6 +15,13 @@ import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
+import QuizPlayer from "@/pages/QuizPlayer";
+import AdminLayout from "@/pages/admin/AdminLayout";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import CoursesManager from "@/pages/admin/CoursesManager";
+import ModulesManager from "@/pages/admin/ModulesManager";
+import LessonsManager from "@/pages/admin/LessonsManager";
+import QuizzesManager from "@/pages/admin/QuizzesManager";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +35,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   if (!user) return <Navigate to="/auth" replace />;
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAdmin, loading } = useAdmin();
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (!isAdmin) return <Navigate to="/courses" replace />;
   return <>{children}</>;
 }
 
@@ -59,6 +80,21 @@ const App = () => (
                       <Route path="/library" element={<Library />} />
                       <Route path="/community" element={<Community />} />
                       <Route path="/profile" element={<Profile />} />
+                      <Route path="/quiz/:quizId" element={<QuizPlayer />} />
+                      <Route
+                        path="/admin/*"
+                        element={
+                          <AdminRoute>
+                            <AdminLayout />
+                          </AdminRoute>
+                        }
+                      >
+                        <Route index element={<AdminDashboard />} />
+                        <Route path="courses" element={<CoursesManager />} />
+                        <Route path="modules" element={<ModulesManager />} />
+                        <Route path="lessons" element={<LessonsManager />} />
+                        <Route path="quizzes" element={<QuizzesManager />} />
+                      </Route>
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </AppLayout>
