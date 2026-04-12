@@ -1,32 +1,60 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Flame, BookOpen, Trophy, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
-const stats = [
-  { label: "XP Total", value: "1.250", icon: Zap, color: "bg-xp/15 text-xp" },
-  { label: "Nível de Fluência", value: "A2", icon: Trophy, color: "bg-accent/15 text-accent" },
-  { label: "Aulas Concluídas", value: "24", icon: BookOpen, color: "bg-success/15 text-success" },
-  { label: "Streak", value: "7 dias", icon: Flame, color: "bg-destructive/15 text-destructive" },
-];
-
-const tracks = [
-  { name: "Adults — A1", progress: 100 },
-  { name: "Adults — A2", progress: 62 },
-  { name: "Adults — B1", progress: 0 },
-  { name: "Teens — A1", progress: 45 },
-];
-
-const nextLessons = [
-  { title: "Greetings & Introductions", level: "A2", module: "Adults" },
-  { title: "Daily Routines", level: "A2", module: "Adults" },
-  { title: "At the Restaurant", level: "A1", module: "Teens" },
-];
+interface CourseProgress {
+  name: string;
+  progress: number;
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { profile, user } = useAuth();
+  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
+  const [completedCount, setCompletedCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data: courses } = await supabase.from("courses").select("id, title").eq("published", true).order("display_order");
+      const { data: modules } = await supabase.from("modules").select("id, course_id");
+      const { data: lessons } = await supabase.from("lessons").select("id, module_id");
+      const { data: progress } = await supabase.from("user_progress").select("lesson_id").eq("user_id", user.id);
+
+      const completedIds = new Set((progress || []).map((p) => p.lesson_id));
+      setCompletedCount(completedIds.size);
+
+      const modCourse: Record<string, string> = {};
+      (modules || []).forEach((m) => { modCourse[m.id] = m.course_id; });
+
+      const courseLessons: Record<string, string[]> = {};
+      (lessons || []).forEach((l) => {
+        const cid = modCourse[l.module_id];
+        if (cid) { if (!courseLessons[cid]) courseLessons[cid] = []; courseLessons[cid].push(l.id); }
+      });
+
+      const result = (courses || []).map((c) => {
+        const ids = courseLessons[c.id] || [];
+        const done = ids.filter((id) => completedIds.has(id)).length;
+        return { name: c.title, progress: ids.length > 0 ? Math.round((done / ids.length) * 100) : 0 };
+      });
+      setCourseProgress(result);
+    };
+    load();
+  }, [user]);
+
+  const stats = [
+    { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, color: "bg-xp/15 text-xp" },
+    { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, color: "bg-accent/15 text-accent" },
+    { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, color: "bg-success/15 text-success" },
+    { label: "Streak", value: `${profile?.streak_days ?? 0} dias`, icon: Flame, color: "bg-destructive/15 text-destructive" },
+  ];
 
   return (
     <div className="space-y-8 max-w-6xl">
@@ -37,7 +65,6 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.label}>
@@ -54,55 +81,25 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Tracks progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Progresso por Trilha</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {tracks.map((track) => (
-            <div key={track.name} className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">{track.name}</span>
-                <span className="text-xs text-muted-foreground">{track.progress}%</span>
-              </div>
-              <Progress value={track.progress} className="h-2" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Next lessons */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Próximas Aulas</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {nextLessons.map((lesson, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer"
-              onClick={() => navigate("/courses")}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10">
-                  <BookOpen className="h-4 w-4 text-accent" />
+      {courseProgress.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Progresso por Curso</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {courseProgress.map((track) => (
+              <div key={track.name} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">{track.name}</span>
+                  <span className="text-xs text-muted-foreground">{track.progress}%</span>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">{lesson.title}</p>
-                  <p className="text-xs text-muted-foreground">{lesson.module}</p>
-                </div>
+                <Progress value={track.progress} className="h-2" />
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-[10px]">{lesson.level}</Badge>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
-      {/* CTA */}
       <Card className="bg-primary text-primary-foreground">
         <CardContent className="flex flex-col items-center gap-4 p-8 text-center sm:flex-row sm:text-left">
           <div className="flex-1">
@@ -111,11 +108,7 @@ export default function Dashboard() {
               Acesse o Laboratório de Voz e melhore sua fluência com feedback em tempo real.
             </p>
           </div>
-          <Button
-            variant="secondary"
-            size="lg"
-            onClick={() => navigate("/voice-lab")}
-          >
+          <Button variant="secondary" size="lg" onClick={() => navigate("/voice-lab")}>
             Ir ao Laboratório
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
