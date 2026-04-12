@@ -1,31 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, Square, RotateCcw, Loader2 } from "lucide-react";
+import { Mic, Square, RotateCcw, Loader2, Shuffle } from "lucide-react";
 import FeedbackCard, { type FeedbackScores } from "@/components/FeedbackCard";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-const scriptedPrompts = [
-  {
-    id: "1",
-    level: "A2",
-    text: "Hello! My name is Maria and I'm from Brazil. I love learning English because it helps me connect with people from all over the world.",
-  },
-  {
-    id: "2",
-    level: "B1",
-    text: "Yesterday, I went to the supermarket to buy some groceries. I picked up fruits, vegetables, and a loaf of bread. The cashier was very friendly.",
-  },
-  {
-    id: "3",
-    level: "A1",
-    text: "Good morning! How are you? I am fine, thank you. What is your name?",
-  },
+const fallbackPrompts = [
+  { id: "f1", level: "A1", text: "Good morning! How are you? I am fine, thank you. What is your name?" },
+  { id: "f2", level: "A2", text: "Hello! My name is Maria and I'm from Brazil. I love learning English because it helps me connect with people from all over the world." },
+  { id: "f3", level: "B1", text: "Yesterday, I went to the supermarket to buy some groceries. I picked up fruits, vegetables, and a loaf of bread. The cashier was very friendly." },
 ];
 
 const unscriptedTopics = [
@@ -41,15 +29,47 @@ function formatTime(seconds: number) {
   return `${m}:${s}`;
 }
 
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 export default function VoiceLab() {
   const [mode, setMode] = useState<"scripted" | "unscripted">("scripted");
-  const [selectedPrompt, setSelectedPrompt] = useState(scriptedPrompts[0]);
+  const [prompts, setPrompts] = useState<{ id: string; level: string; text: string }[]>([]);
+  const [selectedPrompt, setSelectedPrompt] = useState<{ id: string; level: string; text: string } | null>(null);
   const [currentTopic, setCurrentTopic] = useState(unscriptedTopics[0]);
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const { user } = useAuth();
+  const [promptsLoading, setPromptsLoading] = useState(true);
+  const { user, profile } = useAuth();
+
+  const userLevel = profile?.level || "A1";
+
+  // Fetch prompts from DB filtered by user level
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      setPromptsLoading(true);
+      const { data } = await supabase
+        .from("pronunciation_prompts")
+        .select("id, text, level")
+        .eq("level", userLevel);
+
+      if (data && data.length > 0) {
+        setPrompts(data);
+        setSelectedPrompt(pickRandom(data));
+      } else {
+        // Fallback: filter hardcoded by level or show all
+        const matching = fallbackPrompts.filter((p) => p.level === userLevel);
+        const available = matching.length > 0 ? matching : fallbackPrompts;
+        setPrompts(available);
+        setSelectedPrompt(pickRandom(available));
+      }
+      setPromptsLoading(false);
+    };
+    fetchPrompts();
+  }, [userLevel]);
 
   const { isRecording, elapsed, recordings, startRecording, stopRecording, audioLevel } =
     useAudioRecorder();
@@ -62,18 +82,12 @@ export default function VoiceLab() {
     try {
       const formData = new FormData();
       formData.append("audio", audioBlob, "recording.webm");
-
-      if (mode === "scripted") {
+      if (mode === "scripted" && selectedPrompt) {
         formData.append("referenceText", selectedPrompt.text);
       }
-
       formData.append("language", "en-US");
 
-      const { data, error } = await supabase.functions.invoke(
-        "azure-pronunciation",
-        { body: formData }
-      );
-
+      const { data, error } = await supabase.functions.invoke("azure-pronunciation", { body: formData });
       if (error) throw error;
 
       if (data.error || data.fallback) {
@@ -87,14 +101,11 @@ export default function VoiceLab() {
         grammar: data.grammar,
         vocabulary: data.vocabulary,
       });
-
       setTranscription(data.transcription || null);
 
-      // Save to voice_sessions table
       if (user) {
         await supabase.from("voice_sessions").insert({
-          user_id: user.id,
-          mode,
+          user_id: user.id, mode,
           text_analyzed: data.transcription || null,
           accuracy_score: data.pronunciation ?? null,
           fluency_score: data.fluency ?? null,
@@ -103,19 +114,12 @@ export default function VoiceLab() {
         });
       }
 
-      // Generate suggestions based on scores
       const newSuggestions: string[] = [];
-      if (data.pronunciation < 70)
-        newSuggestions.push("Foque na articulação clara de cada palavra, especialmente sons como 'th', 'r' e 'l'.");
-      if (data.fluency < 70)
-        newSuggestions.push("Pratique a leitura em voz alta para melhorar o ritmo e a fluidez da fala.");
-      if (data.grammar < 70)
-        newSuggestions.push("Tente cobrir todas as palavras do texto de referência sem pular trechos.");
-      if (data.vocabulary < 70)
-        newSuggestions.push("Trabalhe a entonação e a prosódia para soar mais natural.");
-      if (newSuggestions.length === 0)
-        newSuggestions.push("Excelente! Continue praticando para manter seu nível alto.");
-
+      if (data.pronunciation < 70) newSuggestions.push("Foque na articulação clara de cada palavra, especialmente sons como 'th', 'r' e 'l'.");
+      if (data.fluency < 70) newSuggestions.push("Pratique a leitura em voz alta para melhorar o ritmo e a fluidez da fala.");
+      if (data.grammar < 70) newSuggestions.push("Tente cobrir todas as palavras do texto de referência sem pular trechos.");
+      if (data.vocabulary < 70) newSuggestions.push("Trabalhe a entonação e a prosódia para soar mais natural.");
+      if (newSuggestions.length === 0) newSuggestions.push("Excelente! Continue praticando para manter seu nível alto.");
       setSuggestions(newSuggestions);
     } catch (err) {
       console.error("Azure analysis error:", err);
@@ -125,15 +129,10 @@ export default function VoiceLab() {
     }
   };
 
-  const handleStop = () => {
-    stopRecording();
-    setTimeout(() => {}, 500);
-  };
+  const handleStop = () => { stopRecording(); };
 
-  // Watch for new recordings and auto-analyze
   const lastRecordingId = recordings[0]?.id;
   const [analyzedId, setAnalyzedId] = useState<string | null>(null);
-
   if (lastRecordingId && lastRecordingId !== analyzedId && !isAnalyzing && !isRecording) {
     setAnalyzedId(lastRecordingId);
     analyzeWithAzure(recordings[0].blob);
@@ -145,19 +144,25 @@ export default function VoiceLab() {
     setSuggestions([]);
     setAnalyzedId(null);
     if (mode === "unscripted") {
-      const next = unscriptedTopics[Math.floor(Math.random() * unscriptedTopics.length)];
-      setCurrentTopic(next);
+      setCurrentTopic(pickRandom(unscriptedTopics));
     }
+  };
+
+  const shufflePrompt = () => {
+    if (prompts.length <= 1) return;
+    let next = pickRandom(prompts);
+    while (next.id === selectedPrompt?.id && prompts.length > 1) next = pickRandom(prompts);
+    setSelectedPrompt(next);
+    handleReset();
   };
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Laboratório de Pronúncia Transversal
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">Laboratório de Pronúncia Transversal</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Pratique sua pronúncia e receba feedback detalhado com IA.
+          <Badge variant="outline" className="ml-2">Nível {userLevel}</Badge>
         </p>
       </div>
 
@@ -168,37 +173,32 @@ export default function VoiceLab() {
         </TabsList>
 
         <TabsContent value="scripted" className="space-y-6">
-          <div className="flex gap-2 flex-wrap">
-            {scriptedPrompts.map((p) => (
-              <Button
-                key={p.id}
-                variant={selectedPrompt.id === p.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => { setSelectedPrompt(p); handleReset(); }}
-              >
-                <Badge variant="secondary" className="mr-1.5 text-[10px]">{p.level}</Badge>
-                Texto {p.id}
-              </Button>
-            ))}
-          </div>
+          {promptsLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          ) : (
+            <>
+              <Card>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm text-muted-foreground">Leia o texto abaixo em voz alta:</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={shufflePrompt} disabled={prompts.length <= 1}>
+                    <Shuffle className="h-4 w-4 mr-1" /> Sortear outro
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-lg leading-relaxed text-foreground font-medium">
+                    {selectedPrompt?.text}
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Leia o texto abaixo em voz alta:</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg leading-relaxed text-foreground font-medium">
-                {selectedPrompt.text}
-              </p>
-            </CardContent>
-          </Card>
+              <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} audioLevel={audioLevel} />
 
-          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} audioLevel={audioLevel} />
-
-          {recordings.length > 0 && (
-            <div className="rounded-lg border p-3">
-              <audio src={recordings[0].url} controls className="w-full h-9" />
-            </div>
+              {recordings.length > 0 && (
+                <div className="rounded-lg border p-3">
+                  <audio src={recordings[0].url} controls className="w-full h-9" />
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -223,7 +223,7 @@ export default function VoiceLab() {
       {transcription && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">O que o Azure entendeu:</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">O que foi entendido:</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-base text-foreground">{transcription}</p>
@@ -236,15 +236,14 @@ export default function VoiceLab() {
       {isAnalyzing && (
         <div className="flex flex-col items-center gap-2 py-4">
           <Loader2 className="h-8 w-8 animate-spin text-accent" />
-          <p className="text-sm text-muted-foreground">Analisando pronúncia com Azure Speech…</p>
+          <p className="text-sm text-muted-foreground">Analisando pronúncia…</p>
         </div>
       )}
 
       {feedback && (
         <div className="flex justify-center">
           <Button variant="outline" onClick={handleReset}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Nova Prática
+            <RotateCcw className="mr-2 h-4 w-4" /> Nova Prática
           </Button>
         </div>
       )}
@@ -269,7 +268,6 @@ function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, free
             </Button>
           </div>
           <span className="text-sm font-mono text-destructive font-semibold">{formatTime(elapsed)}</span>
-          {/* Volume meter */}
           <div className="w-48 space-y-1">
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
               <span>Volume do Microfone</span>
