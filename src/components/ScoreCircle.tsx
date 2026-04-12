@@ -12,7 +12,7 @@ export default function ScoreCircle({ label, score, color = "hsl(var(--accent))"
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-1.5 animate-scale-in">
       <svg width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2}
@@ -32,7 +32,11 @@ export default function ScoreCircle({ label, score, color = "hsl(var(--accent))"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-700 ease-out"
+          className="animate-draw-circle"
+          style={{
+            "--circumference": circumference,
+            "--offset": offset,
+          } as React.CSSProperties}
         />
       </svg>
       <span className="text-lg font-bold text-foreground">{score}</span>

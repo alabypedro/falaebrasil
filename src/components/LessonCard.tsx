@@ -21,7 +21,7 @@ export default function LessonCard({
 }: LessonCardProps) {
   return (
     <Card
-      className={`cursor-pointer transition-all duration-200 hover:shadow-md group ${
+      className={`cursor-pointer hover-lift group press-effect ${
         isActive ? "ring-2 ring-primary shadow-md" : "hover:border-primary/30"
       }`}
       onClick={onClick}
@@ -45,7 +45,7 @@ export default function LessonCard({
               </span>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-1 shrink-0" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 mt-1 shrink-0" />
         </div>
       </CardContent>
     </Card>
