@@ -51,7 +51,7 @@ export default function VoiceLab() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { user } = useAuth();
 
-  const { isRecording, elapsed, recordings, startRecording, stopRecording } =
+  const { isRecording, elapsed, recordings, startRecording, stopRecording, audioLevel } =
     useAudioRecorder();
 
   const analyzeWithAzure = async (audioBlob: Blob) => {
