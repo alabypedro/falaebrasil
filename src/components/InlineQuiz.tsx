@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, RotateCcw, ArrowRight, HelpCircle } from "lucide-react";
+import { CheckCircle, XCircle, RotateCcw, ArrowRight, HelpCircle, Star } from "lucide-react";
 
 interface Question {
   id: string;
