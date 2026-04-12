@@ -49,6 +49,7 @@ export type Database = {
       }
       courses: {
         Row: {
+          category: string
           created_at: string
           description: string | null
           display_order: number
@@ -60,6 +61,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string
           created_at?: string
           description?: string | null
           display_order?: number
@@ -71,6 +73,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string
           created_at?: string
           description?: string | null
           display_order?: number
@@ -127,6 +130,33 @@ export type Database = {
           },
         ]
       }
+      library_bst: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          file_url: string | null
+          id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          title: string
+          type: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           course_id: string
@@ -170,33 +200,39 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          hubla_customer_id: string | null
           id: string
           level: string
           streak_days: number
           updated_at: string
           user_id: string
+          user_type: string
           xp: number
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          hubla_customer_id?: string | null
           id?: string
           level?: string
           streak_days?: number
           updated_at?: string
           user_id: string
+          user_type?: string
           xp?: number
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          hubla_customer_id?: string | null
           id?: string
           level?: string
           streak_days?: number
           updated_at?: string
           user_id?: string
+          user_type?: string
           xp?: number
         }
         Relationships: []
@@ -357,6 +393,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_progress: {
+        Row: {
+          completed_at: string
+          id: string
+          lesson_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          lesson_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          lesson_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -375,9 +440,56 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_sessions: {
+        Row: {
+          accuracy_score: number | null
+          created_at: string
+          fluency_score: number | null
+          grammar_feedback: string | null
+          id: string
+          mode: string
+          prosody_score: number | null
+          text_analyzed: string | null
+          user_id: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          created_at?: string
+          fluency_score?: number | null
+          grammar_feedback?: string | null
+          id?: string
+          mode: string
+          prosody_score?: number | null
+          text_analyzed?: string | null
+          user_id: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          created_at?: string
+          fluency_score?: number | null
+          grammar_feedback?: string | null
+          id?: string
+          mode?: string
+          prosody_score?: number | null
+          text_analyzed?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      xp_ranking: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          level: string | null
+          rank_position: number | null
+          total_xp: number | null
+          user_id: string | null
+          user_type: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
