@@ -76,8 +76,8 @@ export default function VoiceLab() {
 
       if (error) throw error;
 
-      if (data.error) {
-        toast.error(data.error);
+      if (data.error || data.fallback) {
+        toast.error(data.message || data.error || "Não foi possível reconhecer o áudio. Fale mais alto e claro.");
         return;
       }
 

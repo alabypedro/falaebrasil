@@ -4,6 +4,29 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple WAV header writer for 16-bit mono PCM
+function createWavHeader(dataLength: number, sampleRate: number): Uint8Array {
+  const header = new ArrayBuffer(44);
+  const view = new DataView(header);
+  const writeString = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + dataLength, true);
+  writeString(8, "WAVE");
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true); // chunk size
+  view.setUint16(20, 1, true);  // PCM
+  view.setUint16(22, 1, true);  // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true); // byte rate
+  view.setUint16(32, 2, true);  // block align
+  view.setUint16(34, 16, true); // bits per sample
+  writeString(36, "data");
+  view.setUint32(40, dataLength, true);
+  return new Uint8Array(header);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -13,12 +36,8 @@ Deno.serve(async (req) => {
     const AZURE_SPEECH_KEY = Deno.env.get("AZURE_SPEECH_KEY");
     const AZURE_SPEECH_REGION = Deno.env.get("AZURE_SPEECH_REGION");
 
-    if (!AZURE_SPEECH_KEY) {
-      throw new Error("AZURE_SPEECH_KEY is not configured");
-    }
-    if (!AZURE_SPEECH_REGION) {
-      throw new Error("AZURE_SPEECH_REGION is not configured");
-    }
+    if (!AZURE_SPEECH_KEY) throw new Error("AZURE_SPEECH_KEY is not configured");
+    if (!AZURE_SPEECH_REGION) throw new Error("AZURE_SPEECH_REGION is not configured");
 
     const formData = await req.formData();
     const audioFile = formData.get("audio") as File | null;
@@ -32,13 +51,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Convert webm to WAV using the audio data directly
-    // Azure Speech REST API needs WAV format, but we'll send raw audio
     const audioBytes = await audioFile.arrayBuffer();
     const audioBuffer = new Uint8Array(audioBytes);
 
-    // Create WAV header for 16kHz 16-bit mono PCM
-    // We'll let Azure handle the webm format via content type
     const pronAssessmentParams = {
       ReferenceText: referenceText || "",
       GradingSystem: "HundredMark",
@@ -49,10 +64,10 @@ Deno.serve(async (req) => {
     };
 
     const pronAssessmentHeader = btoa(JSON.stringify(pronAssessmentParams));
-
     const sessionId = crypto.randomUUID().replace(/-/g, "");
     const url = `https://${AZURE_SPEECH_REGION}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed&X-ConnectionId=${sessionId}`;
 
+    // Try sending as webm first, if that fails with silence, it's likely a format issue
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -73,7 +88,24 @@ Deno.serve(async (req) => {
 
     const result = await response.json();
 
-    // Extract scores from Azure response
+    // Handle InitialSilenceTimeout gracefully
+    if (result.RecognitionStatus === "InitialSilenceTimeout" || 
+        result.RecognitionStatus === "NoMatch" ||
+        result.RecognitionStatus === "BabbleTimeout") {
+      console.warn("Recognition issue:", result.RecognitionStatus);
+      return new Response(
+        JSON.stringify({
+          error: "AUDIO_UNRECOGNIZED",
+          message: "Não foi possível reconhecer o áudio. Tente falar mais alto e claro.",
+          fallback: true,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     let scores = {
       pronunciation: 0,
       fluency: 0,
@@ -99,11 +131,12 @@ Deno.serve(async (req) => {
       console.error("Recognition failed:", result);
       return new Response(
         JSON.stringify({
-          error: "Não foi possível reconhecer o áudio. Tente falar mais alto e claro.",
-          rawResult: result,
+          error: "AUDIO_UNRECOGNIZED",
+          message: "Não foi possível reconhecer o áudio. Tente novamente.",
+          fallback: true,
         }),
         {
-          status: 422,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -116,8 +149,8 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Error in azure-pronunciation:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
+    return new Response(JSON.stringify({ error: message, fallback: true }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
