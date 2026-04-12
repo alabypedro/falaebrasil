@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen } from "lucide-react";
+import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import InlineQuiz from "@/components/InlineQuiz";
 
 interface Course {
   id: string;
@@ -44,13 +45,10 @@ const levelColors: Record<string, string> = {
 
 function getEmbedUrl(url: string): string | null {
   if (!url) return null;
-  // YouTube
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]+)/);
   if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
-  // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
   if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-  // Direct video or storage URL
   return url;
 }
 
@@ -66,6 +64,7 @@ export default function CourseDetail() {
   const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
+  const [lessonQuizId, setLessonQuizId] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!courseId || !user) return;
@@ -101,6 +100,21 @@ export default function CourseDetail() {
   };
 
   useEffect(() => { loadData(); }, [courseId, user]);
+
+  // Load quiz for active lesson
+  useEffect(() => {
+    if (!activeLesson) { setLessonQuizId(null); return; }
+    const loadQuiz = async () => {
+      const { data } = await supabase
+        .from("quizzes")
+        .select("id")
+        .eq("lesson_id", activeLesson.id)
+        .limit(1)
+        .maybeSingle();
+      setLessonQuizId(data?.id ?? null);
+    };
+    loadQuiz();
+  }, [activeLesson?.id]);
 
   const toggleComplete = async (lessonId: string) => {
     if (!user) return;
@@ -231,6 +245,11 @@ export default function CourseDetail() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Inline Quiz */}
+              {lessonQuizId && (
+                <InlineQuiz quizId={lessonQuizId} />
+              )}
             </>
           ) : (
             <Card className="p-12 text-center text-muted-foreground">

@@ -51,7 +51,7 @@ export default function VoiceLab() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { user } = useAuth();
 
-  const { isRecording, elapsed, recordings, startRecording, stopRecording } =
+  const { isRecording, elapsed, recordings, startRecording, stopRecording, audioLevel } =
     useAudioRecorder();
 
   const analyzeWithAzure = async (audioBlob: Blob) => {
@@ -193,7 +193,7 @@ export default function VoiceLab() {
             </CardContent>
           </Card>
 
-          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} />
+          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} audioLevel={audioLevel} />
 
           {recordings.length > 0 && (
             <div className="rounded-lg border p-3">
@@ -210,7 +210,7 @@ export default function VoiceLab() {
             </CardContent>
           </Card>
 
-          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} freeLabel />
+          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} freeLabel audioLevel={audioLevel} />
 
           {recordings.length > 0 && (
             <div className="rounded-lg border p-3">
@@ -252,9 +252,12 @@ export default function VoiceLab() {
   );
 }
 
-function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, freeLabel }: {
-  isRecording: boolean; isAnalyzing: boolean; elapsed: number; onStart: () => void; onStop: () => void; freeLabel?: boolean;
+function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, freeLabel, audioLevel }: {
+  isRecording: boolean; isAnalyzing: boolean; elapsed: number; onStart: () => void; onStop: () => void; freeLabel?: boolean; audioLevel: number;
 }) {
+  const levelColor = audioLevel < 20 ? "bg-destructive" : audioLevel < 50 ? "bg-xp" : "bg-success";
+  const levelLabel = audioLevel < 20 ? "Muito baixo" : audioLevel < 50 ? "Bom" : "Ótimo";
+
   return (
     <div className="flex flex-col items-center gap-3">
       {isRecording ? (
@@ -266,6 +269,16 @@ function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, free
             </Button>
           </div>
           <span className="text-sm font-mono text-destructive font-semibold">{formatTime(elapsed)}</span>
+          {/* Volume meter */}
+          <div className="w-48 space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>Volume do Microfone</span>
+              <span className={audioLevel < 20 ? "text-destructive" : "text-success"}>{levelLabel}</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div className={`h-full rounded-full transition-all duration-100 ${levelColor}`} style={{ width: `${audioLevel}%` }} />
+            </div>
+          </div>
           <span className="text-xs text-muted-foreground">{freeLabel ? "Fale livremente… clique para parar" : "Gravando… clique para parar"}</span>
         </>
       ) : (
