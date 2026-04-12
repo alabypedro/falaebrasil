@@ -14,14 +14,49 @@ export function useAudioRecorder() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [elapsed, setElapsed] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const stopLevelMonitor = useCallback(() => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    setAudioLevel(0);
+  }, []);
+
+  const startLevelMonitor = useCallback((stream: MediaStream) => {
+    const audioCtx = new AudioContext();
+    const source = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    const tick = () => {
+      analyser.getByteFrequencyData(dataArray);
+      // RMS-like average
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+      const avg = sum / dataArray.length;
+      // Normalize to 0-100
+      setAudioLevel(Math.min(100, Math.round((avg / 128) * 100)));
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+  }, []);
 
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -49,6 +84,7 @@ export function useAudioRecorder() {
       startTimeRef.current = Date.now();
       setElapsed(0);
       setIsRecording(true);
+      startLevelMonitor(stream);
 
       timerRef.current = setInterval(() => {
         setElapsed(Math.round((Date.now() - startTimeRef.current) / 1000));
@@ -56,16 +92,17 @@ export function useAudioRecorder() {
     } catch {
       alert("Permissão de microfone necessária para gravar áudio.");
     }
-  }, []);
+  }, [startLevelMonitor]);
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
+    stopLevelMonitor();
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  }, []);
+  }, [stopLevelMonitor]);
 
   const deleteRecording = useCallback((id: string) => {
     setRecordings((prev) => {
@@ -119,6 +156,7 @@ export function useAudioRecorder() {
     isRecording,
     recordings,
     elapsed,
+    audioLevel,
     startRecording,
     stopRecording,
     deleteRecording,
