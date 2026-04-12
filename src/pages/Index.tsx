@@ -41,15 +41,8 @@ export default function Index() {
   const [activeLesson, setActiveLesson] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const {
-    isRecording,
-    recordings,
-    elapsed,
-    startRecording,
-    stopRecording,
-    deleteRecording,
-    transcribeRecording,
-  } = useAudioRecorder();
+  const { isRecording, recordings, elapsed, startRecording, stopRecording, deleteRecording, transcribeRecording } =
+    useAudioRecorder();
 
   const selectedLesson = LESSONS.find((l) => l.id === activeLesson);
 
@@ -66,12 +59,7 @@ export default function Index() {
               ClassRoom<span className="text-accent">AI</span>
             </h1>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowApiKey((v) => !v)}
-            title="Configurar API Key"
-          >
+          <Button variant="ghost" size="icon" onClick={() => setShowApiKey((v) => !v)} title="Configurar API Key">
             <Settings className="h-5 w-5" />
           </Button>
         </div>
@@ -89,9 +77,7 @@ export default function Index() {
               onChange={(e) => setApiKey(e.target.value)}
               className="max-w-md"
             />
-            <span className="text-xs text-muted-foreground hidden sm:block">
-              Necessária para transcrição Whisper
-            </span>
+            <span className="text-xs text-muted-foreground hidden sm:block">Necessária para transcrição Whisper</span>
           </div>
         </div>
       )}
@@ -103,9 +89,7 @@ export default function Index() {
           <div className="lg:col-span-2 space-y-4">
             <div>
               <h2 className="text-xl font-bold text-foreground">Aulas</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Selecione uma aula e grave notas em áudio
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">Selecione uma aula e grave notas em áudio</p>
             </div>
             <div className="space-y-3">
               {LESSONS.map((lesson) => (
@@ -128,18 +112,12 @@ export default function Index() {
                     <p className="text-xs font-semibold text-accent uppercase tracking-wider">
                       {selectedLesson.category}
                     </p>
-                    <h2 className="text-xl font-bold text-foreground mt-1">
-                      {selectedLesson.title}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {selectedLesson.description}
-                    </p>
+                    <h2 className="text-xl font-bold text-foreground mt-1">{selectedLesson.title}</h2>
+                    <p className="text-sm text-muted-foreground mt-2">{selectedLesson.description}</p>
                   </div>
 
                   <div className="border-t pt-6">
-                    <h3 className="text-sm font-semibold text-foreground mb-4">
-                      Gravador de Áudio
-                    </h3>
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Gravador de Áudio</h3>
                     <AudioRecorder
                       isRecording={isRecording}
                       elapsed={elapsed}
