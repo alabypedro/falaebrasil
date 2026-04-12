@@ -7,6 +7,7 @@ import { Mic, Square, RotateCcw, Loader2 } from "lucide-react";
 import FeedbackCard, { type FeedbackScores } from "@/components/FeedbackCard";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const scriptedPrompts = [
@@ -48,6 +49,7 @@ export default function VoiceLab() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const { isRecording, elapsed, recordings, startRecording, stopRecording } =
     useAudioRecorder();
@@ -88,6 +90,19 @@ export default function VoiceLab() {
 
       setTranscription(data.transcription || null);
 
+      // Save to voice_sessions table
+      if (user) {
+        await supabase.from("voice_sessions").insert({
+          user_id: user.id,
+          mode,
+          text_analyzed: data.transcription || null,
+          accuracy_score: data.pronunciation ?? null,
+          fluency_score: data.fluency ?? null,
+          prosody_score: data.vocabulary ?? null,
+          grammar_feedback: data.grammar ? `Completeness: ${data.grammar}%` : null,
+        });
+      }
+
       // Generate suggestions based on scores
       const newSuggestions: string[] = [];
       if (data.pronunciation < 70)
@@ -112,10 +127,7 @@ export default function VoiceLab() {
 
   const handleStop = () => {
     stopRecording();
-    // Wait briefly for the recording to be finalized, then analyze
-    setTimeout(() => {
-      // The latest recording will be at index 0 after state update
-    }, 500);
+    setTimeout(() => {}, 500);
   };
 
   // Watch for new recordings and auto-analyze
@@ -155,7 +167,6 @@ export default function VoiceLab() {
           <TabsTrigger value="unscripted">🎤 Unscripted</TabsTrigger>
         </TabsList>
 
-        {/* SCRIPTED */}
         <TabsContent value="scripted" className="space-y-6">
           <div className="flex gap-2 flex-wrap">
             {scriptedPrompts.map((p) => (
@@ -182,13 +193,7 @@ export default function VoiceLab() {
             </CardContent>
           </Card>
 
-          <RecordButton
-            isRecording={isRecording}
-            isAnalyzing={isAnalyzing}
-            elapsed={elapsed}
-            onStart={startRecording}
-            onStop={handleStop}
-          />
+          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} />
 
           {recordings.length > 0 && (
             <div className="rounded-lg border p-3">
@@ -197,25 +202,15 @@ export default function VoiceLab() {
           )}
         </TabsContent>
 
-        {/* UNSCRIPTED */}
         <TabsContent value="unscripted" className="space-y-6">
           <Card className="bg-accent/5 border-accent/20">
             <CardContent className="p-6 text-center">
-              <p className="text-xs text-accent font-semibold uppercase tracking-wide mb-2">
-                Tema Sugerido
-              </p>
+              <p className="text-xs text-accent font-semibold uppercase tracking-wide mb-2">Tema Sugerido</p>
               <p className="text-lg font-medium text-foreground">{currentTopic}</p>
             </CardContent>
           </Card>
 
-          <RecordButton
-            isRecording={isRecording}
-            isAnalyzing={isAnalyzing}
-            elapsed={elapsed}
-            onStart={startRecording}
-            onStop={handleStop}
-            freeLabel
-          />
+          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} freeLabel />
 
           {recordings.length > 0 && (
             <div className="rounded-lg border p-3">
@@ -225,7 +220,6 @@ export default function VoiceLab() {
         </TabsContent>
       </Tabs>
 
-      {/* Transcription */}
       {transcription && (
         <Card>
           <CardHeader className="pb-2">
@@ -237,13 +231,8 @@ export default function VoiceLab() {
         </Card>
       )}
 
-      {/* Feedback */}
-      <FeedbackCard
-        scores={feedback}
-        suggestions={suggestions.length > 0 ? suggestions : undefined}
-      />
+      <FeedbackCard scores={feedback} suggestions={suggestions.length > 0 ? suggestions : undefined} />
 
-      {/* Analyzing spinner */}
       {isAnalyzing && (
         <div className="flex flex-col items-center gap-2 py-4">
           <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -263,20 +252,8 @@ export default function VoiceLab() {
   );
 }
 
-function RecordButton({
-  isRecording,
-  isAnalyzing,
-  elapsed,
-  onStart,
-  onStop,
-  freeLabel,
-}: {
-  isRecording: boolean;
-  isAnalyzing: boolean;
-  elapsed: number;
-  onStart: () => void;
-  onStop: () => void;
-  freeLabel?: boolean;
+function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, freeLabel }: {
+  isRecording: boolean; isAnalyzing: boolean; elapsed: number; onStart: () => void; onStop: () => void; freeLabel?: boolean;
 }) {
   return (
     <div className="flex flex-col items-center gap-3">
@@ -284,39 +261,19 @@ function RecordButton({
         <>
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-destructive/20 animate-pulse-recording" />
-            <Button
-              size="lg"
-              variant="destructive"
-              className="relative h-20 w-20 rounded-full"
-              onClick={onStop}
-            >
+            <Button size="lg" variant="destructive" className="relative h-20 w-20 rounded-full" onClick={onStop}>
               <Square className="h-7 w-7" />
             </Button>
           </div>
-          <span className="text-sm font-mono text-destructive font-semibold">
-            {formatTime(elapsed)}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {freeLabel ? "Fale livremente… clique para parar" : "Gravando… clique para parar"}
-          </span>
+          <span className="text-sm font-mono text-destructive font-semibold">{formatTime(elapsed)}</span>
+          <span className="text-xs text-muted-foreground">{freeLabel ? "Fale livremente… clique para parar" : "Gravando… clique para parar"}</span>
         </>
       ) : (
         <>
-          <Button
-            size="lg"
-            className="h-20 w-20 rounded-full"
-            onClick={onStart}
-            disabled={isAnalyzing}
-          >
-            {isAnalyzing ? (
-              <Loader2 className="h-7 w-7 animate-spin" />
-            ) : (
-              <Mic className="h-7 w-7" />
-            )}
+          <Button size="lg" className="h-20 w-20 rounded-full" onClick={onStart} disabled={isAnalyzing}>
+            {isAnalyzing ? <Loader2 className="h-7 w-7 animate-spin" /> : <Mic className="h-7 w-7" />}
           </Button>
-          <span className="text-xs text-muted-foreground">
-            {isAnalyzing ? "Analisando…" : "Clique para gravar"}
-          </span>
+          <span className="text-xs text-muted-foreground">{isAnalyzing ? "Analisando…" : "Clique para gravar"}</span>
         </>
       )}
     </div>

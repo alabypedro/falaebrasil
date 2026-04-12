@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ImageIcon } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Course {
@@ -21,11 +21,12 @@ interface Course {
   display_order: number;
   published: boolean;
   thumbnail_url: string | null;
+  category: string;
 }
 
 const levels = ["A1", "A2", "B1", "B2"];
 
-const emptyForm = { title: "", description: "", level: "A1", display_order: 0, published: false, thumbnail_url: "" };
+const emptyForm = { title: "", description: "", level: "A1", display_order: 0, published: false, thumbnail_url: "", category: "transversal" };
 
 export default function CoursesManager() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -33,6 +34,7 @@ export default function CoursesManager() {
   const [editing, setEditing] = useState<Course | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from("courses").select("*").order("display_order");
@@ -45,14 +47,27 @@ export default function CoursesManager() {
 
   const openEdit = (c: Course) => {
     setEditing(c);
-    setForm({ title: c.title, description: c.description ?? "", level: c.level, display_order: c.display_order, published: c.published, thumbnail_url: c.thumbnail_url ?? "" });
+    setForm({ title: c.title, description: c.description ?? "", level: c.level, display_order: c.display_order, published: c.published, thumbnail_url: c.thumbnail_url ?? "", category: c.category });
     setOpen(true);
+  };
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const path = `thumbnails/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from("lesson-files").upload(path, file);
+    if (error) { toast.error("Erro no upload: " + error.message); setUploading(false); return; }
+    const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
+    setForm({ ...form, thumbnail_url: data.publicUrl });
+    setUploading(false);
+    toast.success("Imagem enviada!");
   };
 
   const save = async () => {
     if (!form.title.trim()) { toast.error("Título obrigatório"); return; }
     setLoading(true);
-    const payload = { title: form.title.trim(), description: form.description.trim() || null, level: form.level, display_order: form.display_order, published: form.published, thumbnail_url: form.thumbnail_url.trim() || null };
+    const payload = { title: form.title.trim(), description: form.description.trim() || null, level: form.level, display_order: form.display_order, published: form.published, thumbnail_url: form.thumbnail_url.trim() || null, category: form.category };
 
     if (editing) {
       const { error } = await supabase.from("courses").update(payload).eq("id", editing.id);
@@ -96,35 +111,32 @@ export default function CoursesManager() {
               <TableHead>Ordem</TableHead>
               <TableHead>Título</TableHead>
               <TableHead>Nível</TableHead>
+              <TableHead>Categoria</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {courses.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum curso cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum curso cadastrado.</TableCell></TableRow>
             )}
             {courses.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-mono text-xs">{c.display_order}</TableCell>
-                <TableCell className="font-medium">{c.title}</TableCell>
+                <TableCell className="font-medium flex items-center gap-2">
+                  {c.thumbnail_url && <img src={c.thumbnail_url} alt="" className="h-8 w-8 rounded object-cover" />}
+                  {c.title}
+                </TableCell>
                 <TableCell><Badge className={levelColor[c.level] ?? ""}>{c.level}</Badge></TableCell>
+                <TableCell className="text-sm text-muted-foreground capitalize">{c.category}</TableCell>
                 <TableCell>{c.published ? <Badge variant="default">Publicado</Badge> : <Badge variant="secondary">Rascunho</Badge>}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
                   <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </AlertDialogTrigger>
+                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
                     <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir curso?</AlertDialogTitle>
-                        <AlertDialogDescription>Isso também excluirá todos os módulos, lições e quizzes vinculados.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => remove(c.id)}>Excluir</AlertDialogAction>
-                      </AlertDialogFooter>
+                      <AlertDialogHeader><AlertDialogTitle>Excluir curso?</AlertDialogTitle><AlertDialogDescription>Isso também excluirá todos os módulos, lições e quizzes vinculados.</AlertDialogDescription></AlertDialogHeader>
+                      <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => remove(c.id)}>Excluir</AlertDialogAction></AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                 </TableCell>
@@ -135,7 +147,7 @@ export default function CoursesManager() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "Editar Curso" : "Novo Curso"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -155,13 +167,29 @@ export default function CoursesManager() {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>Categoria</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="transversal">Transversal</SelectItem>
+                    <SelectItem value="bst">BST</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label>Ordem</Label>
                 <Input type="number" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: parseInt(e.target.value) || 0 })} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>URL Thumbnail</Label>
-              <Input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} placeholder="https://..." />
+              <Label>Thumbnail do Curso</Label>
+              <div className="flex gap-2 items-center">
+                <Input type="file" accept="image/*" onChange={handleThumbnailUpload} disabled={uploading} />
+                {form.thumbnail_url && <img src={form.thumbnail_url} alt="thumb" className="h-10 w-10 rounded object-cover" />}
+              </div>
+              {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={form.published} onCheckedChange={(v) => setForm({ ...form, published: v })} />

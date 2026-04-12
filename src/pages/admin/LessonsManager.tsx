@@ -34,7 +34,8 @@ export default function LessonsManager() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [filterModule, setFilterModule] = useState<string>("all");
-  const [uploading, setUploading] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const load = async () => {
     const [{ data: lsn }, { data: mods }] = await Promise.all([
@@ -57,17 +58,20 @@ export default function LessonsManager() {
     setOpen(true);
   };
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "pdf" | "video") => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const setUploading = type === "pdf" ? setUploadingPdf : setUploadingVideo;
     setUploading(true);
-    const path = `pdfs/${Date.now()}_${file.name}`;
+    const folder = type === "pdf" ? "pdfs" : "videos";
+    const path = `${folder}/${Date.now()}_${file.name}`;
     const { error } = await supabase.storage.from("lesson-files").upload(path, file);
     if (error) { toast.error("Erro no upload: " + error.message); setUploading(false); return; }
     const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
-    setForm({ ...form, pdf_url: data.publicUrl });
+    const field = type === "pdf" ? "pdf_url" : "video_url";
+    setForm((prev) => ({ ...prev, [field]: data.publicUrl }));
     setUploading(false);
-    toast.success("PDF enviado!");
+    toast.success(type === "pdf" ? "PDF enviado!" : "Vídeo enviado!");
   };
 
   const save = async () => {
@@ -169,16 +173,22 @@ export default function LessonsManager() {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
             </div>
             <div className="space-y-2">
-              <Label>URL do Vídeo (YouTube/Vimeo/Mux)</Label>
-              <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://..." />
+              <Label>Videoaula (upload do PC)</Label>
+              <div className="flex gap-2 items-center">
+                <Input type="file" accept="video/*" onChange={(e) => handleFileUpload(e, "video")} disabled={uploadingVideo} />
+                {form.video_url && <a href={form.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver vídeo</a>}
+              </div>
+              {uploadingVideo && <p className="text-xs text-muted-foreground">Enviando vídeo...</p>}
+              <p className="text-[11px] text-muted-foreground">Ou cole uma URL:</p>
+              <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://youtube.com/..." />
             </div>
             <div className="space-y-2">
               <Label>PDF da Aula</Label>
               <div className="flex gap-2 items-center">
-                <Input type="file" accept="application/pdf" onChange={handlePdfUpload} disabled={uploading} />
+                <Input type="file" accept="application/pdf" onChange={(e) => handleFileUpload(e, "pdf")} disabled={uploadingPdf} />
                 {form.pdf_url && <a href={form.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver PDF</a>}
               </div>
-              {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
+              {uploadingPdf && <p className="text-xs text-muted-foreground">Enviando PDF...</p>}
             </div>
             <div className="space-y-2">
               <Label>Ordem</Label>
