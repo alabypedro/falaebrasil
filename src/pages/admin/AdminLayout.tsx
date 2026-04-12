@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Users } from "lucide-react";
+import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNav = [
@@ -8,6 +8,7 @@ const adminNav = [
   { to: "/admin/modules", icon: Layers, label: "Módulos" },
   { to: "/admin/lessons", icon: FileText, label: "Lições" },
   { to: "/admin/quizzes", icon: HelpCircle, label: "Quizzes" },
+  { to: "/admin/library", icon: Library, label: "Biblioteca BST" },
 ];
 
 export default function AdminLayout() {
@@ -15,7 +16,7 @@ export default function AdminLayout() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gerencie cursos, módulos, lições e quizzes.</p>
+        <p className="text-sm text-muted-foreground mt-1">Gerencie cursos, módulos, lições, quizzes e biblioteca.</p>
       </div>
 
       <nav className="flex gap-1 overflow-x-auto border-b pb-px">

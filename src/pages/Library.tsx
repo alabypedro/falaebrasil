@@ -1,63 +1,73 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LibraryItem {
   id: string;
   title: string;
-  author: string;
-  level: string;
-  type: "ebook" | "audiobook";
-  cover: string;
+  type: string;
+  file_url: string | null;
+  audio_url: string | null;
 }
-
-const libraryItems: LibraryItem[] = [
-  { id: "1", title: "English for Everyday Life", author: "Sarah Collins", level: "A1", type: "ebook", cover: "📘" },
-  { id: "2", title: "Travel English", author: "James Wright", level: "A2", type: "ebook", cover: "📗" },
-  { id: "3", title: "Business Communication", author: "Laura Chen", level: "B1", type: "ebook", cover: "📕" },
-  { id: "4", title: "Advanced Conversations", author: "Michael Brown", level: "B2", type: "ebook", cover: "📙" },
-  { id: "5", title: "Pronunciation Mastery", author: "Emily Davis", level: "A2", type: "audiobook", cover: "🎧" },
-  { id: "6", title: "Listening Practice A1", author: "David Wilson", level: "A1", type: "audiobook", cover: "🎧" },
-  { id: "7", title: "Podcast Comprehension", author: "Anna Lee", level: "B1", type: "audiobook", cover: "🎧" },
-  { id: "8", title: "Idioms & Expressions", author: "Chris Taylor", level: "B2", type: "audiobook", cover: "🎧" },
-];
-
-const levelColors: Record<string, string> = {
-  A1: "bg-success/15 text-success",
-  A2: "bg-accent/15 text-accent",
-  B1: "bg-xp/15 text-xp",
-  B2: "bg-innovation/15 text-innovation",
-};
 
 function ItemCard({ item }: { item: LibraryItem }) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-5 space-y-3">
         <div className="flex items-start justify-between">
-          <span className="text-4xl">{item.cover}</span>
-          <Badge className={`text-[10px] border-0 ${levelColors[item.level] || ""}`}>
-            {item.level}
+          <span className="text-4xl">{item.type === "ebook" ? "📘" : "🎧"}</span>
+          <Badge variant="secondary" className="text-[10px] border-0">
+            {item.type === "ebook" ? "E-book" : "Audiobook"}
           </Badge>
         </div>
         <div>
           <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
-          <p className="text-xs text-muted-foreground">{item.author}</p>
         </div>
-        <Button variant="outline" size="sm" className="w-full">
-          {item.type === "ebook" ? (
-            <><BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler</>
-          ) : (
-            <><Headphones className="mr-1.5 h-3.5 w-3.5" /> Ouvir</>
-          )}
-        </Button>
+        {item.type === "ebook" && item.file_url ? (
+          <Button variant="outline" size="sm" className="w-full" asChild>
+            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
+              <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
+            </a>
+          </Button>
+        ) : item.type === "audiobook" && item.audio_url ? (
+          <div className="space-y-2">
+            <audio src={item.audio_url} controls className="w-full h-9" />
+          </div>
+        ) : (
+          <Button variant="outline" size="sm" className="w-full" disabled>
+            {item.type === "ebook" ? <><BookOpen className="mr-1.5 h-3.5 w-3.5" /> Indisponível</> : <><Headphones className="mr-1.5 h-3.5 w-3.5" /> Indisponível</>}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
 }
 
 export default function Library() {
+  const [items, setItems] = useState<LibraryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.from("library_bst").select("*").order("created_at", { ascending: false });
+      if (data) setItems(data);
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
@@ -74,29 +84,18 @@ export default function Library() {
           <TabsTrigger value="audiobook">Audiobooks</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {libraryItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="ebook">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {libraryItems.filter((i) => i.type === "ebook").map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="audiobook">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {libraryItems.filter((i) => i.type === "audiobook").map((item) => (
-              <ItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        </TabsContent>
+        {["all", "ebook", "audiobook"].map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {(tab === "all" ? items : items.filter((i) => i.type === tab)).map((item) => (
+                <ItemCard key={item.id} item={item} />
+              ))}
+            </div>
+            {(tab === "all" ? items : items.filter((i) => i.type === tab)).length === 0 && (
+              <p className="text-center text-muted-foreground py-8">Nenhum item disponível.</p>
+            )}
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
