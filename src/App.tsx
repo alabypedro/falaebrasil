@@ -24,6 +24,7 @@ import ModulesManager from "@/pages/admin/ModulesManager";
 import LessonsManager from "@/pages/admin/LessonsManager";
 import QuizzesManager from "@/pages/admin/QuizzesManager";
 import LibraryManager from "@/pages/admin/LibraryManager";
+import PromptsManager from "@/pages/admin/PromptsManager";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +99,7 @@ const App = () => (
                         <Route path="lessons" element={<LessonsManager />} />
                         <Route path="quizzes" element={<QuizzesManager />} />
                         <Route path="library" element={<LibraryManager />} />
+                        <Route path="prompts" element={<PromptsManager />} />
                       </Route>
                       <Route path="*" element={<NotFound />} />
                     </Routes>
