@@ -34,8 +34,9 @@ const categories = [
 ];
 
 function CourseCard({ course }: { course: CourseWithProgress }) {
+  const navigate = useNavigate();
   return (
-    <Card className="relative overflow-hidden transition-shadow hover:shadow-md">
+    <Card className="relative overflow-hidden transition-shadow hover:shadow-md cursor-pointer" onClick={() => navigate(`/courses/${course.id}`)}>
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">

@@ -16,6 +16,7 @@ import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
 import NotFound from "@/pages/NotFound";
 import QuizPlayer from "@/pages/QuizPlayer";
+import CourseDetail from "@/pages/CourseDetail";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import CoursesManager from "@/pages/admin/CoursesManager";
@@ -77,6 +78,7 @@ const App = () => (
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/courses" element={<Courses />} />
+                      <Route path="/courses/:courseId" element={<CourseDetail />} />
                       <Route path="/voice-lab" element={<VoiceLab />} />
                       <Route path="/library" element={<Library />} />
                       <Route path="/community" element={<Community />} />
