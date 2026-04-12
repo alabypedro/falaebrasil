@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Upload, Plus, Trash2, Loader2, Pencil } from "lucide-react";
+import { Plus, Trash2, Loader2, Pencil } from "lucide-react";
 
 interface Prompt {
   id: string;
@@ -28,8 +29,9 @@ export default function PromptsManager() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadLevel, setUploadLevel] = useState("A1");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
-  // Manual add/edit dialog
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ text: "", level: "A1" });
@@ -40,34 +42,43 @@ export default function PromptsManager() {
     if (filterLevel !== "all") q = q.eq("level", filterLevel);
     const { data } = await q;
     setPrompts((data as Prompt[]) || []);
+    setSelected(new Set());
     setLoading(false);
   };
 
   useEffect(() => { load(); }, [filterLevel]);
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selected.size === prompts.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(prompts.map((p) => p.id)));
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-
     try {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("level", uploadLevel);
-
       const { data, error } = await supabase.functions.invoke("parse-prompts", { body: formData });
       if (error) throw error;
-
       const parsed = data.prompts as { text: string; level: string }[];
-      if (!parsed?.length) {
-        toast.warning("Nenhum texto válido encontrado no arquivo.");
-        return;
-      }
-
+      if (!parsed?.length) { toast.warning("Nenhum texto válido encontrado no arquivo."); return; }
       const rows = parsed.map((p) => ({ text: p.text, level: p.level, source_file: file.name }));
       const { error: insertErr } = await supabase.from("pronunciation_prompts").insert(rows);
       if (insertErr) throw insertErr;
-
       toast.success(`${rows.length} textos importados com sucesso!`);
       load();
     } catch (err: any) {
@@ -100,6 +111,22 @@ export default function PromptsManager() {
     load();
   };
 
+  const bulkRemove = async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    // Delete in batches of 50
+    for (let i = 0; i < ids.length; i += 50) {
+      const batch = ids.slice(i, i + 50);
+      await supabase.from("pronunciation_prompts").delete().in("id", batch);
+    }
+    toast.success(`${ids.length} texto(s) removido(s).`);
+    setBulkDeleteOpen(false);
+    load();
+  };
+
+  const allSelected = prompts.length > 0 && selected.size === prompts.length;
+  const someSelected = selected.size > 0 && selected.size < prompts.length;
+
   return (
     <div className="space-y-6">
       {/* Upload card */}
@@ -126,14 +153,36 @@ export default function PromptsManager() {
       </Card>
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <Select value={filterLevel} onValueChange={setFilterLevel}>
-          <SelectTrigger className="w-32"><SelectValue placeholder="Filtrar nível" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            {levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Select value={filterLevel} onValueChange={setFilterLevel}>
+            <SelectTrigger className="w-32"><SelectValue placeholder="Filtrar nível" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          {selected.size > 0 && (
+            <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="destructive">
+                  <Trash2 className="h-4 w-4 mr-1" /> Excluir {selected.size} selecionado(s)
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir {selected.size} texto(s)?</AlertDialogTitle>
+                  <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={bulkRemove}>Excluir</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
         <Button size="sm" onClick={openAdd}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
       </div>
 
@@ -142,6 +191,14 @@ export default function PromptsManager() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allSelected}
+                  {...(someSelected ? { "data-state": "indeterminate" } : {})}
+                  onCheckedChange={toggleAll}
+                  aria-label="Selecionar todos"
+                />
+              </TableHead>
               <TableHead>Texto</TableHead>
               <TableHead className="w-20">Nível</TableHead>
               <TableHead className="w-32">Origem</TableHead>
@@ -150,11 +207,18 @@ export default function PromptsManager() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={4} className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
             ) : prompts.length === 0 ? (
-              <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum texto cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum texto cadastrado.</TableCell></TableRow>
             ) : prompts.map((p) => (
-              <TableRow key={p.id}>
+              <TableRow key={p.id} className={selected.has(p.id) ? "bg-muted/50" : ""}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.has(p.id)}
+                    onCheckedChange={() => toggleSelect(p.id)}
+                    aria-label={`Selecionar "${p.text.slice(0, 30)}"`}
+                  />
+                </TableCell>
                 <TableCell className="max-w-md truncate text-sm">{p.text}</TableCell>
                 <TableCell><Badge variant="secondary">{p.level}</Badge></TableCell>
                 <TableCell className="text-xs text-muted-foreground">{p.source_file || "Manual"}</TableCell>
