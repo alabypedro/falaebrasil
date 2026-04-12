@@ -1,35 +1,24 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lock, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-interface Course {
+interface CourseWithProgress {
   id: string;
   title: string;
   level: string;
-  modules: number;
+  category: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  totalLessons: number;
+  completedLessons: number;
   progress: number;
-  locked: boolean;
 }
-
-const coursesData: Record<string, Course[]> = {
-  adults: [
-    { id: "a1", title: "Foundations", level: "A1", modules: 12, progress: 100, locked: false },
-    { id: "a2", title: "Building Confidence", level: "A2", modules: 14, progress: 62, locked: false },
-    { id: "b1", title: "Independent Speaker", level: "B1", modules: 16, progress: 0, locked: true },
-    { id: "b2", title: "Advanced Communication", level: "B2", modules: 18, progress: 0, locked: true },
-  ],
-  teens: [
-    { id: "t-a1", title: "Getting Started", level: "A1", modules: 10, progress: 45, locked: false },
-    { id: "t-a2", title: "Express Yourself", level: "A2", modules: 12, progress: 0, locked: true },
-    { id: "t-b1", title: "Debate & Discuss", level: "B1", modules: 14, progress: 0, locked: true },
-  ],
-  kids: [
-    { id: "k-a1", title: "Fun with English", level: "A1", modules: 8, progress: 30, locked: false },
-    { id: "k-a2", title: "Story Time", level: "A2", modules: 10, progress: 0, locked: true },
-  ],
-};
 
 const levelColors: Record<string, string> = {
   A1: "bg-success/15 text-success",
@@ -38,22 +27,34 @@ const levelColors: Record<string, string> = {
   B2: "bg-innovation/15 text-innovation",
 };
 
-function CourseCard({ course }: { course: Course }) {
+const categories = [
+  { key: "all", label: "Todos" },
+  { key: "transversal", label: "Transversal" },
+  { key: "bst", label: "BST" },
+];
+
+function CourseCard({ course }: { course: CourseWithProgress }) {
   return (
-    <Card className={`relative overflow-hidden transition-shadow hover:shadow-md ${course.locked ? "opacity-60" : ""}`}>
+    <Card className="relative overflow-hidden transition-shadow hover:shadow-md">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between">
-          <div>
-            <Badge className={`text-[10px] ${levelColors[course.level] || ""} border-0`}>
-              {course.level}
-            </Badge>
-            <h3 className="text-sm font-semibold text-foreground mt-2">{course.title}</h3>
-            <p className="text-xs text-muted-foreground">{course.modules} módulos</p>
+          <div className="flex items-start gap-3">
+            {course.thumbnail_url && (
+              <img src={course.thumbnail_url} alt="" className="h-12 w-12 rounded object-cover flex-shrink-0" />
+            )}
+            <div>
+              <Badge className={`text-[10px] ${levelColors[course.level] || ""} border-0`}>
+                {course.level}
+              </Badge>
+              <h3 className="text-sm font-semibold text-foreground mt-2">{course.title}</h3>
+              {course.description && (
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{course.description}</p>
+              )}
+              <p className="text-xs text-muted-foreground">{course.totalLessons} aulas</p>
+            </div>
           </div>
-          {course.locked ? (
-            <Lock className="h-5 w-5 text-muted-foreground" />
-          ) : course.progress === 100 ? (
-            <CheckCircle className="h-5 w-5 text-success" />
+          {course.progress === 100 && course.totalLessons > 0 ? (
+            <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
           ) : null}
         </div>
         <div className="space-y-1">
@@ -69,29 +70,106 @@ function CourseCard({ course }: { course: Course }) {
 }
 
 export default function Courses() {
+  const [courses, setCourses] = useState<CourseWithProgress[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const load = async () => {
+      // Fetch published courses with their lessons via modules
+      const { data: coursesData } = await supabase
+        .from("courses")
+        .select("id, title, level, category, description, thumbnail_url")
+        .eq("published", true)
+        .order("display_order");
+
+      if (!coursesData) { setLoading(false); return; }
+
+      // Fetch all lessons grouped by course via modules
+      const { data: modules } = await supabase
+        .from("modules")
+        .select("id, course_id");
+
+      const { data: lessons } = await supabase
+        .from("lessons")
+        .select("id, module_id");
+
+      // Fetch user progress
+      const { data: progress } = await supabase
+        .from("user_progress")
+        .select("lesson_id")
+        .eq("user_id", user.id);
+
+      const completedLessonIds = new Set((progress || []).map((p) => p.lesson_id));
+
+      // Map lessons to courses
+      const moduleToCourseLookup: Record<string, string> = {};
+      (modules || []).forEach((m) => { moduleToCourseLookup[m.id] = m.course_id; });
+
+      const courseLessons: Record<string, string[]> = {};
+      (lessons || []).forEach((l) => {
+        const courseId = moduleToCourseLookup[l.module_id];
+        if (courseId) {
+          if (!courseLessons[courseId]) courseLessons[courseId] = [];
+          courseLessons[courseId].push(l.id);
+        }
+      });
+
+      const result: CourseWithProgress[] = coursesData.map((c) => {
+        const lessonIds = courseLessons[c.id] || [];
+        const completed = lessonIds.filter((id) => completedLessonIds.has(id)).length;
+        const pct = lessonIds.length > 0 ? Math.round((completed / lessonIds.length) * 100) : 0;
+        return {
+          ...c,
+          totalLessons: lessonIds.length,
+          completedLessons: completed,
+          progress: pct,
+        };
+      });
+
+      setCourses(result);
+      setLoading(false);
+    };
+
+    load();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Meus Cursos</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Trilhas de aprendizado do A1 ao B2 — escolha seu perfil.
+          Trilhas de aprendizado — seu progresso em tempo real.
         </p>
       </div>
 
-      <Tabs defaultValue="adults">
+      <Tabs defaultValue="all">
         <TabsList>
-          <TabsTrigger value="adults">Adults</TabsTrigger>
-          <TabsTrigger value="teens">Teens</TabsTrigger>
-          <TabsTrigger value="kids">Kids</TabsTrigger>
+          {categories.map((cat) => (
+            <TabsTrigger key={cat.key} value={cat.key}>{cat.label}</TabsTrigger>
+          ))}
         </TabsList>
 
-        {Object.entries(coursesData).map(([key, courses]) => (
-          <TabsContent key={key} value={key}>
+        {categories.map((cat) => (
+          <TabsContent key={cat.key} value={cat.key}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {courses.map((course) => (
+              {(cat.key === "all" ? courses : courses.filter((c) => c.category === cat.key)).map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
             </div>
+            {(cat.key === "all" ? courses : courses.filter((c) => c.category === cat.key)).length === 0 && (
+              <p className="text-center text-muted-foreground py-8">Nenhum curso publicado nesta categoria.</p>
+            )}
           </TabsContent>
         ))}
       </Tabs>
