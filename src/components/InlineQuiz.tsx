@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, RotateCcw, ArrowRight, HelpCircle } from "lucide-react";
+import { CheckCircle, XCircle, RotateCcw, ArrowRight, HelpCircle, Star } from "lucide-react";
 
 interface Question {
   id: string;
@@ -26,6 +26,7 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [passed, setPassed] = useState(false);
+  const [xpEarned, setXpEarned] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,6 +60,30 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
       passed: p,
       answers: answers as any,
     });
+
+    // Gamification: award XP when passed
+    if (p) {
+      const xpEarned = Math.round(s / 10) * 5; // 35-50 XP based on score
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("xp, level")
+        .eq("user_id", user.id)
+        .single();
+      if (profile) {
+        const newXp = (profile.xp || 0) + xpEarned;
+        // Level up thresholds
+        let newLevel = profile.level;
+        if (newXp >= 5000) newLevel = "B2";
+        else if (newXp >= 2500) newLevel = "B1";
+        else if (newXp >= 1000) newLevel = "A2";
+        else newLevel = "A1";
+        await supabase
+          .from("profiles")
+          .update({ xp: newXp, level: newLevel })
+          .eq("user_id", user.id);
+        setXpEarned(xpEarned);
+      }
+    }
   };
 
   const retry = () => {
@@ -79,6 +104,11 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
             <CardTitle className="text-base">{passed ? "Parabéns! Você passou! 🎉" : "Tente novamente"}</CardTitle>
           </div>
           <CardDescription>Nota: {score}% — Mínimo: {quiz.passing_score}%</CardDescription>
+          {passed && xpEarned > 0 && (
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-500">
+              <Star className="h-4 w-4 fill-amber-500" />+{xpEarned} XP conquistados!
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           <Progress value={score} className="h-2" />
