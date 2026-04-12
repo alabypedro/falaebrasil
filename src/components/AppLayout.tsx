@@ -28,15 +28,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between border-b px-4">
-            <SidebarTrigger className="ml-0" />
+          <header className="h-14 flex items-center justify-between border-b px-4 animate-fade-in">
+            <SidebarTrigger className="ml-0 press-effect" />
             <div className="flex items-center gap-3">
               <XPBadge xp={profile?.xp ?? 0} level={profile?.level ?? "A1"} compact />
               <button
                 onClick={() => navigate("/profile")}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-2 hover:opacity-80 transition-all duration-200 press-effect"
               >
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8 ring-2 ring-transparent hover:ring-accent/30 transition-all duration-200">
                   <AvatarImage src={profile?.avatar_url || undefined} />
                   <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                     {initials}
@@ -46,7 +46,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   {displayName}
                 </span>
               </button>
-              <Button size="icon" variant="ghost" onClick={signOut} title="Sair">
+              <Button size="icon" variant="ghost" onClick={signOut} title="Sair" className="press-effect hover:text-destructive transition-colors">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>

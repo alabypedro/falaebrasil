@@ -9,7 +9,7 @@ interface XPBadgeProps {
 export default function XPBadge({ xp, level, compact = false }: XPBadgeProps) {
   if (compact) {
     return (
-      <div className="flex items-center gap-1.5 rounded-full bg-xp/15 px-2.5 py-1">
+      <div className="flex items-center gap-1.5 rounded-full bg-xp/15 px-2.5 py-1 hover-scale glow-accent cursor-default transition-all">
         <Zap className="h-3.5 w-3.5 text-xp" />
         <span className="text-xs font-bold text-xp">{xp} XP</span>
       </div>
@@ -17,8 +17,8 @@ export default function XPBadge({ xp, level, compact = false }: XPBadgeProps) {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-xp/15">
+    <div className="flex items-center gap-3 rounded-lg border bg-card p-3 hover-lift transition-all">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-xp/15 hover-bounce">
         <Zap className="h-5 w-5 text-xp" />
       </div>
       <div>

@@ -3,7 +3,7 @@ import { Users } from "lucide-react";
 
 export default function Community() {
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl page-transition">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Comunidade</h1>
         <p className="text-sm text-muted-foreground mt-1">

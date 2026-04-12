@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lock, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -33,15 +33,23 @@ const categories = [
   { key: "bst", label: "BST" },
 ];
 
-function CourseCard({ course }: { course: CourseWithProgress }) {
+function CourseCard({ course, index }: { course: CourseWithProgress; index: number }) {
   const navigate = useNavigate();
   return (
-    <Card className="relative overflow-hidden transition-shadow hover:shadow-md cursor-pointer" onClick={() => navigate(`/courses/${course.id}`)}>
+    <Card
+      className="relative overflow-hidden hover-lift cursor-pointer animate-fade-up"
+      style={{ "--delay": `${80 * (index + 1)}ms` } as React.CSSProperties}
+      onClick={() => navigate(`/courses/${course.id}`)}
+    >
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
             {course.thumbnail_url && (
-              <img src={course.thumbnail_url} alt="" className="h-12 w-12 rounded object-cover flex-shrink-0" />
+              <img
+                src={course.thumbnail_url}
+                alt=""
+                className="h-12 w-12 rounded object-cover flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+              />
             )}
             <div>
               <Badge className={`text-[10px] ${levelColors[course.level] || ""} border-0`}>
@@ -55,7 +63,7 @@ function CourseCard({ course }: { course: CourseWithProgress }) {
             </div>
           </div>
           {course.progress === 100 && course.totalLessons > 0 ? (
-            <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+            <CheckCircle className="h-5 w-5 text-success flex-shrink-0 animate-xp-pop" />
           ) : null}
         </div>
         <div className="space-y-1">
@@ -79,7 +87,6 @@ export default function Courses() {
     if (!user) return;
 
     const load = async () => {
-      // Fetch published courses with their lessons via modules
       const { data: coursesData } = await supabase
         .from("courses")
         .select("id, title, level, category, description, thumbnail_url")
@@ -88,24 +95,11 @@ export default function Courses() {
 
       if (!coursesData) { setLoading(false); return; }
 
-      // Fetch all lessons grouped by course via modules
-      const { data: modules } = await supabase
-        .from("modules")
-        .select("id, course_id");
-
-      const { data: lessons } = await supabase
-        .from("lessons")
-        .select("id, module_id");
-
-      // Fetch user progress
-      const { data: progress } = await supabase
-        .from("user_progress")
-        .select("lesson_id")
-        .eq("user_id", user.id);
+      const { data: modules } = await supabase.from("modules").select("id, course_id");
+      const { data: lessons } = await supabase.from("lessons").select("id, module_id");
+      const { data: progress } = await supabase.from("user_progress").select("lesson_id").eq("user_id", user.id);
 
       const completedLessonIds = new Set((progress || []).map((p) => p.lesson_id));
-
-      // Map lessons to courses
       const moduleToCourseLookup: Record<string, string> = {};
       (modules || []).forEach((m) => { moduleToCourseLookup[m.id] = m.course_id; });
 
@@ -122,12 +116,7 @@ export default function Courses() {
         const lessonIds = courseLessons[c.id] || [];
         const completed = lessonIds.filter((id) => completedLessonIds.has(id)).length;
         const pct = lessonIds.length > 0 ? Math.round((completed / lessonIds.length) * 100) : 0;
-        return {
-          ...c,
-          totalLessons: lessonIds.length,
-          completedLessons: completed,
-          progress: pct,
-        };
+        return { ...c, totalLessons: lessonIds.length, completedLessons: completed, progress: pct };
       });
 
       setCourses(result);
@@ -146,30 +135,30 @@ export default function Courses() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <div>
+    <div className="space-y-6 max-w-6xl page-transition">
+      <div className="animate-fade-up">
         <h1 className="text-2xl font-bold text-foreground">Meus Cursos</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Trilhas de aprendizado — seu progresso em tempo real.
         </p>
       </div>
 
-      <Tabs defaultValue="all">
+      <Tabs defaultValue="all" className="animate-fade-up" style={{ "--delay": "100ms" } as React.CSSProperties}>
         <TabsList>
           {categories.map((cat) => (
-            <TabsTrigger key={cat.key} value={cat.key}>{cat.label}</TabsTrigger>
+            <TabsTrigger key={cat.key} value={cat.key} className="press-effect">{cat.label}</TabsTrigger>
           ))}
         </TabsList>
 
         {categories.map((cat) => (
           <TabsContent key={cat.key} value={cat.key}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(cat.key === "all" ? courses : courses.filter((c) => c.category === cat.key)).map((course) => (
-                <CourseCard key={course.id} course={course} />
+              {(cat.key === "all" ? courses : courses.filter((c) => c.category === cat.key)).map((course, i) => (
+                <CourseCard key={course.id} course={course} index={i} />
               ))}
             </div>
             {(cat.key === "all" ? courses : courses.filter((c) => c.category === cat.key)).length === 0 && (
-              <p className="text-center text-muted-foreground py-8">Nenhum curso publicado nesta categoria.</p>
+              <p className="text-center text-muted-foreground py-8 animate-fade-in">Nenhum curso publicado nesta categoria.</p>
             )}
           </TabsContent>
         ))}

@@ -57,8 +57,8 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8 max-w-6xl">
-      <div>
+    <div className="space-y-8 max-w-6xl page-transition">
+      <div className="animate-fade-up">
         <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Bem-vindo de volta! Continue sua jornada de aprendizado.
@@ -66,10 +66,14 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
+        {stats.map((stat, i) => (
+          <Card
+            key={stat.label}
+            className="animate-fade-up hover-lift cursor-default"
+            style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
+          >
             <CardContent className="flex items-center gap-4 p-5">
-              <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${stat.color}`}>
+              <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${stat.color} hover-bounce`}>
                 <stat.icon className="h-5 w-5" />
               </div>
               <div>
@@ -82,13 +86,17 @@ export default function Dashboard() {
       </div>
 
       {courseProgress.length > 0 && (
-        <Card>
+        <Card className="animate-fade-up" style={{ "--delay": "400ms" } as React.CSSProperties}>
           <CardHeader>
             <CardTitle className="text-base">Progresso por Curso</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {courseProgress.map((track) => (
-              <div key={track.name} className="space-y-1.5">
+            {courseProgress.map((track, i) => (
+              <div
+                key={track.name}
+                className="space-y-1.5 animate-fade-up"
+                style={{ "--delay": `${450 + i * 60}ms` } as React.CSSProperties}
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{track.name}</span>
                   <span className="text-xs text-muted-foreground">{track.progress}%</span>
@@ -100,7 +108,10 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <Card className="bg-primary text-primary-foreground">
+      <Card
+        className="bg-primary text-primary-foreground animate-fade-up hover-lift glow-accent"
+        style={{ "--delay": "550ms" } as React.CSSProperties}
+      >
         <CardContent className="flex flex-col items-center gap-4 p-8 text-center sm:flex-row sm:text-left">
           <div className="flex-1">
             <h3 className="text-lg font-bold">Pratique sua pronúncia agora!</h3>
@@ -108,7 +119,7 @@ export default function Dashboard() {
               Acesse o Laboratório de Voz e melhore sua fluência com feedback em tempo real.
             </p>
           </div>
-          <Button variant="secondary" size="lg" onClick={() => navigate("/voice-lab")}>
+          <Button variant="secondary" size="lg" onClick={() => navigate("/voice-lab")} className="press-effect">
             Ir ao Laboratório
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
