@@ -104,6 +104,11 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
             <CardTitle className="text-base">{passed ? "Parabéns! Você passou! 🎉" : "Tente novamente"}</CardTitle>
           </div>
           <CardDescription>Nota: {score}% — Mínimo: {quiz.passing_score}%</CardDescription>
+          {passed && xpEarned > 0 && (
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-500">
+              <Star className="h-4 w-4 fill-amber-500" />+{xpEarned} XP conquistados!
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           <Progress value={score} className="h-2" />
