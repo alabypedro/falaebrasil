@@ -237,6 +237,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pronunciation_prompts: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          source_file: string | null
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: string
+          source_file?: string | null
+          text: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          source_file?: string | null
+          text?: string
+        }
+        Relationships: []
+      }
       quiz_attempts: {
         Row: {
           answers: Json
