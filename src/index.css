@@ -98,11 +98,180 @@
   }
 }
 
+/* ──────────────────────────────────────────────
+   Performance-first animations (GPU-accelerated)
+   All use transform/opacity only for 60fps
+   ────────────────────────────────────────────── */
+
+/* Recording pulse */
 @keyframes pulse-recording {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.15); opacity: 0.7; }
 }
-
 .animate-pulse-recording {
   animation: pulse-recording 1.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Fade up — staggerable with --delay */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--delay, 0ms);
+  will-change: transform, opacity;
+}
+
+/* Fade in (no movement) */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* Scale in — for cards, modals */
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in {
+  animation: scale-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--delay, 0ms);
+  will-change: transform, opacity;
+}
+
+/* Slide in from left — for sidebar items */
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-left {
+  animation: slide-in-left 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* Gentle float — for CTA/hero elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Score circle draw — for SVG strokes */
+@keyframes draw-circle {
+  from { stroke-dashoffset: var(--circumference); }
+  to { stroke-dashoffset: var(--offset); }
+}
+.animate-draw-circle {
+  animation: draw-circle 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.2s;
+}
+
+/* Count up number — shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, hsl(var(--foreground)) 40%, hsl(var(--accent)) 50%, hsl(var(--foreground)) 60%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s ease-in-out;
+}
+
+/* XP pop — for gamification rewards */
+@keyframes xp-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-xp-pop {
+  animation: xp-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+/* ──────────────────────────────────────────────
+   Hover micro-interactions (GPU-only transforms)
+   ────────────────────────────────────────────── */
+
+/* Card lift on hover */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -8px hsl(var(--foreground) / 0.1);
+}
+
+/* Subtle scale on hover */
+.hover-scale {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+/* Icon bounce on hover */
+.hover-bounce:hover {
+  animation: xp-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Button press effect */
+.press-effect {
+  transition: transform 0.1s ease;
+}
+.press-effect:active {
+  transform: scale(0.97);
+}
+
+/* Progress bar animated fill */
+@keyframes progress-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Glow effect for accent elements */
+.glow-accent {
+  box-shadow: 0 0 0 0 hsl(var(--accent) / 0);
+  transition: box-shadow 0.3s ease;
+}
+.glow-accent:hover {
+  box-shadow: 0 0 15px 2px hsl(var(--accent) / 0.2);
+}
+
+/* Smooth page transition */
+.page-transition {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Reduced motion: respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-scale-in,
+  .animate-slide-in-left,
+  .animate-float,
+  .animate-xp-pop,
+  .animate-draw-circle,
+  .animate-shimmer,
+  .animate-pulse-recording,
+  .page-transition {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .hover-lift:hover,
+  .hover-scale:hover {
+    transform: none !important;
+  }
 }
