@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, Square, RotateCcw, Loader2, Shuffle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Mic, Square, RotateCcw, Loader2, Shuffle, Upload, FileText } from "lucide-react";
 import FeedbackCard, { type FeedbackScores } from "@/components/FeedbackCard";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,19 @@ const fallbackPrompts = [
   { id: "f1", level: "A1", text: "Good morning! How are you? I am fine, thank you. What is your name?" },
   { id: "f2", level: "A2", text: "Hello! My name is Maria and I'm from Brazil. I love learning English because it helps me connect with people from all over the world." },
   { id: "f3", level: "B1", text: "Yesterday, I went to the supermarket to buy some groceries. I picked up fruits, vegetables, and a loaf of bread. The cashier was very friendly." },
+];
+
+const genericPhrases = [
+  { id: "g1", text: "The weather today is beautiful, and I would like to take a walk in the park." },
+  { id: "g2", text: "Can you please tell me where the nearest bus stop is? I need to get to the city center." },
+  { id: "g3", text: "I enjoy reading books in my free time, especially adventure and science fiction novels." },
+  { id: "g4", text: "Excuse me, could you help me find the way to the library? I'm new in this neighborhood." },
+  { id: "g5", text: "My favorite food is pasta with tomato sauce. I usually cook it on weekends for my family." },
+  { id: "g6", text: "Technology has changed the way we communicate with each other in many interesting ways." },
+  { id: "g7", text: "I would like to order a cup of coffee and a piece of chocolate cake, please." },
+  { id: "g8", text: "Learning a new language takes time and patience, but the results are truly rewarding." },
+  { id: "g9", text: "The children are playing in the garden while their parents are preparing dinner inside." },
+  { id: "g10", text: "Could you recommend a good restaurant near here? I'm looking for Italian food." },
 ];
 
 const unscriptedTopics = [
@@ -43,6 +57,9 @@ export default function VoiceLab() {
   const [transcription, setTranscription] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [promptsLoading, setPromptsLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, profile } = useAuth();
 
   const userLevel = profile?.level || "A1";
@@ -60,7 +77,6 @@ export default function VoiceLab() {
         setPrompts(data);
         setSelectedPrompt(pickRandom(data));
       } else {
-        // Fallback: filter hardcoded by level or show all
         const matching = fallbackPrompts.filter((p) => p.level === userLevel);
         const available = matching.length > 0 ? matching : fallbackPrompts;
         setPrompts(available);
@@ -148,12 +164,73 @@ export default function VoiceLab() {
     }
   };
 
+  // Shuffle from DB/imported prompts
   const shufflePrompt = () => {
     if (prompts.length <= 1) return;
     let next = pickRandom(prompts);
     while (next.id === selectedPrompt?.id && prompts.length > 1) next = pickRandom(prompts);
     setSelectedPrompt(next);
     handleReset();
+  };
+
+  // Shuffle generic phrase (unrelated to imported content)
+  const shuffleGeneric = () => {
+    const generic = pickRandom(genericPhrases);
+    setSelectedPrompt({ id: generic.id, level: userLevel, text: generic.text });
+    handleReset();
+  };
+
+  // File upload handler
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedExts = [".txt", ".csv", ".md", ".pdf"];
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    if (!allowedExts.includes(ext)) {
+      toast.error("Formato não suportado. Use .txt, .csv, .md ou .pdf");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("level", userLevel);
+
+      const { data, error } = await supabase.functions.invoke("parse-prompts", { body: formData });
+      if (error) throw error;
+
+      const parsed = data.prompts as { text: string; level: string }[];
+      if (!parsed?.length) {
+        toast.warning("Nenhum texto válido encontrado no arquivo.");
+        return;
+      }
+
+      // Insert into DB
+      const rows = parsed.map((p) => ({ text: p.text, level: p.level, source_file: file.name }));
+      const { error: insertErr } = await supabase.from("pronunciation_prompts").insert(rows);
+      if (insertErr) throw insertErr;
+
+      toast.success(`${rows.length} texto(s) importado(s) com sucesso!`);
+      setUploadedFileName(file.name);
+
+      // Reload prompts
+      const { data: freshData } = await supabase
+        .from("pronunciation_prompts")
+        .select("id, text, level")
+        .eq("level", userLevel);
+
+      if (freshData && freshData.length > 0) {
+        setPrompts(freshData);
+        setSelectedPrompt(pickRandom(freshData));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao importar arquivo.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   return (
@@ -177,12 +254,61 @@ export default function VoiceLab() {
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <>
+              {/* File import section */}
+              <Card className="border-dashed border-2 border-muted-foreground/20 hover:border-primary/40 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground flex-shrink-0">
+                      <Upload className="h-4 w-4" />
+                      <span>Importar textos:</span>
+                    </div>
+                    <div className="flex-1 w-full sm:w-auto">
+                      <Input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".txt,.csv,.md,.pdf"
+                        onChange={handleFileUpload}
+                        disabled={uploading}
+                        className="cursor-pointer file:cursor-pointer file:mr-2 file:rounded file:border-0 file:bg-primary/10 file:px-3 file:py-1 file:text-xs file:font-medium file:text-primary hover:file:bg-primary/20"
+                      />
+                    </div>
+                    {uploading && <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />}
+                    {uploadedFileName && !uploading && (
+                      <Badge variant="secondary" className="flex-shrink-0 gap-1">
+                        <FileText className="h-3 w-3" />
+                        {uploadedFileName}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/60 mt-2 text-center sm:text-left">
+                    Formatos aceitos: .txt, .csv, .md, .pdf — Os textos serão adicionados ao seu nível atual.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Prompt display */}
               <Card>
-                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardHeader className="pb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <CardTitle className="text-sm text-muted-foreground">Leia o texto abaixo em voz alta:</CardTitle>
-                  <Button variant="ghost" size="sm" onClick={shufflePrompt} disabled={prompts.length <= 1}>
-                    <Shuffle className="h-4 w-4 mr-1" /> Sortear outro
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={shufflePrompt}
+                      disabled={prompts.length <= 1}
+                      className="gap-1 text-xs"
+                    >
+                      <Shuffle className="h-3.5 w-3.5" /> Sortear importado
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={shuffleGeneric}
+                      className="gap-1 text-xs"
+                    >
+                      <Shuffle className="h-3.5 w-3.5" /> Sortear genérico
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <p className="text-lg leading-relaxed text-foreground font-medium">
