@@ -20,7 +20,54 @@ Deno.serve(async (req) => {
       });
     }
 
-    const text = await file.text();
+    let text: string;
+    const fileName = file.name.toLowerCase();
+
+    if (fileName.endsWith(".pdf")) {
+      // For PDF: extract raw text bytes (best-effort plain text extraction)
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      // Simple PDF text extraction: find text between BT/ET blocks or stream content
+      const rawText = new TextDecoder("latin1").decode(bytes);
+      
+      // Extract text from PDF streams - find text in parentheses after Tj/TJ operators
+      const textParts: string[] = [];
+      // Match text in parentheses that appears before text-showing operators
+      const regex = /\(([^)]*)\)\s*Tj/g;
+      let match;
+      while ((match = regex.exec(rawText)) !== null) {
+        const decoded = match[1]
+          .replace(/\\n/g, "\n")
+          .replace(/\\r/g, "\r")
+          .replace(/\\t/g, "\t")
+          .replace(/\\\\/g, "\\")
+          .replace(/\\([()])/g, "$1");
+        if (decoded.trim()) textParts.push(decoded.trim());
+      }
+      
+      // Also try TJ arrays
+      const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
+      while ((match = tjArrayRegex.exec(rawText)) !== null) {
+        const innerRegex = /\(([^)]*)\)/g;
+        let innerMatch;
+        const parts: string[] = [];
+        while ((innerMatch = innerRegex.exec(match[1])) !== null) {
+          parts.push(innerMatch[1]);
+        }
+        const joined = parts.join("").trim();
+        if (joined) textParts.push(joined);
+      }
+      
+      text = textParts.join("\n");
+      
+      if (!text.trim()) {
+        // Fallback: try to find readable ASCII sequences
+        const asciiText = rawText.replace(/[^\x20-\x7E\n]/g, " ").replace(/\s{3,}/g, "\n");
+        text = asciiText;
+      }
+    } else {
+      text = await file.text();
+    }
 
     // Split into sentences/paragraphs, filter empties
     const prompts = text
