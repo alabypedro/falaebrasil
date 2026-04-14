@@ -47,7 +47,7 @@ Return a JSON object with:
 
 Return 3-5 suggestions. Each should be specific and actionable, not generic.`;
 
-    const response = await fetch("https://ai.lovable.dev/api/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
