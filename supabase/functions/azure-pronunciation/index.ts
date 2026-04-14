@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const pronAssessmentParams = {
       ReferenceText: referenceText || "",
       GradingSystem: "HundredMark",
-      Granularity: "FullText",
+      Granularity: "Word",
       Dimension: "Comprehensive",
       EnableMiscue: true,
       EnableProsodyAssessment: true,
@@ -67,13 +67,12 @@ Deno.serve(async (req) => {
     const sessionId = crypto.randomUUID().replace(/-/g, "");
     const url = `https://${AZURE_SPEECH_REGION}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed&X-ConnectionId=${sessionId}`;
 
-    // Try sending as webm first, if that fails with silence, it's likely a format issue
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Accept: "application/json;text/xml",
+        Accept: "application/json",
         Connection: "Keep-Alive",
-        "Content-Type": "audio/webm; codecs=opus",
+        "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
         "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
         "Pronunciation-Assessment": pronAssessmentHeader,
       },
@@ -118,6 +117,7 @@ Deno.serve(async (req) => {
     if (result.RecognitionStatus === "Success" && result.NBest && result.NBest.length > 0) {
       const best = result.NBest[0];
       const pa = best.PronunciationAssessment || {};
+      const transcription = (best.Display || best.Lexical || "").trim();
 
       scores = {
         pronunciation: Math.round(pa.AccuracyScore || 0),
@@ -125,8 +125,31 @@ Deno.serve(async (req) => {
         grammar: Math.round(pa.CompletenessScore || 0),
         vocabulary: Math.round(pa.ProsodyScore || pa.CompletenessScore || 0),
         prosody: Math.round(pa.ProsodyScore || 0),
-        transcription: best.Display || best.Lexical || "",
+        transcription,
       };
+
+      const hasRecognizedSpeech = /[\p{L}\p{N}]/u.test(transcription);
+      const allScoresZero = [
+        scores.pronunciation,
+        scores.fluency,
+        scores.grammar,
+        scores.vocabulary,
+        scores.prosody,
+      ].every((score) => score === 0);
+
+      if (!hasRecognizedSpeech || allScoresZero) {
+        return new Response(
+          JSON.stringify({
+            error: "AUDIO_UNRECOGNIZED",
+            message: "O áudio foi captado, mas a fala não ficou nítida o suficiente. Tente falar um pouco mais perto do microfone; o app agora ajusta automaticamente o volume para evitar distorção.",
+            fallback: true,
+          }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     } else {
       console.error("Recognition failed:", result);
       return new Response(

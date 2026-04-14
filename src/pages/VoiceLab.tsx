@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,7 @@ export default function VoiceLab() {
   const [promptsLoading, setPromptsLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [analyzedId, setAnalyzedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, profile } = useAuth();
 
@@ -90,14 +91,16 @@ export default function VoiceLab() {
   const { isRecording, elapsed, recordings, startRecording, stopRecording, audioLevel } =
     useAudioRecorder();
 
-  const analyzeWithAzure = async (audioBlob: Blob) => {
+  const analyzeWithAzure = useCallback(async (audioBlob: Blob) => {
     setIsAnalyzing(true);
     setFeedback(null);
     setTranscription(null);
+    setSuggestions([]);
 
     try {
       const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.webm");
+      const fileName = audioBlob.type.includes("wav") ? "recording.wav" : "recording.webm";
+      formData.append("audio", audioBlob, fileName);
       if (mode === "scripted" && selectedPrompt) {
         formData.append("referenceText", selectedPrompt.text);
       }
@@ -125,7 +128,7 @@ export default function VoiceLab() {
           text_analyzed: data.transcription || null,
           accuracy_score: data.pronunciation ?? null,
           fluency_score: data.fluency ?? null,
-          prosody_score: data.vocabulary ?? null,
+          prosody_score: data.prosody ?? null,
           grammar_feedback: data.grammar ? `Completeness: ${data.grammar}%` : null,
         });
       }
@@ -159,22 +162,25 @@ export default function VoiceLab() {
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [mode, selectedPrompt, user]);
 
   const handleStop = () => { stopRecording(); };
 
-  const lastRecordingId = recordings[0]?.id;
-  const [analyzedId, setAnalyzedId] = useState<string | null>(null);
-  if (lastRecordingId && lastRecordingId !== analyzedId && !isAnalyzing && !isRecording) {
-    setAnalyzedId(lastRecordingId);
-    analyzeWithAzure(recordings[0].blob);
-  }
+  useEffect(() => {
+    const latestRecording = recordings[0];
+
+    if (!latestRecording || latestRecording.id === analyzedId || isAnalyzing || isRecording) {
+      return;
+    }
+
+    setAnalyzedId(latestRecording.id);
+    void analyzeWithAzure(latestRecording.blob);
+  }, [analyzeWithAzure, analyzedId, isAnalyzing, isRecording, recordings]);
 
   const handleReset = () => {
     setFeedback(null);
     setTranscription(null);
     setSuggestions([]);
-    setAnalyzedId(null);
     if (mode === "unscripted") {
       setCurrentTopic(pickRandom(unscriptedTopics));
     }
@@ -396,8 +402,8 @@ export default function VoiceLab() {
 function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, freeLabel, audioLevel }: {
   isRecording: boolean; isAnalyzing: boolean; elapsed: number; onStart: () => void; onStop: () => void; freeLabel?: boolean; audioLevel: number;
 }) {
-  const levelColor = audioLevel < 20 ? "bg-destructive" : audioLevel < 50 ? "bg-xp" : "bg-success";
-  const levelLabel = audioLevel < 20 ? "Muito baixo" : audioLevel < 50 ? "Bom" : "Ótimo";
+  const levelColor = audioLevel < 20 ? "bg-destructive" : audioLevel > 85 ? "bg-xp" : "bg-success";
+  const levelLabel = audioLevel < 20 ? "Muito baixo" : audioLevel > 85 ? "Muito alto" : "Ideal";
 
   return (
     <div className="flex flex-col items-center gap-3">
