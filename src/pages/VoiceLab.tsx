@@ -130,13 +130,29 @@ export default function VoiceLab() {
         });
       }
 
-      const newSuggestions: string[] = [];
-      if (data.pronunciation < 70) newSuggestions.push("Foque na articulação clara de cada palavra, especialmente sons como 'th', 'r' e 'l'.");
-      if (data.fluency < 70) newSuggestions.push("Pratique a leitura em voz alta para melhorar o ritmo e a fluidez da fala.");
-      if (data.grammar < 70) newSuggestions.push("Tente cobrir todas as palavras do texto de referência sem pular trechos.");
-      if (data.vocabulary < 70) newSuggestions.push("Trabalhe a entonação e a prosódia para soar mais natural.");
-      if (newSuggestions.length === 0) newSuggestions.push("Excelente! Continue praticando para manter seu nível alto.");
-      setSuggestions(newSuggestions);
+      // Generate AI-powered specific feedback
+      try {
+        const { data: feedbackData } = await supabase.functions.invoke("pronunciation-feedback", {
+          body: {
+            scores: {
+              pronunciation: data.pronunciation,
+              fluency: data.fluency,
+              grammar: data.grammar,
+              vocabulary: data.vocabulary,
+            },
+            transcription: data.transcription || "",
+            referenceText: mode === "scripted" && selectedPrompt ? selectedPrompt.text : "",
+            mode,
+          },
+        });
+        if (feedbackData?.suggestions?.length) {
+          setSuggestions(feedbackData.suggestions);
+        } else {
+          setSuggestions(["Não foi possível gerar feedback detalhado. Tente novamente."]);
+        }
+      } catch {
+        setSuggestions(["Erro ao gerar sugestões. Tente gravar novamente."]);
+      }
     } catch (err) {
       console.error("Azure analysis error:", err);
       toast.error("Erro ao analisar pronúncia. Tente novamente.");
