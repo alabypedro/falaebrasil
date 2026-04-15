@@ -4,6 +4,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function toNullableScore(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.round(value * 10) / 10
+    : null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -64,6 +70,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
+    console.log(JSON.stringify(result));
     console.log("Azure RecognitionStatus:", result.RecognitionStatus);
 
     // Handle clear failures
@@ -84,22 +91,45 @@ Deno.serve(async (req) => {
     // If Success, always return the data — even if scores are low
     if (result.RecognitionStatus === "Success" && result.NBest && result.NBest.length > 0) {
       const best = result.NBest[0];
-      const pa = best.PronunciationAssessment || {};
+      const pa = best.PronunciationAssessment || result.PronunciationAssessment || {};
       const transcription = (best.Display || best.Lexical || "").trim();
+      const accuracyScore = toNullableScore(pa.AccuracyScore);
+      const fluencyScore = toNullableScore(pa.FluencyScore);
+      const completenessScore = toNullableScore(pa.CompletenessScore);
+      const prosodyScore = toNullableScore(pa.ProsodyScore);
+      const pronunciationScore = toNullableScore(pa.PronunciationScore ?? pa.PronScore);
+      const confidence = typeof best.Confidence === "number" && Number.isFinite(best.Confidence)
+        ? Math.round(best.Confidence * 100)
+        : null;
+      const snr = toNullableScore(result.SNR);
+
+      const missingScores = [
+        accuracyScore == null ? "AccuracyScore" : null,
+        fluencyScore == null ? "FluencyScore" : null,
+        prosodyScore == null ? "ProsodyScore" : null,
+        completenessScore == null ? "CompletenessScore" : null,
+        pronunciationScore == null ? "PronunciationScore" : null,
+      ].filter((scoreName): scoreName is string => Boolean(scoreName));
 
       const scores = {
         status: result.RecognitionStatus,
         transcription,
-        confidence: Math.round((best.Confidence || 0) * 100),
-        snr: result.SNR ? Math.round(result.SNR * 10) / 10 : null,
-        pronunciation: Math.round(pa.AccuracyScore || 0),
-        fluency: Math.round(pa.FluencyScore || 0),
-        completeness: Math.round(pa.CompletenessScore || 0),
-        prosody: Math.round(pa.ProsodyScore || 0),
-        pronScore: Math.round(pa.PronScore || pa.AccuracyScore || 0),
+        confidence,
+        snr,
+        pronunciation: accuracyScore,
+        accuracyScore,
+        fluency: fluencyScore,
+        fluencyScore,
+        completeness: completenessScore,
+        completenessScore,
+        prosody: prosodyScore,
+        prosodyScore,
+        pronScore: pronunciationScore,
+        pronunciationScore,
         // Keep backwards-compatible fields
-        grammar: Math.round(pa.CompletenessScore || 0),
-        vocabulary: Math.round(pa.ProsodyScore || 0),
+        grammar: completenessScore,
+        vocabulary: prosodyScore,
+        missingScores,
       };
 
       console.log("Returning scores:", JSON.stringify(scores));

@@ -11,6 +11,110 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+type NormalizedAzureResponse = {
+  status?: string;
+  transcription?: string;
+  confidence?: number;
+  snr?: number | null;
+  accuracyScore: number | null;
+  fluencyScore: number | null;
+  prosodyScore: number | null;
+  completenessScore: number | null;
+  pronunciationScore: number | null;
+  missingScores: string[];
+};
+
+function toNullableNumber(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return Math.round(value * 10) / 10;
+}
+
+function tryParseAzureJson(value: unknown): Record<string, any> | null {
+  if (typeof value !== "string") return null;
+
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeAzureResponse(payload: any): NormalizedAzureResponse {
+  const propertyPayload =
+    tryParseAzureJson(payload?.properties?.SpeechServiceResponse_JsonResult) ??
+    tryParseAzureJson(payload?.speechServiceResponseJsonResult) ??
+    tryParseAzureJson(payload?.jsonResult) ??
+    null;
+
+  const candidate = propertyPayload ?? payload?.result ?? payload;
+  const best = candidate?.NBest?.[0] ?? payload?.NBest?.[0] ?? null;
+  const pronunciationAssessment =
+    best?.PronunciationAssessment ??
+    candidate?.PronunciationAssessment ??
+    payload?.PronunciationAssessment ??
+    null;
+
+  const accuracyScore = toNullableNumber(
+    payload?.accuracyScore ?? payload?.AccuracyScore ?? payload?.pronunciation ?? pronunciationAssessment?.AccuracyScore,
+  );
+  const fluencyScore = toNullableNumber(
+    payload?.fluencyScore ?? payload?.FluencyScore ?? payload?.fluency ?? pronunciationAssessment?.FluencyScore,
+  );
+  const prosodyScore = toNullableNumber(
+    payload?.prosodyScore ??
+      payload?.ProsodyScore ??
+      payload?.prosody ??
+      payload?.vocabulary ??
+      pronunciationAssessment?.ProsodyScore,
+  );
+  const completenessScore = toNullableNumber(
+    payload?.completenessScore ??
+      payload?.CompletenessScore ??
+      payload?.completeness ??
+      payload?.grammar ??
+      pronunciationAssessment?.CompletenessScore,
+  );
+  const pronunciationScore = toNullableNumber(
+    payload?.pronunciationScore ??
+      payload?.PronunciationScore ??
+      payload?.pronScore ??
+      payload?.PronScore ??
+      pronunciationAssessment?.PronunciationScore ??
+      pronunciationAssessment?.PronScore,
+  );
+
+  const rawConfidence = toNullableNumber(payload?.confidence ?? payload?.Confidence ?? best?.Confidence);
+  const confidence =
+    rawConfidence == null ? undefined : rawConfidence <= 1 ? Math.round(rawConfidence * 100) : rawConfidence;
+
+  const missingScores = [
+    accuracyScore == null ? "AccuracyScore" : null,
+    fluencyScore == null ? "FluencyScore" : null,
+    prosodyScore == null ? "ProsodyScore" : null,
+    completenessScore == null ? "CompletenessScore" : null,
+    pronunciationScore == null ? "PronunciationScore" : null,
+  ].filter((score): score is string => Boolean(score));
+
+  return {
+    status: payload?.status ?? payload?.RecognitionStatus ?? candidate?.RecognitionStatus,
+    transcription:
+      payload?.transcription ??
+      best?.Display ??
+      best?.Lexical ??
+      candidate?.DisplayText ??
+      undefined,
+    confidence,
+    snr: toNullableNumber(payload?.snr ?? payload?.SNR ?? candidate?.SNR),
+    accuracyScore,
+    fluencyScore,
+    prosodyScore,
+    completenessScore,
+    pronunciationScore,
+    missingScores,
+  };
+}
+
 const fallbackPrompts = [
   { id: "f1", level: "A1", text: "Good morning! How are you? I am fine, thank you. What is your name?" },
   { id: "f2", level: "A2", text: "Hello! My name is Maria and I'm from Brazil. I love learning English because it helps me connect with people from all over the world." },
@@ -100,43 +204,60 @@ export default function VoiceLab() {
     try {
       const formData = new FormData();
       const fileName = audioBlob.type.includes("wav") ? "recording.wav" : "recording.webm";
+      const referenceTextOnScreen = mode === "scripted" ? selectedPrompt?.text ?? "" : "";
+
       formData.append("audio", audioBlob, fileName);
-      if (mode === "scripted" && selectedPrompt) {
-        formData.append("referenceText", selectedPrompt.text);
+      if (referenceTextOnScreen) {
+        formData.append("referenceText", referenceTextOnScreen);
       }
       formData.append("language", "en-US");
 
       const { data, error } = await supabase.functions.invoke("azure-pronunciation", { body: formData });
       if (error) throw error;
 
+      const normalized = normalizeAzureResponse(data);
+
       if (data.error || data.fallback) {
-        toast.error(data.message || data.error || "Não foi possível reconhecer o áudio. Fale mais alto e claro.");
+        setFeedback(null);
+        setTranscription(normalized.transcription ?? null);
+        window.alert(data.message || data.error || "Não foi possível obter as notas do Azure.");
         return;
       }
 
-      setFeedback({
-        pronunciation: data.pronunciation,
-        fluency: data.fluency,
-        grammar: data.grammar,
-        vocabulary: data.vocabulary,
-        status: data.status,
-        transcription: data.transcription || undefined,
-        confidence: data.confidence,
-        snr: data.snr,
-        completeness: data.completeness,
-        prosody: data.prosody,
-        pronScore: data.pronScore,
-      });
-      setTranscription(data.transcription || null);
+      if (normalized.missingScores.length > 0) {
+        setFeedback(null);
+        setTranscription(normalized.transcription ?? null);
+        window.alert(
+          `O Azure reconheceu o áudio, mas não retornou todas as notas esperadas: ${normalized.missingScores.join(", ")}.`,
+        );
+        return;
+      }
+
+      const mappedFeedback: FeedbackScores = {
+        pronunciation: normalized.accuracyScore,
+        fluency: normalized.fluencyScore,
+        grammar: normalized.completenessScore,
+        vocabulary: normalized.prosodyScore,
+        status: normalized.status,
+        transcription: normalized.transcription,
+        confidence: normalized.confidence,
+        snr: normalized.snr,
+        completeness: normalized.completenessScore,
+        prosody: normalized.prosodyScore,
+        pronScore: normalized.pronunciationScore,
+      };
+
+      setFeedback(mappedFeedback);
+      setTranscription(normalized.transcription || null);
 
       if (user) {
         await supabase.from("voice_sessions").insert({
           user_id: user.id, mode,
-          text_analyzed: data.transcription || null,
-          accuracy_score: data.pronunciation ?? null,
-          fluency_score: data.fluency ?? null,
-          prosody_score: data.prosody ?? null,
-          grammar_feedback: data.grammar ? `Completeness: ${data.grammar}%` : null,
+          text_analyzed: normalized.transcription || null,
+          accuracy_score: normalized.accuracyScore,
+          fluency_score: normalized.fluencyScore,
+          prosody_score: normalized.prosodyScore,
+          grammar_feedback: normalized.completenessScore != null ? `Completeness: ${normalized.completenessScore}%` : null,
         });
       }
 
@@ -145,13 +266,13 @@ export default function VoiceLab() {
         const { data: feedbackData } = await supabase.functions.invoke("pronunciation-feedback", {
           body: {
             scores: {
-              pronunciation: data.pronunciation,
-              fluency: data.fluency,
-              grammar: data.grammar,
-              vocabulary: data.vocabulary,
+              pronunciation: mappedFeedback.pronunciation,
+              fluency: mappedFeedback.fluency,
+              grammar: mappedFeedback.grammar,
+              vocabulary: mappedFeedback.vocabulary,
             },
-            transcription: data.transcription || "",
-            referenceText: mode === "scripted" && selectedPrompt ? selectedPrompt.text : "",
+            transcription: normalized.transcription || "",
+            referenceText: referenceTextOnScreen,
             mode,
           },
         });
@@ -165,7 +286,7 @@ export default function VoiceLab() {
       }
     } catch (err) {
       console.error("Azure analysis error:", err);
-      toast.error("Erro ao analisar pronúncia. Tente novamente.");
+      window.alert("Erro ao analisar a pronúncia com o Azure. Verifique a integração e tente novamente.");
     } finally {
       setIsAnalyzing(false);
     }
