@@ -24,7 +24,8 @@ interface FeedbackCardProps {
 
 function getScoreColor(score: number) {
   if (score >= 80) return "text-success";
-  if (score >= 50) return "text-xp";
+  if (score >= 60) return "text-xp";
+  if (score >= 40) return "text-orange-400";
   return "text-destructive";
 }
 
@@ -92,11 +93,11 @@ export default function FeedbackCard({ scores, suggestions }: FeedbackCardProps)
 
         {/* Score circles */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-          <ScoreCircle label="Pronúncia" score={scores.pronunciation} color="hsl(var(--accent))" />
-          <ScoreCircle label="Fluência" score={scores.fluency} color="hsl(var(--success))" />
-          <ScoreCircle label="Completude" score={scores.completeness ?? scores.grammar} color="hsl(var(--innovation))" />
-          <ScoreCircle label="Prosódia" score={scores.prosody ?? scores.vocabulary} color="hsl(var(--xp))" />
-          <ScoreCircle label="PronScore" score={scores.pronScore ?? overall} color="hsl(var(--accent))" />
+          <ScoreCircle label="Pronúncia" score={scores.pronunciation} />
+          <ScoreCircle label="Fluência" score={scores.fluency} />
+          <ScoreCircle label="Completude" score={scores.completeness ?? scores.grammar} />
+          <ScoreCircle label="Prosódia" score={scores.prosody ?? scores.vocabulary} />
+          <ScoreCircle label="PronScore" score={scores.pronScore ?? overall} />
         </div>
 
         {/* AI Suggestions */}
