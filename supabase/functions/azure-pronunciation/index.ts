@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
 
     const audioBytes = await audioFile.arrayBuffer();
     const audioBuffer = new Uint8Array(audioBytes);
+    console.log(`Audio received: ${audioBuffer.length} bytes, type: ${audioFile.type}, name: ${audioFile.name}`);
 
     const pronAssessmentParams = {
       ReferenceText: referenceText || "",
