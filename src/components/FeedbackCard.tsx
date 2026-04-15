@@ -24,7 +24,8 @@ interface FeedbackCardProps {
 
 function getScoreColor(score: number) {
   if (score >= 80) return "text-success";
-  if (score >= 50) return "text-xp";
+  if (score >= 60) return "text-xp";
+  if (score >= 40) return "text-orange-400";
   return "text-destructive";
 }
 
