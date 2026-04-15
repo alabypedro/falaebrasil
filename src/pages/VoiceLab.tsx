@@ -233,18 +233,24 @@ export default function VoiceLab() {
         return;
       }
 
+      const accuracyScore = normalized.accuracyScore as number;
+      const fluencyScore = normalized.fluencyScore as number;
+      const completenessScore = normalized.completenessScore as number;
+      const prosodyScore = normalized.prosodyScore as number;
+      const pronunciationScore = normalized.pronunciationScore as number;
+
       const mappedFeedback: FeedbackScores = {
-        pronunciation: normalized.accuracyScore,
-        fluency: normalized.fluencyScore,
-        grammar: normalized.completenessScore,
-        vocabulary: normalized.prosodyScore,
+        pronunciation: accuracyScore,
+        fluency: fluencyScore,
+        grammar: completenessScore,
+        vocabulary: prosodyScore,
         status: normalized.status,
         transcription: normalized.transcription,
         confidence: normalized.confidence,
         snr: normalized.snr,
-        completeness: normalized.completenessScore,
-        prosody: normalized.prosodyScore,
-        pronScore: normalized.pronunciationScore,
+        completeness: completenessScore,
+        prosody: prosodyScore,
+        pronScore: pronunciationScore,
       };
 
       setFeedback(mappedFeedback);
@@ -254,10 +260,10 @@ export default function VoiceLab() {
         await supabase.from("voice_sessions").insert({
           user_id: user.id, mode,
           text_analyzed: normalized.transcription || null,
-          accuracy_score: normalized.accuracyScore,
-          fluency_score: normalized.fluencyScore,
-          prosody_score: normalized.prosodyScore,
-          grammar_feedback: normalized.completenessScore != null ? `Completeness: ${normalized.completenessScore}%` : null,
+          accuracy_score: accuracyScore,
+          fluency_score: fluencyScore,
+          prosody_score: prosodyScore,
+          grammar_feedback: `Completeness: ${completenessScore}%`,
         });
       }
 
