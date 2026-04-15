@@ -4,29 +4,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Simple WAV header writer for 16-bit mono PCM
-function createWavHeader(dataLength: number, sampleRate: number): Uint8Array {
-  const header = new ArrayBuffer(44);
-  const view = new DataView(header);
-  const writeString = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-  };
-  writeString(0, "RIFF");
-  view.setUint32(4, 36 + dataLength, true);
-  writeString(8, "WAVE");
-  writeString(12, "fmt ");
-  view.setUint32(16, 16, true); // chunk size
-  view.setUint16(20, 1, true);  // PCM
-  view.setUint16(22, 1, true);  // mono
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true); // byte rate
-  view.setUint16(32, 2, true);  // block align
-  view.setUint16(34, 16, true); // bits per sample
-  writeString(36, "data");
-  view.setUint32(40, dataLength, true);
-  return new Uint8Array(header);
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -87,90 +64,63 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
-    console.log("Azure full response:", JSON.stringify(result).substring(0, 2000));
+    console.log("Azure RecognitionStatus:", result.RecognitionStatus);
 
-    // Handle InitialSilenceTimeout gracefully
+    // Handle clear failures
     if (result.RecognitionStatus === "InitialSilenceTimeout" || 
         result.RecognitionStatus === "NoMatch" ||
         result.RecognitionStatus === "BabbleTimeout") {
-      console.warn("Recognition issue:", result.RecognitionStatus);
       return new Response(
         JSON.stringify({
+          status: result.RecognitionStatus,
           error: "AUDIO_UNRECOGNIZED",
           message: "Não foi possível reconhecer o áudio. Tente falar mais alto e claro.",
           fallback: true,
         }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    let scores = {
-      pronunciation: 0,
-      fluency: 0,
-      grammar: 0,
-      vocabulary: 0,
-      prosody: 0,
-      transcription: "",
-    };
-
+    // If Success, always return the data — even if scores are low
     if (result.RecognitionStatus === "Success" && result.NBest && result.NBest.length > 0) {
       const best = result.NBest[0];
       const pa = best.PronunciationAssessment || {};
       const transcription = (best.Display || best.Lexical || "").trim();
 
-      scores = {
+      const scores = {
+        status: result.RecognitionStatus,
+        transcription,
+        confidence: Math.round((best.Confidence || 0) * 100),
+        snr: result.SNR ? Math.round(result.SNR * 10) / 10 : null,
         pronunciation: Math.round(pa.AccuracyScore || 0),
         fluency: Math.round(pa.FluencyScore || 0),
-        grammar: Math.round(pa.CompletenessScore || 0),
-        vocabulary: Math.round(pa.ProsodyScore || pa.CompletenessScore || 0),
+        completeness: Math.round(pa.CompletenessScore || 0),
         prosody: Math.round(pa.ProsodyScore || 0),
-        transcription,
+        pronScore: Math.round(pa.PronScore || pa.AccuracyScore || 0),
+        // Keep backwards-compatible fields
+        grammar: Math.round(pa.CompletenessScore || 0),
+        vocabulary: Math.round(pa.ProsodyScore || 0),
       };
 
-      const hasRecognizedSpeech = /[\p{L}\p{N}]/u.test(transcription);
-      const allScoresZero = [
-        scores.pronunciation,
-        scores.fluency,
-        scores.grammar,
-        scores.vocabulary,
-        scores.prosody,
-      ].every((score) => score === 0);
+      console.log("Returning scores:", JSON.stringify(scores));
 
-      if (!hasRecognizedSpeech || allScoresZero) {
-        return new Response(
-          JSON.stringify({
-            error: "AUDIO_UNRECOGNIZED",
-            message: "O áudio foi captado, mas a fala não ficou nítida o suficiente. Tente falar um pouco mais perto do microfone; o app agora ajusta automaticamente o volume para evitar distorção.",
-            fallback: true,
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-    } else {
-      console.error("Recognition failed:", result);
-      return new Response(
-        JSON.stringify({
-          error: "AUDIO_UNRECOGNIZED",
-          message: "Não foi possível reconhecer o áudio. Tente novamente.",
-          fallback: true,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify(scores), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    return new Response(JSON.stringify(scores), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Fallback for unexpected status
+    console.error("Unexpected recognition result:", JSON.stringify(result).substring(0, 500));
+    return new Response(
+      JSON.stringify({
+        status: result.RecognitionStatus || "Unknown",
+        error: "AUDIO_UNRECOGNIZED",
+        message: "Não foi possível processar o áudio. Tente novamente.",
+        fallback: true,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
     console.error("Error in azure-pronunciation:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
