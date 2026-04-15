@@ -119,6 +119,13 @@ export default function VoiceLab() {
         fluency: data.fluency,
         grammar: data.grammar,
         vocabulary: data.vocabulary,
+        status: data.status,
+        transcription: data.transcription || undefined,
+        confidence: data.confidence,
+        snr: data.snr,
+        completeness: data.completeness,
+        prosody: data.prosody,
+        pronScore: data.pronScore,
       });
       setTranscription(data.transcription || null);
 
@@ -368,16 +375,6 @@ export default function VoiceLab() {
         </TabsContent>
       </Tabs>
 
-      {transcription && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">O que foi entendido:</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-base text-foreground">{transcription}</p>
-          </CardContent>
-        </Card>
-      )}
 
       <FeedbackCard scores={feedback} suggestions={suggestions.length > 0 ? suggestions : undefined} />
 
