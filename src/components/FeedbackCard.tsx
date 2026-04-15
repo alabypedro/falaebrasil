@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import ScoreCircle from "@/components/ScoreCircle";
 
 export interface FeedbackScores {
@@ -6,11 +7,31 @@ export interface FeedbackScores {
   fluency: number;
   grammar: number;
   vocabulary: number;
+  // Extended Azure fields
+  status?: string;
+  transcription?: string;
+  confidence?: number;
+  snr?: number | null;
+  completeness?: number;
+  prosody?: number;
+  pronScore?: number;
 }
 
 interface FeedbackCardProps {
   scores: FeedbackScores | null;
   suggestions?: string[];
+}
+
+function getScoreColor(score: number) {
+  if (score >= 80) return "text-success";
+  if (score >= 50) return "text-xp";
+  return "text-destructive";
+}
+
+function getSnrLabel(snr: number) {
+  if (snr >= 25) return { label: "Excelente", color: "text-success" };
+  if (snr >= 15) return { label: "Bom", color: "text-xp" };
+  return { label: "Baixo", color: "text-destructive" };
 }
 
 export default function FeedbackCard({ scores, suggestions }: FeedbackCardProps) {
@@ -29,7 +50,7 @@ export default function FeedbackCard({ scores, suggestions }: FeedbackCardProps)
     );
   }
 
-  const avg = Math.round(
+  const overall = scores.pronScore ?? Math.round(
     (scores.pronunciation + scores.fluency + scores.grammar + scores.vocabulary) / 4
   );
 
@@ -38,21 +59,51 @@ export default function FeedbackCard({ scores, suggestions }: FeedbackCardProps)
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center justify-between">
           <span>Feedback de Pronúncia</span>
-          <span className="text-2xl font-bold text-accent animate-xp-pop">{avg}/100</span>
+          <span className={`text-2xl font-bold animate-xp-pop ${getScoreColor(overall)}`}>{overall}/100</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <ScoreCircle label="Pronúncia" score={scores.pronunciation} color="hsl(var(--accent))" />
-          <ScoreCircle label="Fluência" score={scores.fluency} color="hsl(var(--success))" />
-          <ScoreCircle label="Gramática" score={scores.grammar} color="hsl(var(--innovation))" />
-          <ScoreCircle label="Vocabulário" score={scores.vocabulary} color="hsl(var(--xp))" />
+      <CardContent className="space-y-5">
+        {/* Status & metadata row */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {scores.status && (
+            <Badge variant="outline" className="gap-1 text-xs">
+              ✅ {scores.status}
+            </Badge>
+          )}
+          {scores.confidence != null && (
+            <Badge variant="secondary" className="gap-1 text-xs">
+              🎯 Confiança: {scores.confidence}%
+            </Badge>
+          )}
+          {scores.snr != null && (
+            <Badge variant="secondary" className={`gap-1 text-xs ${getSnrLabel(scores.snr).color}`}>
+              🔊 SNR: {scores.snr} dB — {getSnrLabel(scores.snr).label}
+            </Badge>
+          )}
         </div>
 
+        {/* Transcription */}
+        {scores.transcription && (
+          <div className="rounded-lg bg-secondary/50 p-3">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Texto reconhecido</p>
+            <p className="text-sm text-foreground font-medium">"{scores.transcription}"</p>
+          </div>
+        )}
+
+        {/* Score circles */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+          <ScoreCircle label="Pronúncia" score={scores.pronunciation} color="hsl(var(--accent))" />
+          <ScoreCircle label="Fluência" score={scores.fluency} color="hsl(var(--success))" />
+          <ScoreCircle label="Completude" score={scores.completeness ?? scores.grammar} color="hsl(var(--innovation))" />
+          <ScoreCircle label="Prosódia" score={scores.prosody ?? scores.vocabulary} color="hsl(var(--xp))" />
+          <ScoreCircle label="PronScore" score={scores.pronScore ?? overall} color="hsl(var(--accent))" />
+        </div>
+
+        {/* AI Suggestions */}
         {suggestions && suggestions.length > 0 && (
           <div className="rounded-lg bg-secondary p-4 space-y-2 animate-fade-up" style={{ "--delay": "300ms" } as React.CSSProperties}>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Sugestões de Melhoria
+              Sugestões de Melhoria (IA)
             </p>
             <ul className="space-y-1">
               {suggestions.map((s, i) => (
