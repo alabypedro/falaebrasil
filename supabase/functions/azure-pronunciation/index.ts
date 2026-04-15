@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
+    console.log("Azure full response:", JSON.stringify(result).substring(0, 2000));
 
     // Handle InitialSilenceTimeout gracefully
     if (result.RecognitionStatus === "InitialSilenceTimeout" || 

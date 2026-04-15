@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 
 const TARGET_SAMPLE_RATE = 16000;
-const SILENCE_THRESHOLD = 0.012;
+const SILENCE_THRESHOLD = 0.005;
 const SILENCE_PADDING_MS = 120;
 const TARGET_PEAK = 0.72;
 const MAX_GAIN = 4;
