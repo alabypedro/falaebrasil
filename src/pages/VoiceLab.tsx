@@ -16,102 +16,31 @@ type NormalizedAzureResponse = {
   transcription?: string;
   confidence?: number;
   snr?: number | null;
-  accuracyScore: number | null;
-  fluencyScore: number | null;
-  prosodyScore: number | null;
-  completenessScore: number | null;
-  pronunciationScore: number | null;
-  missingScores: string[];
+  accuracy: number;
+  fluency: number;
+  completeness: number;
+  prosody: number;
+  pronunciation: number;
 };
 
-function toNullableNumber(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+function toNumberOrZero(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
   return Math.round(value * 10) / 10;
 }
 
-function tryParseAzureJson(value: unknown): Record<string, any> | null {
-  if (typeof value !== "string") return null;
-
-  try {
-    const parsed = JSON.parse(value);
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 function normalizeAzureResponse(payload: any): NormalizedAzureResponse {
-  const propertyPayload =
-    tryParseAzureJson(payload?.properties?.SpeechServiceResponse_JsonResult) ??
-    tryParseAzureJson(payload?.speechServiceResponseJsonResult) ??
-    tryParseAzureJson(payload?.jsonResult) ??
-    null;
-
-  const candidate = propertyPayload ?? payload?.result ?? payload;
-  const best = candidate?.NBest?.[0] ?? payload?.NBest?.[0] ?? null;
-  const pronunciationAssessment =
-    best?.PronunciationAssessment ??
-    candidate?.PronunciationAssessment ??
-    payload?.PronunciationAssessment ??
-    null;
-
-  const accuracyScore = toNullableNumber(
-    payload?.accuracyScore ?? payload?.AccuracyScore ?? payload?.pronunciation ?? pronunciationAssessment?.AccuracyScore,
-  );
-  const fluencyScore = toNullableNumber(
-    payload?.fluencyScore ?? payload?.FluencyScore ?? payload?.fluency ?? pronunciationAssessment?.FluencyScore,
-  );
-  const prosodyScore = toNullableNumber(
-    payload?.prosodyScore ??
-      payload?.ProsodyScore ??
-      payload?.prosody ??
-      payload?.vocabulary ??
-      pronunciationAssessment?.ProsodyScore,
-  );
-  const completenessScore = toNullableNumber(
-    payload?.completenessScore ??
-      payload?.CompletenessScore ??
-      payload?.completeness ??
-      payload?.grammar ??
-      pronunciationAssessment?.CompletenessScore,
-  );
-  const pronunciationScore = toNullableNumber(
-    payload?.pronunciationScore ??
-      payload?.PronunciationScore ??
-      payload?.pronScore ??
-      payload?.PronScore ??
-      pronunciationAssessment?.PronunciationScore ??
-      pronunciationAssessment?.PronScore,
-  );
-
-  const rawConfidence = toNullableNumber(payload?.confidence ?? payload?.Confidence ?? best?.Confidence);
-  const confidence =
-    rawConfidence == null ? undefined : rawConfidence <= 1 ? Math.round(rawConfidence * 100) : rawConfidence;
-
-  const missingScores = [
-    accuracyScore == null ? "AccuracyScore" : null,
-    fluencyScore == null ? "FluencyScore" : null,
-    prosodyScore == null ? "ProsodyScore" : null,
-    completenessScore == null ? "CompletenessScore" : null,
-    pronunciationScore == null ? "PronunciationScore" : null,
-  ].filter((score): score is string => Boolean(score));
+  console.log("Edge function payload received:", payload);
 
   return {
-    status: payload?.status ?? payload?.RecognitionStatus ?? candidate?.RecognitionStatus,
-    transcription:
-      payload?.transcription ??
-      best?.Display ??
-      best?.Lexical ??
-      candidate?.DisplayText ??
-      undefined,
-    confidence,
-    snr: toNullableNumber(payload?.snr ?? payload?.SNR ?? candidate?.SNR),
-    accuracyScore,
-    fluencyScore,
-    prosodyScore,
-    completenessScore,
-    pronunciationScore,
-    missingScores,
+    status: payload?.status,
+    transcription: payload?.transcription ?? undefined,
+    confidence: typeof payload?.confidence === "number" ? payload.confidence : undefined,
+    snr: typeof payload?.snr === "number" ? payload.snr : null,
+    accuracy: toNumberOrZero(payload?.accuracy),
+    fluency: toNumberOrZero(payload?.fluency),
+    completeness: toNumberOrZero(payload?.completeness),
+    prosody: toNumberOrZero(payload?.prosody),
+    pronunciation: toNumberOrZero(payload?.pronunciation),
   };
 }
 
@@ -215,42 +144,28 @@ export default function VoiceLab() {
       const { data, error } = await supabase.functions.invoke("azure-pronunciation", { body: formData });
       if (error) throw error;
 
-      const normalized = normalizeAzureResponse(data);
-
-      if (data.error || data.fallback) {
+      if (data?.error || data?.fallback) {
         setFeedback(null);
-        setTranscription(normalized.transcription ?? null);
+        setTranscription(null);
         window.alert(data.message || data.error || "Não foi possível obter as notas do Azure.");
         return;
       }
 
-      if (normalized.missingScores.length > 0) {
-        setFeedback(null);
-        setTranscription(normalized.transcription ?? null);
-        window.alert(
-          `O Azure reconheceu o áudio, mas não retornou todas as notas esperadas: ${normalized.missingScores.join(", ")}.`,
-        );
-        return;
-      }
-
-      const accuracyScore = normalized.accuracyScore as number;
-      const fluencyScore = normalized.fluencyScore as number;
-      const completenessScore = normalized.completenessScore as number;
-      const prosodyScore = normalized.prosodyScore as number;
-      const pronunciationScore = normalized.pronunciationScore as number;
+      const normalized = normalizeAzureResponse(data);
 
       const mappedFeedback: FeedbackScores = {
-        pronunciation: accuracyScore,
-        fluency: fluencyScore,
-        grammar: completenessScore,
-        vocabulary: prosodyScore,
+        // Map per Azure NBest[0].PronunciationAssessment fields
+        pronunciation: normalized.accuracy,   // Círculo Pronúncia ← AccuracyScore
+        fluency: normalized.fluency,           // Círculo Fluência ← FluencyScore
+        grammar: normalized.completeness,      // (legacy) ← CompletenessScore
+        vocabulary: normalized.prosody,        // (legacy) ← ProsodyScore
+        completeness: normalized.completeness, // Círculo Completude
+        prosody: normalized.prosody,           // Círculo Prosódia
+        pronScore: normalized.pronunciation,   // Nota Geral ← PronunciationScore
         status: normalized.status,
         transcription: normalized.transcription,
         confidence: normalized.confidence,
         snr: normalized.snr,
-        completeness: completenessScore,
-        prosody: prosodyScore,
-        pronScore: pronunciationScore,
       };
 
       setFeedback(mappedFeedback);
@@ -260,10 +175,10 @@ export default function VoiceLab() {
         await supabase.from("voice_sessions").insert({
           user_id: user.id, mode,
           text_analyzed: normalized.transcription || null,
-          accuracy_score: accuracyScore,
-          fluency_score: fluencyScore,
-          prosody_score: prosodyScore,
-          grammar_feedback: `Completeness: ${completenessScore}%`,
+          accuracy_score: normalized.accuracy,
+          fluency_score: normalized.fluency,
+          prosody_score: normalized.prosody,
+          grammar_feedback: `Completeness: ${normalized.completeness}%`,
         });
       }
 

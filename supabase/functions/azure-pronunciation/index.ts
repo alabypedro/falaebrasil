@@ -70,11 +70,11 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
-    console.log(JSON.stringify(result));
+    console.log("Azure raw response:", JSON.stringify(result));
     console.log("Azure RecognitionStatus:", result.RecognitionStatus);
 
     // Handle clear failures
-    if (result.RecognitionStatus === "InitialSilenceTimeout" || 
+    if (result.RecognitionStatus === "InitialSilenceTimeout" ||
         result.RecognitionStatus === "NoMatch" ||
         result.RecognitionStatus === "BabbleTimeout") {
       return new Response(
@@ -88,51 +88,53 @@ Deno.serve(async (req) => {
       );
     }
 
-    // If Success, always return the data — even if scores are low
+    // If Success, extract scores strictly from NBest[0].PronunciationAssessment
     if (result.RecognitionStatus === "Success" && result.NBest && result.NBest.length > 0) {
       const best = result.NBest[0];
       const pa = best.PronunciationAssessment || result.PronunciationAssessment || {};
+
+      console.log("PronunciationAssessment payload:", JSON.stringify(pa));
+
       const transcription = (best.Display || best.Lexical || "").trim();
-      const accuracyScore = toNullableScore(pa.AccuracyScore);
-      const fluencyScore = toNullableScore(pa.FluencyScore);
-      const completenessScore = toNullableScore(pa.CompletenessScore);
-      const prosodyScore = toNullableScore(pa.ProsodyScore);
-      const pronunciationScore = toNullableScore(pa.PronunciationScore ?? pa.PronScore);
+
+      // Extract each score as a plain number; fallback to 0 if missing and log it
+      const pickScore = (rawValue: unknown, fieldName: string): number => {
+        const normalized = toNullableScore(rawValue);
+        if (normalized == null) {
+          console.warn(`[azure-pronunciation] Missing score field: ${fieldName} — defaulting to 0`);
+          return 0;
+        }
+        return normalized;
+      };
+
+      const accuracy = pickScore(pa.AccuracyScore, "AccuracyScore");
+      const fluency = pickScore(pa.FluencyScore, "FluencyScore");
+      const completeness = pickScore(pa.CompletenessScore, "CompletenessScore");
+      const prosody = pickScore(pa.ProsodyScore, "ProsodyScore");
+      const pronunciation = pickScore(
+        pa.PronunciationScore ?? pa.PronScore,
+        "PronunciationScore",
+      );
+
       const confidence = typeof best.Confidence === "number" && Number.isFinite(best.Confidence)
         ? Math.round(best.Confidence * 100)
-        : null;
+        : 0;
       const snr = toNullableScore(result.SNR);
-
-      const missingScores = [
-        accuracyScore == null ? "AccuracyScore" : null,
-        fluencyScore == null ? "FluencyScore" : null,
-        prosodyScore == null ? "ProsodyScore" : null,
-        completenessScore == null ? "CompletenessScore" : null,
-        pronunciationScore == null ? "PronunciationScore" : null,
-      ].filter((scoreName): scoreName is string => Boolean(scoreName));
 
       const scores = {
         status: result.RecognitionStatus,
         transcription,
         confidence,
         snr,
-        pronunciation: accuracyScore,
-        accuracyScore,
-        fluency: fluencyScore,
-        fluencyScore,
-        completeness: completenessScore,
-        completenessScore,
-        prosody: prosodyScore,
-        prosodyScore,
-        pronScore: pronunciationScore,
-        pronunciationScore,
-        // Keep backwards-compatible fields
-        grammar: completenessScore,
-        vocabulary: prosodyScore,
-        missingScores,
+        // Primary normalized fields (simple numbers, never null)
+        accuracy,
+        fluency,
+        completeness,
+        prosody,
+        pronunciation, // overall score (0-100)
       };
 
-      console.log("Returning scores:", JSON.stringify(scores));
+      console.log("Returning normalized scores:", JSON.stringify(scores));
 
       return new Response(JSON.stringify(scores), {
         status: 200,
