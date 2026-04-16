@@ -1,245 +1,202 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, Mic, Trash2 } from "lucide-react";
 
-interface Prompt {
+interface Course { id: string; title: string; }
+
+interface LessonRow {
   id: string;
-  text: string;
-  level: string;
-  source_file: string | null;
-  created_at: string;
+  title: string;
+  practice_text: string | null;
+  display_order: number;
+  module_id: string;
+  modules?: { id: string; title: string; display_order: number; course_id: string; courses?: { id: string; title: string } | null } | null;
 }
 
-const levels = ["A1", "A2", "B1", "B2"];
-
 export default function PromptsManager() {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [filterLevel, setFilterLevel] = useState("all");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [lessons, setLessons] = useState<LessonRow[]>([]);
+  const [activeCourseId, setActiveCourseId] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [uploadLevel, setUploadLevel] = useState("A1");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ text: "", level: "A1" });
+  const [editing, setEditing] = useState<LessonRow | null>(null);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("pronunciation_prompts").select("*").order("created_at", { ascending: false });
-    if (filterLevel !== "all") q = q.eq("level", filterLevel);
-    const { data } = await q;
-    setPrompts((data as Prompt[]) || []);
-    setSelected(new Set());
+    const [{ data: cs }, { data: ls }] = await Promise.all([
+      supabase.from("courses").select("id, title").order("display_order"),
+      supabase
+        .from("lessons")
+        .select("id, title, practice_text, display_order, module_id, modules(id, title, display_order, course_id, courses(id, title))")
+        .order("display_order"),
+    ]);
+    const courseList = (cs as Course[]) || [];
+    setCourses(courseList);
+    setLessons((ls as any) || []);
+    setActiveCourseId((prev) => prev || courseList[0]?.id || "");
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [filterLevel]);
+  useEffect(() => { load(); }, []);
 
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+  // Only lessons that belong to the active course
+  const lessonsInCourse = useMemo(() => {
+    if (!activeCourseId) return [];
+    return lessons
+      .filter((l) => l.modules?.course_id === activeCourseId)
+      .sort((a, b) => {
+        const ma = a.modules?.display_order ?? 0;
+        const mb = b.modules?.display_order ?? 0;
+        if (ma !== mb) return ma - mb;
+        return (a.display_order ?? 0) - (b.display_order ?? 0);
+      });
+  }, [lessons, activeCourseId]);
+
+  const totalWithText = lessonsInCourse.filter((l) => l.practice_text && l.practice_text.trim()).length;
+
+  const openEdit = (l: LessonRow) => {
+    setEditing(l);
+    setEditText(l.practice_text ?? "");
   };
 
-  const toggleAll = () => {
-    if (selected.size === prompts.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(prompts.map((p) => p.id)));
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("level", uploadLevel);
-      const { data, error } = await supabase.functions.invoke("parse-prompts", { body: formData });
-      if (error) throw error;
-      const parsed = data.prompts as { text: string; level: string }[];
-      if (!parsed?.length) { toast.warning("Nenhum texto válido encontrado no arquivo."); return; }
-      const rows = parsed.map((p) => ({ text: p.text, level: p.level, source_file: file.name }));
-      const { error: insertErr } = await supabase.from("pronunciation_prompts").insert(rows);
-      if (insertErr) throw insertErr;
-      toast.success(`${rows.length} textos importados com sucesso!`);
-      load();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao importar arquivo.");
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
-  };
-
-  const openAdd = () => { setEditId(null); setForm({ text: "", level: "A1" }); setDialogOpen(true); };
-  const openEdit = (p: Prompt) => { setEditId(p.id); setForm({ text: p.text, level: p.level }); setDialogOpen(true); };
-
-  const save = async () => {
-    if (!form.text.trim()) { toast.error("Texto obrigatório."); return; }
-    if (editId) {
-      await supabase.from("pronunciation_prompts").update({ text: form.text.trim(), level: form.level }).eq("id", editId);
-      toast.success("Texto atualizado.");
-    } else {
-      await supabase.from("pronunciation_prompts").insert({ text: form.text.trim(), level: form.level });
-      toast.success("Texto adicionado.");
-    }
-    setDialogOpen(false);
+  const saveText = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("lessons")
+      .update({ practice_text: editText.trim() || null })
+      .eq("id", editing.id);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Texto do Laboratório de Voz atualizado.");
+    setEditing(null);
     load();
   };
 
-  const remove = async (id: string) => {
-    await supabase.from("pronunciation_prompts").delete().eq("id", id);
-    toast.success("Removido.");
+  const clearText = async (lessonId: string) => {
+    const { error } = await supabase.from("lessons").update({ practice_text: null }).eq("id", lessonId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Texto removido da lição.");
     load();
   };
 
-  const bulkRemove = async () => {
-    const ids = Array.from(selected);
-    if (!ids.length) return;
-    // Delete in batches of 50
-    for (let i = 0; i < ids.length; i += 50) {
-      const batch = ids.slice(i, i + 50);
-      await supabase.from("pronunciation_prompts").delete().in("id", batch);
-    }
-    toast.success(`${ids.length} texto(s) removido(s).`);
-    setBulkDeleteOpen(false);
-    load();
-  };
-
-  const allSelected = prompts.length > 0 && selected.size === prompts.length;
-  const someSelected = selected.size > 0 && selected.size < prompts.length;
+  const activeCourse = courses.find((c) => c.id === activeCourseId);
 
   return (
     <div className="space-y-6">
-      {/* Upload card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Importar Textos de Arquivo</CardTitle>
+      {/* Header / Painel direto do Laboratório de Voz */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Mic className="h-4 w-4 text-primary" />
+            Textos do Laboratório de Voz
+          </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Nível</label>
-            <Select value={uploadLevel} onValueChange={setUploadLevel}>
-              <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Arquivo (.txt, .csv, .md)</label>
-            <Input type="file" accept=".txt,.csv,.md,.text" onChange={handleFileUpload} disabled={uploading} />
-          </div>
-          {uploading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
+        <CardContent className="space-y-2 pt-0">
+          <p className="text-sm text-muted-foreground">
+            Cadastre aqui as frases que o aluno lerá em voz alta no <strong>Laboratório de Voz</strong>.
+            Cada texto fica vinculado a uma lição do curso e é avaliado pelo Azure quando o aluno grava.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Selecione um curso para ver e editar apenas os textos das lições dele.
+          </p>
         </CardContent>
       </Card>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
+      {/* Course selector toolbar */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <Select value={filterLevel} onValueChange={setFilterLevel}>
-            <SelectTrigger className="w-32"><SelectValue placeholder="Filtrar nível" /></SelectTrigger>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Curso ativo</span>
+          <Select value={activeCourseId} onValueChange={setActiveCourseId}>
+            <SelectTrigger className="w-72">
+              <SelectValue placeholder="Selecione um curso" />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+              {courses.length === 0 && <SelectItem value="none" disabled>Nenhum curso cadastrado</SelectItem>}
+              {courses.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-
-          {selected.size > 0 && (
-            <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
-              <AlertDialogTrigger asChild>
-                <Button size="sm" variant="destructive">
-                  <Trash2 className="h-4 w-4 mr-1" /> Excluir {selected.size} selecionado(s)
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir {selected.size} texto(s)?</AlertDialogTitle>
-                  <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={bulkRemove}>Excluir</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
         </div>
-        <Button size="sm" onClick={openAdd}><Plus className="h-4 w-4 mr-1" /> Adicionar</Button>
+
+        {activeCourse && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="secondary">{lessonsInCourse.length} lição(ões)</Badge>
+            <Badge variant="outline">{totalWithText} com texto</Badge>
+          </div>
+        )}
       </div>
 
-      {/* Table */}
+      {/* Lessons list of the active course */}
       <div className="rounded-lg border overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10">
-                <Checkbox
-                  checked={allSelected}
-                  {...(someSelected ? { "data-state": "indeterminate" } : {})}
-                  onCheckedChange={toggleAll}
-                  aria-label="Selecionar todos"
-                />
-              </TableHead>
-              <TableHead>Texto</TableHead>
-              <TableHead className="w-20">Nível</TableHead>
-              <TableHead className="w-32">Origem</TableHead>
-              <TableHead className="w-24">Ações</TableHead>
+              <TableHead className="w-[28%]">Lição</TableHead>
+              <TableHead>Texto para Prática de Voz</TableHead>
+              <TableHead className="w-32 text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
-            ) : prompts.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum texto cadastrado.</TableCell></TableRow>
-            ) : prompts.map((p) => (
-              <TableRow key={p.id} className={selected.has(p.id) ? "bg-muted/50" : ""}>
-                <TableCell>
-                  <Checkbox
-                    checked={selected.has(p.id)}
-                    onCheckedChange={() => toggleSelect(p.id)}
-                    aria-label={`Selecionar "${p.text.slice(0, 30)}"`}
-                  />
+              <TableRow><TableCell colSpan={3} className="text-center py-8"><Loader2 className="h-5 w-5 animate-spin mx-auto" /></TableCell></TableRow>
+            ) : !activeCourseId ? (
+              <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">Selecione um curso acima.</TableCell></TableRow>
+            ) : lessonsInCourse.length === 0 ? (
+              <TableRow><TableCell colSpan={3} className="text-center py-8 text-muted-foreground">Este curso ainda não tem lições. Crie-as em "Lições".</TableCell></TableRow>
+            ) : lessonsInCourse.map((l) => (
+              <TableRow key={l.id}>
+                <TableCell className="align-top">
+                  <div className="font-medium text-sm leading-tight">{l.title}</div>
+                  {l.modules?.title && (
+                    <div className="text-[11px] text-muted-foreground mt-0.5">Módulo: {l.modules.title}</div>
+                  )}
                 </TableCell>
-                <TableCell className="max-w-md truncate text-sm">{p.text}</TableCell>
-                <TableCell><Badge variant="secondary">{p.level}</Badge></TableCell>
-                <TableCell className="text-xs text-muted-foreground">{p.source_file || "Manual"}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remover texto?</AlertDialogTitle>
-                          <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => remove(p.id)}>Remover</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                <TableCell className="align-top">
+                  {l.practice_text && l.practice_text.trim() ? (
+                    <p className="text-sm text-foreground whitespace-pre-wrap line-clamp-3">{l.practice_text}</p>
+                  ) : (
+                    <span className="text-xs italic text-muted-foreground">Nenhum texto cadastrado para esta lição.</span>
+                  )}
+                </TableCell>
+                <TableCell className="align-top text-right">
+                  <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(l)} aria-label="Editar texto">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    {l.practice_text && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Remover texto">
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover texto desta lição?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A lição continuará existindo, mas não terá mais texto de prática no Laboratório de Voz.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => clearText(l.id)}>Remover</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -248,20 +205,34 @@ export default function PromptsManager() {
         </Table>
       </div>
 
-      {/* Add/Edit dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{editId ? "Editar Texto" : "Novo Texto"}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Textarea placeholder="Digite o texto para pronúncia…" value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} rows={4} />
-            <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter><Button onClick={save}>{editId ? "Salvar" : "Adicionar"}</Button></DialogFooter>
+      {/* Edit dialog */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Texto do Laboratório de Voz</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div className="text-xs text-muted-foreground">
+                <div><strong>Lição:</strong> {editing.title}</div>
+                {editing.modules?.title && <div><strong>Módulo:</strong> {editing.modules.title}</div>}
+                {editing.modules?.courses?.title && <div><strong>Curso:</strong> {editing.modules.courses.title}</div>}
+              </div>
+              <Textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={6}
+                placeholder="Texto em inglês que o aluno lerá em voz alta no Laboratório de Voz desta lição…"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Este texto é enviado ao Azure como referência para calcular as notas de pronúncia, fluência, prosódia e completude.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button onClick={saveText} disabled={saving}>{saving ? "Salvando…" : "Salvar"}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
