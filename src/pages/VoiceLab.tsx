@@ -52,9 +52,6 @@ const unscriptedTopics = [
   "Conte sobre seu hobby favorito.",
 ];
 
-const defaultPracticeText =
-  "Hello! My name is Maria and I'm learning English. Today I want to practice my pronunciation by reading this short text aloud.";
-
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
   const s = (seconds % 60).toString().padStart(2, "0");
@@ -66,6 +63,8 @@ function pickRandom<T>(arr: T[]): T {
 }
 
 type LessonContext = { id: string; title: string; courseId: string; courseTitle: string };
+type CourseOption = { id: string; title: string };
+type CoursePhrase = { lessonId: string; text: string; moduleOrder: number; lessonOrder: number };
 
 export default function VoiceLab() {
   const [searchParams] = useSearchParams();
@@ -82,43 +81,133 @@ export default function VoiceLab() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [promptsLoading, setPromptsLoading] = useState(true);
   const [analyzedId, setAnalyzedId] = useState<string | null>(null);
-  const { user, profile } = useAuth();
 
+  // Course selector + phrases of the active course
+  const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [activeCourseId, setActiveCourseId] = useState<string>("");
+  const [coursePhrases, setCoursePhrases] = useState<CoursePhrase[]>([]);
+  const [selectedPhraseIndex, setSelectedPhraseIndex] = useState<number>(0);
+
+  const { user, profile } = useAuth();
   const userLevel = profile?.level || "A1";
 
-  // Fetch the lesson's practice_text (when entering from a lesson) or use a default sample text
+  // Load all published courses for the selector
   useEffect(() => {
-    const fetchPracticeText = async () => {
-      setPromptsLoading(true);
+    const loadCourses = async () => {
+      const { data } = await supabase
+        .from("courses")
+        .select("id, title, published, display_order")
+        .order("display_order");
+      const list = ((data as any[]) || [])
+        .filter((c) => c.published)
+        .map((c) => ({ id: c.id, title: c.title }));
+      setCourses(list);
+    };
+    loadCourses();
+  }, []);
+
+  // When entering via ?lesson=, lock the active course to that lesson's course
+  useEffect(() => {
+    if (!lessonIdParam) {
       setLessonContext(null);
+      return;
+    }
+    const fetchFromLesson = async () => {
+      const { data: lesson } = await supabase
+        .from("lessons")
+        .select("id, title, practice_text, modules(id, title, course_id, courses(id, title))")
+        .eq("id", lessonIdParam)
+        .maybeSingle();
 
-      if (lessonIdParam) {
-        const { data: lesson } = await supabase
-          .from("lessons")
-          .select("id, title, practice_text, modules(id, title, course_id, courses(id, title))")
-          .eq("id", lessonIdParam)
-          .maybeSingle();
-
-        if (lesson?.practice_text && lesson.practice_text.trim()) {
-          setPracticeText(lesson.practice_text.trim());
-          const mod: any = lesson.modules;
-          setLessonContext({
-            id: lesson.id,
-            title: lesson.title,
-            courseId: mod?.courses?.id ?? mod?.course_id ?? "",
-            courseTitle: mod?.courses?.title ?? "",
-          });
-        } else {
-          setPracticeText(defaultPracticeText);
-        }
-      } else {
-        setPracticeText(defaultPracticeText);
+      if (lesson) {
+        const mod: any = lesson.modules;
+        const courseId = mod?.courses?.id ?? mod?.course_id ?? "";
+        setLessonContext({
+          id: lesson.id,
+          title: lesson.title,
+          courseId,
+          courseTitle: mod?.courses?.title ?? "",
+        });
+        if (courseId) setActiveCourseId(courseId);
       }
+    };
+    fetchFromLesson();
+  }, [lessonIdParam]);
 
+  // Default to the first course when not opened from a specific lesson
+  useEffect(() => {
+    if (!activeCourseId && !lessonIdParam && courses.length > 0) {
+      setActiveCourseId(courses[0].id);
+    }
+  }, [courses, activeCourseId, lessonIdParam]);
+
+  // Fetch all practice phrases for the active course (no random, ordered)
+  useEffect(() => {
+    if (!activeCourseId) {
+      setCoursePhrases([]);
+      setPracticeText("");
+      setPromptsLoading(false);
+      return;
+    }
+    const loadPhrases = async () => {
+      setPromptsLoading(true);
+      const { data: mods } = await supabase
+        .from("modules")
+        .select("id, display_order, course_id, lessons(id, title, practice_text, display_order)")
+        .eq("course_id", activeCourseId)
+        .order("display_order");
+
+      const phrases: CoursePhrase[] = [];
+      ((mods as any[]) || []).forEach((m) => {
+        ((m.lessons as any[]) || []).forEach((l) => {
+          if (l.practice_text && String(l.practice_text).trim()) {
+            phrases.push({
+              lessonId: l.id,
+              text: String(l.practice_text).trim(),
+              moduleOrder: m.display_order ?? 0,
+              lessonOrder: l.display_order ?? 0,
+            });
+          }
+        });
+      });
+      phrases.sort((a, b) => a.moduleOrder - b.moduleOrder || a.lessonOrder - b.lessonOrder);
+      setCoursePhrases(phrases);
+
+      // Pick the phrase: from ?lesson= if present, else first
+      let idx = 0;
+      if (lessonIdParam) {
+        const found = phrases.findIndex((p) => p.lessonId === lessonIdParam);
+        if (found >= 0) idx = found;
+      }
+      setSelectedPhraseIndex(idx);
+      setPracticeText(phrases[idx]?.text ?? "");
       setPromptsLoading(false);
     };
-    fetchPracticeText();
-  }, [lessonIdParam]);
+    loadPhrases();
+  }, [activeCourseId, lessonIdParam]);
+
+  const handleSelectPhrase = (indexStr: string) => {
+    const idx = parseInt(indexStr, 10);
+    if (Number.isNaN(idx) || !coursePhrases[idx]) return;
+    setSelectedPhraseIndex(idx);
+    setPracticeText(coursePhrases[idx].text);
+    setFeedback(null);
+    setTranscription(null);
+    setSuggestions([]);
+  };
+
+  const handleCourseChange = (courseId: string) => {
+    setActiveCourseId(courseId);
+    setLessonContext(null);
+    setFeedback(null);
+    setTranscription(null);
+    setSuggestions([]);
+  };
+
+  const activeCourseTitle = useMemo(
+    () => courses.find((c) => c.id === activeCourseId)?.title ?? "",
+    [courses, activeCourseId],
+  );
 
   const { isRecording, elapsed, recordings, startRecording, stopRecording, audioLevel } =
     useAudioRecorder();
