@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle } from "lucide-react";
+import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
 
@@ -33,6 +33,7 @@ interface Lesson {
   description: string | null;
   video_url: string | null;
   pdf_url: string | null;
+  practice_text: string | null;
   display_order: number;
 }
 
@@ -221,12 +222,17 @@ export default function CourseDetail() {
                         <p className="text-sm text-muted-foreground mt-1">{activeLesson.description}</p>
                       )}
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
                       {activeLesson.pdf_url && (
                         <Button variant="outline" size="sm" asChild>
                           <a href={activeLesson.pdf_url} target="_blank" rel="noopener noreferrer">
                             <FileText className="h-4 w-4 mr-1" /> PDF
                           </a>
+                        </Button>
+                      )}
+                      {activeLesson.practice_text && (
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/voice-lab?lesson=${activeLesson.id}`)}>
+                          <Mic className="h-4 w-4 mr-1" /> Praticar Pronúncia
                         </Button>
                       )}
                       <Button

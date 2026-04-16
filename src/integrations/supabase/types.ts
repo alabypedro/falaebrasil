@@ -94,6 +94,7 @@ export type Database = {
           id: string
           module_id: string
           pdf_url: string | null
+          practice_text: string | null
           title: string
           updated_at: string
           video_url: string | null
@@ -105,6 +106,7 @@ export type Database = {
           id?: string
           module_id: string
           pdf_url?: string | null
+          practice_text?: string | null
           title: string
           updated_at?: string
           video_url?: string | null
@@ -116,6 +118,7 @@ export type Database = {
           id?: string
           module_id?: string
           pdf_url?: string | null
+          practice_text?: string | null
           title?: string
           updated_at?: string
           video_url?: string | null
