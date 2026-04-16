@@ -63,46 +63,60 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+type LessonContext = { id: string; title: string; courseId: string; courseTitle: string };
+
 export default function VoiceLab() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const lessonIdParam = searchParams.get("lesson");
+
   const [mode, setMode] = useState<"scripted" | "unscripted">("scripted");
-  const [prompts, setPrompts] = useState<{ id: string; level: string; text: string }[]>([]);
-  const [selectedPrompt, setSelectedPrompt] = useState<{ id: string; level: string; text: string } | null>(null);
+  const [practiceText, setPracticeText] = useState<string>("");
+  const [lessonContext, setLessonContext] = useState<LessonContext | null>(null);
   const [currentTopic, setCurrentTopic] = useState(unscriptedTopics[0]);
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [promptsLoading, setPromptsLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [analyzedId, setAnalyzedId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, profile } = useAuth();
 
   const userLevel = profile?.level || "A1";
 
-  // Fetch prompts from DB filtered by user level
+  // Fetch the lesson's practice_text (when entering from a lesson) or use a default sample text
   useEffect(() => {
-    const fetchPrompts = async () => {
+    const fetchPracticeText = async () => {
       setPromptsLoading(true);
-      const { data } = await supabase
-        .from("pronunciation_prompts")
-        .select("id, text, level")
-        .eq("level", userLevel);
+      setLessonContext(null);
 
-      if (data && data.length > 0) {
-        setPrompts(data);
-        setSelectedPrompt(pickRandom(data));
+      if (lessonIdParam) {
+        const { data: lesson } = await supabase
+          .from("lessons")
+          .select("id, title, practice_text, modules(id, title, course_id, courses(id, title))")
+          .eq("id", lessonIdParam)
+          .maybeSingle();
+
+        if (lesson?.practice_text && lesson.practice_text.trim()) {
+          setPracticeText(lesson.practice_text.trim());
+          const mod: any = lesson.modules;
+          setLessonContext({
+            id: lesson.id,
+            title: lesson.title,
+            courseId: mod?.courses?.id ?? mod?.course_id ?? "",
+            courseTitle: mod?.courses?.title ?? "",
+          });
+        } else {
+          setPracticeText(defaultPracticeText);
+        }
       } else {
-        const matching = fallbackPrompts.filter((p) => p.level === userLevel);
-        const available = matching.length > 0 ? matching : fallbackPrompts;
-        setPrompts(available);
-        setSelectedPrompt(pickRandom(available));
+        setPracticeText(defaultPracticeText);
       }
+
       setPromptsLoading(false);
     };
-    fetchPrompts();
-  }, [userLevel]);
+    fetchPracticeText();
+  }, [lessonIdParam]);
 
   const { isRecording, elapsed, recordings, startRecording, stopRecording, audioLevel } =
     useAudioRecorder();
