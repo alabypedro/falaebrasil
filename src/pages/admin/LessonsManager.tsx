@@ -18,13 +18,14 @@ interface Lesson {
   description: string | null;
   video_url: string | null;
   pdf_url: string | null;
+  practice_text: string | null;
   display_order: number;
   modules?: { title: string; courses?: { title: string } | null } | null;
 }
 
 interface ModuleOption { id: string; title: string; course_title: string; }
 
-const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", display_order: 0 };
+const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", practice_text: "", display_order: 0 };
 
 export default function LessonsManager() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -54,7 +55,7 @@ export default function LessonsManager() {
 
   const openEdit = (l: Lesson) => {
     setEditing(l);
-    setForm({ module_id: l.module_id, title: l.title, description: l.description ?? "", video_url: l.video_url ?? "", pdf_url: l.pdf_url ?? "", display_order: l.display_order });
+    setForm({ module_id: l.module_id, title: l.title, description: l.description ?? "", video_url: l.video_url ?? "", pdf_url: l.pdf_url ?? "", practice_text: l.practice_text ?? "", display_order: l.display_order });
     setOpen(true);
   };
 
@@ -77,7 +78,7 @@ export default function LessonsManager() {
   const save = async () => {
     if (!form.title.trim() || !form.module_id) { toast.error("Preencha título e módulo"); return; }
     setLoading(true);
-    const payload = { module_id: form.module_id, title: form.title.trim(), description: form.description.trim() || null, video_url: form.video_url.trim() || null, pdf_url: form.pdf_url.trim() || null, display_order: form.display_order };
+    const payload = { module_id: form.module_id, title: form.title.trim(), description: form.description.trim() || null, video_url: form.video_url.trim() || null, pdf_url: form.pdf_url.trim() || null, practice_text: form.practice_text.trim() || null, display_order: form.display_order };
 
     if (editing) {
       const { error } = await supabase.from("lessons").update(payload).eq("id", editing.id);
@@ -189,6 +190,18 @@ export default function LessonsManager() {
                 {form.pdf_url && <a href={form.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver PDF</a>}
               </div>
               {uploadingPdf && <p className="text-xs text-muted-foreground">Enviando PDF...</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Texto para Prática de Voz</Label>
+              <Textarea
+                value={form.practice_text}
+                onChange={(e) => setForm({ ...form, practice_text: e.target.value })}
+                rows={4}
+                placeholder="Texto em inglês que o aluno lerá em voz alta no Laboratório de Voz desta lição..."
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Este texto será carregado automaticamente quando o aluno entrar no Laboratório de Voz a partir desta lição.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Ordem</Label>
