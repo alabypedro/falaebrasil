@@ -43,31 +43,15 @@ function normalizeAzureResponse(payload: any): NormalizedAzureResponse {
   };
 }
 
-const fallbackPrompts = [
-  { id: "f1", level: "A1", text: "Good morning! How are you? I am fine, thank you. What is your name?" },
-  { id: "f2", level: "A2", text: "Hello! My name is Maria and I'm from Brazil. I love learning English because it helps me connect with people from all over the world." },
-  { id: "f3", level: "B1", text: "Yesterday, I went to the supermarket to buy some groceries. I picked up fruits, vegetables, and a loaf of bread. The cashier was very friendly." },
-];
-
-const genericPhrases = [
-  { id: "g1", text: "The weather today is beautiful, and I would like to take a walk in the park." },
-  { id: "g2", text: "Can you please tell me where the nearest bus stop is? I need to get to the city center." },
-  { id: "g3", text: "I enjoy reading books in my free time, especially adventure and science fiction novels." },
-  { id: "g4", text: "Excuse me, could you help me find the way to the library? I'm new in this neighborhood." },
-  { id: "g5", text: "My favorite food is pasta with tomato sauce. I usually cook it on weekends for my family." },
-  { id: "g6", text: "Technology has changed the way we communicate with each other in many interesting ways." },
-  { id: "g7", text: "I would like to order a cup of coffee and a piece of chocolate cake, please." },
-  { id: "g8", text: "Learning a new language takes time and patience, but the results are truly rewarding." },
-  { id: "g9", text: "The children are playing in the garden while their parents are preparing dinner inside." },
-  { id: "g10", text: "Could you recommend a good restaurant near here? I'm looking for Italian food." },
-];
-
 const unscriptedTopics = [
   "Descreva seu fim de semana ideal em inglês.",
   "Fale sobre um lugar que você gostaria de visitar.",
   "Descreva sua rotina matinal.",
   "Conte sobre seu hobby favorito.",
 ];
+
+const defaultPracticeText =
+  "Hello! My name is Maria and I'm learning English. Today I want to practice my pronunciation by reading this short text aloud.";
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60).toString().padStart(2, "0");
