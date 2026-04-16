@@ -342,11 +342,34 @@ export default function VoiceLab() {
         </TabsList>
 
         <TabsContent value="scripted" className="space-y-6">
+          {/* Course selector */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground">Curso ativo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <Select value={activeCourseId} onValueChange={handleCourseChange}>
+                <SelectTrigger className="w-full sm:w-96">
+                  <SelectValue placeholder="Selecione um curso" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.length === 0 && <SelectItem value="none" disabled>Nenhum curso disponível</SelectItem>}
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                As frases abaixo são apenas do curso selecionado.
+              </p>
+            </CardContent>
+          </Card>
+
           {promptsLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : (
             <>
-              {/* Lesson context banner */}
+              {/* Lesson context banner (when entered from a lesson) */}
               {lessonContext && (
                 <Card className="bg-primary/5 border-primary/20">
                   <CardContent className="p-3 flex items-center justify-between gap-3 flex-wrap">
@@ -367,24 +390,72 @@ export default function VoiceLab() {
                 </Card>
               )}
 
-              {/* Practice text */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-muted-foreground">Leia o texto abaixo em voz alta:</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-lg leading-relaxed text-foreground font-medium whitespace-pre-wrap">
-                    {practiceText}
-                  </p>
-                </CardContent>
-              </Card>
+              {coursePhrases.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center text-sm text-muted-foreground">
+                    {activeCourseTitle ? (
+                      <>O curso <strong>{activeCourseTitle}</strong> ainda não tem frases para o Laboratório de Voz.</>
+                    ) : (
+                      <>Selecione um curso acima para ver as frases disponíveis.</>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {/* Phrases list (no lesson labels) */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-muted-foreground">
+                        Escolha uma frase {activeCourseTitle && <span className="text-foreground font-medium">— {activeCourseTitle}</span>}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="space-y-1.5 max-h-64 overflow-auto pr-1">
+                        {coursePhrases.map((p, idx) => {
+                          const active = idx === selectedPhraseIndex;
+                          return (
+                            <button
+                              key={`${p.lessonId}-${idx}`}
+                              type="button"
+                              onClick={() => handleSelectPhrase(String(idx))}
+                              className={cn(
+                                "w-full text-left rounded-md border px-3 py-2 text-sm transition-colors",
+                                active
+                                  ? "border-primary bg-primary/10 text-foreground"
+                                  : "border-border hover:bg-muted text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+                                {idx + 1}
+                              </span>
+                              <span className="line-clamp-2 align-middle">{p.text}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} audioLevel={audioLevel} />
+                  {/* Selected phrase to read aloud */}
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm text-muted-foreground">Leia em voz alta:</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-lg leading-relaxed text-foreground font-medium whitespace-pre-wrap">
+                        {practiceText}
+                      </p>
+                    </CardContent>
+                  </Card>
 
-              {recordings.length > 0 && (
-                <div className="rounded-lg border p-3">
-                  <audio src={recordings[0].url} controls className="w-full h-9" />
-                </div>
+                  <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} audioLevel={audioLevel} />
+
+                  {recordings.length > 0 && (
+                    <div className="rounded-lg border p-3">
+                      <audio src={recordings[0].url} controls className="w-full h-9" />
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
