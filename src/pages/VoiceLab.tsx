@@ -22,6 +22,7 @@ type NormalizedAzureResponse = {
   completeness: number;
   prosody: number;
   pronunciation: number;
+  missingScoreFields: string[];
 };
 
 function toNumberOrZero(value: unknown): number {
@@ -32,16 +33,28 @@ function toNumberOrZero(value: unknown): number {
 function normalizeAzureResponse(payload: any): NormalizedAzureResponse {
   console.log("Edge function payload received:", payload);
 
+  const missingScoreFields = Array.isArray(payload?.missingScoreFields)
+    ? payload.missingScoreFields.filter((field: unknown): field is string => typeof field === "string")
+    : [];
+
+  const rawScores = payload?.scores ?? payload?.result?.scores ?? payload?.PronunciationAssessmentResult ?? {};
+
   return {
     status: payload?.status,
     transcription: payload?.transcription ?? undefined,
     confidence: typeof payload?.confidence === "number" ? payload.confidence : undefined,
     snr: typeof payload?.snr === "number" ? payload.snr : null,
-    accuracy: toNumberOrZero(payload?.accuracy),
-    fluency: toNumberOrZero(payload?.fluency),
-    completeness: toNumberOrZero(payload?.completeness),
-    prosody: toNumberOrZero(payload?.prosody),
-    pronunciation: toNumberOrZero(payload?.pronunciation),
+    accuracy: toNumberOrZero(payload?.accuracy ?? rawScores?.accuracy ?? rawScores?.AccuracyScore),
+    fluency: toNumberOrZero(payload?.fluency ?? rawScores?.fluency ?? rawScores?.FluencyScore),
+    completeness: toNumberOrZero(payload?.completeness ?? rawScores?.completeness ?? rawScores?.CompletenessScore),
+    prosody: toNumberOrZero(payload?.prosody ?? rawScores?.prosody ?? rawScores?.ProsodyScore),
+    pronunciation: toNumberOrZero(
+      payload?.pronunciation
+      ?? rawScores?.pronunciation
+      ?? rawScores?.PronunciationScore
+      ?? rawScores?.PronScore,
+    ),
+    missingScoreFields,
   };
 }
 
@@ -240,6 +253,12 @@ export default function VoiceLab() {
       }
 
       const normalized = normalizeAzureResponse(data);
+
+      if (normalized.missingScoreFields.length > 0) {
+        window.alert(
+          `O Azure respondeu sem algumas notas: ${normalized.missingScoreFields.join(", ")}. Verifique a integração.`,
+        );
+      }
 
       const mappedFeedback: FeedbackScores = {
         // Map per Azure NBest[0].PronunciationAssessment fields

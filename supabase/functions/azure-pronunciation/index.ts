@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
+    console.log(JSON.stringify(result));
     console.log("Azure raw response:", JSON.stringify(result));
     console.log("Azure RecognitionStatus:", result.RecognitionStatus);
 
@@ -92,28 +93,58 @@ Deno.serve(async (req) => {
     if (result.RecognitionStatus === "Success" && result.NBest && result.NBest.length > 0) {
       const best = result.NBest[0];
       const pa = best.PronunciationAssessment || result.PronunciationAssessment || {};
+      const missingScoreFields: string[] = [];
 
       console.log("PronunciationAssessment payload:", JSON.stringify(pa));
 
       const transcription = (best.Display || best.Lexical || "").trim();
 
       // Extract each score as a plain number; fallback to 0 if missing and log it
-      const pickScore = (rawValue: unknown, fieldName: string): number => {
-        const normalized = toNullableScore(rawValue);
-        if (normalized == null) {
-          console.warn(`[azure-pronunciation] Missing score field: ${fieldName} — defaulting to 0`);
-          return 0;
+      const pickScore = (fieldName: string, ...candidates: unknown[]): number => {
+        for (const candidate of candidates) {
+          const normalized = toNullableScore(candidate);
+          if (normalized != null) {
+            return normalized;
+          }
         }
-        return normalized;
+
+        console.warn(`[azure-pronunciation] Missing score field: ${fieldName} — defaulting to 0`);
+        missingScoreFields.push(fieldName);
+        return 0;
       };
 
-      const accuracy = pickScore(pa.AccuracyScore, "AccuracyScore");
-      const fluency = pickScore(pa.FluencyScore, "FluencyScore");
-      const completeness = pickScore(pa.CompletenessScore, "CompletenessScore");
-      const prosody = pickScore(pa.ProsodyScore, "ProsodyScore");
+      const accuracy = pickScore(
+        "AccuracyScore",
+        pa.AccuracyScore,
+        best.AccuracyScore,
+        result.AccuracyScore,
+      );
+      const fluency = pickScore(
+        "FluencyScore",
+        pa.FluencyScore,
+        best.FluencyScore,
+        result.FluencyScore,
+      );
+      const completeness = pickScore(
+        "CompletenessScore",
+        pa.CompletenessScore,
+        best.CompletenessScore,
+        result.CompletenessScore,
+      );
+      const prosody = pickScore(
+        "ProsodyScore",
+        pa.ProsodyScore,
+        best.ProsodyScore,
+        result.ProsodyScore,
+      );
       const pronunciation = pickScore(
-        pa.PronunciationScore ?? pa.PronScore,
         "PronunciationScore",
+        pa.PronunciationScore,
+        pa.PronScore,
+        best.PronunciationScore,
+        best.PronScore,
+        result.PronunciationScore,
+        result.PronScore,
       );
 
       const confidence = typeof best.Confidence === "number" && Number.isFinite(best.Confidence)
@@ -132,6 +163,7 @@ Deno.serve(async (req) => {
         completeness,
         prosody,
         pronunciation, // overall score (0-100)
+        missingScoreFields,
       };
 
       console.log("Returning normalized scores:", JSON.stringify(scores));
