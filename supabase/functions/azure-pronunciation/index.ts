@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       };
 
       const accuracy = pickScore(
-        "PronunciationScore",
+        "AccuracyScore",
         pa.AccuracyScore,
         best.AccuracyScore,
         result.AccuracyScore,
