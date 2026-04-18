@@ -30,7 +30,6 @@ const levelColors: Record<string, string> = {
 const categories = [
   { key: "all", label: "Todos" },
   { key: "transversal", label: "Transversal" },
-  { key: "bst", label: "BST" },
 ];
 
 function CourseCard({ course, index }: { course: CourseWithProgress; index: number }) {
