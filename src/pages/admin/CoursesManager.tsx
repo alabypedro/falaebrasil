@@ -111,14 +111,13 @@ export default function CoursesManager() {
               <TableHead>Ordem</TableHead>
               <TableHead>Título</TableHead>
               <TableHead>Nível</TableHead>
-              <TableHead>Categoria</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {courses.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum curso cadastrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum curso cadastrado.</TableCell></TableRow>
             )}
             {courses.map((c) => (
               <TableRow key={c.id}>
@@ -128,7 +127,6 @@ export default function CoursesManager() {
                   {c.title}
                 </TableCell>
                 <TableCell><Badge className={levelColor[c.level] ?? ""}>{c.level}</Badge></TableCell>
-                <TableCell className="text-sm text-muted-foreground capitalize">{c.category}</TableCell>
                 <TableCell>{c.published ? <Badge variant="default">Publicado</Badge> : <Badge variant="secondary">Rascunho</Badge>}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
@@ -158,23 +156,12 @@ export default function CoursesManager() {
               <Label>Descrição</Label>
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição do curso..." rows={3} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nível</Label>
-                <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="transversal">Transversal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Nível</Label>
+              <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
