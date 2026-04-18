@@ -172,7 +172,6 @@ export default function CoursesManager() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="transversal">Transversal</SelectItem>
-                    <SelectItem value="bst">BST</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
