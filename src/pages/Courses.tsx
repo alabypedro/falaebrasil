@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,11 +25,6 @@ const levelColors: Record<string, string> = {
   B1: "bg-xp/15 text-xp",
   B2: "bg-innovation/15 text-innovation",
 };
-
-const categories = [
-  { key: "all", label: "Todos" },
-  { key: "transversal", label: "Transversal" },
-];
 
 function CourseCard({ course, index }: { course: CourseWithProgress; index: number }) {
   const navigate = useNavigate();
@@ -142,26 +136,16 @@ export default function Courses() {
         </p>
       </div>
 
-      <Tabs defaultValue="all" className="animate-fade-up" style={{ "--delay": "100ms" } as React.CSSProperties}>
-        <TabsList>
-          {categories.map((cat) => (
-            <TabsTrigger key={cat.key} value={cat.key} className="press-effect">{cat.label}</TabsTrigger>
+      <div className="animate-fade-up" style={{ "--delay": "100ms" } as React.CSSProperties}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {courses.map((course, i) => (
+            <CourseCard key={course.id} course={course} index={i} />
           ))}
-        </TabsList>
-
-        {categories.map((cat) => (
-          <TabsContent key={cat.key} value={cat.key}>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(cat.key === "all" ? courses : courses.filter((c) => c.category === cat.key)).map((course, i) => (
-                <CourseCard key={course.id} course={course} index={i} />
-              ))}
-            </div>
-            {(cat.key === "all" ? courses : courses.filter((c) => c.category === cat.key)).length === 0 && (
-              <p className="text-center text-muted-foreground py-8 animate-fade-in">Nenhum curso publicado nesta categoria.</p>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+        </div>
+        {courses.length === 0 && (
+          <p className="text-center text-muted-foreground py-8 animate-fade-in">Nenhum curso publicado.</p>
+        )}
+      </div>
     </div>
   );
 }
