@@ -26,11 +26,6 @@ const levelColors: Record<string, string> = {
   B2: "bg-innovation/15 text-innovation",
 };
 
-const categories = [
-  { key: "all", label: "Todos" },
-  { key: "transversal", label: "Transversal" },
-];
-
 function CourseCard({ course, index }: { course: CourseWithProgress; index: number }) {
   const navigate = useNavigate();
   return (
