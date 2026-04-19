@@ -350,7 +350,6 @@ export default function VoiceLab() {
         <h1 className="text-2xl font-bold text-foreground">Laboratório de Pronúncia Transversal</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Pratique sua pronúncia e receba feedback detalhado com IA.
-          <Badge variant="outline" className="ml-2">Nível {userLevel}</Badge>
         </p>
       </div>
 
