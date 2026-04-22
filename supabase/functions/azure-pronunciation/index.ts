@@ -57,6 +57,30 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Enforce maximum upload size (10 MB) to protect Azure quota and edge resources
+    const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+    if (audioFile.size > MAX_AUDIO_BYTES) {
+      return new Response(
+        JSON.stringify({ error: "Audio file too large (max 10 MB)" }),
+        {
+          status: 413,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // Validate MIME type — accept common browser-recorded audio formats
+    const allowedTypes = ["audio/wav", "audio/wave", "audio/x-wav", "audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4"];
+    if (audioFile.type && !allowedTypes.some((t) => audioFile.type.startsWith(t))) {
+      return new Response(
+        JSON.stringify({ error: `Unsupported audio type: ${audioFile.type}` }),
+        {
+          status: 415,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const audioBytes = await audioFile.arrayBuffer();
     const audioBuffer = new Uint8Array(audioBytes);
     console.log(`Audio received: ${audioBuffer.length} bytes, type: ${audioFile.type}, name: ${audioFile.name}`);
