@@ -134,7 +134,9 @@ export default function QuizPlayer() {
 
             <div className="space-y-3 text-left">
               {questions.map((q, i) => {
-                const isCorrect = answers[i] === q.correct_option_index;
+                const r = results[q.id];
+                const isCorrect = r?.correct ?? false;
+                const correctIdx = r?.correct_option_index ?? -1;
                 return (
                   <div key={q.id} className="rounded-lg border p-3 space-y-1">
                     <div className="flex items-start gap-2">
@@ -143,7 +145,7 @@ export default function QuizPlayer() {
                     </div>
                     {!isCorrect && (
                       <p className="text-xs text-muted-foreground ml-6">
-                        Sua resposta: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-emerald-600">{q.options[q.correct_option_index]}</span>
+                        Sua resposta: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-emerald-600">{q.options[correctIdx] ?? "—"}</span>
                       </p>
                     )}
                   </div>
