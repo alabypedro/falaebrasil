@@ -13,7 +13,6 @@ interface Question {
   id: string;
   question_text: string;
   options: string[];
-  correct_option_index: number;
   display_order: number;
 }
 
@@ -28,12 +27,13 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
   const [passed, setPassed] = useState(false);
   const [xpEarned, setXpEarned] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [results, setResults] = useState<Record<string, { correct: boolean; correct_option_index: number }>>({});
 
   useEffect(() => {
     const load = async () => {
       const [{ data: q }, { data: qs }] = await Promise.all([
         supabase.from("quizzes").select("id, title, passing_score").eq("id", quizId).single(),
-        supabase.from("quiz_questions").select("*").eq("quiz_id", quizId).order("display_order"),
+        supabase.from("quiz_questions_public" as any).select("*").eq("quiz_id", quizId).order("display_order"),
       ]);
       if (q) setQuiz(q);
       if (qs) setQuestions(qs.map((item: any) => ({ ...item, options: item.options as string[] })));
@@ -46,50 +46,32 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
 
   const submit = async () => {
     if (!quiz || !user) return;
-    let correct = 0;
-    questions.forEach((q, i) => { if (answers[i] === q.correct_option_index) correct++; });
-    const s = Math.round((correct / questions.length) * 100);
-    const p = s >= quiz.passing_score;
-    setScore(s);
-    setPassed(p);
-    setSubmitted(true);
-    await supabase.from("quiz_attempts").insert({
-      user_id: user.id,
-      quiz_id: quiz.id,
-      score: s,
-      passed: p,
-      answers: answers as any,
+    const answersById: Record<string, number> = {};
+    questions.forEach((q, i) => {
+      if (answers[i] !== undefined) answersById[q.id] = answers[i];
     });
-
-    // Gamification: award XP when passed
-    if (p) {
-      const xpEarned = Math.round(s / 10) * 5; // 35-50 XP based on score
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("xp, level")
-        .eq("user_id", user.id)
-        .single();
-      if (profile) {
-        const newXp = (profile.xp || 0) + xpEarned;
-        // Level up thresholds
-        let newLevel = profile.level;
-        if (newXp >= 5000) newLevel = "B2";
-        else if (newXp >= 2500) newLevel = "B1";
-        else if (newXp >= 1000) newLevel = "A2";
-        else newLevel = "A1";
-        await supabase
-          .from("profiles")
-          .update({ xp: newXp, level: newLevel })
-          .eq("user_id", user.id);
-        setXpEarned(xpEarned);
-      }
-    }
+    const { data, error } = await supabase.rpc("submit_quiz" as any, {
+      _quiz_id: quiz.id,
+      _answers: answersById as any,
+    });
+    if (error) return;
+    const r = data as any;
+    const resultsMap: Record<string, { correct: boolean; correct_option_index: number }> = {};
+    (r.results ?? []).forEach((res: any) => {
+      resultsMap[res.question_id] = { correct: res.correct, correct_option_index: res.correct_option_index };
+    });
+    setResults(resultsMap);
+    setScore(r.score ?? 0);
+    setPassed(r.passed ?? false);
+    setXpEarned(r.xp_earned ?? 0);
+    setSubmitted(true);
   };
 
   const retry = () => {
     setAnswers({});
     setCurrent(0);
     setSubmitted(false);
+    setResults({});
   };
 
   if (loading) return null;
@@ -113,7 +95,9 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
         <CardContent className="space-y-3">
           <Progress value={score} className="h-2" />
           {questions.map((q, i) => {
-            const isCorrect = answers[i] === q.correct_option_index;
+            const r = results[q.id];
+            const isCorrect = r?.correct ?? false;
+            const correctIdx = r?.correct_option_index ?? -1;
             return (
               <div key={q.id} className="rounded-md border p-2.5 text-sm">
                 <div className="flex items-start gap-2">
@@ -122,7 +106,7 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
                 </div>
                 {!isCorrect && (
                   <p className="text-xs text-muted-foreground ml-5 mt-1">
-                    Sua: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-success">{q.options[q.correct_option_index]}</span>
+                    Sua: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-success">{q.options[correctIdx] ?? "—"}</span>
                   </p>
                 )}
               </div>

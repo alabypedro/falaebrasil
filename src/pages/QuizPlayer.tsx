@@ -15,7 +15,6 @@ interface Question {
   id: string;
   question_text: string;
   options: string[];
-  correct_option_index: number;
   display_order: number;
 }
 
@@ -32,13 +31,14 @@ export default function QuizPlayer() {
   const [score, setScore] = useState(0);
   const [passed, setPassed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [results, setResults] = useState<Record<string, { correct: boolean; correct_option_index: number }>>({});
 
   useEffect(() => {
     if (!quizId) return;
     const load = async () => {
       const [{ data: q }, { data: qs }] = await Promise.all([
         supabase.from("quizzes").select("id, title, passing_score").eq("id", quizId).single(),
-        supabase.from("quiz_questions").select("*").eq("quiz_id", quizId).order("display_order"),
+        supabase.from("quiz_questions_public" as any).select("*").eq("quiz_id", quizId).order("display_order"),
       ]);
       if (q) setQuiz(q);
       if (qs) setQuestions(qs.map((item: any) => ({ ...item, options: item.options as string[] })));
@@ -61,25 +61,29 @@ export default function QuizPlayer() {
 
   const submit = async () => {
     if (!quiz || !user) return;
-    let correct = 0;
+    // Build answers keyed by question id (server expects question_id -> selected index)
+    const answersById: Record<string, number> = {};
     questions.forEach((q, i) => {
-      if (answers[i] === q.correct_option_index) correct++;
+      if (answers[i] !== undefined) answersById[q.id] = answers[i];
     });
 
-    const scorePercent = Math.round((correct / questions.length) * 100);
-    const hasPassed = scorePercent >= quiz.passing_score;
-
-    setScore(scorePercent);
-    setPassed(hasPassed);
+    const { data, error } = await supabase.rpc("submit_quiz" as any, {
+      _quiz_id: quiz.id,
+      _answers: answersById as any,
+    });
+    if (error) {
+      toast.error("Erro ao enviar quiz: " + error.message);
+      return;
+    }
+    const r = data as any;
+    const resultsMap: Record<string, { correct: boolean; correct_option_index: number }> = {};
+    (r.results ?? []).forEach((res: any) => {
+      resultsMap[res.question_id] = { correct: res.correct, correct_option_index: res.correct_option_index };
+    });
+    setResults(resultsMap);
+    setScore(r.score ?? 0);
+    setPassed(r.passed ?? false);
     setSubmitted(true);
-
-    await supabase.from("quiz_attempts").insert({
-      user_id: user.id,
-      quiz_id: quiz.id,
-      score: scorePercent,
-      passed: hasPassed,
-      answers: answers as any,
-    });
   };
 
   const retry = () => {
@@ -88,6 +92,7 @@ export default function QuizPlayer() {
     setSubmitted(false);
     setScore(0);
     setPassed(false);
+    setResults({});
   };
 
   if (loading) {
@@ -129,7 +134,9 @@ export default function QuizPlayer() {
 
             <div className="space-y-3 text-left">
               {questions.map((q, i) => {
-                const isCorrect = answers[i] === q.correct_option_index;
+                const r = results[q.id];
+                const isCorrect = r?.correct ?? false;
+                const correctIdx = r?.correct_option_index ?? -1;
                 return (
                   <div key={q.id} className="rounded-lg border p-3 space-y-1">
                     <div className="flex items-start gap-2">
@@ -138,7 +145,7 @@ export default function QuizPlayer() {
                     </div>
                     {!isCorrect && (
                       <p className="text-xs text-muted-foreground ml-6">
-                        Sua resposta: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-emerald-600">{q.options[q.correct_option_index]}</span>
+                        Sua resposta: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-emerald-600">{q.options[correctIdx] ?? "—"}</span>
                       </p>
                     )}
                   </div>

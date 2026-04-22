@@ -505,6 +505,80 @@ export type Database = {
       }
     }
     Views: {
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          level: string | null
+          streak_days: number | null
+          updated_at: string | null
+          user_id: string | null
+          user_type: string | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          level?: string | null
+          streak_days?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_type?: string | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          level?: string | null
+          streak_days?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_type?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
+      quiz_questions_public: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string | null
+          options: Json | null
+          question_text: string | null
+          quiz_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          quiz_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          quiz_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       xp_ranking: {
         Row: {
           avatar_url: string | null
@@ -526,6 +600,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
