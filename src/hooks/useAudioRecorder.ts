@@ -305,47 +305,6 @@ export function useAudioRecorder() {
     });
   }, []);
 
-  const transcribeRecording = useCallback(
-    async (id: string, apiKey: string) => {
-      const rec = recordings.find((r) => r.id === id);
-      if (!rec) return;
-
-      setRecordings((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, isTranscribing: true } : r))
-      );
-
-      try {
-        const formData = new FormData();
-        const extension = rec.blob.type.includes("wav") ? "wav" : "webm";
-        formData.append("file", rec.blob, `audio.${extension}`);
-        formData.append("model", "whisper-1");
-        formData.append("language", "pt");
-
-        const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${apiKey}` },
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error(`Erro ${res.status}`);
-        const data = await res.json();
-
-        setRecordings((prev) =>
-          prev.map((r) =>
-            r.id === id ? { ...r, transcription: data.text, isTranscribing: false } : r
-          )
-        );
-      } catch (err) {
-        setRecordings((prev) =>
-          prev.map((r) =>
-            r.id === id ? { ...r, isTranscribing: false, transcription: "Erro na transcrição." } : r
-          )
-        );
-      }
-    },
-    [recordings]
-  );
-
   return {
     isRecording,
     recordings,
@@ -354,7 +313,6 @@ export function useAudioRecorder() {
     startRecording,
     stopRecording,
     deleteRecording,
-    transcribeRecording,
   };
 }
 
