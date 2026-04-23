@@ -27,7 +27,7 @@ import {
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Meus Cursos", url: "/courses", icon: BookOpen },
-  { title: "Laboratório de Voz", url: "/voice-lab", icon: Mic },
+  { title: "AI Falaê", url: "/voice-lab", icon: Mic },
   { title: "Biblioteca BST", url: "/library", icon: Library },
   { title: "Comunidade", url: "/community", icon: Users },
 ];

@@ -9,7 +9,7 @@ const adminNav = [
   { to: "/admin/lessons", icon: FileText, label: "Lições" },
   { to: "/admin/quizzes", icon: HelpCircle, label: "Quizzes" },
   { to: "/admin/library", icon: Library, label: "Biblioteca BST" },
-  { to: "/admin/prompts", icon: Mic, label: "Textos Pronúncia" },
+  { to: "/admin/prompts", icon: Mic, label: "Textos AI Falaê" },
 ];
 
 export default function AdminLayout() {

@@ -116,11 +116,11 @@ export default function Dashboard() {
           <div className="flex-1">
             <h3 className="text-lg font-bold">Pratique sua pronúncia agora!</h3>
             <p className="text-sm opacity-80 mt-1">
-              Acesse o Laboratório de Voz e melhore sua fluência com feedback em tempo real.
+              Acesse o AI Falaê e melhore sua fluência com feedback em tempo real.
             </p>
           </div>
           <Button variant="secondary" size="lg" onClick={() => navigate("/voice-lab")} className="press-effect">
-            Ir ao Laboratório
+            Ir ao AI Falaê
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
