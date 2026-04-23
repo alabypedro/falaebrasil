@@ -70,14 +70,18 @@ export default function Auth() {
 
   if (isForgot) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4 page-transition">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+      <div className="relative min-h-screen flex items-center justify-center bg-gradient-hero p-4 page-transition overflow-hidden">
+        {/* Decorative blobs */}
+        <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-accent/30 blur-3xl animate-blob" />
+        <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary-glow/30 blur-3xl animate-blob" style={{ animationDelay: "4s" }} />
+
+        <Card className="w-full max-w-md glass-strong shadow-elegant border-border/40 relative z-10">
+          <CardHeader className="text-center space-y-3">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-accent text-accent-foreground font-display font-extrabold text-lg shadow-glow animate-float">
               FB
             </div>
-            <CardTitle className="text-xl">Recuperar Senha</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-display font-extrabold">Recuperar Senha</CardTitle>
+            <CardDescription className="text-sm">
               Enviaremos um link de recuperação para seu email.
             </CardDescription>
           </CardHeader>
@@ -91,14 +95,14 @@ export default function Auth() {
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
-                    className="pl-9"
+                    className="pl-9 h-11"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
                 {loading ? "Enviando..." : "Enviar Link"}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => setIsForgot(false)}>
