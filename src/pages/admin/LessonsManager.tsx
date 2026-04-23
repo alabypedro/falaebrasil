@@ -189,14 +189,64 @@ export default function LessonsManager() {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
             </div>
             <div className="space-y-2">
-              <Label>Videoaula (upload do PC)</Label>
-              <div className="flex gap-2 items-center">
-                <Input type="file" accept="video/*" onChange={(e) => handleFileUpload(e, "video")} disabled={uploadingVideo} />
-                {form.video_url && <a href={form.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver vídeo</a>}
-              </div>
-              {uploadingVideo && <p className="text-xs text-muted-foreground">Enviando vídeo...</p>}
-              <p className="text-[11px] text-muted-foreground">Ou cole uma URL:</p>
-              <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://youtube.com/..." />
+              <Label>Videoaula</Label>
+              <Input
+                value={form.video_url}
+                onChange={(e) => setForm({ ...form, video_url: e.target.value })}
+                placeholder="Cole o link do Vimeo, YouTube ou ID do Vimeo (ex: 123456789)"
+              />
+              {form.video_url && (() => {
+                const vimeo = parseVimeo(form.video_url);
+                if (vimeo) {
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-success">
+                        <Video className="h-3.5 w-3.5" />
+                        <span>Vídeo do Vimeo detectado (ID: {vimeo.id})</span>
+                        <a
+                          href={`https://vimeo.com/${vimeo.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto inline-flex items-center gap-1 text-accent hover:underline"
+                        >
+                          Abrir <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                      <div className="aspect-video w-full overflow-hidden rounded-md border bg-muted">
+                        <iframe
+                          src={vimeo.embedUrl}
+                          className="h-full w-full"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                          title="Preview Vimeo"
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <p className="text-[11px] text-muted-foreground">
+                    URL salva. Para Vimeo, cole o link completo (https://vimeo.com/...) ou apenas o ID numérico.
+                  </p>
+                );
+              })()}
+              <details className="text-[11px] text-muted-foreground">
+                <summary className="cursor-pointer hover:text-foreground">
+                  Ou enviar arquivo direto (não recomendado para vídeos longos)
+                </summary>
+                <div className="mt-2 flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleFileUpload(e, "video")}
+                    disabled={uploadingVideo}
+                  />
+                  {uploadingVideo && <span className="text-xs">Enviando...</span>}
+                </div>
+                <p className="mt-1">
+                  Recomendamos hospedar vídeos no Vimeo e colar a URL acima — melhor performance e player profissional.
+                </p>
+              </details>
             </div>
             <div className="space-y-2">
               <Label>PDF da Aula</Label>
