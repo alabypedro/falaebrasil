@@ -197,10 +197,10 @@ export default function LessonsManager() {
                 value={form.practice_text}
                 onChange={(e) => setForm({ ...form, practice_text: e.target.value })}
                 rows={4}
-                placeholder="Texto em inglês que o aluno lerá em voz alta no Laboratório de Voz desta lição..."
+                placeholder="Texto em inglês que o aluno lerá em voz alta no AI Falaê desta lição..."
               />
               <p className="text-[11px] text-muted-foreground">
-                Este texto será carregado automaticamente quando o aluno entrar no Laboratório de Voz a partir desta lição.
+                Este texto será carregado automaticamente quando o aluno entrar no AI Falaê a partir desta lição.
               </p>
             </div>
             <div className="space-y-2">

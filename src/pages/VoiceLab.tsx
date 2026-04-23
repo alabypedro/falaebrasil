@@ -412,7 +412,7 @@ export default function VoiceLab() {
                 <Card>
                   <CardContent className="p-6 text-center text-sm text-muted-foreground">
                     {activeCourseTitle ? (
-                      <>O curso <strong>{activeCourseTitle}</strong> ainda não tem frases para o Laboratório de Voz.</>
+                      <>O curso <strong>{activeCourseTitle}</strong> ainda não tem frases para o AI Falaê.</>
                     ) : (
                       <>Selecione um curso acima para ver as frases disponíveis.</>
                     )}
