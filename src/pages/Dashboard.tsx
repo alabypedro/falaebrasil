@@ -50,17 +50,19 @@ export default function Dashboard() {
   }, [user]);
 
   const stats = [
-    { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, color: "bg-xp/15 text-xp" },
-    { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, color: "bg-accent/15 text-accent" },
-    { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, color: "bg-success/15 text-success" },
-    { label: "Streak", value: `${profile?.streak_days ?? 0} dias`, icon: Flame, color: "bg-destructive/15 text-destructive" },
+    { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
+    { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
+    { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
+    { label: "Streak", value: `${profile?.streak_days ?? 0} dias`, icon: Flame, gradient: "bg-gradient-to-br from-destructive to-destructive/70", iconColor: "text-destructive-foreground" },
   ];
 
   return (
     <div className="space-y-8 max-w-6xl page-transition">
       <div className="animate-fade-up">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground tracking-tight">
+          Dashboard
+        </h1>
+        <p className="text-sm md:text-base text-muted-foreground mt-2">
           Bem-vindo de volta! Continue sua jornada de aprendizado.
         </p>
       </div>
@@ -69,16 +71,16 @@ export default function Dashboard() {
         {stats.map((stat, i) => (
           <Card
             key={stat.label}
-            className="animate-fade-up hover-lift cursor-default"
+            className="animate-fade-up hover-lift card-shine cursor-default border-border/50 overflow-hidden relative"
             style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
           >
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${stat.color} hover-bounce`}>
-                <stat.icon className="h-5 w-5" />
+            <CardContent className="flex items-center gap-4 p-5 relative">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
+                <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="text-2xl font-display font-extrabold text-foreground tabular-nums">{stat.value}</p>
+                <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
               </div>
             </CardContent>
           </Card>
@@ -86,22 +88,25 @@ export default function Dashboard() {
       </div>
 
       {courseProgress.length > 0 && (
-        <Card className="animate-fade-up" style={{ "--delay": "400ms" } as React.CSSProperties}>
+        <Card className="animate-fade-up border-border/50" style={{ "--delay": "400ms" } as React.CSSProperties}>
           <CardHeader>
-            <CardTitle className="text-base">Progresso por Curso</CardTitle>
+            <CardTitle className="text-base font-display flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-gradient-accent animate-pulse" />
+              Progresso por Curso
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             {courseProgress.map((track, i) => (
               <div
                 key={track.name}
-                className="space-y-1.5 animate-fade-up"
+                className="space-y-2 animate-fade-up"
                 style={{ "--delay": `${450 + i * 60}ms` } as React.CSSProperties}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{track.name}</span>
-                  <span className="text-xs text-muted-foreground">{track.progress}%</span>
+                  <span className="text-sm font-semibold text-foreground">{track.name}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums font-bold">{track.progress}%</span>
                 </div>
-                <Progress value={track.progress} className="h-2" />
+                <Progress value={track.progress} className="h-2 [&>div]:bg-gradient-accent" />
               </div>
             ))}
           </CardContent>
@@ -109,17 +114,31 @@ export default function Dashboard() {
       )}
 
       <Card
-        className="bg-primary text-primary-foreground animate-fade-up hover-lift glow-accent"
+        className="relative overflow-hidden bg-gradient-hero text-white border-0 animate-fade-up hover-lift-lg shadow-elegant"
         style={{ "--delay": "550ms" } as React.CSSProperties}
       >
-        <CardContent className="flex flex-col items-center gap-4 p-8 text-center sm:flex-row sm:text-left">
-          <div className="flex-1">
-            <h3 className="text-lg font-bold">Pratique sua pronúncia agora!</h3>
-            <p className="text-sm opacity-80 mt-1">
+        {/* Decorative blobs */}
+        <div className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/10 blur-3xl animate-blob" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-accent/30 blur-3xl animate-blob" style={{ animationDelay: "3s" }} />
+
+        <CardContent className="relative flex flex-col items-center gap-5 p-8 md:p-10 text-center sm:flex-row sm:text-left">
+          <div className="flex-1 space-y-2">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1 text-xs font-semibold border border-white/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-glow animate-pulse" />
+              Pratique agora
+            </div>
+            <h3 className="text-xl md:text-2xl font-display font-extrabold leading-tight">
+              Pratique sua pronúncia agora!
+            </h3>
+            <p className="text-sm md:text-base opacity-90 leading-relaxed">
               Acesse o AI Falaê e melhore sua fluência com feedback em tempo real.
             </p>
           </div>
-          <Button variant="secondary" size="lg" onClick={() => navigate("/voice-lab")} className="press-effect">
+          <Button
+            size="lg"
+            onClick={() => navigate("/voice-lab")}
+            className="bg-white text-primary hover:bg-white/95 shadow-soft-lg press-effect font-bold"
+          >
             Ir ao AI Falaê
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

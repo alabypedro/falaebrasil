@@ -70,14 +70,18 @@ export default function Auth() {
 
   if (isForgot) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4 page-transition">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+      <div className="relative min-h-screen flex items-center justify-center bg-gradient-hero p-4 page-transition overflow-hidden">
+        {/* Decorative blobs */}
+        <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-accent/30 blur-3xl animate-blob" />
+        <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary-glow/30 blur-3xl animate-blob" style={{ animationDelay: "4s" }} />
+
+        <Card className="w-full max-w-md glass-strong shadow-elegant border-border/40 relative z-10">
+          <CardHeader className="text-center space-y-3">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-accent text-accent-foreground font-display font-extrabold text-lg shadow-glow animate-float">
               FB
             </div>
-            <CardTitle className="text-xl">Recuperar Senha</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-display font-extrabold">Recuperar Senha</CardTitle>
+            <CardDescription className="text-sm">
               Enviaremos um link de recuperação para seu email.
             </CardDescription>
           </CardHeader>
@@ -91,14 +95,14 @@ export default function Auth() {
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
-                    className="pl-9"
+                    className="pl-9 h-11"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
                 {loading ? "Enviando..." : "Enviar Link"}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => setIsForgot(false)}>
@@ -112,16 +116,21 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 page-transition">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-hero p-4 page-transition overflow-hidden">
+      {/* Decorative animated blobs */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-accent/30 blur-3xl animate-blob" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary-glow/30 blur-3xl animate-blob" style={{ animationDelay: "4s" }} />
+      <div className="pointer-events-none absolute top-1/3 right-1/4 h-64 w-64 rounded-full bg-xp/20 blur-3xl animate-blob" style={{ animationDelay: "2s" }} />
+
+      <Card className="w-full max-w-md glass-strong shadow-elegant border-border/40 relative z-10 animate-scale-in">
+        <CardHeader className="text-center space-y-3">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-accent text-accent-foreground font-display font-extrabold text-lg shadow-glow animate-float">
             FB
           </div>
-          <CardTitle className="text-xl">
-            {isSignUp ? "Criar Conta" : "Entrar"}
+          <CardTitle className="text-2xl md:text-3xl font-display font-extrabold tracking-tight">
+            {isSignUp ? "Criar Conta" : "Bem-vindo de volta"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             {isSignUp
               ? "Crie sua conta para começar a aprender."
               : "Acesse sua conta para continuar."}
@@ -129,7 +138,7 @@ export default function Auth() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Google */}
-          <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
+          <Button variant="outline" className="w-full h-11 font-semibold" onClick={handleGoogleLogin} disabled={loading}>
             <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -141,7 +150,7 @@ export default function Auth() {
 
           <div className="relative">
             <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground font-medium uppercase tracking-wider">
               ou
             </span>
           </div>
@@ -156,7 +165,7 @@ export default function Auth() {
                   <Input
                     id="name"
                     placeholder="Seu nome"
-                    className="pl-9"
+                    className="pl-9 h-11"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -173,7 +182,7 @@ export default function Auth() {
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
-                  className="pl-9"
+                  className="pl-9 h-11"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -187,7 +196,7 @@ export default function Auth() {
                 {!isSignUp && (
                   <button
                     type="button"
-                    className="text-xs text-accent hover:underline"
+                    className="text-xs font-medium text-accent hover:underline"
                     onClick={() => setIsForgot(true)}
                   >
                     Esqueceu a senha?
@@ -200,7 +209,7 @@ export default function Auth() {
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-9"
+                  className="pl-9 h-11"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -209,7 +218,7 @@ export default function Auth() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
               {loading ? "Carregando..." : isSignUp ? "Criar Conta" : "Entrar"}
             </Button>
           </form>
@@ -218,7 +227,7 @@ export default function Auth() {
             {isSignUp ? "Já tem conta?" : "Não tem conta?"}{" "}
             <button
               type="button"
-              className="font-medium text-accent hover:underline"
+              className="font-semibold text-accent hover:underline"
               onClick={() => setIsSignUp(!isSignUp)}
             >
               {isSignUp ? "Fazer login" : "Criar conta"}
