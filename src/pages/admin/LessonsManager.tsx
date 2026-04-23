@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Video, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, FileText, ExternalLink } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Lesson {
@@ -26,6 +26,21 @@ interface Lesson {
 interface ModuleOption { id: string; title: string; course_title: string; }
 
 const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", practice_text: "", display_order: 0 };
+
+// Detect and normalize Vimeo URLs / IDs
+function parseVimeo(url: string): { id: string; embedUrl: string } | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  // Bare numeric ID
+  if (/^\d{6,}$/.test(trimmed)) {
+    return { id: trimmed, embedUrl: `https://player.vimeo.com/video/${trimmed}` };
+  }
+  const match = trimmed.match(/vimeo\.com\/(?:video\/|channels\/[^/]+\/|groups\/[^/]+\/videos\/)?(\d+)/i);
+  if (match) {
+    return { id: match[1], embedUrl: `https://player.vimeo.com/video/${match[1]}` };
+  }
+  return null;
+}
 
 export default function LessonsManager() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
