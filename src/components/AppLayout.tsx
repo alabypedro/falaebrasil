@@ -33,6 +33,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <header className="h-14 flex items-center justify-between border-b px-4 animate-fade-in">
             <SidebarTrigger className="ml-0 press-effect" />
             <div className="flex items-center gap-3">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleTheme}
+                title={theme === "light" ? "Modo escuro" : "Modo claro"}
+                className="press-effect"
+              >
+                {theme === "light" ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
+              </Button>
               <XPBadge xp={profile?.xp ?? 0} level={profile?.level ?? "A1"} compact />
               <button
                 onClick={() => navigate("/profile")}
