@@ -17,6 +17,7 @@ interface Channel {
   slug: string;
   description: string | null;
   display_order: number;
+  level: string;
 }
 
 interface Profile {
