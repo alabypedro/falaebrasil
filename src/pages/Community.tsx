@@ -304,29 +304,44 @@ export default function Community() {
           </p>
         </div>
         <ScrollArea className="flex-1">
-          <ul className="space-y-0.5 p-2">
-            {channels.map((c) => (
-              <li key={c.id}>
-                <button
-                  onClick={() => setActiveChannelId(c.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                    c.id === activeChannelId
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "hover:bg-muted text-foreground/80"
-                  )}
-                >
-                  <Hash className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{c.name}</span>
-                </button>
-              </li>
+          <div className="space-y-3 p-2">
+            {channelsByLevel.map((group) => (
+              <div key={group.level}>
+                <div className="flex items-center gap-2 px-2 pb-1 pt-1">
+                  <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                    {group.level}
+                  </span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Comunidade {group.level}
+                  </span>
+                </div>
+                <ul className="space-y-0.5">
+                  {group.channels.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        onClick={() => setActiveChannelId(c.id)}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                          c.id === activeChannelId
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "hover:bg-muted text-foreground/80"
+                        )}
+                      >
+                        <Hash className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{c.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
             {channels.length === 0 && (
-              <li className="px-2 py-4 text-center text-xs text-muted-foreground">
-                Nenhum canal disponível.
-              </li>
+              <div className="px-2 py-4 text-center text-xs text-muted-foreground">
+                Nenhuma comunidade disponível para o seu nível ainda. Continue
+                evoluindo para desbloquear!
+              </div>
             )}
-          </ul>
+          </div>
         </ScrollArea>
       </aside>
 
