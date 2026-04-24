@@ -20,6 +20,7 @@ export type Database = {
           description: string | null
           display_order: number
           id: string
+          level: string
           name: string
           slug: string
           updated_at: string
@@ -29,6 +30,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           id?: string
+          level?: string
           name: string
           slug: string
           updated_at?: string
@@ -38,6 +40,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           id?: string
+          level?: string
           name?: string
           slug?: string
           updated_at?: string
@@ -664,6 +667,7 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_level: { Args: { _level: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -671,6 +675,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      level_rank: { Args: { _level: string }; Returns: number }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
     }
     Enums: {
