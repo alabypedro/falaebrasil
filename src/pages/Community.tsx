@@ -351,6 +351,11 @@ export default function Community() {
         <header className="flex items-center justify-between border-b px-4 py-3">
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 truncate text-base font-semibold">
+              {activeChannel && (
+                <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  {activeChannel.level}
+                </span>
+              )}
               <Hash className="h-4 w-4 text-muted-foreground" />
               {activeChannel?.name ?? "Selecione um canal"}
             </h1>
@@ -366,10 +371,14 @@ export default function Community() {
             value={activeChannelId}
             onChange={(e) => setActiveChannelId(e.target.value)}
           >
-            {channels.map((c) => (
-              <option key={c.id} value={c.id}>
-                #{c.name}
-              </option>
+            {channelsByLevel.map((group) => (
+              <optgroup key={group.level} label={`Comunidade ${group.level}`}>
+                {group.channels.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    #{c.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </header>
