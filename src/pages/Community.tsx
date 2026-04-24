@@ -84,6 +84,20 @@ export default function Community() {
     [channels, activeChannelId]
   );
 
+  // Group channels by level (community)
+  const channelsByLevel = useMemo(() => {
+    const groups: Record<string, Channel[]> = {};
+    for (const c of channels) {
+      const lvl = (c.level || "A1").toUpperCase();
+      if (!groups[lvl]) groups[lvl] = [];
+      groups[lvl].push(c);
+    }
+    const order = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    return order
+      .filter((lvl) => groups[lvl]?.length)
+      .map((lvl) => ({ level: lvl, channels: groups[lvl] }));
+  }, [channels]);
+
   // Load channels
   useEffect(() => {
     (async () => {
