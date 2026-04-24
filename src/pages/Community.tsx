@@ -17,6 +17,7 @@ interface Channel {
   slug: string;
   description: string | null;
   display_order: number;
+  level: string;
 }
 
 interface Profile {
@@ -82,6 +83,20 @@ export default function Community() {
     () => channels.find((c) => c.id === activeChannelId),
     [channels, activeChannelId]
   );
+
+  // Group channels by level (community)
+  const channelsByLevel = useMemo(() => {
+    const groups: Record<string, Channel[]> = {};
+    for (const c of channels) {
+      const lvl = (c.level || "A1").toUpperCase();
+      if (!groups[lvl]) groups[lvl] = [];
+      groups[lvl].push(c);
+    }
+    const order = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    return order
+      .filter((lvl) => groups[lvl]?.length)
+      .map((lvl) => ({ level: lvl, channels: groups[lvl] }));
+  }, [channels]);
 
   // Load channels
   useEffect(() => {
@@ -289,29 +304,44 @@ export default function Community() {
           </p>
         </div>
         <ScrollArea className="flex-1">
-          <ul className="space-y-0.5 p-2">
-            {channels.map((c) => (
-              <li key={c.id}>
-                <button
-                  onClick={() => setActiveChannelId(c.id)}
-                  className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                    c.id === activeChannelId
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "hover:bg-muted text-foreground/80"
-                  )}
-                >
-                  <Hash className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{c.name}</span>
-                </button>
-              </li>
+          <div className="space-y-3 p-2">
+            {channelsByLevel.map((group) => (
+              <div key={group.level}>
+                <div className="flex items-center gap-2 px-2 pb-1 pt-1">
+                  <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                    {group.level}
+                  </span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Comunidade {group.level}
+                  </span>
+                </div>
+                <ul className="space-y-0.5">
+                  {group.channels.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        onClick={() => setActiveChannelId(c.id)}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                          c.id === activeChannelId
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "hover:bg-muted text-foreground/80"
+                        )}
+                      >
+                        <Hash className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{c.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
             {channels.length === 0 && (
-              <li className="px-2 py-4 text-center text-xs text-muted-foreground">
-                Nenhum canal disponível.
-              </li>
+              <div className="px-2 py-4 text-center text-xs text-muted-foreground">
+                Nenhuma comunidade disponível para o seu nível ainda. Continue
+                evoluindo para desbloquear!
+              </div>
             )}
-          </ul>
+          </div>
         </ScrollArea>
       </aside>
 
@@ -321,6 +351,11 @@ export default function Community() {
         <header className="flex items-center justify-between border-b px-4 py-3">
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 truncate text-base font-semibold">
+              {activeChannel && (
+                <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  {activeChannel.level}
+                </span>
+              )}
               <Hash className="h-4 w-4 text-muted-foreground" />
               {activeChannel?.name ?? "Selecione um canal"}
             </h1>
@@ -336,10 +371,14 @@ export default function Community() {
             value={activeChannelId}
             onChange={(e) => setActiveChannelId(e.target.value)}
           >
-            {channels.map((c) => (
-              <option key={c.id} value={c.id}>
-                #{c.name}
-              </option>
+            {channelsByLevel.map((group) => (
+              <optgroup key={group.level} label={`Comunidade ${group.level}`}>
+                {group.channels.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    #{c.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </header>
