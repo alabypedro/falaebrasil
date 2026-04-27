@@ -272,24 +272,29 @@ export default function CourseDetail() {
               )}
 
               <Card>
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-lg font-semibold text-foreground">{activeLesson.title}</h2>
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="text-base sm:text-lg font-semibold text-foreground break-words">{activeLesson.title}</h2>
                       {activeLesson.description && (
-                        <p className="text-sm text-muted-foreground mt-1">{activeLesson.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1 break-words">{activeLesson.description}</p>
                       )}
                     </div>
-                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                    <div className="flex flex-wrap gap-2 md:flex-shrink-0 md:justify-end">
                       {activeLesson.pdf_url && (
-                        <Button variant="outline" size="sm" asChild>
+                        <Button variant="outline" size="sm" asChild className="flex-1 min-w-[110px] md:flex-none">
                           <a href={activeLesson.pdf_url} target="_blank" rel="noopener noreferrer">
                             <FileText className="h-4 w-4 mr-1" /> PDF
                           </a>
                         </Button>
                       )}
                       {activeLesson.practice_text && (
-                        <Button variant="outline" size="sm" onClick={() => navigate(`/voice-lab?lesson=${activeLesson.id}`)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/voice-lab?lesson=${activeLesson.id}`)}
+                          className="flex-1 min-w-[140px] md:flex-none"
+                        >
                           <Mic className="h-4 w-4 mr-1" /> Praticar Pronúncia
                         </Button>
                       )}
@@ -298,11 +303,12 @@ export default function CourseDetail() {
                         variant={completedLessons.has(activeLesson.id) ? "secondary" : "default"}
                         onClick={() => toggleComplete(activeLesson.id)}
                         disabled={marking}
+                        className="flex-1 min-w-[160px] md:flex-none whitespace-normal text-center leading-tight h-auto py-2"
                       >
                         {completedLessons.has(activeLesson.id) ? (
-                          <><CheckCircle className="h-4 w-4 mr-1" /> Concluída</>
+                          <><CheckCircle className="h-4 w-4 mr-1 shrink-0" /> Concluída</>
                         ) : (
-                          <><Circle className="h-4 w-4 mr-1" /> Marcar como concluída</>
+                          <><Circle className="h-4 w-4 mr-1 shrink-0" /> Marcar como concluída</>
                         )}
                       </Button>
                     </div>
