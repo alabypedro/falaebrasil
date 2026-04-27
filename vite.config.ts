@@ -53,12 +53,24 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api/, /^\/functions/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff,woff2}"],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
         runtimeCaching: [
           {
             urlPattern: ({ url }) =>
               url.origin.includes("supabase.co") ||
               url.pathname.startsWith("/functions/"),
             handler: "NetworkOnly",
+          },
+          {
+            // HTML/navegação: sempre tenta a rede primeiro para pegar novas versões
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "html-cache",
+              networkTimeoutSeconds: 5,
+            },
           },
           {
             urlPattern: ({ request }) => request.destination === "image",

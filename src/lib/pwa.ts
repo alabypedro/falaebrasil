@@ -46,15 +46,29 @@ export async function setupPWA() {
 
   try {
     const { registerSW } = await import("virtual:pwa-register");
-    registerSW({
+    const updateSW = registerSW({
       immediate: true,
+      // Quando uma nova versão estiver pronta, recarrega automaticamente
+      onNeedRefresh() {
+        updateSW(true);
+      },
       onRegisteredSW(_url, registration) {
-        // Periodic update check (every hour)
-        if (registration) {
-          setInterval(() => {
-            registration.update().catch(() => {});
-          }, 60 * 60 * 1000);
-        }
+        if (!registration) return;
+
+        const check = () => registration.update().catch(() => {});
+
+        // Verifica atualizações a cada 60 segundos
+        setInterval(check, 60 * 1000);
+
+        // Verifica também quando o app volta ao foco ou recupera a conexão
+        window.addEventListener("focus", check);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") check();
+        });
+        window.addEventListener("online", check);
+
+        // Checagem imediata após o registro
+        check();
       },
     });
   } catch (err) {
