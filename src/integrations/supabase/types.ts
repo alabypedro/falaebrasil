@@ -778,6 +778,7 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_level_from_xp: { Args: { _xp: number }; Returns: string }
       can_access_level: { Args: { _level: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -812,6 +813,8 @@ export type Database = {
           read_ct: number
         }[]
       }
+      reset_all_progress: { Args: never; Returns: Json }
+      reset_course_progress: { Args: { _course_id: string }; Returns: Json }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
     }
     Enums: {

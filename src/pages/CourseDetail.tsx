@@ -7,9 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic } from "lucide-react";
+import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Course {
   id: string;
@@ -66,6 +77,7 @@ export default function CourseDetail() {
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
   const [lessonQuizId, setLessonQuizId] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   const loadData = async () => {
     if (!courseId || !user) return;
@@ -133,6 +145,19 @@ export default function CourseDetail() {
     setMarking(false);
   };
 
+  const handleResetCourse = async () => {
+    if (!user || !courseId) return;
+    setResetting(true);
+    const { error } = await supabase.rpc("reset_course_progress", { _course_id: courseId });
+    if (error) {
+      toast.error(error.message || "Erro ao resetar progresso");
+    } else {
+      setCompletedLessons(new Set());
+      toast.success("Progresso do curso resetado! 🔄");
+    }
+    setResetting(false);
+  };
+
   const totalLessons = lessons.length;
   const completedCount = lessons.filter((l) => completedLessons.has(l.id)).length;
   const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
@@ -180,6 +205,28 @@ export default function CourseDetail() {
           <div className="flex items-center gap-3 mt-3">
             <Progress value={progressPct} className="h-2 flex-1 max-w-xs" />
             <span className="text-xs text-muted-foreground">{completedCount}/{totalLessons} aulas • {progressPct}%</span>
+            {completedCount > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={resetting}>
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                    Resetar progresso
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Resetar progresso deste curso?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Todas as aulas deste curso serão marcadas como não assistidas e o XP correspondente (25 por aula) será descontado do seu total. Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleResetCourse}>Resetar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       </div>
