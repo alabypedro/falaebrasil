@@ -99,9 +99,20 @@ export default function CourseDetail() {
           .in("module_id", moduleIds)
           .order("display_order");
         if (lessonsData) {
-          setLessons(lessonsData);
-          if (!activeLesson && lessonsData.length > 0) {
-            setActiveLesson(lessonsData[0]);
+          // Sort lessons by module display_order, then lesson display_order
+          const moduleOrder: Record<string, number> = {};
+          modulesData.forEach((m) => { moduleOrder[m.id] = m.display_order; });
+          const ordered = [...lessonsData].sort((a, b) => {
+            const mo = (moduleOrder[a.module_id] ?? 0) - (moduleOrder[b.module_id] ?? 0);
+            if (mo !== 0) return mo;
+            return (a.display_order ?? 0) - (b.display_order ?? 0);
+          });
+          setLessons(ordered);
+          if (!activeLesson && ordered.length > 0) {
+            const completedIds = new Set((progressData ?? []).map((p) => p.lesson_id));
+            // Resume on first non-completed lesson; if all done, last lesson
+            const nextLesson = ordered.find((l) => !completedIds.has(l.id)) ?? ordered[ordered.length - 1];
+            setActiveLesson(nextLesson);
           }
         }
       }
