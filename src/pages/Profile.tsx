@@ -8,7 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Camera, ArrowLeft, Loader2 } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, RotateCcw } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -19,6 +30,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,6 +81,19 @@ export default function Profile() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleResetAll = async () => {
+    if (!user) return;
+    setResetting(true);
+    const { error } = await supabase.rpc("reset_all_progress");
+    if (error) {
+      toast.error(error.message || "Erro ao resetar progresso");
+      setResetting(false);
+      return;
+    }
+    toast.success("Todo o progresso foi resetado! 🔄");
+    setTimeout(() => { window.location.href = "/"; }, 800);
   };
 
   const initials = (displayName || user?.email || "U")
@@ -156,6 +181,39 @@ export default function Profile() {
           <Button onClick={handleSave} disabled={saving} className="w-full">
             {saving ? "Salvando..." : "Salvar Alterações"}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="text-base text-destructive">Zona de Perigo</CardTitle>
+          <CardDescription>
+            Resete todo o seu progresso: zera XP, retorna ao nível A1, marca todas as aulas como não assistidas e apaga o histórico de quizzes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full" disabled={resetting}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                {resetting ? "Resetando..." : "Resetar todo o progresso"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Resetar TODO o seu progresso?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação irá zerar seu XP, voltar seu nível para A1, marcar todas as aulas como não assistidas e apagar todas as suas tentativas de quiz. Não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetAll} className="bg-destructive hover:bg-destructive/90">
+                  Resetar tudo
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
     </div>
