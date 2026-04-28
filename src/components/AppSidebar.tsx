@@ -11,6 +11,7 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Progress } from "@/components/ui/progress";
+import falaeLogo from "@/assets/falae-brasil-logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -46,9 +47,11 @@ export default function AppSidebar() {
 
         {/* Logo */}
         <div className={`relative flex items-center border-b border-sidebar-border/30 ${collapsed ? "justify-center px-2 py-4" : "gap-2.5 px-4 py-5"}`}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-accent text-sidebar-primary-foreground font-display font-extrabold text-sm shadow-glow">
-            FB
-          </div>
+          <img
+            src={falaeLogo}
+            alt="Falaê Brasil!"
+            className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+          />
           {!collapsed && (
             <div className="flex flex-col animate-fade-in min-w-0">
               <span className="text-sm font-display font-bold text-sidebar-foreground leading-tight tracking-tight truncate">
