@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic } from "lucide-react";
+import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNav = [
@@ -10,6 +10,7 @@ const adminNav = [
   { to: "/admin/quizzes", icon: HelpCircle, label: "Quizzes" },
   { to: "/admin/library", icon: Library, label: "Biblioteca BST" },
   { to: "/admin/prompts", icon: Mic, label: "Textos AI Falaê" },
+  { to: "/admin/admins", icon: ShieldCheck, label: "Admins" },
 ];
 
 export default function AdminLayout() {
