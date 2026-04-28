@@ -8,14 +8,14 @@
   "theme_color": "#1a2744",
   "icons": [
     {
-      "src": "/placeholder.svg",
+      "src": "/falae-brasil-logo.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "/placeholder.svg",
+      "src": "/falae-brasil-logo.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }
