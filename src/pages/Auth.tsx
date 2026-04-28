@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Mail, Lock, User } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
@@ -51,20 +49,6 @@ export default function Auth() {
     } catch (err: any) {
       toast.error(err.message || "Erro na autenticação.");
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (result.error) throw result.error;
-      if (!result.redirected) navigate("/");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao entrar com Google.");
       setLoading(false);
     }
   };
