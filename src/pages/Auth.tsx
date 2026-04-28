@@ -81,7 +81,9 @@ export default function Auth() {
             <img
               src={falaeLogo}
               alt="Falaê Brasil!"
-              className="mx-auto h-20 w-20 object-contain animate-float drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+              loading="eager"
+              decoding="async"
+              className="mx-auto block h-24 w-24 sm:h-20 sm:w-20 object-contain animate-float drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
             />
             <CardTitle className="text-2xl font-display font-extrabold">Recuperar Senha</CardTitle>
             <CardDescription className="text-sm">
@@ -130,7 +132,9 @@ export default function Auth() {
           <img
             src={falaeLogo}
             alt="Falaê Brasil!"
-            className="mx-auto h-24 w-24 object-contain animate-float drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+            loading="eager"
+            decoding="async"
+            className="mx-auto block h-28 w-28 sm:h-24 sm:w-24 object-contain animate-float drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
           />
           <CardTitle className="text-2xl md:text-3xl font-display font-extrabold tracking-tight">
             {isSignUp ? "Criar Conta" : "Bem-vindo de volta"}
