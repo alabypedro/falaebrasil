@@ -29,7 +29,7 @@ const navItems = [
   { title: "Meus Cursos", url: "/courses", icon: BookOpen },
   { title: "AI Falaê", url: "/voice-lab", icon: Mic },
   { title: "Biblioteca BST", url: "/library", icon: Library },
-  { title: "Comunidade", url: "/community", icon: Users },
+  { title: "Lets Falaê", url: "/community", icon: Users },
 ];
 
 export default function AppSidebar() {
