@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Mail, Lock, User } from "lucide-react";
+import falaeLogo from "@/assets/falae-brasil-logo.png";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -77,9 +78,11 @@ export default function Auth() {
 
         <Card className="w-full max-w-md glass-strong shadow-elegant border-border/40 relative z-10">
           <CardHeader className="text-center space-y-3">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-accent text-accent-foreground font-display font-extrabold text-lg shadow-glow animate-float">
-              FB
-            </div>
+            <img
+              src={falaeLogo}
+              alt="Falaê Brasil!"
+              className="mx-auto h-20 w-20 object-contain animate-float drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+            />
             <CardTitle className="text-2xl font-display font-extrabold">Recuperar Senha</CardTitle>
             <CardDescription className="text-sm">
               Enviaremos um link de recuperação para seu email.
@@ -124,9 +127,11 @@ export default function Auth() {
 
       <Card className="w-full max-w-md glass-strong shadow-elegant border-border/40 relative z-10 animate-scale-in">
         <CardHeader className="text-center space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-accent text-accent-foreground font-display font-extrabold text-lg shadow-glow animate-float">
-            FB
-          </div>
+          <img
+            src={falaeLogo}
+            alt="Falaê Brasil!"
+            className="mx-auto h-24 w-24 object-contain animate-float drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+          />
           <CardTitle className="text-2xl md:text-3xl font-display font-extrabold tracking-tight">
             {isSignUp ? "Criar Conta" : "Bem-vindo de volta"}
           </CardTitle>
