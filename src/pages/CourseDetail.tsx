@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdmin } from "@/hooks/useAdmin";
+import { Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +70,8 @@ export default function CourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useAuth();
+  const { isAdmin } = useAdmin();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -186,6 +190,22 @@ export default function CourseDetail() {
       <div className="text-center py-12">
         <p className="text-muted-foreground">Curso não encontrado.</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate("/courses")}>Voltar</Button>
+      </div>
+    );
+  }
+
+  // Gating: bloqueia conteúdo se usuário não comprou o Essencial Pro A1 (admins veem tudo)
+  if (!isAdmin && !profile?.has_course_access) {
+    return (
+      <div className="max-w-md mx-auto py-12 text-center space-y-4">
+        <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <Lock className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="text-2xl font-bold">Conteúdo bloqueado</h1>
+        <p className="text-muted-foreground">
+          Para acessar o curso <strong>{course.title}</strong> você precisa adquirir o <strong>Essencial Pro A1</strong>.
+        </p>
+        <Button onClick={() => navigate("/courses")}>Ver detalhes do curso</Button>
       </div>
     );
   }
