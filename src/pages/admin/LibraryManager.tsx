@@ -18,9 +18,17 @@ interface LibraryItem {
   file_url: string | null;
   audio_url: string | null;
   created_at: string;
+  access_key: string;
 }
 
-const emptyForm = { title: "", type: "ebook", file_url: "", audio_url: "" };
+const emptyForm = { title: "", type: "ebook", file_url: "", audio_url: "", access_key: "free" };
+
+const accessLabels: Record<string, string> = {
+  free: "Grátis (todos)",
+  ebook1: "E-book 1 (Anfitrião Soberano)",
+  ebook2: "E-book 2 (Decodificador de Gringo)",
+  ebook3: "E-book 3 (Vocabulário de Poder)",
+};
 
 export default function LibraryManager() {
   const [items, setItems] = useState<LibraryItem[]>([]);
@@ -45,7 +53,7 @@ export default function LibraryManager() {
 
   const openEdit = (item: LibraryItem) => {
     setEditing(item);
-    setForm({ title: item.title, type: item.type, file_url: item.file_url ?? "", audio_url: item.audio_url ?? "" });
+    setForm({ title: item.title, type: item.type, file_url: item.file_url ?? "", audio_url: item.audio_url ?? "", access_key: item.access_key ?? "free" });
     setOpen(true);
   };
 
@@ -73,7 +81,7 @@ export default function LibraryManager() {
   const save = async () => {
     if (!form.title.trim()) { toast.error("Título obrigatório"); return; }
     setLoading(true);
-    const payload = { title: form.title.trim(), type: form.type, file_url: form.file_url.trim() || null, audio_url: form.audio_url.trim() || null };
+    const payload = { title: form.title.trim(), type: form.type, file_url: form.file_url.trim() || null, audio_url: form.audio_url.trim() || null, access_key: form.access_key };
 
     if (editing) {
       const { error } = await supabase.from("library_bst").update(payload).eq("id", editing.id);
@@ -116,13 +124,14 @@ export default function LibraryManager() {
             <TableRow>
               <TableHead>Título</TableHead>
               <TableHead>Tipo</TableHead>
+              <TableHead>Acesso</TableHead>
               <TableHead>Arquivos</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum item na biblioteca.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum item na biblioteca.</TableCell></TableRow>
             )}
             {filtered.map((item) => (
               <TableRow key={item.id}>
@@ -131,6 +140,11 @@ export default function LibraryManager() {
                   <Badge variant="secondary" className="gap-1">
                     {item.type === "ebook" ? <BookOpen className="h-3 w-3" /> : <Headphones className="h-3 w-3" />}
                     {item.type === "ebook" ? "E-book" : "Audiobook"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={item.access_key === "free" ? "outline" : "default"} className="text-[10px]">
+                    {accessLabels[item.access_key] ?? item.access_key}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
@@ -171,6 +185,19 @@ export default function LibraryManager() {
                   <SelectItem value="audiobook">Audiobook</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Acesso requerido</Label>
+              <Select value={form.access_key} onValueChange={(v) => setForm({ ...form, access_key: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Grátis (todos os usuários)</SelectItem>
+                  <SelectItem value="ebook1">E-book 1 — Anfitrião Soberano</SelectItem>
+                  <SelectItem value="ebook2">E-book 2 — Decodificador de Gringo</SelectItem>
+                  <SelectItem value="ebook3">E-book 3 — Vocabulário de Poder</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Define qual flag de compra libera este item para o usuário.</p>
             </div>
             <div className="space-y-2">
               <Label>Arquivo PDF / E-book</Label>
