@@ -54,16 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch profile when user changes
-  useEffect(() => {
-    if (!user) {
-      setProfile(null);
-      return;
-    }
-
-    fetchProfile();
-  }, [user]);
-
   const fetchProfile = async () => {
     if (!user) return;
     const { data } = await supabase
@@ -73,6 +63,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
     if (data) setProfile(data as any);
   };
+
+  // Fetch profile when user changes
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
