@@ -55,7 +55,13 @@ export default function LibraryManager() {
     const setUploading = field === "file_url" ? setUploadingFile : setUploadingAudio;
     setUploading(true);
     const folder = field === "file_url" ? "library" : "library-audio";
-    const path = `${folder}/${Date.now()}_${file.name}`;
+    // Sanitize filename: remove accents, replace invalid chars (Supabase Storage rejects keys with ã, ç, spaces, etc.)
+    const sanitized = file.name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // strip diacritics
+      .replace(/[^a-zA-Z0-9._-]/g, "_") // replace any non-safe char with underscore
+      .replace(/_+/g, "_");
+    const path = `${folder}/${Date.now()}_${sanitized}`;
     const { error } = await supabase.storage.from("lesson-files").upload(path, file);
     if (error) { toast.error("Erro no upload: " + error.message); setUploading(false); return; }
     const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
