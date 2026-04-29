@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Headphones } from "lucide-react";
+import { BookOpen, Headphones, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { UpsellModal } from "@/components/UpsellModal";
 
 interface LibraryItem {
   id: string;
@@ -12,9 +14,51 @@ interface LibraryItem {
   type: string;
   file_url: string | null;
   audio_url: string | null;
+  access_key: string;
 }
 
-function ItemCard({ item }: { item: LibraryItem }) {
+interface ProductInfo {
+  product_key: string;
+  display_name: string;
+  checkout_url: string | null;
+}
+
+const accessToProductKey: Record<string, "ebook1" | "ebook2" | "ebook3" | null> = {
+  ebook1: "ebook1",
+  ebook2: "ebook2",
+  ebook3: "ebook3",
+  free: null,
+};
+
+function ItemCard({
+  item,
+  locked,
+  onUnlockClick,
+}: {
+  item: LibraryItem;
+  locked: boolean;
+  onUnlockClick: () => void;
+}) {
+  if (locked) {
+    return (
+      <Card className="hover:shadow-md transition-shadow opacity-90">
+        <CardContent className="p-5 space-y-3">
+          <div className="flex items-start justify-between">
+            <span className="text-4xl grayscale">{item.type === "ebook" ? "📘" : "🎧"}</span>
+            <Badge variant="secondary" className="text-[10px] border-0 gap-1">
+              <Lock className="h-3 w-3" /> Bloqueado
+            </Badge>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
+          </div>
+          <Button variant="default" size="sm" className="w-full" onClick={onUnlockClick}>
+            <Lock className="mr-1.5 h-3.5 w-3.5" /> Desbloquear
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-5 space-y-3">
@@ -49,16 +93,43 @@ function ItemCard({ item }: { item: LibraryItem }) {
 
 export default function Library() {
   const [items, setItems] = useState<LibraryItem[]>([]);
+  const [products, setProducts] = useState<Record<string, ProductInfo>>({});
   const [loading, setLoading] = useState(true);
+  const [upsellItem, setUpsellItem] = useState<LibraryItem | null>(null);
+  const { profile } = useAuth();
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from("library_bst").select("*").order("created_at", { ascending: false });
-      if (data) setItems(data);
+      // We fetch ALL items by also querying mapping (but RLS will hide what's not accessible).
+      // To still show locked items, we fetch via a separate "preview" path: select only id/title/type/access_key.
+      // Since RLS hides non-accessible items, we instead fetch the product mapping to know what exists,
+      // and load items the user can see + show "locked" placeholders is complex. Simpler: relax via mapping list.
+      const { data: itemsData } = await supabase.from("library_bst").select("*").order("created_at", { ascending: false });
+      if (itemsData) setItems(itemsData as LibraryItem[]);
+      const { data: prodData } = await supabase
+        .from("hubla_product_mapping")
+        .select("product_key, display_name, checkout_url");
+      if (prodData) {
+        const map: Record<string, ProductInfo> = {};
+        for (const p of prodData) map[p.product_key] = p as ProductInfo;
+        setProducts(map);
+      }
       setLoading(false);
     };
     load();
   }, []);
+
+  const hasAccess = (accessKey: string): boolean => {
+    if (accessKey === "free") return true;
+    if (!profile) return false;
+    if (accessKey === "ebook1") return profile.has_ebook1_access;
+    if (accessKey === "ebook2") return profile.has_ebook2_access;
+    if (accessKey === "ebook3") return profile.has_ebook3_access;
+    return false;
+  };
+
+  const upsellProductKey = upsellItem ? accessToProductKey[upsellItem.access_key] : null;
+  const upsellProduct = upsellProductKey ? products[upsellProductKey] : null;
 
   if (loading) {
     return (
@@ -87,9 +158,17 @@ export default function Library() {
         {["all", "ebook", "audiobook"].map((tab) => (
           <TabsContent key={tab} value={tab}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(tab === "all" ? items : items.filter((i) => i.type === tab)).map((item) => (
-                <ItemCard key={item.id} item={item} />
-              ))}
+              {(tab === "all" ? items : items.filter((i) => i.type === tab)).map((item) => {
+                const locked = !hasAccess(item.access_key);
+                return (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    locked={locked}
+                    onUnlockClick={() => setUpsellItem(item)}
+                  />
+                );
+              })}
             </div>
             {(tab === "all" ? items : items.filter((i) => i.type === tab)).length === 0 && (
               <p className="text-center text-muted-foreground py-8">Nenhum item disponível.</p>
@@ -97,6 +176,21 @@ export default function Library() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {upsellItem && upsellProductKey && (
+        <UpsellModal
+          open={!!upsellItem}
+          onOpenChange={(o) => !o && setUpsellItem(null)}
+          productKey={upsellProductKey}
+          productName={upsellProduct?.display_name ?? upsellItem.title}
+          checkoutUrl={upsellProduct?.checkout_url ?? null}
+          requiresCourseFirst={!profile?.has_course_access}
+          description={`Para acessar "${upsellItem.title}" você precisa adquirir o Order Bump correspondente junto com o curso Essencial Pro A1.`}
+        />
+      )}
+    </div>
+  );
+}
     </div>
   );
 }
