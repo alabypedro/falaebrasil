@@ -7,7 +7,18 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  profile: { display_name: string | null; avatar_url: string | null; level: string; xp: number; streak_days: number } | null;
+  profile: {
+    display_name: string | null;
+    avatar_url: string | null;
+    level: string;
+    xp: number;
+    streak_days: number;
+    has_course_access: boolean;
+    has_ebook1_access: boolean;
+    has_ebook2_access: boolean;
+    has_ebook3_access: boolean;
+  } | null;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signOut: async () => {},
   profile: null,
+  refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -42,23 +54,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const fetchProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url, level, xp, streak_days, has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access")
+      .eq("user_id", user.id)
+      .single();
+    if (data) setProfile(data as any);
+  };
+
   // Fetch profile when user changes
   useEffect(() => {
     if (!user) {
       setProfile(null);
       return;
     }
-
-    const fetchProfile = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url, level, xp, streak_days")
-        .eq("user_id", user.id)
-        .single();
-      if (data) setProfile(data);
-    };
-
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const signOut = async () => {
@@ -66,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, profile }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, profile, refreshProfile: fetchProfile }}>
       {children}
     </AuthContext.Provider>
   );

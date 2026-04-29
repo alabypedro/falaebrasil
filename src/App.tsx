@@ -27,6 +27,8 @@ import QuizzesManager from "@/pages/admin/QuizzesManager";
 import LibraryManager from "@/pages/admin/LibraryManager";
 import PromptsManager from "@/pages/admin/PromptsManager";
 import AdminsManager from "@/pages/admin/AdminsManager";
+import HublaProductsManager from "@/pages/admin/HublaProductsManager";
+import Success from "@/pages/Success";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +90,7 @@ const App = () => (
                       <Route path="/community" element={<Community />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/quiz/:quizId" element={<QuizPlayer />} />
+                      <Route path="/success" element={<Success />} />
                       <Route
                         path="/admin/*"
                         element={
@@ -104,6 +107,7 @@ const App = () => (
                         <Route path="library" element={<LibraryManager />} />
                         <Route path="prompts" element={<PromptsManager />} />
                         <Route path="admins" element={<AdminsManager />} />
+                        <Route path="hubla" element={<HublaProductsManager />} />
                       </Route>
                       <Route path="*" element={<NotFound />} />
                     </Routes>

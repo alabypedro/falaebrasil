@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { UpsellModal } from "@/components/UpsellModal";
 
 interface CourseWithProgress {
   id: string;
@@ -26,13 +27,23 @@ const levelColors: Record<string, string> = {
   B2: "bg-innovation/15 text-innovation",
 };
 
-function CourseCard({ course, index }: { course: CourseWithProgress; index: number }) {
+function CourseCard({
+  course,
+  index,
+  locked,
+  onLockedClick,
+}: {
+  course: CourseWithProgress;
+  index: number;
+  locked: boolean;
+  onLockedClick: () => void;
+}) {
   const navigate = useNavigate();
   return (
     <Card
       className="relative overflow-hidden hover-lift cursor-pointer animate-fade-up"
       style={{ "--delay": `${80 * (index + 1)}ms` } as React.CSSProperties}
-      onClick={() => navigate(`/courses/${course.id}`)}
+      onClick={() => (locked ? onLockedClick() : navigate(`/courses/${course.id}`))}
     >
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between">
@@ -41,7 +52,7 @@ function CourseCard({ course, index }: { course: CourseWithProgress; index: numb
               <img
                 src={course.thumbnail_url}
                 alt=""
-                className="h-12 w-12 rounded object-cover flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+                className={`h-12 w-12 rounded object-cover flex-shrink-0 transition-transform duration-300 group-hover:scale-105 ${locked ? "grayscale" : ""}`}
               />
             )}
             <div>
@@ -55,17 +66,25 @@ function CourseCard({ course, index }: { course: CourseWithProgress; index: numb
               <p className="text-xs text-muted-foreground">{course.totalLessons} aulas</p>
             </div>
           </div>
-          {course.progress === 100 && course.totalLessons > 0 ? (
+          {locked ? (
+            <Lock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+          ) : course.progress === 100 && course.totalLessons > 0 ? (
             <CheckCircle className="h-5 w-5 text-success flex-shrink-0 animate-xp-pop" />
           ) : null}
         </div>
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Progresso</span>
-            <span>{course.progress}%</span>
+        {locked ? (
+          <Badge variant="default" className="w-full justify-center py-1.5 gap-1.5">
+            <Lock className="h-3 w-3" /> Comprar Essencial Pro A1
+          </Badge>
+        ) : (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Progresso</span>
+              <span>{course.progress}%</span>
+            </div>
+            <Progress value={course.progress} className="h-1.5" />
           </div>
-          <Progress value={course.progress} className="h-1.5" />
-        </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -74,12 +93,21 @@ function CourseCard({ course, index }: { course: CourseWithProgress; index: numb
 export default function Courses() {
   const [courses, setCourses] = useState<CourseWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [coursePrice, setCoursePrice] = useState<{ display_name: string; checkout_url: string | null } | null>(null);
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     if (!user) return;
 
     const load = async () => {
+      const { data: prodData } = await supabase
+        .from("hubla_product_mapping")
+        .select("display_name, checkout_url")
+        .eq("product_key", "essencial_pro_a1")
+        .maybeSingle();
+      if (prodData) setCoursePrice(prodData as any);
+
       const { data: coursesData } = await supabase
         .from("courses")
         .select("id, title, level, category, description, thumbnail_url")
@@ -127,6 +155,8 @@ export default function Courses() {
     );
   }
 
+  const isLocked = !profile?.has_course_access;
+
   return (
     <div className="space-y-6 max-w-6xl page-transition">
       <div className="animate-fade-up">
@@ -139,13 +169,28 @@ export default function Courses() {
       <div className="animate-fade-up" style={{ "--delay": "100ms" } as React.CSSProperties}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {courses.map((course, i) => (
-            <CourseCard key={course.id} course={course} index={i} />
+            <CourseCard
+              key={course.id}
+              course={course}
+              index={i}
+              locked={isLocked}
+              onLockedClick={() => setShowUpsell(true)}
+            />
           ))}
         </div>
         {courses.length === 0 && (
           <p className="text-center text-muted-foreground py-8 animate-fade-in">Nenhum curso publicado.</p>
         )}
       </div>
+
+      <UpsellModal
+        open={showUpsell}
+        onOpenChange={setShowUpsell}
+        productKey="essencial_pro_a1"
+        productName={coursePrice?.display_name ?? "Essencial Pro A1"}
+        checkoutUrl={coursePrice?.checkout_url ?? null}
+        description="Para acessar o conteúdo do curso Essencial Pro A1 você precisa adquirir o curso."
+      />
     </div>
   );
 }
