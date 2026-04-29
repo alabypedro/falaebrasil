@@ -12,15 +12,19 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, HelpCircle, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-interface Quiz { id: string; lesson_id: string; title: string; passing_score: number; lessons?: { title: string; modules?: { title: string } | null } | null; }
+interface Quiz { id: string; lesson_id: string; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
-interface LessonOption { id: string; title: string; module_title: string; }
+interface LessonOption { id: string; title: string; module_id: string; module_title: string; }
+interface ModuleOption { id: string; title: string; course_title: string; }
 
 const emptyQuizForm = { lesson_id: "", title: "", passing_score: 70 };
 
 export default function QuizzesManager() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [lessons, setLessons] = useState<LessonOption[]>([]);
+  const [modules, setModules] = useState<ModuleOption[]>([]);
+  const [filterModule, setFilterModule] = useState<string>("all");
+  const [filterLesson, setFilterLesson] = useState<string>("all");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Quiz | null>(null);
   const [form, setForm] = useState(emptyQuizForm);
@@ -28,15 +32,25 @@ export default function QuizzesManager() {
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    const [{ data: qz }, { data: lsn }] = await Promise.all([
-      supabase.from("quizzes").select("*, lessons(title, modules(title))").order("created_at"),
-      supabase.from("lessons").select("id, title, modules(title)").order("display_order"),
+    const [{ data: qz }, { data: lsn }, { data: mods }] = await Promise.all([
+      supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title))").order("created_at"),
+      supabase.from("lessons").select("id, title, module_id, modules(title)").order("display_order"),
+      supabase.from("modules").select("id, title, courses(title)").order("display_order"),
     ]);
     if (qz) setQuizzes(qz);
-    if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_title: l.modules?.title ?? "" })));
+    if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_id: l.module_id, module_title: l.modules?.title ?? "" })));
+    if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
   };
 
   useEffect(() => { load(); }, []);
+
+  const lessonsForFilter = filterModule === "all" ? lessons : lessons.filter((l) => l.module_id === filterModule);
+
+  const filtered = quizzes.filter((q) => {
+    if (filterLesson !== "all") return q.lesson_id === filterLesson;
+    if (filterModule !== "all") return (q.lessons as any)?.modules?.id === filterModule || (q.lessons as any)?.module_id === filterModule;
+    return true;
+  });
 
   const openNew = () => {
     setEditing(null);
@@ -117,9 +131,25 @@ export default function QuizzesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-semibold">Quizzes</h2>
-        <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Novo Quiz</Button>
+        <div className="flex gap-2 flex-wrap">
+          <Select value={filterModule} onValueChange={(v) => { setFilterModule(v); setFilterLesson("all"); }}>
+            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar por módulo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os módulos</SelectItem>
+              {modules.map((m) => <SelectItem key={m.id} value={m.id}>{m.course_title} › {m.title}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterLesson} onValueChange={setFilterLesson}>
+            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar por lição" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as lições</SelectItem>
+              {lessonsForFilter.map((l) => <SelectItem key={l.id} value={l.id}>{l.module_title} › {l.title}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Novo Quiz</Button>
+        </div>
       </div>
 
       <div className="rounded-md border">
@@ -133,10 +163,10 @@ export default function QuizzesManager() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {quizzes.length === 0 && (
+            {filtered.length === 0 && (
               <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum quiz cadastrado.</TableCell></TableRow>
             )}
-            {quizzes.map((q) => (
+            {filtered.map((q) => (
               <TableRow key={q.id}>
                 <TableCell className="font-medium">{q.title}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{(q.lessons as any)?.title ?? "—"}</TableCell>
