@@ -247,6 +247,54 @@ export type Database = {
         }
         Relationships: []
       }
+      hubla_product_mapping: {
+        Row: {
+          checkout_url: string | null
+          created_at: string
+          display_name: string
+          grants_course: boolean
+          grants_ebook1: boolean
+          grants_ebook2: boolean
+          grants_ebook3: boolean
+          hubla_product_id: string | null
+          hubla_product_name: string | null
+          id: string
+          price_cents: number
+          product_key: string
+          updated_at: string
+        }
+        Insert: {
+          checkout_url?: string | null
+          created_at?: string
+          display_name: string
+          grants_course?: boolean
+          grants_ebook1?: boolean
+          grants_ebook2?: boolean
+          grants_ebook3?: boolean
+          hubla_product_id?: string | null
+          hubla_product_name?: string | null
+          id?: string
+          price_cents?: number
+          product_key: string
+          updated_at?: string
+        }
+        Update: {
+          checkout_url?: string | null
+          created_at?: string
+          display_name?: string
+          grants_course?: boolean
+          grants_ebook1?: boolean
+          grants_ebook2?: boolean
+          grants_ebook3?: boolean
+          hubla_product_id?: string | null
+          hubla_product_name?: string | null
+          id?: string
+          price_cents?: number
+          product_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lessons: {
         Row: {
           created_at: string
@@ -296,6 +344,7 @@ export type Database = {
       }
       library_bst: {
         Row: {
+          access_key: string
           audio_url: string | null
           created_at: string
           file_url: string | null
@@ -304,6 +353,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          access_key?: string
           audio_url?: string | null
           created_at?: string
           file_url?: string | null
@@ -312,6 +362,7 @@ export type Database = {
           type: string
         }
         Update: {
+          access_key?: string
           audio_url?: string | null
           created_at?: string
           file_url?: string | null
@@ -364,6 +415,10 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          has_course_access: boolean
+          has_ebook1_access: boolean
+          has_ebook2_access: boolean
+          has_ebook3_access: boolean
           hubla_customer_id: string | null
           id: string
           level: string
@@ -377,6 +432,10 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          has_course_access?: boolean
+          has_ebook1_access?: boolean
+          has_ebook2_access?: boolean
+          has_ebook3_access?: boolean
           hubla_customer_id?: string | null
           id?: string
           level?: string
@@ -390,6 +449,10 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          has_course_access?: boolean
+          has_ebook1_access?: boolean
+          has_ebook2_access?: boolean
+          has_ebook3_access?: boolean
           hubla_customer_id?: string | null
           id?: string
           level?: string
@@ -788,6 +851,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      has_bst_item_access: { Args: { _access_key: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
