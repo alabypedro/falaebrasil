@@ -61,7 +61,14 @@ function ItemCard({
   locked: boolean;
   onUnlockClick: () => void;
 }) {
-  if (locked) {
+  // Defesa em profundidade: se a URL não veio (a view safe nulifica quando não há acesso),
+  // tratamos como bloqueado independentemente do que o estado do client diga.
+  const missingAsset =
+    (item.type === "ebook" && !item.file_url) ||
+    (item.type === "audiobook" && !item.audio_url);
+  const effectivelyLocked = locked || missingAsset;
+
+  if (effectivelyLocked) {
     return (
       <Card className="hover:shadow-md transition-shadow opacity-90">
         <CardContent className="p-5 space-y-3">
@@ -127,7 +134,9 @@ export default function Library() {
       // To still show locked items, we fetch via a separate "preview" path: select only id/title/type/access_key.
       // Since RLS hides non-accessible items, we instead fetch the product mapping to know what exists,
       // and load items the user can see + show "locked" placeholders is complex. Simpler: relax via mapping list.
-      const { data: itemsData } = await supabase.from("library_bst").select("*");
+      // Use the safe view: file_url/audio_url come back NULL when the user lacks access,
+      // even if the client tries to bypass the UI lock.
+      const { data: itemsData } = await supabase.from("library_bst_safe").select("*");
       if (itemsData) setItems(sortLibrary(itemsData as LibraryItem[]));
       const { data: prodData } = await supabase
         .from("hubla_product_mapping")
