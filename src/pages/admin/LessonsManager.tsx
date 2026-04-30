@@ -269,24 +269,98 @@ export default function LessonsManager() {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
             </div>
             <div className="space-y-2">
-              <Label>Videoaula</Label>
-              <Input
-                value={form.video_url}
-                onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-                placeholder="Cole UM link: Vimeo (https://vimeo.com/...) OU YouTube (https://youtu.be/...)"
-              />
+              <div className="flex items-center justify-between">
+                <Label>Videoaulas</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setVideos((prev) => [
+                      ...prev,
+                      { title: `Videoaula ${prev.length + 1}`, video_url: "", display_order: prev.length },
+                    ])
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar vídeo
+                </Button>
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                Aceita apenas <strong>um link por vez</strong>: Vimeo ou YouTube. O player exibido na lição se adapta ao tipo informado.
+                Adicione uma ou mais videoaulas (Vimeo ou YouTube). O aluno poderá alternar entre elas dentro da unidade.
               </p>
-              {form.video_url && (() => {
-                const info = parseVideo(form.video_url);
-                if (info) {
-                  const label = info.provider === "youtube" ? "YouTube" : "Vimeo";
-                  return (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-xs text-success">
-                        <Video className="h-3.5 w-3.5" />
-                        <span>Vídeo do {label} detectado (ID: {info.id})</span>
+
+              {videos.length === 0 && (
+                <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  Nenhuma videoaula adicionada. Clique em "Adicionar vídeo" para incluir a primeira.
+                </div>
+              )}
+
+              {videos.map((v, idx) => {
+                const info = parseVideo(v.video_url);
+                const label = info ? (info.provider === "youtube" ? "YouTube" : "Vimeo") : null;
+                return (
+                  <div key={v.id ?? `local-${idx}`} className="rounded-md border p-3 space-y-2 bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-xs font-medium text-muted-foreground">#{idx + 1}</span>
+                      <Input
+                        value={v.title}
+                        onChange={(e) =>
+                          setVideos((prev) => prev.map((it, i) => (i === idx ? { ...it, title: e.target.value } : it)))
+                        }
+                        placeholder={`Título da videoaula ${idx + 1}`}
+                        className="h-8 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        disabled={idx === 0}
+                        onClick={() =>
+                          setVideos((prev) => {
+                            const next = [...prev];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            return next;
+                          })
+                        }
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        disabled={idx === videos.length - 1}
+                        onClick={() =>
+                          setVideos((prev) => {
+                            const next = [...prev];
+                            [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                            return next;
+                          })
+                        }
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setVideos((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={v.video_url}
+                      onChange={(e) =>
+                        setVideos((prev) => prev.map((it, i) => (i === idx ? { ...it, video_url: e.target.value } : it)))
+                      }
+                      placeholder="Link Vimeo (https://vimeo.com/...) ou YouTube (https://youtu.be/...)"
+                    />
+                    {v.video_url && info && (
+                      <div className="flex items-center gap-2 text-[11px] text-success">
+                        <Video className="h-3 w-3" />
+                        <span>{label} detectado (ID: {info.id})</span>
                         <a
                           href={info.openUrl}
                           target="_blank"
@@ -296,41 +370,13 @@ export default function LessonsManager() {
                           Abrir <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
-                      <div className="aspect-video w-full overflow-hidden rounded-md border bg-muted">
-                        <iframe
-                          src={info.embedUrl}
-                          className="h-full w-full"
-                          allow="autoplay; fullscreen; picture-in-picture"
-                          allowFullScreen
-                          title={`Preview ${label}`}
-                        />
-                      </div>
-                    </div>
-                  );
-                }
-                return (
-                  <p className="text-[11px] text-warning">
-                    Link não reconhecido. Use uma URL válida do Vimeo ou do YouTube.
-                  </p>
+                    )}
+                    {v.video_url && !info && (
+                      <p className="text-[11px] text-warning">Link não reconhecido. Use uma URL válida do Vimeo ou YouTube.</p>
+                    )}
+                  </div>
                 );
-              })()}
-              <details className="text-[11px] text-muted-foreground">
-                <summary className="cursor-pointer hover:text-foreground">
-                  Ou enviar arquivo direto (não recomendado para vídeos longos)
-                </summary>
-                <div className="mt-2 flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => handleFileUpload(e, "video")}
-                    disabled={uploadingVideo}
-                  />
-                  {uploadingVideo && <span className="text-xs">Enviando...</span>}
-                </div>
-                <p className="mt-1">
-                  Recomendamos hospedar vídeos no Vimeo e colar a URL acima — melhor performance e player profissional.
-                </p>
-              </details>
+              })}
             </div>
             <div className="space-y-2">
               <Label>PDF da Aula</Label>
