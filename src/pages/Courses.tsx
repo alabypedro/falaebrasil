@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { UpsellModal } from "@/components/UpsellModal";
+import { useAdmin } from "@/hooks/useAdmin";
 
 interface CourseWithProgress {
   id: string;
@@ -96,6 +97,7 @@ export default function Courses() {
   const [showUpsell, setShowUpsell] = useState(false);
   const [coursePrice, setCoursePrice] = useState<{ display_name: string; checkout_url: string | null } | null>(null);
   const { user, profile } = useAuth();
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
     if (!user) return;
@@ -145,7 +147,7 @@ export default function Courses() {
     };
 
     load();
-  }, [user]);
+  }, [user, isAdmin]);
 
   if (loading) {
     return (
@@ -156,6 +158,7 @@ export default function Courses() {
   }
 
   const isLocked = !profile?.has_course_access;
+  const visibleCourses = isAdmin ? courses : courses.filter((c) => c.level === "A1");
 
   return (
     <div className="space-y-6 max-w-6xl page-transition">
@@ -168,7 +171,7 @@ export default function Courses() {
 
       <div className="animate-fade-up" style={{ "--delay": "100ms" } as React.CSSProperties}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {courses.map((course, i) => (
+          {visibleCourses.map((course, i) => (
             <CourseCard
               key={course.id}
               course={course}
@@ -178,7 +181,7 @@ export default function Courses() {
             />
           ))}
         </div>
-        {courses.length === 0 && (
+        {visibleCourses.length === 0 && (
           <p className="text-center text-muted-foreground py-8 animate-fade-in">Nenhum curso publicado.</p>
         )}
       </div>
