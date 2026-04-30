@@ -49,6 +49,9 @@ Deno.serve(async (req) => {
     const audioFile = formData.get("audio") as File | null;
     const referenceText = formData.get("referenceText") as string | null;
     const language = (formData.get("language") as string) || "en-US";
+    const modeRaw = (formData.get("mode") as string | null)?.toLowerCase();
+    const mode: "scripted" | "unscripted" =
+      modeRaw === "unscripted" ? "unscripted" : "scripted";
 
     if (!audioFile) {
       return new Response(JSON.stringify({ error: "No audio file provided" }), {
@@ -85,25 +88,27 @@ Deno.serve(async (req) => {
     const audioBuffer = new Uint8Array(audioBytes);
     console.log(`Audio received: ${audioBuffer.length} bytes, type: ${audioFile.type}, name: ${audioFile.name}`);
 
-    // ---- SCRIPTED CREDIT CHECK ----
-    // Check user's scripted balance BEFORE calling Azure to avoid wasted API spend.
+    // ---- CREDIT CHECK (per mode) ----
+    // Check the relevant balance BEFORE calling Azure to avoid wasted API spend.
+    const balanceColumn = mode === "unscripted" ? "unscripted_balance" : "scripted_balance";
     const { data: profileRow, error: profileErr } = await supabase
       .from("profiles")
-      .select("scripted_balance")
+      .select(balanceColumn)
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (profileErr) {
-      console.error("Failed to read scripted_balance:", profileErr);
+      console.error(`Failed to read ${balanceColumn}:`, profileErr);
     }
 
-    const currentBalance = profileRow?.scripted_balance ?? 0;
+    const currentBalance = (profileRow as Record<string, number> | null)?.[balanceColumn] ?? 0;
     if (currentBalance <= 0) {
+      const label = mode === "unscripted" ? "Unscripted" : "Scripted";
       return new Response(
         JSON.stringify({
           error: "INSUFFICIENT_CREDITS",
-          credit_type: "scripted",
-          message: "Saldo de prática Scripted esgotado. Adquira novos módulos para continuar praticando.",
+          credit_type: mode,
+          message: `Saldo de prática ${label} esgotado. Adquira novos módulos para continuar praticando.`,
           fallback: true,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -146,7 +151,7 @@ Deno.serve(async (req) => {
     console.log("Azure raw response:", JSON.stringify(result));
     console.log("Azure RecognitionStatus:", result.RecognitionStatus);
 
-    // ---- DEBIT SCRIPTED SECONDS ----
+    // ---- DEBIT SECONDS (per mode) ----
     // Estimate audio duration from NBest[0].Duration (100-ns units) when available;
     // fall back to a minimum of 1 second so each call always debits something.
     let durationSeconds = 1;
@@ -157,13 +162,14 @@ Deno.serve(async (req) => {
       }
     } catch (_) { /* ignore */ }
 
-    const { data: debitResult, error: debitErr } = await supabase.rpc("debit_scripted_seconds", {
+    const debitRpc = mode === "unscripted" ? "debit_unscripted_seconds" : "debit_scripted_seconds";
+    const { data: debitResult, error: debitErr } = await supabase.rpc(debitRpc, {
       _seconds: durationSeconds,
     });
     if (debitErr) {
-      console.error("debit_scripted_seconds failed:", debitErr);
+      console.error(`${debitRpc} failed:`, debitErr);
     } else {
-      console.log("Debited scripted seconds:", debitResult);
+      console.log(`Debited ${mode} seconds:`, debitResult);
     }
 
     // Handle clear failures
