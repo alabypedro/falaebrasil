@@ -978,6 +978,7 @@ export type Database = {
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
+      uncomplete_video: { Args: { _video_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
