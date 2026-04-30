@@ -34,13 +34,13 @@ interface LessonVideo {
 
 const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", practice_text: "", display_order: 0 };
 
-// Detect and normalize Vimeo / YouTube URLs / IDs
-type VideoInfo = { provider: "vimeo" | "youtube"; id: string; embedUrl: string; openUrl: string };
+// Detect and normalize YouTube URLs / IDs
+type VideoInfo = { provider: "youtube"; id: string; embedUrl: string; openUrl: string };
 
 function parseVideo(url: string): VideoInfo | null {
   if (!url) return null;
   const trimmed = url.trim();
-  // YouTube
+  // YouTube full URL (watch, embed, shorts, youtu.be)
   const yt = trimmed.match(
     /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i,
   );
@@ -52,25 +52,13 @@ function parseVideo(url: string): VideoInfo | null {
       openUrl: `https://youtu.be/${yt[1]}`,
     };
   }
-  // Vimeo full URL
-  const vimeo = trimmed.match(
-    /vimeo\.com\/(?:video\/|channels\/[^/]+\/|groups\/[^/]+\/videos\/)?(\d+)/i,
-  );
-  if (vimeo) {
+  // Bare YouTube ID (11 chars, letters/digits/_-)
+  if (/^[\w-]{11}$/.test(trimmed)) {
     return {
-      provider: "vimeo",
-      id: vimeo[1],
-      embedUrl: `https://player.vimeo.com/video/${vimeo[1]}`,
-      openUrl: `https://vimeo.com/${vimeo[1]}`,
-    };
-  }
-  // Bare numeric ID → assume Vimeo
-  if (/^\d{6,}$/.test(trimmed)) {
-    return {
-      provider: "vimeo",
+      provider: "youtube",
       id: trimmed,
-      embedUrl: `https://player.vimeo.com/video/${trimmed}`,
-      openUrl: `https://vimeo.com/${trimmed}`,
+      embedUrl: `https://www.youtube.com/embed/${trimmed}`,
+      openUrl: `https://youtu.be/${trimmed}`,
     };
   }
   return null;
@@ -286,7 +274,7 @@ export default function LessonsManager() {
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Adicione uma ou mais videoaulas (Vimeo ou YouTube). O aluno poderá alternar entre elas dentro da unidade.
+                Adicione uma ou mais videoaulas do YouTube. O aluno poderá alternar entre elas dentro da unidade.
               </p>
 
               {videos.length === 0 && (
@@ -297,7 +285,7 @@ export default function LessonsManager() {
 
               {videos.map((v, idx) => {
                 const info = parseVideo(v.video_url);
-                const label = info ? (info.provider === "youtube" ? "YouTube" : "Vimeo") : null;
+                const label = info ? "YouTube" : null;
                 return (
                   <div key={v.id ?? `local-${idx}`} className="rounded-md border p-3 space-y-2 bg-muted/30">
                     <div className="flex items-center gap-2">
@@ -355,7 +343,7 @@ export default function LessonsManager() {
                       onChange={(e) =>
                         setVideos((prev) => prev.map((it, i) => (i === idx ? { ...it, video_url: e.target.value } : it)))
                       }
-                      placeholder="Link Vimeo (https://vimeo.com/...) ou YouTube (https://youtu.be/...)"
+                      placeholder="Link do YouTube (https://youtu.be/... ou https://youtube.com/watch?v=...)"
                     />
                     {v.video_url && info && (
                       <div className="flex items-center gap-2 text-[11px] text-success">
@@ -372,7 +360,7 @@ export default function LessonsManager() {
                       </div>
                     )}
                     {v.video_url && !info && (
-                      <p className="text-[11px] text-warning">Link não reconhecido. Use uma URL válida do Vimeo ou YouTube.</p>
+                      <p className="text-[11px] text-warning">Link não reconhecido. Use uma URL válida do YouTube.</p>
                     )}
                   </div>
                 );
