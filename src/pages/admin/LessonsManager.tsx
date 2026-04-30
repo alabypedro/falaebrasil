@@ -64,6 +64,19 @@ function parseVideo(url: string): VideoInfo | null {
   return null;
 }
 
+const VIDEO_SLOTS = 10;
+
+function buildSlots(existing: LessonVideo[]): LessonVideo[] {
+  const slots: LessonVideo[] = [];
+  for (let i = 0; i < VIDEO_SLOTS; i++) {
+    const found = existing.find((v) => v.display_order === i);
+    slots.push(
+      found ?? { title: `Videoaula ${i + 1}`, video_url: "", display_order: i },
+    );
+  }
+  return slots;
+}
+
 export default function LessonsManager() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
@@ -99,7 +112,7 @@ export default function LessonsManager() {
   const openNew = () => {
     setEditing(null);
     setForm({ ...emptyForm, module_id: filterModule !== "all" ? filterModule : modules[0]?.id ?? "" });
-    setVideos([]);
+    setVideos(buildSlots([]));
     setOpen(true);
   };
 
@@ -111,7 +124,7 @@ export default function LessonsManager() {
       .select("id, title, video_url, display_order")
       .eq("lesson_id", l.id)
       .order("display_order");
-    setVideos((data ?? []) as LessonVideo[]);
+    setVideos(buildSlots((data ?? []) as LessonVideo[]));
     setOpen(true);
   };
 
@@ -156,7 +169,13 @@ export default function LessonsManager() {
       for (let i = 0; i < videos.length; i++) {
         const v = videos[i];
         const url = v.video_url.trim();
-        if (!url) continue;
+        if (!url) {
+          // If this slot existed before but was cleared, remove it
+          if (v.id) {
+            await supabase.from("lesson_videos").delete().eq("id", v.id);
+          }
+          continue;
+        }
         const row = { lesson_id: lessonId, title: v.title.trim() || `Videoaula ${i + 1}`, video_url: url, display_order: i };
         if (v.id) {
           await supabase.from("lesson_videos").update(row).eq("id", v.id);
@@ -258,30 +277,14 @@ export default function LessonsManager() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Videoaulas</Label>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    setVideos((prev) => [
-                      ...prev,
-                      { title: `Videoaula ${prev.length + 1}`, video_url: "", display_order: prev.length },
-                    ])
-                  }
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar vídeo
-                </Button>
+                <Label>Videoaulas (10 slots)</Label>
+                <span className="text-[11px] text-muted-foreground">
+                  {videos.filter((v) => v.video_url.trim()).length}/{VIDEO_SLOTS} preenchidos
+                </span>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Adicione uma ou mais videoaulas do YouTube. O aluno poderá alternar entre elas dentro da unidade.
+                Cada unidade tem 10 campos para URLs do YouTube. Preencha apenas os que precisar — slots vazios não aparecem para o aluno.
               </p>
-
-              {videos.length === 0 && (
-                <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
-                  Nenhuma videoaula adicionada. Clique em "Adicionar vídeo" para incluir a primeira.
-                </div>
-              )}
 
               {videos.map((v, idx) => {
                 const info = parseVideo(v.video_url);
@@ -289,7 +292,6 @@ export default function LessonsManager() {
                 return (
                   <div key={v.id ?? `local-${idx}`} className="rounded-md border p-3 space-y-2 bg-muted/30">
                     <div className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span className="text-xs font-medium text-muted-foreground">#{idx + 1}</span>
                       <Input
                         value={v.title}
@@ -299,44 +301,23 @@ export default function LessonsManager() {
                         placeholder={`Título da videoaula ${idx + 1}`}
                         className="h-8 text-sm"
                       />
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        disabled={idx === 0}
-                        onClick={() =>
-                          setVideos((prev) => {
-                            const next = [...prev];
-                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                            return next;
-                          })
-                        }
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        disabled={idx === videos.length - 1}
-                        onClick={() =>
-                          setVideos((prev) => {
-                            const next = [...prev];
-                            [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
-                            return next;
-                          })
-                        }
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setVideos((prev) => prev.filter((_, i) => i !== idx))}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {v.video_url && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          title="Limpar este slot"
+                          onClick={() =>
+                            setVideos((prev) =>
+                              prev.map((it, i) =>
+                                i === idx ? { ...it, video_url: "" } : it,
+                              ),
+                            )
+                          }
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                     <Input
                       value={v.video_url}
