@@ -753,6 +753,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_video_progress: {
+        Row: {
+          completed_at: string
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_video_progress_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voice_sessions: {
         Row: {
           accuracy_score: number | null
@@ -911,6 +940,7 @@ export type Database = {
     Functions: {
       calculate_level_from_xp: { Args: { _xp: number }; Returns: string }
       can_access_level: { Args: { _level: string }; Returns: boolean }
+      complete_video: { Args: { _video_id: string }; Returns: Json }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
