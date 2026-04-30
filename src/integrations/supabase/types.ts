@@ -460,7 +460,9 @@ export type Database = {
           hubla_customer_id: string | null
           id: string
           level: string
+          scripted_balance: number
           streak_days: number
+          unscripted_balance: number
           updated_at: string
           user_id: string
           user_type: string
@@ -477,7 +479,9 @@ export type Database = {
           hubla_customer_id?: string | null
           id?: string
           level?: string
+          scripted_balance?: number
           streak_days?: number
+          unscripted_balance?: number
           updated_at?: string
           user_id: string
           user_type?: string
@@ -494,7 +498,9 @@ export type Database = {
           hubla_customer_id?: string | null
           id?: string
           level?: string
+          scripted_balance?: number
           streak_days?: number
+          unscripted_balance?: number
           updated_at?: string
           user_id?: string
           user_type?: string
@@ -782,6 +788,69 @@ export type Database = {
           },
         ]
       }
+      voice_credit_grants: {
+        Row: {
+          created_at: string
+          hubla_event_id: string
+          hubla_product_id: string
+          id: string
+          raw_payload: Json | null
+          scripted_seconds_added: number
+          unscripted_seconds_added: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hubla_event_id: string
+          hubla_product_id: string
+          id?: string
+          raw_payload?: Json | null
+          scripted_seconds_added?: number
+          unscripted_seconds_added?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hubla_event_id?: string
+          hubla_product_id?: string
+          id?: string
+          raw_payload?: Json | null
+          scripted_seconds_added?: number
+          unscripted_seconds_added?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      voice_credit_products: {
+        Row: {
+          created_at: string
+          display_name: string
+          hubla_product_id: string
+          id: string
+          scripted_seconds: number
+          unscripted_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          hubla_product_id: string
+          id?: string
+          scripted_seconds?: number
+          unscripted_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          hubla_product_id?: string
+          id?: string
+          scripted_seconds?: number
+          unscripted_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       voice_sessions: {
         Row: {
           accuracy_score: number | null
@@ -941,6 +1010,8 @@ export type Database = {
       calculate_level_from_xp: { Args: { _xp: number }; Returns: string }
       can_access_level: { Args: { _level: string }; Returns: boolean }
       complete_video: { Args: { _video_id: string }; Returns: Json }
+      debit_scripted_seconds: { Args: { _seconds: number }; Returns: Json }
+      debit_unscripted_seconds: { Args: { _seconds: number }; Returns: Json }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -948,6 +1019,15 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      grant_voice_credits: {
+        Args: {
+          _hubla_event_id: string
+          _hubla_product_id: string
+          _raw_payload?: Json
+          _user_id: string
+        }
+        Returns: Json
       }
       has_bst_item_access: { Args: { _access_key: string }; Returns: boolean }
       has_role: {
