@@ -194,21 +194,38 @@ export default function CourseDetail() {
 
   const handleVideoComplete = async (videoId: string) => {
     if (!user || !videoId || videoId.startsWith("legacy-")) return;
-    if (completedVideos.has(videoId)) return;
     setMarkingVideo(true);
-    const { data, error } = await supabase.rpc("complete_video", { _video_id: videoId });
-    setMarkingVideo(false);
-    if (error) {
-      toast.error("Não foi possível registrar o vídeo");
-      return;
-    }
-    setCompletedVideos(prev => new Set(prev).add(videoId));
-    const result = data as { awarded?: boolean; xp_earned?: number } | null;
-    if (result?.awarded && (result.xp_earned ?? 0) > 0) {
-      toast.success(`+${result.xp_earned} XP! Vídeo concluído 🎉`);
-      refreshProfile();
+    const isDone = completedVideos.has(videoId);
+    if (isDone) {
+      const { data, error } = await supabase.rpc("uncomplete_video", { _video_id: videoId });
+      setMarkingVideo(false);
+      if (error) {
+        toast.error("Não foi possível desmarcar o vídeo");
+        return;
+      }
+      setCompletedVideos(prev => { const next = new Set(prev); next.delete(videoId); return next; });
+      const result = data as { removed?: boolean; xp_deducted?: number } | null;
+      if (result?.removed && (result.xp_deducted ?? 0) > 0) {
+        toast.success(`Vídeo desmarcado • -${result.xp_deducted} XP`);
+        refreshProfile();
+      } else {
+        toast.success("Vídeo desmarcado");
+      }
     } else {
-      toast.success("Vídeo marcado como assistido");
+      const { data, error } = await supabase.rpc("complete_video", { _video_id: videoId });
+      setMarkingVideo(false);
+      if (error) {
+        toast.error("Não foi possível registrar o vídeo");
+        return;
+      }
+      setCompletedVideos(prev => new Set(prev).add(videoId));
+      const result = data as { awarded?: boolean; xp_earned?: number } | null;
+      if (result?.awarded && (result.xp_earned ?? 0) > 0) {
+        toast.success(`+${result.xp_earned} XP! Vídeo concluído 🎉`);
+        refreshProfile();
+      } else {
+        toast.success("Vídeo marcado como assistido");
+      }
     }
   };
 
@@ -376,8 +393,9 @@ export default function CourseDetail() {
                   <Button
                     size="sm"
                     variant={completedVideos.has(activeVideo.id) ? "outline" : "default"}
-                    disabled={markingVideo || completedVideos.has(activeVideo.id)}
+                    disabled={markingVideo}
                     onClick={() => handleVideoComplete(activeVideo.id)}
+                    title={completedVideos.has(activeVideo.id) ? "Clique para desmarcar" : "Clique para marcar como assistido"}
                   >
                     <Check className="h-4 w-4 mr-1" />
                     {completedVideos.has(activeVideo.id) ? "Concluído" : "Marcar como assistido"}
