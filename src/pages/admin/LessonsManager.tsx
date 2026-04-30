@@ -64,6 +64,19 @@ function parseVideo(url: string): VideoInfo | null {
   return null;
 }
 
+const VIDEO_SLOTS = 10;
+
+function buildSlots(existing: LessonVideo[]): LessonVideo[] {
+  const slots: LessonVideo[] = [];
+  for (let i = 0; i < VIDEO_SLOTS; i++) {
+    const found = existing.find((v) => v.display_order === i);
+    slots.push(
+      found ?? { title: `Videoaula ${i + 1}`, video_url: "", display_order: i },
+    );
+  }
+  return slots;
+}
+
 export default function LessonsManager() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
@@ -99,7 +112,7 @@ export default function LessonsManager() {
   const openNew = () => {
     setEditing(null);
     setForm({ ...emptyForm, module_id: filterModule !== "all" ? filterModule : modules[0]?.id ?? "" });
-    setVideos([]);
+    setVideos(buildSlots([]));
     setOpen(true);
   };
 
@@ -111,7 +124,7 @@ export default function LessonsManager() {
       .select("id, title, video_url, display_order")
       .eq("lesson_id", l.id)
       .order("display_order");
-    setVideos((data ?? []) as LessonVideo[]);
+    setVideos(buildSlots((data ?? []) as LessonVideo[]));
     setOpen(true);
   };
 
@@ -156,7 +169,13 @@ export default function LessonsManager() {
       for (let i = 0; i < videos.length; i++) {
         const v = videos[i];
         const url = v.video_url.trim();
-        if (!url) continue;
+        if (!url) {
+          // If this slot existed before but was cleared, remove it
+          if (v.id) {
+            await supabase.from("lesson_videos").delete().eq("id", v.id);
+          }
+          continue;
+        }
         const row = { lesson_id: lessonId, title: v.title.trim() || `Videoaula ${i + 1}`, video_url: url, display_order: i };
         if (v.id) {
           await supabase.from("lesson_videos").update(row).eq("id", v.id);
