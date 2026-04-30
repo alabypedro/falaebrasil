@@ -28,6 +28,20 @@ const levelColors: Record<string, string> = {
   B2: "bg-innovation/15 text-innovation",
 };
 
+const levelBadgeLabels: Record<string, string> = {
+  A1: "FB Básico PRO (A1)",
+  A2: "FB A2",
+  B1: "FB B1",
+  B2: "FB B2",
+};
+
+const courseTitleLabels: Record<string, string> = {
+  A1: "FB Básico PRO (A1)",
+  A2: "FB A2",
+  B1: "FB B1",
+  B2: "FB B2",
+};
+
 function CourseCard({
   course,
   index,
@@ -58,9 +72,11 @@ function CourseCard({
             )}
             <div>
               <Badge className={`text-[10px] ${levelColors[course.level] || ""} border-0`}>
-                {course.level}
+                {levelBadgeLabels[course.level] || course.level}
               </Badge>
-              <h3 className="text-sm font-semibold text-foreground mt-2">{course.title}</h3>
+              <h3 className="text-sm font-semibold text-foreground mt-2">
+                {courseTitleLabels[course.title] || course.title}
+              </h3>
               {course.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{course.description}</p>
               )}
@@ -163,7 +179,7 @@ export default function Courses() {
   return (
     <div className="space-y-6 max-w-6xl page-transition">
       <div className="animate-fade-up">
-        <h1 className="text-2xl font-bold text-foreground">Meus Cursos</h1>
+        <h1 className="text-2xl font-bold text-foreground">Cursos Falaê Brasil! (FB)</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Trilhas de aprendizado — seu progresso em tempo real.
         </p>
