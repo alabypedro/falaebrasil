@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Lock } from "lucide-react";
+import { CheckCircle, Lock, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,8 @@ interface CourseWithProgress {
   totalLessons: number;
   completedLessons: number;
   progress: number;
+  earnedXp: number;
+  totalXp: number;
 }
 
 const levelColors: Record<string, string> = {
@@ -80,7 +82,7 @@ function CourseCard({
               {course.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{course.description}</p>
               )}
-              <p className="text-xs text-muted-foreground">{course.totalLessons} aulas</p>
+              <p className="text-xs text-muted-foreground">{course.totalLessons} units</p>
             </div>
           </div>
           {locked ? (
@@ -94,12 +96,23 @@ function CourseCard({
             <Lock className="h-3 w-3" /> Comprar Essencial Pro A1
           </Badge>
         ) : (
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progresso</span>
-              <span>{course.progress}%</span>
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Progresso</span>
+                <span>{course.progress}%</span>
+              </div>
+              <Progress value={course.progress} className="h-1.5" />
             </div>
-            <Progress value={course.progress} className="h-1.5" />
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1 text-xp font-medium">
+                <Zap className="h-3 w-3 fill-xp/30" />
+                {course.earnedXp} XP
+              </span>
+              <span className="text-muted-foreground tabular-nums">
+                / {course.totalXp} XP
+              </span>
+            </div>
           </div>
         )}
       </CardContent>
@@ -137,6 +150,17 @@ export default function Courses() {
       const { data: modules } = await supabase.from("modules").select("id, course_id");
       const { data: lessons } = await supabase.from("lessons").select("id, module_id");
       const { data: progress } = await supabase.from("user_progress").select("lesson_id").eq("user_id", user.id);
+      const { data: videos } = await supabase.from("lesson_videos").select("id, lesson_id");
+      const { data: videoProgress } = await supabase
+        .from("user_video_progress")
+        .select("video_id")
+        .eq("user_id", user.id);
+      const { data: quizzes } = await supabase.from("quizzes").select("id, lesson_id");
+      const { data: quizQuestions } = await supabase.from("quiz_questions").select("id, quiz_id");
+      const { data: quizAttempts } = await supabase
+        .from("quiz_attempts")
+        .select("quiz_id, score, passed")
+        .eq("user_id", user.id);
 
       const completedLessonIds = new Set((progress || []).map((p) => p.lesson_id));
       const moduleToCourseLookup: Record<string, string> = {};
@@ -151,11 +175,77 @@ export default function Courses() {
         }
       });
 
+      // Map lesson -> course for videos & quizzes
+      const lessonToCourse: Record<string, string> = {};
+      (lessons || []).forEach((l) => {
+        const cid = moduleToCourseLookup[l.module_id];
+        if (cid) lessonToCourse[l.id] = cid;
+      });
+
+      const completedVideoIds = new Set((videoProgress || []).map((v) => v.video_id));
+      const courseVideos: Record<string, string[]> = {};
+      (videos || []).forEach((v) => {
+        const cid = lessonToCourse[v.lesson_id];
+        if (!cid) return;
+        if (!courseVideos[cid]) courseVideos[cid] = [];
+        courseVideos[cid].push(v.id);
+      });
+
+      // Best score per quiz
+      const bestScoreByQuiz: Record<string, { score: number; passed: boolean }> = {};
+      (quizAttempts || []).forEach((a) => {
+        const cur = bestScoreByQuiz[a.quiz_id];
+        if (!cur || a.score > cur.score) {
+          bestScoreByQuiz[a.quiz_id] = { score: a.score, passed: a.passed };
+        }
+      });
+
+      const questionsCountByQuiz: Record<string, number> = {};
+      (quizQuestions || []).forEach((q) => {
+        questionsCountByQuiz[q.quiz_id] = (questionsCountByQuiz[q.quiz_id] || 0) + 1;
+      });
+
+      const courseQuizzes: Record<string, string[]> = {};
+      (quizzes || []).forEach((q) => {
+        const cid = lessonToCourse[q.lesson_id];
+        if (!cid) return;
+        if (!courseQuizzes[cid]) courseQuizzes[cid] = [];
+        courseQuizzes[cid].push(q.id);
+      });
+
       const result: CourseWithProgress[] = coursesData.map((c) => {
         const lessonIds = courseLessons[c.id] || [];
         const completed = lessonIds.filter((id) => completedLessonIds.has(id)).length;
         const pct = lessonIds.length > 0 ? Math.round((completed / lessonIds.length) * 100) : 0;
-        return { ...c, totalLessons: lessonIds.length, completedLessons: completed, progress: pct };
+
+        // XP from videos: 25 each
+        const vids = courseVideos[c.id] || [];
+        const watched = vids.filter((id) => completedVideoIds.has(id)).length;
+        const videoXpEarned = watched * 25;
+        const videoXpTotal = vids.length * 25;
+
+        // XP from quizzes: per quiz, max = (questions * 5) + 25 bonus
+        const qIds = courseQuizzes[c.id] || [];
+        let quizXpEarned = 0;
+        let quizXpTotal = 0;
+        qIds.forEach((qid) => {
+          const qCount = questionsCountByQuiz[qid] || 0;
+          quizXpTotal += qCount * 5 + 25;
+          const best = bestScoreByQuiz[qid];
+          if (best) {
+            const correct = Math.round((best.score / 100) * qCount);
+            quizXpEarned += correct * 5 + (best.passed ? 25 : 0);
+          }
+        });
+
+        return {
+          ...c,
+          totalLessons: lessonIds.length,
+          completedLessons: completed,
+          progress: pct,
+          earnedXp: videoXpEarned + quizXpEarned,
+          totalXp: videoXpTotal + quizXpTotal,
+        };
       });
 
       setCourses(result);
