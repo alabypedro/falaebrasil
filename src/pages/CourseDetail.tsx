@@ -370,19 +370,6 @@ export default function CourseDetail() {
                           <Mic className="h-4 w-4 mr-1" /> Praticar Pronúncia
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant={completedLessons.has(activeLesson.id) ? "secondary" : "default"}
-                        onClick={() => toggleComplete(activeLesson.id)}
-                        disabled={marking}
-                        className="flex-1 min-w-[160px] md:flex-none whitespace-normal text-center leading-tight h-auto py-2"
-                      >
-                        {completedLessons.has(activeLesson.id) ? (
-                          <><CheckCircle className="h-4 w-4 mr-1 shrink-0" /> Concluída</>
-                        ) : (
-                          <><Circle className="h-4 w-4 mr-1 shrink-0" /> Marcar como concluída</>
-                        )}
-                      </Button>
                     </div>
                   </div>
                 </CardContent>
