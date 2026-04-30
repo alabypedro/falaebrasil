@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Video, FileText, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, FileText, ExternalLink, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Lesson {
@@ -24,6 +24,13 @@ interface Lesson {
 }
 
 interface ModuleOption { id: string; title: string; course_title: string; }
+
+interface LessonVideo {
+  id?: string;
+  title: string;
+  video_url: string;
+  display_order: number;
+}
 
 const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", practice_text: "", display_order: 0 };
 
@@ -79,25 +86,44 @@ export default function LessonsManager() {
   const [filterModule, setFilterModule] = useState<string>("all");
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videos, setVideos] = useState<LessonVideo[]>([]);
+  const [videoCounts, setVideoCounts] = useState<Record<string, number>>({});
 
   const load = async () => {
-    const [{ data: lsn }, { data: mods }] = await Promise.all([
+    const [{ data: lsn }, { data: mods }, { data: vids }] = await Promise.all([
       supabase.from("lessons").select("*, modules(title, courses(title))").order("display_order"),
       supabase.from("modules").select("id, title, courses(title)").order("display_order"),
+      supabase.from("lesson_videos").select("lesson_id"),
     ]);
     if (lsn) setLessons(lsn);
     if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
+    if (vids) {
+      const counts: Record<string, number> = {};
+      vids.forEach((v: any) => { counts[v.lesson_id] = (counts[v.lesson_id] ?? 0) + 1; });
+      setVideoCounts(counts);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const filtered = filterModule === "all" ? lessons : lessons.filter((l) => l.module_id === filterModule);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm, module_id: filterModule !== "all" ? filterModule : modules[0]?.id ?? "" }); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm({ ...emptyForm, module_id: filterModule !== "all" ? filterModule : modules[0]?.id ?? "" });
+    setVideos([]);
+    setOpen(true);
+  };
 
-  const openEdit = (l: Lesson) => {
+  const openEdit = async (l: Lesson) => {
     setEditing(l);
     setForm({ module_id: l.module_id, title: l.title, description: l.description ?? "", video_url: l.video_url ?? "", pdf_url: l.pdf_url ?? "", practice_text: l.practice_text ?? "", display_order: l.display_order });
+    const { data } = await supabase
+      .from("lesson_videos")
+      .select("id, title, video_url, display_order")
+      .eq("lesson_id", l.id)
+      .order("display_order");
+    setVideos((data ?? []) as LessonVideo[]);
     setOpen(true);
   };
 
@@ -120,17 +146,39 @@ export default function LessonsManager() {
   const save = async () => {
     if (!form.title.trim() || !form.module_id) { toast.error("Preencha título e módulo"); return; }
     setLoading(true);
-    const payload = { module_id: form.module_id, title: form.title.trim(), description: form.description.trim() || null, video_url: form.video_url.trim() || null, pdf_url: form.pdf_url.trim() || null, practice_text: form.practice_text.trim() || null, display_order: form.display_order };
+    const primaryVideo = videos[0]?.video_url?.trim() || form.video_url.trim() || null;
+    const payload = { module_id: form.module_id, title: form.title.trim(), description: form.description.trim() || null, video_url: primaryVideo, pdf_url: form.pdf_url.trim() || null, practice_text: form.practice_text.trim() || null, display_order: form.display_order };
 
+    let lessonId: string | null = editing?.id ?? null;
     if (editing) {
       const { error } = await supabase.from("lessons").update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); setLoading(false); return; }
-      toast.success("Lição atualizada!");
     } else {
-      const { error } = await supabase.from("lessons").insert(payload);
+      const { data: inserted, error } = await supabase.from("lessons").insert(payload).select("id").single();
       if (error) { toast.error(error.message); setLoading(false); return; }
-      toast.success("Lição criada!");
+      lessonId = inserted!.id;
     }
+
+    if (lessonId) {
+      const keepIds = videos.filter((v) => v.id).map((v) => v.id!) as string[];
+      let delQuery = supabase.from("lesson_videos").delete().eq("lesson_id", lessonId);
+      if (keepIds.length > 0) delQuery = delQuery.not("id", "in", `(${keepIds.join(",")})`);
+      await delQuery;
+
+      for (let i = 0; i < videos.length; i++) {
+        const v = videos[i];
+        const url = v.video_url.trim();
+        if (!url) continue;
+        const row = { lesson_id: lessonId, title: v.title.trim() || `Videoaula ${i + 1}`, video_url: url, display_order: i };
+        if (v.id) {
+          await supabase.from("lesson_videos").update(row).eq("id", v.id);
+        } else {
+          await supabase.from("lesson_videos").insert(row);
+        }
+      }
+    }
+
+    toast.success(editing ? "Lição atualizada!" : "Lição criada!");
     setOpen(false); setLoading(false); load();
   };
 
@@ -177,7 +225,12 @@ export default function LessonsManager() {
                 <TableCell className="font-medium">{l.title}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{(l.modules as any)?.title ?? "—"}</TableCell>
                 <TableCell className="flex gap-1">
-                  {l.video_url && <Video className="h-4 w-4 text-accent" />}
+                  {(videoCounts[l.id] ?? (l.video_url ? 1 : 0)) > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-accent text-xs">
+                      <Video className="h-4 w-4" />
+                      {videoCounts[l.id] ?? 1}
+                    </span>
+                  )}
                   {l.pdf_url && <FileText className="h-4 w-4 text-muted-foreground" />}
                 </TableCell>
                 <TableCell className="text-right space-x-1">
