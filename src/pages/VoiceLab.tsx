@@ -250,6 +250,7 @@ export default function VoiceLab() {
         formData.append("referenceText", referenceTextOnScreen);
       }
       formData.append("language", "en-US");
+      formData.append("mode", mode);
 
       const { data, error } = await supabase.functions.invoke("azure-pronunciation", { body: formData });
       if (error) throw error;
