@@ -85,6 +85,31 @@ Deno.serve(async (req) => {
     const audioBuffer = new Uint8Array(audioBytes);
     console.log(`Audio received: ${audioBuffer.length} bytes, type: ${audioFile.type}, name: ${audioFile.name}`);
 
+    // ---- SCRIPTED CREDIT CHECK ----
+    // Check user's scripted balance BEFORE calling Azure to avoid wasted API spend.
+    const { data: profileRow, error: profileErr } = await supabase
+      .from("profiles")
+      .select("scripted_balance")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (profileErr) {
+      console.error("Failed to read scripted_balance:", profileErr);
+    }
+
+    const currentBalance = profileRow?.scripted_balance ?? 0;
+    if (currentBalance <= 0) {
+      return new Response(
+        JSON.stringify({
+          error: "INSUFFICIENT_CREDITS",
+          credit_type: "scripted",
+          message: "Saldo de prática Scripted esgotado. Adquira novos módulos para continuar praticando.",
+          fallback: true,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const pronAssessmentParams = {
       ReferenceText: referenceText || "",
       GradingSystem: "HundredMark",
@@ -121,6 +146,26 @@ Deno.serve(async (req) => {
     console.log("Azure raw response:", JSON.stringify(result));
     console.log("Azure RecognitionStatus:", result.RecognitionStatus);
 
+    // ---- DEBIT SCRIPTED SECONDS ----
+    // Estimate audio duration from NBest[0].Duration (100-ns units) when available;
+    // fall back to a minimum of 1 second so each call always debits something.
+    let durationSeconds = 1;
+    try {
+      const nbestDuration = result?.NBest?.[0]?.Duration ?? result?.Duration;
+      if (typeof nbestDuration === "number" && nbestDuration > 0) {
+        durationSeconds = Math.max(1, Math.ceil(nbestDuration / 10_000_000));
+      }
+    } catch (_) { /* ignore */ }
+
+    const { data: debitResult, error: debitErr } = await supabase.rpc("debit_scripted_seconds", {
+      _seconds: durationSeconds,
+    });
+    if (debitErr) {
+      console.error("debit_scripted_seconds failed:", debitErr);
+    } else {
+      console.log("Debited scripted seconds:", debitResult);
+    }
+
     // Handle clear failures
     if (result.RecognitionStatus === "InitialSilenceTimeout" ||
         result.RecognitionStatus === "NoMatch" ||
@@ -131,6 +176,7 @@ Deno.serve(async (req) => {
           error: "AUDIO_UNRECOGNIZED",
           message: "Não foi possível reconhecer o áudio. Tente falar mais alto e claro.",
           fallback: true,
+          credit_debited_seconds: durationSeconds,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
