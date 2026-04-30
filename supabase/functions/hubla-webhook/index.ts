@@ -65,6 +65,18 @@ function extractProductIds(body: any): string[] {
   return Array.from(ids);
 }
 
+function extractEventId(body: any): string {
+  return String(
+    body?.id ||
+    body?.event?.id ||
+    body?.event_id ||
+    body?.eventId ||
+    body?.transactionId ||
+    body?.event?.transactionId ||
+    crypto.randomUUID()
+  );
+}
+
 function extractProductNames(body: any): string[] {
   const names = new Set<string>();
   const candidates = [
@@ -208,6 +220,24 @@ Deno.serve(async (req) => {
       .eq("user_id", userId!);
     if (updErr) throw updErr;
 
+    // ---- VOICE CREDIT GRANTS (idempotent per event+product) ----
+    const eventId = extractEventId(body);
+    const creditResults: any[] = [];
+    for (const productId of productIds) {
+      const { data: grantResult, error: grantErr } = await admin.rpc("grant_voice_credits", {
+        _user_id: userId!,
+        _hubla_event_id: eventId,
+        _hubla_product_id: productId,
+        _raw_payload: body,
+      });
+      if (grantErr) {
+        console.error("grant_voice_credits failed", { productId, eventId, grantErr });
+        creditResults.push({ productId, error: grantErr.message });
+      } else {
+        creditResults.push({ productId, ...grantResult });
+      }
+    }
+
     // Send recovery link if new user (so they can set their password)
     let recoveryLink: string | null = null;
     if (createdNewUser) {
@@ -233,6 +263,8 @@ Deno.serve(async (req) => {
         granted: grants,
         matched_products: matched.map((m: any) => m.product_key),
         recovery_link_sent: createdNewUser,
+        voice_credits: creditResults,
+        event_id: eventId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
