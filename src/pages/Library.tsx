@@ -61,7 +61,14 @@ function ItemCard({
   locked: boolean;
   onUnlockClick: () => void;
 }) {
-  if (locked) {
+  // Defesa em profundidade: se a URL não veio (a view safe nulifica quando não há acesso),
+  // tratamos como bloqueado independentemente do que o estado do client diga.
+  const missingAsset =
+    (item.type === "ebook" && !item.file_url) ||
+    (item.type === "audiobook" && !item.audio_url);
+  const effectivelyLocked = locked || missingAsset;
+
+  if (effectivelyLocked) {
     return (
       <Card className="hover:shadow-md transition-shadow opacity-90">
         <CardContent className="p-5 space-y-3">
