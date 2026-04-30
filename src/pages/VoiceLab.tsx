@@ -352,9 +352,39 @@ export default function VoiceLab() {
     setTranscription(null);
     setSuggestions([]);
     if (mode === "unscripted") {
-      setCurrentTopic(pickRandom(unscriptedTopics));
+      void fetchUnscriptedTopic();
     }
   };
+
+  const fetchUnscriptedTopic = useCallback(async () => {
+    setTopicLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-unscripted-topic", {
+        body: { recent: recentTopics.slice(0, 6) },
+      });
+      if (error) throw error;
+      const topic = (data as any)?.topic as string | undefined;
+      if (topic) {
+        setCurrentTopic(topic);
+        setRecentTopics((prev) => [topic, ...prev.filter((t) => t !== topic)].slice(0, 8));
+      } else {
+        setCurrentTopic(pickRandom(unscriptedTopics));
+      }
+    } catch (e) {
+      console.error("Failed to fetch AI topic", e);
+      setCurrentTopic(pickRandom(unscriptedTopics));
+    } finally {
+      setTopicLoading(false);
+    }
+  }, [recentTopics]);
+
+  // Auto-fetch a fresh AI topic the first time the user enters Unscripted
+  useEffect(() => {
+    if (mode === "unscripted" && recentTopics.length === 0 && !topicLoading) {
+      void fetchUnscriptedTopic();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   // (Texto vem da Lição via Admin — sem aleatoriedade nem upload de arquivos)
 
