@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Square, RotateCcw, Loader2, BookOpen } from "lucide-react";
+import { Mic, Square, RotateCcw, Loader2, BookOpen, Sparkles } from "lucide-react";
 import FeedbackCard, { type FeedbackScores } from "@/components/FeedbackCard";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +90,8 @@ export default function VoiceLab() {
   const [practiceText, setPracticeText] = useState<string>("");
   const [lessonContext, setLessonContext] = useState<LessonContext | null>(null);
   const [currentTopic, setCurrentTopic] = useState(unscriptedTopics[0]);
+  const [recentTopics, setRecentTopics] = useState<string[]>([]);
+  const [topicLoading, setTopicLoading] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
@@ -350,9 +352,39 @@ export default function VoiceLab() {
     setTranscription(null);
     setSuggestions([]);
     if (mode === "unscripted") {
-      setCurrentTopic(pickRandom(unscriptedTopics));
+      void fetchUnscriptedTopic();
     }
   };
+
+  const fetchUnscriptedTopic = useCallback(async () => {
+    setTopicLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-unscripted-topic", {
+        body: { recent: recentTopics.slice(0, 6) },
+      });
+      if (error) throw error;
+      const topic = (data as any)?.topic as string | undefined;
+      if (topic) {
+        setCurrentTopic(topic);
+        setRecentTopics((prev) => [topic, ...prev.filter((t) => t !== topic)].slice(0, 8));
+      } else {
+        setCurrentTopic(pickRandom(unscriptedTopics));
+      }
+    } catch (e) {
+      console.error("Failed to fetch AI topic", e);
+      setCurrentTopic(pickRandom(unscriptedTopics));
+    } finally {
+      setTopicLoading(false);
+    }
+  }, [recentTopics]);
+
+  // Auto-fetch a fresh AI topic the first time the user enters Unscripted
+  useEffect(() => {
+    if (mode === "unscripted" && recentTopics.length === 0 && !topicLoading) {
+      void fetchUnscriptedTopic();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   // (Texto vem da Lição via Admin — sem aleatoriedade nem upload de arquivos)
 
@@ -532,9 +564,27 @@ export default function VoiceLab() {
           )}
 
           <Card className="bg-accent/5 border-accent/20">
-            <CardContent className="p-6 text-center">
-              <p className="text-xs text-accent font-semibold uppercase tracking-wide mb-2">Tema Sugerido</p>
-              <p className="text-lg font-medium text-foreground">{currentTopic}</p>
+            <CardContent className="p-6 text-center space-y-3">
+              <p className="text-xs text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
+              {topicLoading ? (
+                <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Gerando tema com IA…</span>
+                </div>
+              ) : (
+                <p className="text-lg font-medium text-foreground">{currentTopic}</p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void fetchUnscriptedTopic()}
+                disabled={topicLoading}
+                className="gap-1.5"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Novo tema
+              </Button>
             </CardContent>
           </Card>
 
