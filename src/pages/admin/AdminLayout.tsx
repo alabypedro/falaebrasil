@@ -9,7 +9,7 @@ const adminNav = [
   { to: "/admin/lessons", icon: FileText, label: "Lições" },
   { to: "/admin/quizzes", icon: HelpCircle, label: "Quizzes" },
   { to: "/admin/library", icon: Library, label: "Biblioteca BST" },
-  { to: "/admin/prompts", icon: Mic, label: "Textos AI Falaê" },
+  { to: "/admin/prompts", icon: Mic, label: "Textos IA Falaê" },
   { to: "/admin/admins", icon: ShieldCheck, label: "Admins" },
   { to: "/admin/hubla", icon: ShoppingCart, label: "Vendas Hubla" },
 ];

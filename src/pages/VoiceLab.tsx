@@ -347,7 +347,7 @@ export default function VoiceLab() {
   return (
     <div className="space-y-6 max-w-4xl page-transition">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">AI Falaê</h1>
+        <h1 className="text-2xl font-bold text-foreground">IA Falaê</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Pratique sua pronúncia e receba feedback detalhado com IA.
         </p>
@@ -412,7 +412,7 @@ export default function VoiceLab() {
                 <Card>
                   <CardContent className="p-6 text-center text-sm text-muted-foreground">
                     {activeCourseTitle ? (
-                      <>O curso <strong>{activeCourseTitle}</strong> ainda não tem frases para o AI Falaê.</>
+                      <>O curso <strong>{activeCourseTitle}</strong> ainda não tem frases para o IA Falaê.</>
                     ) : (
                       <>Selecione um curso acima para ver as frases disponíveis.</>
                     )}
