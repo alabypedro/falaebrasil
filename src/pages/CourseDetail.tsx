@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw } from "lucide-react";
+import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
 import {
@@ -76,7 +76,7 @@ export default function CourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const { isAdmin } = useAdmin();
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -90,6 +90,8 @@ export default function CourseDetail() {
   const [resetting, setResetting] = useState(false);
   const [lessonVideos, setLessonVideos] = useState<LessonVideo[]>([]);
   const [activeVideoIdx, setActiveVideoIdx] = useState(0);
+  const [completedVideos, setCompletedVideos] = useState<Set<string>>(new Set());
+  const [markingVideo, setMarkingVideo] = useState(false);
 
   const loadData = async () => {
     if (!courseId || !user) return;
@@ -174,9 +176,41 @@ export default function CourseDetail() {
       }
       setLessonVideos(videos);
       setActiveVideoIdx(0);
+      // Carrega quais vídeos desta aula já foram concluídos
+      const realIds = videos.filter(v => !v.id.startsWith("legacy-")).map(v => v.id);
+      if (user && realIds.length > 0) {
+        const { data: prog } = await supabase
+          .from("user_video_progress")
+          .select("video_id")
+          .eq("user_id", user.id)
+          .in("video_id", realIds);
+        setCompletedVideos(new Set((prog ?? []).map(p => p.video_id)));
+      } else {
+        setCompletedVideos(new Set());
+      }
     };
     loadVideos();
-  }, [activeLesson?.id]);
+  }, [activeLesson?.id, user?.id]);
+
+  const handleVideoComplete = async (videoId: string) => {
+    if (!user || !videoId || videoId.startsWith("legacy-")) return;
+    if (completedVideos.has(videoId)) return;
+    setMarkingVideo(true);
+    const { data, error } = await supabase.rpc("complete_video", { _video_id: videoId });
+    setMarkingVideo(false);
+    if (error) {
+      toast.error("Não foi possível registrar o vídeo");
+      return;
+    }
+    setCompletedVideos(prev => new Set(prev).add(videoId));
+    const result = data as { awarded?: boolean; xp_earned?: number } | null;
+    if (result?.awarded && (result.xp_earned ?? 0) > 0) {
+      toast.success(`+${result.xp_earned} XP! Vídeo concluído 🎉`);
+      refreshProfile();
+    } else {
+      toast.success("Vídeo marcado como assistido");
+    }
+  };
 
   const toggleComplete = async (lessonId: string) => {
     if (!user) return;
@@ -305,7 +339,12 @@ export default function CourseDetail() {
               {embedUrl && (
                 <div className="aspect-video rounded-lg overflow-hidden bg-black">
                   {isDirectVideo ? (
-                    <video src={embedUrl} controls className="w-full h-full" />
+                    <video
+                      src={embedUrl}
+                      controls
+                      className="w-full h-full"
+                      onEnded={() => activeVideo && handleVideoComplete(activeVideo.id)}
+                    />
                   ) : (
                     <iframe
                       src={embedUrl}
@@ -314,6 +353,35 @@ export default function CourseDetail() {
                       allowFullScreen
                     />
                   )}
+                </div>
+              )}
+
+              {activeVideo && !activeVideo.id.startsWith("legacy-") && (
+                <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    {completedVideos.has(activeVideo.id) ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 text-success" />
+                        <span className="text-muted-foreground">Vídeo concluído</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4 text-xp" />
+                        <span className="text-muted-foreground">
+                          Assista até o fim e marque como concluído para ganhar <strong>+25 XP</strong>
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={completedVideos.has(activeVideo.id) ? "outline" : "default"}
+                    disabled={markingVideo || completedVideos.has(activeVideo.id)}
+                    onClick={() => handleVideoComplete(activeVideo.id)}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    {completedVideos.has(activeVideo.id) ? "Concluído" : "Marcar como assistido"}
+                  </Button>
                 </div>
               )}
 
@@ -327,7 +395,11 @@ export default function CourseDetail() {
                       onClick={() => setActiveVideoIdx(i)}
                       className="text-xs"
                     >
-                      <PlayCircle className="h-3.5 w-3.5 mr-1" />
+                      {completedVideos.has(v.id) ? (
+                        <CheckCircle className="h-3.5 w-3.5 mr-1 text-success" />
+                      ) : (
+                        <PlayCircle className="h-3.5 w-3.5 mr-1" />
+                      )}
                       {v.title || `Videoaula ${i + 1}`}
                     </Button>
                   ))}
