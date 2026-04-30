@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Lock } from "lucide-react";
+import { CheckCircle, Lock, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,8 @@ interface CourseWithProgress {
   totalLessons: number;
   completedLessons: number;
   progress: number;
+  earnedXp: number;
+  totalXp: number;
 }
 
 const levelColors: Record<string, string> = {
@@ -80,7 +82,7 @@ function CourseCard({
               {course.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{course.description}</p>
               )}
-              <p className="text-xs text-muted-foreground">{course.totalLessons} aulas</p>
+              <p className="text-xs text-muted-foreground">{course.totalLessons} units</p>
             </div>
           </div>
           {locked ? (
@@ -94,12 +96,23 @@ function CourseCard({
             <Lock className="h-3 w-3" /> Comprar Essencial Pro A1
           </Badge>
         ) : (
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progresso</span>
-              <span>{course.progress}%</span>
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Progresso</span>
+                <span>{course.progress}%</span>
+              </div>
+              <Progress value={course.progress} className="h-1.5" />
             </div>
-            <Progress value={course.progress} className="h-1.5" />
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1 text-xp font-medium">
+                <Zap className="h-3 w-3 fill-xp/30" />
+                {course.earnedXp} XP
+              </span>
+              <span className="text-muted-foreground tabular-nums">
+                / {course.totalXp} XP
+              </span>
+            </div>
           </div>
         )}
       </CardContent>
