@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Square, RotateCcw, Loader2, BookOpen } from "lucide-react";
+import { Mic, Square, RotateCcw, Loader2, BookOpen, Sparkles } from "lucide-react";
 import FeedbackCard, { type FeedbackScores } from "@/components/FeedbackCard";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +90,8 @@ export default function VoiceLab() {
   const [practiceText, setPracticeText] = useState<string>("");
   const [lessonContext, setLessonContext] = useState<LessonContext | null>(null);
   const [currentTopic, setCurrentTopic] = useState(unscriptedTopics[0]);
+  const [recentTopics, setRecentTopics] = useState<string[]>([]);
+  const [topicLoading, setTopicLoading] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
