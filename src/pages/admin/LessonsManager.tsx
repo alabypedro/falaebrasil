@@ -27,17 +27,44 @@ interface ModuleOption { id: string; title: string; course_title: string; }
 
 const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", practice_text: "", display_order: 0 };
 
-// Detect and normalize Vimeo URLs / IDs
-function parseVimeo(url: string): { id: string; embedUrl: string } | null {
+// Detect and normalize Vimeo / YouTube URLs / IDs
+type VideoInfo = { provider: "vimeo" | "youtube"; id: string; embedUrl: string; openUrl: string };
+
+function parseVideo(url: string): VideoInfo | null {
   if (!url) return null;
   const trimmed = url.trim();
-  // Bare numeric ID
-  if (/^\d{6,}$/.test(trimmed)) {
-    return { id: trimmed, embedUrl: `https://player.vimeo.com/video/${trimmed}` };
+  // YouTube
+  const yt = trimmed.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i,
+  );
+  if (yt) {
+    return {
+      provider: "youtube",
+      id: yt[1],
+      embedUrl: `https://www.youtube.com/embed/${yt[1]}`,
+      openUrl: `https://youtu.be/${yt[1]}`,
+    };
   }
-  const match = trimmed.match(/vimeo\.com\/(?:video\/|channels\/[^/]+\/|groups\/[^/]+\/videos\/)?(\d+)/i);
-  if (match) {
-    return { id: match[1], embedUrl: `https://player.vimeo.com/video/${match[1]}` };
+  // Vimeo full URL
+  const vimeo = trimmed.match(
+    /vimeo\.com\/(?:video\/|channels\/[^/]+\/|groups\/[^/]+\/videos\/)?(\d+)/i,
+  );
+  if (vimeo) {
+    return {
+      provider: "vimeo",
+      id: vimeo[1],
+      embedUrl: `https://player.vimeo.com/video/${vimeo[1]}`,
+      openUrl: `https://vimeo.com/${vimeo[1]}`,
+    };
+  }
+  // Bare numeric ID → assume Vimeo
+  if (/^\d{6,}$/.test(trimmed)) {
+    return {
+      provider: "vimeo",
+      id: trimmed,
+      embedUrl: `https://player.vimeo.com/video/${trimmed}`,
+      openUrl: `https://vimeo.com/${trimmed}`,
+    };
   }
   return null;
 }
@@ -193,18 +220,22 @@ export default function LessonsManager() {
               <Input
                 value={form.video_url}
                 onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-                placeholder="Cole o link do Vimeo, YouTube ou ID do Vimeo (ex: 123456789)"
+                placeholder="Cole UM link: Vimeo (https://vimeo.com/...) OU YouTube (https://youtu.be/...)"
               />
+              <p className="text-[11px] text-muted-foreground">
+                Aceita apenas <strong>um link por vez</strong>: Vimeo ou YouTube. O player exibido na lição se adapta ao tipo informado.
+              </p>
               {form.video_url && (() => {
-                const vimeo = parseVimeo(form.video_url);
-                if (vimeo) {
+                const info = parseVideo(form.video_url);
+                if (info) {
+                  const label = info.provider === "youtube" ? "YouTube" : "Vimeo";
                   return (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-xs text-success">
                         <Video className="h-3.5 w-3.5" />
-                        <span>Vídeo do Vimeo detectado (ID: {vimeo.id})</span>
+                        <span>Vídeo do {label} detectado (ID: {info.id})</span>
                         <a
-                          href={`https://vimeo.com/${vimeo.id}`}
+                          href={info.openUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="ml-auto inline-flex items-center gap-1 text-accent hover:underline"
@@ -214,19 +245,19 @@ export default function LessonsManager() {
                       </div>
                       <div className="aspect-video w-full overflow-hidden rounded-md border bg-muted">
                         <iframe
-                          src={vimeo.embedUrl}
+                          src={info.embedUrl}
                           className="h-full w-full"
                           allow="autoplay; fullscreen; picture-in-picture"
                           allowFullScreen
-                          title="Preview Vimeo"
+                          title={`Preview ${label}`}
                         />
                       </div>
                     </div>
                   );
                 }
                 return (
-                  <p className="text-[11px] text-muted-foreground">
-                    URL salva. Para Vimeo, cole o link completo (https://vimeo.com/...) ou apenas o ID numérico.
+                  <p className="text-[11px] text-warning">
+                    Link não reconhecido. Use uma URL válida do Vimeo ou do YouTube.
                   </p>
                 );
               })()}
