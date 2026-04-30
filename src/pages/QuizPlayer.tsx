@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, ArrowRight, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, ArrowRight, RotateCcw, Star, BookOpen, Trophy } from "lucide-react";
 
 interface Question {
   id: string;
@@ -30,6 +30,8 @@ export default function QuizPlayer() {
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [passed, setPassed] = useState(false);
+  const [xpEarned, setXpEarned] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<Record<string, { correct: boolean; correct_option_index: number }>>({});
 
@@ -83,6 +85,8 @@ export default function QuizPlayer() {
     setResults(resultsMap);
     setScore(r.score ?? 0);
     setPassed(r.passed ?? false);
+    setXpEarned(r.xp_earned ?? 0);
+    setCorrectCount(r.correct_count ?? 0);
     setSubmitted(true);
   };
 
@@ -92,6 +96,8 @@ export default function QuizPlayer() {
     setSubmitted(false);
     setScore(0);
     setPassed(false);
+    setXpEarned(0);
+    setCorrectCount(0);
     setResults({});
   };
 
@@ -113,12 +119,13 @@ export default function QuizPlayer() {
   }
 
   if (submitted) {
+    const wrongCount = questions.length - correctCount;
     return (
       <div className="max-w-xl mx-auto space-y-6">
         <Card className="text-center">
           <CardHeader>
             {passed ? (
-              <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto mb-2" />
+              <Trophy className="h-16 w-16 text-amber-500 mx-auto mb-2" />
             ) : (
               <XCircle className="h-16 w-16 text-destructive mx-auto mb-2" />
             )}
@@ -128,9 +135,34 @@ export default function QuizPlayer() {
             <CardDescription>
               Sua nota: <span className="font-bold text-foreground">{score}%</span> — Mínimo: {quiz.passing_score}%
             </CardDescription>
+            <div className="flex items-center justify-center gap-3 mt-3 text-sm">
+              <div className="rounded-md bg-emerald-500/10 text-emerald-600 px-3 py-1.5">
+                ✓ {correctCount} acertos
+              </div>
+              <div className="rounded-md bg-destructive/10 text-destructive px-3 py-1.5">
+                ✗ {wrongCount} erros
+              </div>
+              {xpEarned > 0 && (
+                <div className="flex items-center gap-1 rounded-md bg-amber-500/10 text-amber-600 px-3 py-1.5 font-semibold">
+                  <Star className="h-3.5 w-3.5 fill-amber-500" />+{xpEarned} XP
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <Progress value={score} className="h-3" />
+
+            {!passed && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-left text-sm flex gap-2 items-start">
+                <BookOpen className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium text-foreground">Recomendação</p>
+                  <p className="text-muted-foreground text-xs">
+                    Revise a videoaula desta unidade e tente novamente. O sistema só conta XP quando você passa pela primeira vez.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3 text-left">
               {questions.map((q, i) => {
@@ -138,16 +170,23 @@ export default function QuizPlayer() {
                 const isCorrect = r?.correct ?? false;
                 const correctIdx = r?.correct_option_index ?? -1;
                 return (
-                  <div key={q.id} className="rounded-lg border p-3 space-y-1">
+                  <div key={q.id} className={`rounded-lg border p-3 space-y-2 ${isCorrect ? "border-emerald-500/30 bg-emerald-500/5" : "border-destructive/30 bg-destructive/5"}`}>
                     <div className="flex items-start gap-2">
                       {isCorrect ? <CheckCircle className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" /> : <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />}
-                      <p className="text-sm font-medium">{q.question_text}</p>
+                      <p className="text-sm font-medium">{i + 1}. {q.question_text}</p>
                     </div>
-                    {!isCorrect && (
-                      <p className="text-xs text-muted-foreground ml-6">
-                        Sua resposta: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-emerald-600">{q.options[correctIdx] ?? "—"}</span>
+                    <div className="ml-6 space-y-1 text-xs">
+                      <p>
+                        <span className="text-muted-foreground">Sua resposta: </span>
+                        <span className={isCorrect ? "text-emerald-600 font-medium" : "text-destructive font-medium"}>
+                          {q.options[answers[i]] ?? "— (não respondida)"}
+                        </span>
                       </p>
-                    )}
+                      <p>
+                        <span className="text-muted-foreground">Resposta correta: </span>
+                        <span className="text-emerald-600 font-medium">{q.options[correctIdx] ?? "—"}</span>
+                      </p>
+                    </div>
                   </div>
                 );
               })}

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, RotateCcw, ArrowRight, HelpCircle, Star } from "lucide-react";
+import { CheckCircle, XCircle, RotateCcw, ArrowRight, HelpCircle, Star, BookOpen } from "lucide-react";
 
 interface Question {
   id: string;
@@ -78,6 +78,8 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
   if (!quiz || questions.length === 0) return null;
 
   if (submitted) {
+    const correctCount = Object.values(results).filter((r) => r.correct).length;
+    const wrongCount = questions.length - correctCount;
     return (
       <Card className="border-primary/20">
         <CardHeader className="pb-3">
@@ -86,6 +88,10 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
             <CardTitle className="text-base">{passed ? "Parabéns! Você passou! 🎉" : "Tente novamente"}</CardTitle>
           </div>
           <CardDescription>Nota: {score}% — Mínimo: {quiz.passing_score}%</CardDescription>
+          <div className="flex items-center gap-2 text-xs mt-1">
+            <span className="rounded bg-emerald-500/10 text-emerald-600 px-2 py-0.5">✓ {correctCount}</span>
+            <span className="rounded bg-destructive/10 text-destructive px-2 py-0.5">✗ {wrongCount}</span>
+          </div>
           {passed && xpEarned > 0 && (
             <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-500">
               <Star className="h-4 w-4 fill-amber-500" />+{xpEarned} XP conquistados!
@@ -94,21 +100,34 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <Progress value={score} className="h-2" />
+          {!passed && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-2 text-xs flex gap-2 items-start">
+              <BookOpen className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+              <span className="text-muted-foreground">Revise a videoaula desta unidade e tente novamente para ganhar XP.</span>
+            </div>
+          )}
           {questions.map((q, i) => {
             const r = results[q.id];
             const isCorrect = r?.correct ?? false;
             const correctIdx = r?.correct_option_index ?? -1;
             return (
-              <div key={q.id} className="rounded-md border p-2.5 text-sm">
+              <div key={q.id} className={`rounded-md border p-2.5 text-sm ${isCorrect ? "border-emerald-500/30 bg-emerald-500/5" : "border-destructive/30 bg-destructive/5"}`}>
                 <div className="flex items-start gap-2">
                   {isCorrect ? <CheckCircle className="h-3.5 w-3.5 text-success mt-0.5 shrink-0" /> : <XCircle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />}
-                  <span>{q.question_text}</span>
+                  <span>{i + 1}. {q.question_text}</span>
                 </div>
-                {!isCorrect && (
-                  <p className="text-xs text-muted-foreground ml-5 mt-1">
-                    Sua: <span className="text-destructive">{q.options[answers[i]] ?? "—"}</span> · Correta: <span className="text-success">{q.options[correctIdx] ?? "—"}</span>
+                <div className="ml-5 mt-1 space-y-0.5 text-xs">
+                  <p>
+                    <span className="text-muted-foreground">Sua: </span>
+                    <span className={isCorrect ? "text-emerald-600 font-medium" : "text-destructive font-medium"}>
+                      {q.options[answers[i]] ?? "— (vazio)"}
+                    </span>
                   </p>
-                )}
+                  <p>
+                    <span className="text-muted-foreground">Correta: </span>
+                    <span className="text-emerald-600 font-medium">{q.options[correctIdx] ?? "—"}</span>
+                  </p>
+                </div>
               </div>
             );
           })}
