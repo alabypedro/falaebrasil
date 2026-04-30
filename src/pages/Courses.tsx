@@ -157,7 +157,7 @@ export default function Courses() {
     );
   }
 
-  const isLocked = !profile?.has_course_access;
+  const isLocked = !isAdmin && !profile?.has_course_access;
   const visibleCourses = isAdmin ? courses : courses.filter((c) => c.level === "A1");
 
   return (

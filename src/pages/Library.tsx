@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { UpsellModal } from "@/components/UpsellModal";
+import { useAdmin } from "@/hooks/useAdmin";
 
 interface LibraryItem {
   id: string;
@@ -97,6 +98,7 @@ export default function Library() {
   const [loading, setLoading] = useState(true);
   const [upsellItem, setUpsellItem] = useState<LibraryItem | null>(null);
   const { profile } = useAuth();
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
     const load = async () => {
@@ -120,6 +122,7 @@ export default function Library() {
   }, []);
 
   const hasAccess = (accessKey: string): boolean => {
+    if (isAdmin) return true;
     if (accessKey === "free") return true;
     if (!profile) return false;
     if (accessKey === "ebook1") return profile.has_ebook1_access;
