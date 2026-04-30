@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Video, FileText, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, FileText, ExternalLink, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Lesson {
@@ -24,6 +24,13 @@ interface Lesson {
 }
 
 interface ModuleOption { id: string; title: string; course_title: string; }
+
+interface LessonVideo {
+  id?: string;
+  title: string;
+  video_url: string;
+  display_order: number;
+}
 
 const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", practice_text: "", display_order: 0 };
 
@@ -79,25 +86,44 @@ export default function LessonsManager() {
   const [filterModule, setFilterModule] = useState<string>("all");
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videos, setVideos] = useState<LessonVideo[]>([]);
+  const [videoCounts, setVideoCounts] = useState<Record<string, number>>({});
 
   const load = async () => {
-    const [{ data: lsn }, { data: mods }] = await Promise.all([
+    const [{ data: lsn }, { data: mods }, { data: vids }] = await Promise.all([
       supabase.from("lessons").select("*, modules(title, courses(title))").order("display_order"),
       supabase.from("modules").select("id, title, courses(title)").order("display_order"),
+      supabase.from("lesson_videos").select("lesson_id"),
     ]);
     if (lsn) setLessons(lsn);
     if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
+    if (vids) {
+      const counts: Record<string, number> = {};
+      vids.forEach((v: any) => { counts[v.lesson_id] = (counts[v.lesson_id] ?? 0) + 1; });
+      setVideoCounts(counts);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const filtered = filterModule === "all" ? lessons : lessons.filter((l) => l.module_id === filterModule);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm, module_id: filterModule !== "all" ? filterModule : modules[0]?.id ?? "" }); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm({ ...emptyForm, module_id: filterModule !== "all" ? filterModule : modules[0]?.id ?? "" });
+    setVideos([]);
+    setOpen(true);
+  };
 
-  const openEdit = (l: Lesson) => {
+  const openEdit = async (l: Lesson) => {
     setEditing(l);
     setForm({ module_id: l.module_id, title: l.title, description: l.description ?? "", video_url: l.video_url ?? "", pdf_url: l.pdf_url ?? "", practice_text: l.practice_text ?? "", display_order: l.display_order });
+    const { data } = await supabase
+      .from("lesson_videos")
+      .select("id, title, video_url, display_order")
+      .eq("lesson_id", l.id)
+      .order("display_order");
+    setVideos((data ?? []) as LessonVideo[]);
     setOpen(true);
   };
 
@@ -120,17 +146,39 @@ export default function LessonsManager() {
   const save = async () => {
     if (!form.title.trim() || !form.module_id) { toast.error("Preencha título e módulo"); return; }
     setLoading(true);
-    const payload = { module_id: form.module_id, title: form.title.trim(), description: form.description.trim() || null, video_url: form.video_url.trim() || null, pdf_url: form.pdf_url.trim() || null, practice_text: form.practice_text.trim() || null, display_order: form.display_order };
+    const primaryVideo = videos[0]?.video_url?.trim() || form.video_url.trim() || null;
+    const payload = { module_id: form.module_id, title: form.title.trim(), description: form.description.trim() || null, video_url: primaryVideo, pdf_url: form.pdf_url.trim() || null, practice_text: form.practice_text.trim() || null, display_order: form.display_order };
 
+    let lessonId: string | null = editing?.id ?? null;
     if (editing) {
       const { error } = await supabase.from("lessons").update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); setLoading(false); return; }
-      toast.success("Lição atualizada!");
     } else {
-      const { error } = await supabase.from("lessons").insert(payload);
+      const { data: inserted, error } = await supabase.from("lessons").insert(payload).select("id").single();
       if (error) { toast.error(error.message); setLoading(false); return; }
-      toast.success("Lição criada!");
+      lessonId = inserted!.id;
     }
+
+    if (lessonId) {
+      const keepIds = videos.filter((v) => v.id).map((v) => v.id!) as string[];
+      let delQuery = supabase.from("lesson_videos").delete().eq("lesson_id", lessonId);
+      if (keepIds.length > 0) delQuery = delQuery.not("id", "in", `(${keepIds.join(",")})`);
+      await delQuery;
+
+      for (let i = 0; i < videos.length; i++) {
+        const v = videos[i];
+        const url = v.video_url.trim();
+        if (!url) continue;
+        const row = { lesson_id: lessonId, title: v.title.trim() || `Videoaula ${i + 1}`, video_url: url, display_order: i };
+        if (v.id) {
+          await supabase.from("lesson_videos").update(row).eq("id", v.id);
+        } else {
+          await supabase.from("lesson_videos").insert(row);
+        }
+      }
+    }
+
+    toast.success(editing ? "Lição atualizada!" : "Lição criada!");
     setOpen(false); setLoading(false); load();
   };
 
@@ -177,7 +225,12 @@ export default function LessonsManager() {
                 <TableCell className="font-medium">{l.title}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{(l.modules as any)?.title ?? "—"}</TableCell>
                 <TableCell className="flex gap-1">
-                  {l.video_url && <Video className="h-4 w-4 text-accent" />}
+                  {(videoCounts[l.id] ?? (l.video_url ? 1 : 0)) > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-accent text-xs">
+                      <Video className="h-4 w-4" />
+                      {videoCounts[l.id] ?? 1}
+                    </span>
+                  )}
                   {l.pdf_url && <FileText className="h-4 w-4 text-muted-foreground" />}
                 </TableCell>
                 <TableCell className="text-right space-x-1">
@@ -216,24 +269,98 @@ export default function LessonsManager() {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
             </div>
             <div className="space-y-2">
-              <Label>Videoaula</Label>
-              <Input
-                value={form.video_url}
-                onChange={(e) => setForm({ ...form, video_url: e.target.value })}
-                placeholder="Cole UM link: Vimeo (https://vimeo.com/...) OU YouTube (https://youtu.be/...)"
-              />
+              <div className="flex items-center justify-between">
+                <Label>Videoaulas</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setVideos((prev) => [
+                      ...prev,
+                      { title: `Videoaula ${prev.length + 1}`, video_url: "", display_order: prev.length },
+                    ])
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar vídeo
+                </Button>
+              </div>
               <p className="text-[11px] text-muted-foreground">
-                Aceita apenas <strong>um link por vez</strong>: Vimeo ou YouTube. O player exibido na lição se adapta ao tipo informado.
+                Adicione uma ou mais videoaulas (Vimeo ou YouTube). O aluno poderá alternar entre elas dentro da unidade.
               </p>
-              {form.video_url && (() => {
-                const info = parseVideo(form.video_url);
-                if (info) {
-                  const label = info.provider === "youtube" ? "YouTube" : "Vimeo";
-                  return (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-xs text-success">
-                        <Video className="h-3.5 w-3.5" />
-                        <span>Vídeo do {label} detectado (ID: {info.id})</span>
+
+              {videos.length === 0 && (
+                <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  Nenhuma videoaula adicionada. Clique em "Adicionar vídeo" para incluir a primeira.
+                </div>
+              )}
+
+              {videos.map((v, idx) => {
+                const info = parseVideo(v.video_url);
+                const label = info ? (info.provider === "youtube" ? "YouTube" : "Vimeo") : null;
+                return (
+                  <div key={v.id ?? `local-${idx}`} className="rounded-md border p-3 space-y-2 bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-xs font-medium text-muted-foreground">#{idx + 1}</span>
+                      <Input
+                        value={v.title}
+                        onChange={(e) =>
+                          setVideos((prev) => prev.map((it, i) => (i === idx ? { ...it, title: e.target.value } : it)))
+                        }
+                        placeholder={`Título da videoaula ${idx + 1}`}
+                        className="h-8 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        disabled={idx === 0}
+                        onClick={() =>
+                          setVideos((prev) => {
+                            const next = [...prev];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            return next;
+                          })
+                        }
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        disabled={idx === videos.length - 1}
+                        onClick={() =>
+                          setVideos((prev) => {
+                            const next = [...prev];
+                            [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                            return next;
+                          })
+                        }
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setVideos((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={v.video_url}
+                      onChange={(e) =>
+                        setVideos((prev) => prev.map((it, i) => (i === idx ? { ...it, video_url: e.target.value } : it)))
+                      }
+                      placeholder="Link Vimeo (https://vimeo.com/...) ou YouTube (https://youtu.be/...)"
+                    />
+                    {v.video_url && info && (
+                      <div className="flex items-center gap-2 text-[11px] text-success">
+                        <Video className="h-3 w-3" />
+                        <span>{label} detectado (ID: {info.id})</span>
                         <a
                           href={info.openUrl}
                           target="_blank"
@@ -243,41 +370,13 @@ export default function LessonsManager() {
                           Abrir <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
-                      <div className="aspect-video w-full overflow-hidden rounded-md border bg-muted">
-                        <iframe
-                          src={info.embedUrl}
-                          className="h-full w-full"
-                          allow="autoplay; fullscreen; picture-in-picture"
-                          allowFullScreen
-                          title={`Preview ${label}`}
-                        />
-                      </div>
-                    </div>
-                  );
-                }
-                return (
-                  <p className="text-[11px] text-warning">
-                    Link não reconhecido. Use uma URL válida do Vimeo ou do YouTube.
-                  </p>
+                    )}
+                    {v.video_url && !info && (
+                      <p className="text-[11px] text-warning">Link não reconhecido. Use uma URL válida do Vimeo ou YouTube.</p>
+                    )}
+                  </div>
                 );
-              })()}
-              <details className="text-[11px] text-muted-foreground">
-                <summary className="cursor-pointer hover:text-foreground">
-                  Ou enviar arquivo direto (não recomendado para vídeos longos)
-                </summary>
-                <div className="mt-2 flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => handleFileUpload(e, "video")}
-                    disabled={uploadingVideo}
-                  />
-                  {uploadingVideo && <span className="text-xs">Enviando...</span>}
-                </div>
-                <p className="mt-1">
-                  Recomendamos hospedar vídeos no Vimeo e colar a URL acima — melhor performance e player profissional.
-                </p>
-              </details>
+              })}
             </div>
             <div className="space-y-2">
               <Label>PDF da Aula</Label>
