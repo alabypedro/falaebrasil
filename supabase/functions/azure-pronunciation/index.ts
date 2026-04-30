@@ -257,6 +257,7 @@ Deno.serve(async (req) => {
         prosody,
         pronunciation, // overall score (0-100)
         missingScoreFields,
+        credit_debited_seconds: durationSeconds,
       };
 
       console.log("Returning normalized scores:", JSON.stringify(scores));
