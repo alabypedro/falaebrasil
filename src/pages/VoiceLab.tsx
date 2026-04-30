@@ -564,9 +564,27 @@ export default function VoiceLab() {
           )}
 
           <Card className="bg-accent/5 border-accent/20">
-            <CardContent className="p-6 text-center">
-              <p className="text-xs text-accent font-semibold uppercase tracking-wide mb-2">Tema Sugerido</p>
-              <p className="text-lg font-medium text-foreground">{currentTopic}</p>
+            <CardContent className="p-6 text-center space-y-3">
+              <p className="text-xs text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
+              {topicLoading ? (
+                <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Gerando tema com IA…</span>
+                </div>
+              ) : (
+                <p className="text-lg font-medium text-foreground">{currentTopic}</p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void fetchUnscriptedTopic()}
+                disabled={topicLoading}
+                className="gap-1.5"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Novo tema
+              </Button>
             </CardContent>
           </Card>
 
