@@ -9,7 +9,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Loader2, Pencil, Mic, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Mic, Trash2, Coins } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Course { id: string; title: string; }
 
@@ -31,6 +33,41 @@ export default function PromptsManager() {
   const [editing, setEditing] = useState<LessonRow | null>(null);
   const [editText, setEditText] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Manual credits grant
+  const [grantEmail, setGrantEmail] = useState("");
+  const [grantScripted, setGrantScripted] = useState<string>("600");
+  const [grantUnscripted, setGrantUnscripted] = useState<string>("300");
+  const [grantBusy, setGrantBusy] = useState(false);
+
+  const handleGrantCredits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = grantEmail.trim();
+    const scripted = parseInt(grantScripted || "0", 10);
+    const unscripted = parseInt(grantUnscripted || "0", 10);
+    if (!email) { toast.error("Informe o email do aluno."); return; }
+    if ((!scripted || scripted < 0) && (!unscripted || unscripted < 0)) {
+      toast.error("Informe ao menos um valor de créditos.");
+      return;
+    }
+    setGrantBusy(true);
+    const { data, error } = await supabase.functions.invoke("grant-voice-credits-admin", {
+      body: {
+        email,
+        scripted_seconds: isNaN(scripted) ? 0 : scripted,
+        unscripted_seconds: isNaN(unscripted) ? 0 : unscripted,
+      },
+    });
+    setGrantBusy(false);
+    if (error || data?.error) {
+      toast.error(data?.error ?? error?.message ?? "Erro ao adicionar créditos");
+      return;
+    }
+    toast.success(
+      `Créditos adicionados. Saldo: ${data.new_scripted_balance}s scripted / ${data.new_unscripted_balance}s unscripted`
+    );
+    setGrantEmail("");
+  };
 
   const load = async () => {
     setLoading(true);
@@ -110,6 +147,57 @@ export default function PromptsManager() {
           </p>
           <p className="text-xs text-muted-foreground">
             Selecione um curso para ver e editar apenas os textos das lições dele.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Manual voice credits grant */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Coins className="h-4 w-4 text-primary" />
+            Conceder créditos de voz a um aluno
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleGrantCredits} className="grid gap-3 sm:grid-cols-[1fr_140px_140px_auto] sm:items-end">
+            <div className="space-y-1">
+              <Label htmlFor="grant-email" className="text-xs">Email do aluno</Label>
+              <Input
+                id="grant-email"
+                type="email"
+                placeholder="aluno@exemplo.com"
+                value={grantEmail}
+                onChange={(e) => setGrantEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="grant-scripted" className="text-xs">Scripted (s)</Label>
+              <Input
+                id="grant-scripted"
+                type="number"
+                min={0}
+                value={grantScripted}
+                onChange={(e) => setGrantScripted(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="grant-unscripted" className="text-xs">Unscripted (s)</Label>
+              <Input
+                id="grant-unscripted"
+                type="number"
+                min={0}
+                value={grantUnscripted}
+                onChange={(e) => setGrantUnscripted(e.target.value)}
+              />
+            </div>
+            <Button type="submit" disabled={grantBusy}>
+              {grantBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Adicionar"}
+            </Button>
+          </form>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Os valores são <strong>somados</strong> ao saldo atual do aluno. Use 600s scripted + 300s unscripted para conceder o equivalente a 1 módulo padrão.
           </p>
         </CardContent>
       </Card>
