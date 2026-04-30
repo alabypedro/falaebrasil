@@ -79,7 +79,7 @@ export default function PromptsManager() {
       .eq("id", editing.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Texto do AI Falaê atualizado.");
+    toast.success("Texto do IA Falaê atualizado.");
     setEditing(null);
     load();
   };
@@ -95,17 +95,17 @@ export default function PromptsManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header / Painel direto do AI Falaê */}
+      {/* Header / Painel direto do IA Falaê */}
       <Card className="bg-primary/5 border-primary/20">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <Mic className="h-4 w-4 text-primary" />
-            Textos do AI Falaê
+            Textos do IA Falaê
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
           <p className="text-sm text-muted-foreground">
-            Cadastre aqui as frases que o aluno lerá em voz alta no <strong>AI Falaê</strong>.
+            Cadastre aqui as frases que o aluno lerá em voz alta no <strong>IA Falaê</strong>.
             Cada texto fica vinculado a uma lição do curso e é avaliado pelo Azure quando o aluno grava.
           </p>
           <p className="text-xs text-muted-foreground">
@@ -187,7 +187,7 @@ export default function PromptsManager() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Remover texto desta lição?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              A lição continuará existindo, mas não terá mais texto de prática no AI Falaê.
+                              A lição continuará existindo, mas não terá mais texto de prática no IA Falaê.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -209,7 +209,7 @@ export default function PromptsManager() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Texto do AI Falaê</DialogTitle>
+            <DialogTitle>Texto do IA Falaê</DialogTitle>
           </DialogHeader>
           {editing && (
             <div className="space-y-3">
@@ -222,7 +222,7 @@ export default function PromptsManager() {
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 rows={6}
-                placeholder="Texto em inglês que o aluno lerá em voz alta no AI Falaê desta lição…"
+                placeholder="Texto em inglês que o aluno lerá em voz alta no IA Falaê desta lição…"
               />
               <p className="text-[11px] text-muted-foreground">
                 Este texto é enviado ao Azure como referência para calcular as notas de pronúncia, fluência, prosódia e completude.

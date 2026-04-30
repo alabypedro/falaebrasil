@@ -131,7 +131,7 @@ export default function Dashboard() {
               Pratique sua pronúncia agora!
             </h3>
             <p className="text-sm md:text-base opacity-90 leading-relaxed">
-              Acesse o AI Falaê e melhore sua fluência com feedback em tempo real.
+              Acesse o IA Falaê e melhore sua fluência com feedback em tempo real.
             </p>
           </div>
           <Button
@@ -139,7 +139,7 @@ export default function Dashboard() {
             onClick={() => navigate("/voice-lab")}
             className="bg-white text-primary hover:bg-white/95 shadow-soft-lg press-effect font-bold"
           >
-            Ir ao AI Falaê
+            Ir ao IA Falaê
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
