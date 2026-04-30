@@ -31,6 +31,27 @@ const accessToProductKey: Record<string, "ebook1" | "ebook2" | "ebook3" | null> 
   free: null,
 };
 
+/** Normaliza o título removendo prefixos "Ebook"/"Audiobook" e acentos para agrupar pares. */
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/^\s*(e-?book|audiobook|audio book)\s*[:\-]?\s*/i, "")
+    .trim();
+}
+
+/** Ordena alfabeticamente pelo título base e, dentro do mesmo título, e-book antes de audiobook. */
+function sortLibrary(items: LibraryItem[]): LibraryItem[] {
+  return [...items].sort((a, b) => {
+    const ka = normalizeTitle(a.title);
+    const kb = normalizeTitle(b.title);
+    if (ka !== kb) return ka.localeCompare(kb, "pt-BR");
+    if (a.type === b.type) return a.title.localeCompare(b.title, "pt-BR");
+    return a.type === "ebook" ? -1 : 1;
+  });
+}
+
 function ItemCard({
   item,
   locked,
@@ -106,8 +127,8 @@ export default function Library() {
       // To still show locked items, we fetch via a separate "preview" path: select only id/title/type/access_key.
       // Since RLS hides non-accessible items, we instead fetch the product mapping to know what exists,
       // and load items the user can see + show "locked" placeholders is complex. Simpler: relax via mapping list.
-      const { data: itemsData } = await supabase.from("library_bst").select("*").order("created_at", { ascending: false });
-      if (itemsData) setItems(itemsData as LibraryItem[]);
+      const { data: itemsData } = await supabase.from("library_bst").select("*");
+      if (itemsData) setItems(sortLibrary(itemsData as LibraryItem[]));
       const { data: prodData } = await supabase
         .from("hubla_product_mapping")
         .select("product_key, display_name, checkout_url");
