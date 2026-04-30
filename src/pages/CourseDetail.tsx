@@ -50,6 +50,14 @@ interface Lesson {
   display_order: number;
 }
 
+interface LessonVideo {
+  id: string;
+  lesson_id: string;
+  title: string;
+  video_url: string;
+  display_order: number;
+}
+
 const levelColors: Record<string, string> = {
   A1: "bg-success/15 text-success",
   A2: "bg-accent/15 text-accent",
@@ -82,6 +90,8 @@ export default function CourseDetail() {
   const [marking, setMarking] = useState(false);
   const [lessonQuizId, setLessonQuizId] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
+  const [lessonVideos, setLessonVideos] = useState<LessonVideo[]>([]);
+  const [activeVideoIdx, setActiveVideoIdx] = useState(0);
 
   const loadData = async () => {
     if (!courseId || !user) return;
@@ -142,6 +152,32 @@ export default function CourseDetail() {
       setLessonQuizId(data?.id ?? null);
     };
     loadQuiz();
+  }, [activeLesson?.id]);
+
+  // Load videos for active lesson
+  useEffect(() => {
+    if (!activeLesson) { setLessonVideos([]); setActiveVideoIdx(0); return; }
+    const loadVideos = async () => {
+      const { data } = await supabase
+        .from("lesson_videos")
+        .select("id, lesson_id, title, video_url, display_order")
+        .eq("lesson_id", activeLesson.id)
+        .order("display_order");
+      let videos = (data ?? []) as LessonVideo[];
+      // Fallback para o video_url legado se não houver registros novos
+      if (videos.length === 0 && activeLesson.video_url) {
+        videos = [{
+          id: `legacy-${activeLesson.id}`,
+          lesson_id: activeLesson.id,
+          title: "Videoaula 1",
+          video_url: activeLesson.video_url,
+          display_order: 0,
+        }];
+      }
+      setLessonVideos(videos);
+      setActiveVideoIdx(0);
+    };
+    loadVideos();
   }, [activeLesson?.id]);
 
   const toggleComplete = async (lessonId: string) => {
@@ -210,7 +246,8 @@ export default function CourseDetail() {
     );
   }
 
-  const embedUrl = activeLesson?.video_url ? getEmbedUrl(activeLesson.video_url) : null;
+  const activeVideo = lessonVideos[activeVideoIdx] ?? null;
+  const embedUrl = activeVideo?.video_url ? getEmbedUrl(activeVideo.video_url) : null;
   const isDirectVideo = embedUrl && (embedUrl.includes("supabase") || embedUrl.match(/\.(mp4|webm|ogg)$/i));
 
   return (
@@ -279,6 +316,23 @@ export default function CourseDetail() {
                       allowFullScreen
                     />
                   )}
+                </div>
+              )}
+
+              {lessonVideos.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {lessonVideos.map((v, i) => (
+                    <Button
+                      key={v.id}
+                      size="sm"
+                      variant={i === activeVideoIdx ? "default" : "outline"}
+                      onClick={() => setActiveVideoIdx(i)}
+                      className="text-xs"
+                    >
+                      <PlayCircle className="h-3.5 w-3.5 mr-1" />
+                      {v.title || `Videoaula ${i + 1}`}
+                    </Button>
+                  ))}
                 </div>
               )}
 
