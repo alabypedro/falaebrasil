@@ -11,6 +11,8 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
+import { AlertCircle } from "lucide-react";
 
 type NormalizedAzureResponse = {
   status?: string;
@@ -101,8 +103,13 @@ export default function VoiceLab() {
   const [coursePhrases, setCoursePhrases] = useState<CoursePhrase[]>([]);
   const [selectedPhraseIndex, setSelectedPhraseIndex] = useState<number>(0);
 
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const userLevel = profile?.level || "A1";
+
+  const scriptedBalance = profile?.scripted_balance ?? 0;
+  const unscriptedBalance = profile?.unscripted_balance ?? 0;
+  const scriptedExhausted = scriptedBalance <= 0;
+  const unscriptedExhausted = unscriptedBalance <= 0;
 
   // Load all published courses for the selector
   useEffect(() => {
@@ -249,6 +256,8 @@ export default function VoiceLab() {
         setFeedback(null);
         setTranscription(null);
         window.alert(data.message || data.error || "Não foi possível obter as notas do Azure.");
+        // Refresh balance even on fallback (in case credits were debited or check failed)
+        void refreshProfile();
         return;
       }
 
@@ -277,6 +286,9 @@ export default function VoiceLab() {
 
       setFeedback(mappedFeedback);
       setTranscription(normalized.transcription || null);
+
+      // Update balance after successful analysis
+      void refreshProfile();
 
       if (user) {
         await supabase.from("voice_sessions").insert({
@@ -318,7 +330,7 @@ export default function VoiceLab() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [mode, practiceText, user]);
+  }, [mode, practiceText, user, refreshProfile]);
 
   const handleStop = () => { stopRecording(); };
 
@@ -353,6 +365,23 @@ export default function VoiceLab() {
         </p>
       </div>
 
+      {/* AI Consumption panel */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm text-muted-foreground">Consumo de IA</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <BalanceMeter
+            label="Scripted (leitura/repetição)"
+            seconds={scriptedBalance}
+          />
+          <BalanceMeter
+            label="Unscripted (conversação livre)"
+            seconds={unscriptedBalance}
+          />
+        </CardContent>
+      </Card>
+
       <Tabs value={mode} onValueChange={(v) => { setMode(v as "scripted" | "unscripted"); handleReset(); }}>
         <TabsList>
           <TabsTrigger value="scripted">📖 Scripted</TabsTrigger>
@@ -360,6 +389,17 @@ export default function VoiceLab() {
         </TabsList>
 
         <TabsContent value="scripted" className="space-y-6">
+          {scriptedExhausted && (
+            <Card className="border-destructive/40 bg-destructive/5">
+              <CardContent className="p-4 flex items-start gap-2 text-sm">
+                <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                <span className="text-destructive font-medium">
+                  Saldo de Scripted esgotado. Adquira novos módulos para continuar praticando.
+                </span>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Course selector */}
           <Card>
             <CardHeader className="pb-2">
