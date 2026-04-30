@@ -753,6 +753,36 @@ export type Database = {
       }
     }
     Views: {
+      library_bst_safe: {
+        Row: {
+          access_key: string | null
+          audio_url: string | null
+          created_at: string | null
+          file_url: string | null
+          id: string | null
+          title: string | null
+          type: string | null
+        }
+        Insert: {
+          access_key?: string | null
+          audio_url?: never
+          created_at?: string | null
+          file_url?: never
+          id?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Update: {
+          access_key?: string | null
+          audio_url?: never
+          created_at?: string | null
+          file_url?: never
+          id?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null
