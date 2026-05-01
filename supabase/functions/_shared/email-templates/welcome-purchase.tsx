@@ -29,36 +29,25 @@ export const WelcomePurchaseEmail = ({
 }: WelcomePurchaseEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Sua compra foi confirmada — crie sua senha no Falaê Brasil!</Preview>
+    <Preview>Seja bem-vindo ao Falaê Brasil — crie sua senha de acesso!</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Compra confirmada! 🎉</Heading>
+        <Heading style={h1}>Seja bem-vindo ao Falaê Brasil! 🎉</Heading>
         <Text style={text}>
-          Que alegria ter você no{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>Falaê Brasil!</strong>
-          </Link>{' '}
-          Sua compra foi processada com sucesso e seu acesso já está liberado.
-        </Text>
-        <Text style={text}>
-          Criamos uma conta para o e-mail{' '}
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          . Para começar a usar a plataforma, defina sua senha clicando no
-          botão abaixo. O link é pessoal e tem validade de 1 hora.
+          O acesso à plataforma deve ser feito pelo botão abaixo:
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Criar minha senha e acessar
+          Acessar Plataforma
         </Button>
         <Text style={text}>
-          Depois de criar sua senha, você já poderá entrar na plataforma e
-          começar a praticar inglês com o Laboratório de Voz, os cursos e a
-          biblioteca BST. Bora falar inglês de verdade! 🚀
+          Clique no botão e crie a sua senha de acesso!
         </Text>
         <Text style={footer}>
-          Se você não reconhece esta compra, entre em contato com nosso
-          suporte para que possamos ajudar.
+          Caso ainda esteja com algum problema ou dificuldades para acessar,
+          por gentileza entre em contato com nosso suporte:{' '}
+          <Link href="mailto:atendimento@falaebrasil.com.br" style={link}>
+            atendimento@falaebrasil.com.br
+          </Link>
         </Text>
       </Container>
     </Body>
