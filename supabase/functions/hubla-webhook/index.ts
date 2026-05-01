@@ -253,12 +253,21 @@ Deno.serve(async (req) => {
       // with the email field locked (readOnly).
       const APP_URL = "https://falaebrasil.lovable.app";
       const redirectTo = `${APP_URL}/auth?email=${encodeURIComponent(email)}`;
-      const { data: linkData } = await admin.auth.admin.generateLink({
-        type: "recovery",
+      // Use the public client's resetPasswordForEmail so Supabase Auth actually
+      // SENDS the email (which triggers the auth-email-hook). admin.generateLink
+      // only returns a link without sending — the hook never fires in that case.
+      const publicClient = createClient(
+        SUPABASE_URL,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      const { error: resetErr } = await publicClient.auth.resetPasswordForEmail(
         email,
-        options: { redirectTo },
-      });
-      recoveryLink = linkData?.properties?.action_link ?? null;
+        { redirectTo }
+      );
+      if (resetErr) {
+        console.error("resetPasswordForEmail failed", resetErr);
+      }
       // The auth-email-hook intercepts this and sends the branded
       // "welcome_purchase" template (single source of truth for the welcome email).
     }
