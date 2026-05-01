@@ -241,18 +241,19 @@ Deno.serve(async (req) => {
     // Send recovery link if new user (so they can set their password)
     let recoveryLink: string | null = null;
     if (createdNewUser) {
-      const origin =
-        req.headers.get("origin") ||
-        req.headers.get("referer") ||
-        "https://falaebrasil.lovable.app";
-      const redirectTo = `${origin.replace(/\/$/, "")}/reset-password`;
+      // Always redirect new students to the /auth page with their email pre-filled.
+      // The frontend detects ?email=... and shows the "create password" form
+      // with the email field locked (readOnly).
+      const APP_URL = "https://falaebrasil.lovable.app";
+      const redirectTo = `${APP_URL}/auth?email=${encodeURIComponent(email)}`;
       const { data: linkData } = await admin.auth.admin.generateLink({
         type: "recovery",
         email,
         options: { redirectTo },
       });
       recoveryLink = linkData?.properties?.action_link ?? null;
-      // Supabase will also email the link automatically via the configured email provider.
+      // The auth-email-hook intercepts this and sends the branded
+      // "welcome_purchase" template (single source of truth for the welcome email).
     }
 
     return new Response(
