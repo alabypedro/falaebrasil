@@ -29,6 +29,7 @@ import LibraryManager from "@/pages/admin/LibraryManager";
 import PromptsManager from "@/pages/admin/PromptsManager";
 import AdminsManager from "@/pages/admin/AdminsManager";
 import HublaProductsManager from "@/pages/admin/HublaProductsManager";
+import TutorialsManager from "@/pages/admin/TutorialsManager";
 import Success from "@/pages/Success";
 
 const queryClient = new QueryClient();
@@ -108,6 +109,7 @@ const App = () => (
                         <Route path="quizzes" element={<QuizzesManager />} />
                         <Route path="library" element={<LibraryManager />} />
                         <Route path="prompts" element={<PromptsManager />} />
+                        <Route path="tutorials" element={<TutorialsManager />} />
                         <Route path="admins" element={<AdminsManager />} />
                         <Route path="hubla" element={<HublaProductsManager />} />
                       </Route>
