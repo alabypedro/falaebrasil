@@ -16,6 +16,7 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
 
 function extractEmail(body: any): string | null {
   return (
+    body?.event?.invoice?.payer?.email ||
     body?.event?.userEmail ||
     body?.event?.user?.email ||
     body?.user?.email ||
@@ -26,6 +27,10 @@ function extractEmail(body: any): string | null {
 }
 
 function extractName(body: any): string {
+  const payer = body?.event?.invoice?.payer;
+  if (payer?.firstName || payer?.lastName) {
+    return `${payer.firstName ?? ""} ${payer.lastName ?? ""}`.trim() || "Aluno";
+  }
   return (
     body?.event?.userName ||
     body?.event?.user?.name ||
@@ -38,6 +43,8 @@ function extractName(body: any): string {
 
 function extractCustomerId(body: any): string | null {
   return (
+    body?.event?.invoice?.payerId ||
+    body?.event?.invoice?.payer?.id ||
     body?.event?.userId ||
     body?.event?.user?.id ||
     body?.user?.id ||
@@ -116,9 +123,6 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    // TEMP DEBUG: log full raw payload to diagnose Hubla email/customer fields
-    console.log("HUBLA_RAW_PAYLOAD", JSON.stringify(body));
-    console.log("HUBLA_HEADERS", JSON.stringify(Object.fromEntries(req.headers.entries())));
     const eventType: string =
       body?.type || body?.event?.type || body?.event_type || "unknown";
 
