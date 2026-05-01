@@ -103,22 +103,6 @@ function extractProductNames(body: any): string[] {
   return Array.from(names);
 }
 
-async function findUserByEmail(email: string): Promise<any | null> {
-  const perPage = 1000;
-  for (let page = 1; page <= 10; page += 1) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-
-    const found = data?.users?.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase()
-    );
-    if (found) return found;
-    if (!data?.users || data.users.length < perPage) break;
-  }
-
-  return null;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -203,7 +187,10 @@ Deno.serve(async (req) => {
     let userId: string | null = null;
     let createdNewUser = false;
 
-    const found = await findUserByEmail(email);
+    const { data: existing } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const found = existing?.users?.find(
+      (u) => u.email?.toLowerCase() === email.toLowerCase()
+    );
 
     if (found) {
       userId = found.id;
@@ -214,18 +201,9 @@ Deno.serve(async (req) => {
         password: crypto.randomUUID() + crypto.randomUUID(),
         user_metadata: { full_name: fullName, from_hubla: true },
       });
-      if (createErr) {
-        // Hubla can fire parent + child invoice events at the same time. If another
-        // request created the user milliseconds earlier, continue with that user.
-        const concurrentlyCreated = await findUserByEmail(email);
-        if (!concurrentlyCreated) throw createErr;
-
-        console.warn("User already created by concurrent webhook", { email });
-        userId = concurrentlyCreated.id;
-      } else {
-        userId = created.user!.id;
-        createdNewUser = true;
-      }
+      if (createErr) throw createErr;
+      userId = created.user!.id;
+      createdNewUser = true;
     }
 
     // Update profile with access flags + customer id (merge, only set true → never demote)
@@ -268,25 +246,21 @@ Deno.serve(async (req) => {
     }
 
     // Send recovery link if new user (so they can set their password)
-    let recoveryEmailSent = false;
-    let recoveryEmailError: string | null = null;
+    let recoveryLink: string | null = null;
     if (createdNewUser) {
       // Always redirect new students to the /auth page with their email pre-filled.
       // The frontend detects ?email=... and shows the "create password" form
       // with the email field locked (readOnly).
       const APP_URL = "https://falaebrasil.lovable.app";
       const redirectTo = `${APP_URL}/auth?email=${encodeURIComponent(email)}`;
-      const { error: recoveryErr } = await admin.auth.resetPasswordForEmail(email, {
-        redirectTo,
+      const { data: linkData } = await admin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo },
       });
-      if (recoveryErr) {
-        recoveryEmailError = recoveryErr.message;
-        console.error("Failed to send Hubla onboarding email", { email, recoveryErr });
-      } else {
-        recoveryEmailSent = true;
-      }
-      // The auth-email-hook intercepts this recovery action and sends the branded
-      // "welcome_purchase" template for Hubla-created users.
+      recoveryLink = linkData?.properties?.action_link ?? null;
+      // The auth-email-hook intercepts this and sends the branded
+      // "welcome_purchase" template (single source of truth for the welcome email).
     }
 
     return new Response(
@@ -296,8 +270,7 @@ Deno.serve(async (req) => {
         created_new_user: createdNewUser,
         granted: grants,
         matched_products: matched.map((m: any) => m.product_key),
-        recovery_link_sent: recoveryEmailSent,
-        recovery_email_error: recoveryEmailError,
+        recovery_link_sent: createdNewUser,
         voice_credits: creditResults,
         event_id: eventId,
       }),
