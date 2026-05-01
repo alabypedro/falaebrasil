@@ -10,7 +10,6 @@ import Dashboard from "@/pages/Dashboard";
 import Courses from "@/pages/Courses";
 import VoiceLab from "@/pages/VoiceLab";
 import Library from "@/pages/Library";
-import Community from "@/pages/Community";
 import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
@@ -95,7 +94,6 @@ const App = () => (
                       <Route path="/courses/:courseId" element={<CourseDetail />} />
                       <Route path="/voice-lab" element={<VoiceLab />} />
                       <Route path="/library" element={<Library />} />
-                      <Route path="/community" element={<Community />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/tutoriais" element={<Tutoriais />} />
                       <Route path="/quiz/:quizId" element={<QuizPlayer />} />
