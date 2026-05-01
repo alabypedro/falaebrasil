@@ -715,6 +715,39 @@ export type Database = {
         }
         Relationships: []
       }
+      tutorials: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_published: boolean
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       user_progress: {
         Row: {
           completed_at: string
