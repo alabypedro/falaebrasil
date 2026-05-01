@@ -199,7 +199,10 @@ Deno.serve(async (req) => {
     if (mapErr) throw mapErr;
 
     const matched = (mappings || []).filter((m: any) => {
-      if (m.hubla_product_id && productIds.includes(String(m.hubla_product_id))) return true;
+      if (m.hubla_product_id) {
+        const target = String(m.hubla_product_id).toLowerCase();
+        if (productIds.map((p) => p.toLowerCase()).includes(target)) return true;
+      }
       if (
         m.hubla_product_name &&
         productNames.includes(String(m.hubla_product_name).toLowerCase())
@@ -243,9 +246,21 @@ Deno.serve(async (req) => {
         password: crypto.randomUUID() + crypto.randomUUID(),
         user_metadata: { full_name: fullName, from_hubla: true },
       });
-      if (createErr) throw createErr;
-      userId = created.user!.id;
-      createdNewUser = true;
+      if (createErr) {
+        // Race condition: another concurrent webhook (orderbump) may have just
+        // created the same user. Re-query and continue with that user instead
+        // of failing — otherwise we lose the access grants for this product.
+        console.warn("createUser failed, re-querying existing user", createErr.message);
+        const { data: retry } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const retryFound = retry?.users?.find(
+          (u) => u.email?.toLowerCase() === email.toLowerCase()
+        );
+        if (!retryFound) throw createErr;
+        userId = retryFound.id;
+      } else {
+        userId = created.user!.id;
+        createdNewUser = true;
+      }
     }
 
     // Update profile with access flags + customer id (merge, only set true → never demote)
