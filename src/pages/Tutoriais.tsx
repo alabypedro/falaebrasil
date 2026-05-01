@@ -2,57 +2,27 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PlayCircle, Loader2 } from "lucide-react";
-
-interface Tutorial {
-  id: string;
-  title: string;
-  description: string | null;
-  video_url: string | null;
-  display_order: number;
-}
-
-const gradients = [
-  "bg-gradient-hero",
-  "bg-gradient-accent",
-  "bg-gradient-xp",
-  "bg-gradient-to-br from-success to-success/70",
-  "bg-gradient-to-br from-primary to-primary/70",
-  "bg-gradient-to-br from-accent to-accent/70",
-];
-
-function parseYoutube(url: string | null): { id: string; embedUrl: string; thumb: string } | null {
-  if (!url) return null;
-  const m = url.trim().match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
-  const id = m?.[1] ?? (/^[\w-]{8,15}$/.test(url.trim()) ? url.trim() : null);
-  if (!id) return null;
-  return {
-    id,
-    embedUrl: `https://www.youtube.com/embed/${id}?autoplay=1&rel=0`,
-    thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-  };
-}
+import { PlayCircle } from "lucide-react";
+import { TUTORIAL_TOPICS, parseYoutube } from "@/lib/tutorialTopics";
 
 export default function Tutoriais() {
-  const [items, setItems] = useState<Tutorial[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [active, setActive] = useState<Tutorial | null>(null);
+  const [videoBySlug, setVideoBySlug] = useState<Record<string, string | null>>({});
+  const [active, setActive] = useState<{ title: string; embedUrl: string } | null>(null);
 
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
         .from("tutorials")
-        .select("id, title, description, video_url, display_order")
-        .eq("is_published", true)
-        .order("display_order", { ascending: true })
-        .order("created_at", { ascending: true });
-      setItems((data as Tutorial[]) ?? []);
-      setLoading(false);
+        .select("slug, video_url")
+        .eq("is_published", true);
+      const map: Record<string, string | null> = {};
+      (data ?? []).forEach((r: any) => {
+        if (r.slug) map[r.slug] = r.video_url;
+      });
+      setVideoBySlug(map);
     };
     load();
   }, []);
-
-  const activeVideo = active ? parseYoutube(active.video_url) : null;
 
   return (
     <div className="space-y-8 max-w-6xl page-transition">
@@ -65,82 +35,63 @@ export default function Tutoriais() {
         </p>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : items.length === 0 ? (
-        <Card className="p-10 text-center border-dashed">
-          <PlayCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">
-            Em breve teremos vídeos por aqui. Volte mais tarde!
-          </p>
-        </Card>
-      ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((t, i) => {
-            const v = parseYoutube(t.video_url);
-            const gradient = gradients[i % gradients.length];
-            return (
-              <Card
-                key={t.id}
-                className="animate-fade-up hover-lift card-shine cursor-pointer border-border/50 overflow-hidden group"
-                style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
-                onClick={() => v && setActive(t)}
-              >
-                <div className={`relative aspect-video ${v ? "" : gradient} flex items-center justify-center`}>
-                  {v ? (
-                    <img
-                      src={v.thumb}
-                      alt={t.title}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : null}
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors" />
-                  <div className="relative flex flex-col items-center gap-2 text-white">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm group-hover:scale-110 transition-transform">
-                      <PlayCircle className="h-7 w-7" />
-                    </div>
-                    <span className="text-xs font-semibold uppercase tracking-wider opacity-90">
-                      {v ? "Assistir" : "Vídeo em breve"}
-                    </span>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {TUTORIAL_TOPICS.map((t, i) => {
+          const v = parseYoutube(videoBySlug[t.slug]);
+          const clickable = !!v;
+          return (
+            <Card
+              key={t.slug}
+              onClick={() => v && setActive({ title: t.title, embedUrl: v.embedUrl })}
+              className={`animate-fade-up hover-lift card-shine border-border/50 overflow-hidden group ${clickable ? "cursor-pointer" : ""}`}
+              style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
+            >
+              <div className={`relative aspect-video ${t.gradient} flex items-center justify-center`}>
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                <div className="relative flex flex-col items-center gap-2 text-white">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                    <PlayCircle className="h-7 w-7" />
                   </div>
+                  <span className="text-xs font-semibold uppercase tracking-wider opacity-90">
+                    {clickable ? "Assistir" : "Vídeo em breve"}
+                  </span>
                 </div>
-                <CardContent className="p-5 space-y-1.5">
-                  <h3 className="text-sm font-display font-bold text-foreground leading-tight">
-                    {t.title}
-                  </h3>
-                  {t.description && (
+              </div>
+              <CardContent className="p-5 space-y-2">
+                <div className="flex items-start gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <t.icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-sm font-display font-bold text-foreground leading-tight">
+                      {t.title}
+                    </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed">
                       {t.description}
                     </p>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{active?.title}</DialogTitle>
           </DialogHeader>
-          {activeVideo && (
+          {active && (
             <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
               <iframe
-                src={activeVideo.embedUrl}
+                src={active.embedUrl}
                 className="w-full h-full"
-                title={active?.title}
+                title={active.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             </div>
-          )}
-          {active?.description && (
-            <p className="text-sm text-muted-foreground">{active.description}</p>
           )}
         </DialogContent>
       </Dialog>
