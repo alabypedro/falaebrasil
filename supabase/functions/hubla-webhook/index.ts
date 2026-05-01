@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
         email,
         email_confirm: true,
         password: crypto.randomUUID() + crypto.randomUUID(),
-        user_metadata: { full_name: fullName },
+        user_metadata: { full_name: fullName, from_hubla: true },
       });
       if (createErr) throw createErr;
       userId = created.user!.id;
