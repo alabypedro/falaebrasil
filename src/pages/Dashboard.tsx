@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import OnboardingTutorialModal from "@/components/OnboardingTutorialModal";
 
 interface CourseProgress {
   name: string;
@@ -58,6 +59,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 max-w-6xl page-transition">
+      <OnboardingTutorialModal />
       <div className="animate-fade-up">
         <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground tracking-tight">
           Dashboard
