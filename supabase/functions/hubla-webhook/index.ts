@@ -164,6 +164,10 @@ Deno.serve(async (req) => {
     const eventType: string =
       body?.type || body?.event?.type || body?.event_type || "unknown";
 
+    // TEMP DEBUG: capture full payload to diagnose order bump structure
+    console.log("HUBLA_RAW_PAYLOAD", JSON.stringify(body));
+    console.log("HUBLA_EVENT_TYPE", eventType);
+
     // Only process successful purchase events
     const isPurchase =
       /sale|purchase|order|payment/i.test(eventType) &&
