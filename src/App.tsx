@@ -18,6 +18,7 @@ import NotFound from "@/pages/NotFound";
 import QuizPlayer from "@/pages/QuizPlayer";
 import CourseDetail from "@/pages/CourseDetail";
 import Install from "@/pages/Install";
+import Tutoriais from "@/pages/Tutoriais";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import CoursesManager from "@/pages/admin/CoursesManager";
@@ -89,6 +90,7 @@ const App = () => (
                       <Route path="/library" element={<Library />} />
                       <Route path="/community" element={<Community />} />
                       <Route path="/profile" element={<Profile />} />
+                      <Route path="/tutoriais" element={<Tutoriais />} />
                       <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                       <Route path="/success" element={<Success />} />
                       <Route
