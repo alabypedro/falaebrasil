@@ -116,6 +116,9 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    // TEMP DEBUG: log full raw payload to diagnose Hubla email/customer fields
+    console.log("HUBLA_RAW_PAYLOAD", JSON.stringify(body));
+    console.log("HUBLA_HEADERS", JSON.stringify(Object.fromEntries(req.headers.entries())));
     const eventType: string =
       body?.type || body?.event?.type || body?.event_type || "unknown";
 
