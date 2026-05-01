@@ -457,6 +457,7 @@ export type Database = {
           has_ebook1_access: boolean
           has_ebook2_access: boolean
           has_ebook3_access: boolean
+          has_seen_tutorial: boolean
           hubla_customer_id: string | null
           id: string
           level: string
@@ -476,6 +477,7 @@ export type Database = {
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
           has_ebook3_access?: boolean
+          has_seen_tutorial?: boolean
           hubla_customer_id?: string | null
           id?: string
           level?: string
@@ -495,6 +497,7 @@ export type Database = {
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
           has_ebook3_access?: boolean
+          has_seen_tutorial?: boolean
           hubla_customer_id?: string | null
           id?: string
           level?: string

@@ -6,6 +6,7 @@ import {
   Users,
   Zap,
   Shield,
+  HelpCircle,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +31,7 @@ const navItems = [
   { title: "IA Falaê", url: "/voice-lab", icon: Mic },
   { title: "Biblioteca BST", url: "/library", icon: Library },
   { title: "Lets Falaê", url: "/community", icon: Users },
+  { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },
 ];
 
 export default function AppSidebar() {
