@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle } from "lucide-react";
+import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNav = [
@@ -10,6 +10,7 @@ const adminNav = [
   { to: "/admin/quizzes", icon: HelpCircle, label: "Quizzes" },
   { to: "/admin/library", icon: Library, label: "Biblioteca BST" },
   { to: "/admin/prompts", icon: Mic, label: "Textos IA Falaê" },
+  { to: "/admin/communities", icon: Users, label: "Comunidades FB" },
   { to: "/admin/tutorials", icon: PlayCircle, label: "Tutoriais" },
   { to: "/admin/admins", icon: ShieldCheck, label: "Admins" },
   { to: "/admin/hubla", icon: ShoppingCart, label: "Vendas Hubla" },

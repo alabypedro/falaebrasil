@@ -247,6 +247,39 @@ export type Database = {
         }
         Relationships: []
       }
+      fb_communities: {
+        Row: {
+          access_key: string
+          created_at: string
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+          whatsapp_url: string | null
+        }
+        Insert: {
+          access_key?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+          whatsapp_url?: string | null
+        }
+        Update: {
+          access_key?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          whatsapp_url?: string | null
+        }
+        Relationships: []
+      }
       hubla_product_mapping: {
         Row: {
           checkout_url: string | null

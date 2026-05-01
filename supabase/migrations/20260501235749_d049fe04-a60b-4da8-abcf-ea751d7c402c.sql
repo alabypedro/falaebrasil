@@ -1,0 +1,1 @@
+UPDATE public.fb_communities SET access_key = 'free' WHERE title = 'FB Básico PRO (A1)';
