@@ -9,6 +9,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { WelcomePurchaseEmail } from '../_shared/email-templates/welcome-purchase.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +24,7 @@ const EMAIL_SUBJECTS: Record<string, string> = {
   recovery: 'Reset your password',
   email_change: 'Confirm your new email',
   reauthentication: 'Your verification code',
+  welcome_purchase: 'Compra confirmada — crie sua senha no Falaê Brasil!',
 }
 
 // Template mapping
@@ -33,6 +35,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   recovery: RecoveryEmail,
   email_change: EmailChangeEmail,
   reauthentication: ReauthenticationEmail,
+  welcome_purchase: WelcomePurchaseEmail,
 }
 
 // Configuration
