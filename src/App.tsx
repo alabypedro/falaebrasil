@@ -18,6 +18,7 @@ import QuizPlayer from "@/pages/QuizPlayer";
 import CourseDetail from "@/pages/CourseDetail";
 import Install from "@/pages/Install";
 import Tutoriais from "@/pages/Tutoriais";
+import Communities from "@/pages/Communities";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import CoursesManager from "@/pages/admin/CoursesManager";
@@ -29,6 +30,7 @@ import PromptsManager from "@/pages/admin/PromptsManager";
 import AdminsManager from "@/pages/admin/AdminsManager";
 import HublaProductsManager from "@/pages/admin/HublaProductsManager";
 import TutorialsManager from "@/pages/admin/TutorialsManager";
+import CommunitiesManager from "@/pages/admin/CommunitiesManager";
 import Success from "@/pages/Success";
 
 const queryClient = new QueryClient();
@@ -96,6 +98,7 @@ const App = () => (
                       <Route path="/library" element={<Library />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/tutoriais" element={<Tutoriais />} />
+                      <Route path="/communities" element={<Communities />} />
                       <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                       <Route path="/success" element={<Success />} />
                       <Route
@@ -114,6 +117,7 @@ const App = () => (
                         <Route path="library" element={<LibraryManager />} />
                         <Route path="prompts" element={<PromptsManager />} />
                         <Route path="tutorials" element={<TutorialsManager />} />
+                        <Route path="communities" element={<CommunitiesManager />} />
                         <Route path="admins" element={<AdminsManager />} />
                         <Route path="hubla" element={<HublaProductsManager />} />
                       </Route>

@@ -7,6 +7,7 @@ import {
   Shield,
   HelpCircle,
   Download,
+  Users,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +31,7 @@ const navItems = [
   { title: "Cursos Falaê Brasil! (FB)", url: "/courses", icon: BookOpen },
   { title: "IA Falaê", url: "/voice-lab", icon: Mic },
   { title: "Biblioteca BST", url: "/library", icon: Library },
+  { title: "Comunidades FB", url: "/communities", icon: Users },
   { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },
   { title: "Instalar App", url: "/install", icon: Download },
 ];
