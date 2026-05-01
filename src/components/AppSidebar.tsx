@@ -7,6 +7,7 @@ import {
   Zap,
   Shield,
   HelpCircle,
+  Download,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +33,7 @@ const navItems = [
   { title: "Biblioteca BST", url: "/library", icon: Library },
   { title: "Lets Falaê", url: "/community", icon: Users },
   { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },
+  { title: "Instalar App", url: "/install", icon: Download },
 ];
 
 export default function AppSidebar() {
