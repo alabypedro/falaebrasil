@@ -722,6 +722,7 @@ export type Database = {
           display_order: number
           id: string
           is_published: boolean
+          slug: string | null
           title: string
           updated_at: string
           video_url: string | null
@@ -732,6 +733,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_published?: boolean
+          slug?: string | null
           title: string
           updated_at?: string
           video_url?: string | null
@@ -742,6 +744,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_published?: boolean
+          slug?: string | null
           title?: string
           updated_at?: string
           video_url?: string | null
