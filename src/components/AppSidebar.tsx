@@ -3,7 +3,6 @@ import {
   BookOpen,
   Mic,
   Library,
-  Users,
   Zap,
   Shield,
   HelpCircle,
@@ -31,7 +30,6 @@ const navItems = [
   { title: "Cursos Falaê Brasil! (FB)", url: "/courses", icon: BookOpen },
   { title: "IA Falaê", url: "/voice-lab", icon: Mic },
   { title: "Biblioteca BST", url: "/library", icon: Library },
-  { title: "Lets Falaê", url: "/community", icon: Users },
   { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },
   { title: "Instalar App", url: "/install", icon: Download },
 ];
