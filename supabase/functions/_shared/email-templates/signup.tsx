@@ -27,31 +27,37 @@ export const SignupEmail = ({
   recipient,
   confirmationUrl,
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Confirme seu e-mail para começar no Falaê Brasil!</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Heading style={h1}>Bem-vindo(a) ao Falaê Brasil! 🎉</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
+          Que bom ter você aqui! Seu cadastro na plataforma{' '}
           <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
+            <strong>Falaê Brasil!</strong>
+          </Link>{' '}
+          foi recebido com sucesso.
         </Text>
         <Text style={text}>
-          Please confirm your email address (
+          Para ativar sua conta e liberar o acesso ao Laboratório de Voz, aos
+          cursos e à biblioteca BST, confirme seu e-mail (
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) by clicking the button below:
+          ) clicando no botão abaixo:
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Verify Email
+          Confirmar meu e-mail
         </Button>
+        <Text style={text}>
+          Após a confirmação, você já poderá entrar na plataforma e começar a
+          praticar seu inglês. Bora falar inglês de verdade! 🚀
+        </Text>
         <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+          Se você não criou uma conta no Falaê Brasil!, pode ignorar este
+          e-mail com tranquilidade — nada será feito na sua conta.
         </Text>
       </Container>
     </Body>
@@ -60,12 +66,15 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: 'Inter, -apple-system, "Segoe UI", Arial, sans-serif',
+}
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(222, 65%, 18%)',
   margin: '0 0 20px',
 }
 const text = {
@@ -74,12 +83,13 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: 'hsl(185, 84%, 42%)', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: 'hsl(222, 65%, 18%)',
   color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
+  fontSize: '15px',
+  fontWeight: 'bold' as const,
+  borderRadius: '14px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
