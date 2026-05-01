@@ -177,7 +177,7 @@ export default function Library() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Biblioteca BST</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          E-books e Audiobooks para complementar seu aprendizado.
+          Brasil Sem Trava: E-books e Audiobooks para complementar seu aprendizado.
         </p>
       </div>
 
