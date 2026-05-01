@@ -13,6 +13,7 @@ import {
   Apple,
   Monitor,
   Info,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   getPlatform,
@@ -162,14 +163,18 @@ export default function Install() {
               Abra este site no <strong>Safari</strong> (não funciona em outros navegadores).
             </Step>
             <Step n={2}>
-              Toque no ícone <Share className="inline h-4 w-4 mx-1" />{" "}
-              <strong>Compartilhar</strong> na barra inferior.
+              Toque no ícone <MoreHorizontal className="inline h-4 w-4 mx-1" />{" "}
+              <strong>Menu</strong> na barra inferior.
             </Step>
             <Step n={3}>
+              Toque no ícone <Share className="inline h-4 w-4 mx-1" />{" "}
+              <strong>Compartilhar</strong>.
+            </Step>
+            <Step n={4}>
               Role e toque em <Plus className="inline h-4 w-4 mx-1" />{" "}
               <strong>Adicionar à Tela de Início</strong>.
             </Step>
-            <Step n={4}>
+            <Step n={5}>
               Confirme em <strong>Adicionar</strong>. O app aparecerá na sua tela inicial.
             </Step>
           </CardContent>
@@ -196,16 +201,13 @@ export default function Install() {
                 Instalar agora
               </Button>
             )}
-            <Step n={1}>Abra o site no Chrome ou no Edge.</Step>
+            <Step n={1}>
+              Toque no ícone <Download className="inline h-4 w-4 mx-1" />{" "}
+              <strong>Instalar agora</strong> ou{" "}
+              <strong>Instalar Falaê Brasil!</strong>
+            </Step>
             <Step n={2}>
-              Toque no menu <strong>⋮</strong> no canto superior direito.
-            </Step>
-            <Step n={3}>
-              Selecione <strong>Instalar app</strong> ou{" "}
-              <strong>Adicionar à tela inicial</strong>.
-            </Step>
-            <Step n={4}>
-              Confirme em <strong>Instalar</strong>. Pronto!
+              Toque em <strong>Instalar</strong>.
             </Step>
           </CardContent>
         </Card>
@@ -232,8 +234,9 @@ export default function Install() {
               </Button>
             )}
             <Step n={1}>
-              Procure pelo ícone de instalação <Download className="inline h-4 w-4 mx-1" />{" "}
-              na barra de endereço.
+              Clique no ícone <Download className="inline h-4 w-4 mx-1" />{" "}
+              <strong>Instalar agora</strong> ou{" "}
+              <strong>Instalar Falaê Brasil!</strong>
             </Step>
             <Step n={2}>
               Clique e confirme em <strong>Instalar</strong>. O Falaê Brasil abrirá
