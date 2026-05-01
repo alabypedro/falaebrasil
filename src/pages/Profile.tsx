@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Camera, ArrowLeft, Loader2, RotateCcw } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, RotateCcw, Mic } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +31,55 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [grants, setGrants] = useState<
+    Array<{
+      id: string;
+      created_at: string;
+      scripted: number;
+      unscripted: number;
+      product_name: string;
+    }>
+  >([]);
+  const [loadingGrants, setLoadingGrants] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: grantData } = await supabase
+        .from("voice_credit_grants")
+        .select("id, created_at, scripted_seconds_added, unscripted_seconds_added, hubla_product_id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      const productIds = Array.from(
+        new Set((grantData || []).map((g) => g.hubla_product_id).filter(Boolean)),
+      );
+      let nameMap: Record<string, string> = {};
+      if (productIds.length > 0) {
+        const { data: products } = await supabase
+          .from("voice_credit_products")
+          .select("hubla_product_id, display_name")
+          .in("hubla_product_id", productIds);
+        (products || []).forEach((p) => {
+          nameMap[p.hubla_product_id] = p.display_name;
+        });
+      }
+      setGrants(
+        (grantData || []).map((g) => ({
+          id: g.id,
+          created_at: g.created_at,
+          scripted: g.scripted_seconds_added,
+          unscripted: g.unscripted_seconds_added,
+          product_name: nameMap[g.hubla_product_id] || "Compra",
+        })),
+      );
+      setLoadingGrants(false);
+    })();
+  }, [user]);
+
+  const scriptedBalance = profile?.scripted_balance ?? 0;
+  const unscriptedBalance = profile?.unscripted_balance ?? 0;
+  const totalBalance = scriptedBalance + unscriptedBalance;
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -146,6 +195,72 @@ export default function Profile() {
             className="hidden"
             onChange={handleAvatarUpload}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Mic className="h-4 w-4 text-primary" />
+            Meus créditos de voz
+          </CardTitle>
+          <CardDescription>
+            Segundos disponíveis para praticar no IA Falaê.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-lg bg-muted/50 p-3 text-center">
+              <p className="text-xs text-muted-foreground">Com roteiro</p>
+              <p className="text-lg font-bold tabular-nums">{scriptedBalance}s</p>
+            </div>
+            <div className="rounded-lg bg-muted/50 p-3 text-center">
+              <p className="text-xs text-muted-foreground">Livre</p>
+              <p className="text-lg font-bold tabular-nums">{unscriptedBalance}s</p>
+            </div>
+            <div className="rounded-lg bg-primary/10 p-3 text-center">
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-lg font-bold tabular-nums text-primary">{totalBalance}s</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Compras recentes
+            </p>
+            {loadingGrants ? (
+              <p className="text-xs text-muted-foreground">Carregando...</p>
+            ) : grants.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nenhuma compra de créditos registrada ainda.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border/60 rounded-lg border border-border/60">
+                {grants.map((g) => (
+                  <li key={g.id} className="flex items-center justify-between p-3 text-xs">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground truncate">{g.product_name}</p>
+                      <p className="text-muted-foreground">
+                        {new Date(g.created_at).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-right tabular-nums">
+                      <p className="font-semibold text-primary">
+                        +{g.scripted + g.unscripted}s
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {g.scripted}s + {g.unscripted}s
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </CardContent>
       </Card>
 
