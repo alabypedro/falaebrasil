@@ -60,13 +60,33 @@ function extractProductIds(body: any): string[] {
     body?.event?.product?.id,
     body?.product?.id,
     body?.productId,
+    body?.event?.invoice?.productId,
+    body?.event?.invoice?.product?.id,
+    body?.event?.offerId,
+    body?.event?.offer?.id,
+    body?.event?.invoice?.offerId,
+    body?.event?.invoice?.offer?.id,
   ];
   for (const c of candidates) if (c) ids.add(String(c));
-  const items = body?.event?.items ?? body?.items ?? body?.products ?? [];
-  if (Array.isArray(items)) {
-    for (const it of items) {
-      const id = it?.productId ?? it?.id ?? it?.product?.id;
-      if (id) ids.add(String(id));
+  const itemSources = [
+    body?.event?.items,
+    body?.event?.products,
+    body?.event?.invoice?.items,
+    body?.event?.invoice?.products,
+    body?.event?.invoice?.offers,
+    body?.event?.offers,
+    body?.event?.orderBumps,
+    body?.event?.invoice?.orderBumps,
+    body?.items,
+    body?.products,
+  ];
+  for (const items of itemSources) {
+    if (Array.isArray(items)) {
+      for (const it of items) {
+        const id =
+          it?.productId ?? it?.id ?? it?.product?.id ?? it?.offerId ?? it?.offer?.id;
+        if (id) ids.add(String(id));
+      }
     }
   }
   return Array.from(ids);
@@ -91,13 +111,31 @@ function extractProductNames(body: any): string[] {
     body?.event?.product?.name,
     body?.product?.name,
     body?.productName,
+    body?.event?.invoice?.productName,
+    body?.event?.invoice?.product?.name,
+    body?.event?.offerName,
+    body?.event?.offer?.name,
   ];
   for (const c of candidates) if (c) names.add(String(c).toLowerCase());
-  const items = body?.event?.items ?? body?.items ?? body?.products ?? [];
-  if (Array.isArray(items)) {
-    for (const it of items) {
-      const n = it?.productName ?? it?.name ?? it?.product?.name;
-      if (n) names.add(String(n).toLowerCase());
+  const itemSources = [
+    body?.event?.items,
+    body?.event?.products,
+    body?.event?.invoice?.items,
+    body?.event?.invoice?.products,
+    body?.event?.invoice?.offers,
+    body?.event?.offers,
+    body?.event?.orderBumps,
+    body?.event?.invoice?.orderBumps,
+    body?.items,
+    body?.products,
+  ];
+  for (const items of itemSources) {
+    if (Array.isArray(items)) {
+      for (const it of items) {
+        const n =
+          it?.productName ?? it?.name ?? it?.product?.name ?? it?.offerName ?? it?.offer?.name;
+        if (n) names.add(String(n).toLowerCase());
+      }
     }
   }
   return Array.from(names);
@@ -125,6 +163,10 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const eventType: string =
       body?.type || body?.event?.type || body?.event_type || "unknown";
+
+    // TEMP DEBUG: capture full payload to diagnose order bump structure
+    console.log("HUBLA_RAW_PAYLOAD", JSON.stringify(body));
+    console.log("HUBLA_EVENT_TYPE", eventType);
 
     // Only process successful purchase events
     const isPurchase =
