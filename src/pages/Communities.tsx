@@ -3,8 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { MessageCircle, Lock, ExternalLink, Copy } from "lucide-react";
-import { toast } from "sonner";
+import { MessageCircle, Lock, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -132,40 +131,15 @@ export default function Communities() {
           </DialogHeader>
           <DialogFooter className="min-w-0 sm:flex-col sm:space-x-0 gap-2">
             {selected?.whatsapp_url ? (
-              <>
-                <Button asChild className="w-full max-w-full">
-                  <a
-                    href={selected.whatsapp_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Entrar no grupo <ExternalLink className="ml-1.5 h-4 w-4" />
-                  </a>
-                </Button>
-                <div className="flex w-full min-w-0 max-w-full items-center gap-2 rounded-md border bg-muted/40 p-2 overflow-hidden">
-                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground" title={selected.whatsapp_url}>
-                    {selected.whatsapp_url}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 shrink-0 px-2"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(selected.whatsapp_url!);
-                        toast.success("Link copiado! Cole no navegador para abrir.");
-                      } catch {
-                        toast.error("Não foi possível copiar. Selecione e copie manualmente.");
-                      }
-                    }}
-                  >
-                    <Copy className="h-3.5 w-3.5 mr-1" /> Copiar
-                  </Button>
-                </div>
-                <p className="text-[11px] text-center text-muted-foreground">
-                  Se o botão não abrir (preview bloqueia o WhatsApp), copie o link e abra no seu navegador.
-                </p>
-              </>
+              <Button asChild className="w-full max-w-full">
+                <a
+                  href={selected.whatsapp_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Entrar no grupo <ExternalLink className="ml-1.5 h-4 w-4" />
+                </a>
+              </Button>
             ) : (
               <Button disabled className="w-full">Link em breve</Button>
             )}
