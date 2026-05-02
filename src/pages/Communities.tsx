@@ -120,7 +120,7 @@ export default function Communities() {
 
       {/* Modal de acesso ao grupo */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md overflow-hidden">
           <DialogHeader>
             <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
               <MessageCircle className="h-6 w-6 text-primary" />
@@ -130,10 +130,10 @@ export default function Communities() {
               {selected?.description ?? "Grupo de WhatsApp da comunidade."}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
+          <DialogFooter className="min-w-0 sm:flex-col sm:space-x-0 gap-2">
             {selected?.whatsapp_url ? (
               <>
-                <Button asChild className="w-full">
+                <Button asChild className="w-full max-w-full">
                   <a
                     href={selected.whatsapp_url}
                     target="_blank"
@@ -142,14 +142,14 @@ export default function Communities() {
                     Entrar no grupo <ExternalLink className="ml-1.5 h-4 w-4" />
                   </a>
                 </Button>
-                <div className="flex items-center gap-2 rounded-md border bg-muted/40 p-2">
-                  <span className="flex-1 truncate text-xs text-muted-foreground" title={selected.whatsapp_url}>
+                <div className="flex w-full min-w-0 max-w-full items-center gap-2 rounded-md border bg-muted/40 p-2 overflow-hidden">
+                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground" title={selected.whatsapp_url}>
                     {selected.whatsapp_url}
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2"
+                    className="h-7 shrink-0 px-2"
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(selected.whatsapp_url!);
