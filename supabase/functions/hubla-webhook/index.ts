@@ -315,19 +315,28 @@ Deno.serve(async (req) => {
     // ---- VOICE CREDIT GRANTS (idempotent per event+product) ----
     const eventId = extractEventId(body);
     const creditResults: any[] = [];
-    for (const productId of productIds) {
+
+    // Only grant voice credits for the PRIMARY product of this invoice.
+    // Hubla sends one webhook per invoice and re-lists every sibling product
+    // inside `event.products`, so iterating `productIds` would credit the
+    // same product multiple times (once per sibling invoice). See
+    // extractPrimaryProductId() for details.
+    const primaryProductId = extractPrimaryProductId(body);
+    if (primaryProductId) {
       const { data: grantResult, error: grantErr } = await admin.rpc("grant_voice_credits", {
         _user_id: userId!,
         _hubla_event_id: eventId,
-        _hubla_product_id: productId,
+        _hubla_product_id: primaryProductId,
         _raw_payload: body,
       });
       if (grantErr) {
-        console.error("grant_voice_credits failed", { productId, eventId, grantErr });
-        creditResults.push({ productId, error: grantErr.message });
+        console.error("grant_voice_credits failed", { primaryProductId, eventId, grantErr });
+        creditResults.push({ productId: primaryProductId, error: grantErr.message });
       } else {
-        creditResults.push({ productId, ...grantResult });
+        creditResults.push({ productId: primaryProductId, ...grantResult });
       }
+    } else {
+      console.warn("No primary product id found in webhook payload — skipping voice credit grant");
     }
 
     // Send recovery link if new user (so they can set their password)
