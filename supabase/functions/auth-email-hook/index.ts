@@ -9,7 +9,6 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
-import { WelcomePurchaseEmail } from '../_shared/email-templates/welcome-purchase.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,7 +23,6 @@ const EMAIL_SUBJECTS: Record<string, string> = {
   recovery: 'Reset your password',
   email_change: 'Confirm your new email',
   reauthentication: 'Your verification code',
-  welcome_purchase: 'Compra confirmada — crie sua senha no Falaê Brasil!',
 }
 
 // Template mapping
@@ -35,7 +33,6 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   recovery: RecoveryEmail,
   email_change: EmailChangeEmail,
   reauthentication: ReauthenticationEmail,
-  welcome_purchase: WelcomePurchaseEmail,
 }
 
 // Configuration
@@ -209,20 +206,7 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   // The email action type is in payload.data.action_type (e.g., "signup", "recovery")
   // payload.type is the hook event type ("auth")
-  let emailType = payload.data.action_type
-
-  // Hubla onboarding: when a recovery link is generated for a user that was
-  // just created by the Hubla webhook, switch to the welcome-purchase template
-  // so the new student gets a "create your password" email instead of a
-  // "reset your password" one.
-  const userMetadata =
-    (payload as any)?.user?.user_metadata ??
-    (payload.data as any)?.user?.user_metadata ??
-    {}
-  if (emailType === 'recovery' && userMetadata?.from_hubla === true) {
-    emailType = 'welcome_purchase'
-  }
-
+  const emailType = payload.data.action_type
   console.log('Received auth event', { emailType, email: payload.data.email, run_id })
 
   const EmailTemplate = EMAIL_TEMPLATES[emailType]

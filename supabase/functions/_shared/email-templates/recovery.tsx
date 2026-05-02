@@ -22,30 +22,22 @@ export const RecoveryEmail = ({
   siteName,
   confirmationUrl,
 }: RecoveryEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
+  <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Redefinir sua senha no Falaê Brasil!</Preview>
+    <Preview>Reset your password for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Redefinição de senha 🔐</Heading>
+        <Heading style={h1}>Reset your password</Heading>
         <Text style={text}>
-          Recebemos um pedido para alterar a senha da sua conta no{' '}
-          <strong>Falaê Brasil!</strong>.
-        </Text>
-        <Text style={text}>
-          Para concluir o processo e cadastrar uma nova senha, clique no botão
-          abaixo. O link é pessoal e tem validade de 1 hora.
+          We received a request to reset your password for {siteName}. Click
+          the button below to choose a new password.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Criar nova senha
+          Reset Password
         </Button>
-        <Text style={text}>
-          Após definir a nova senha, você poderá entrar normalmente na
-          plataforma e continuar praticando seu inglês.
-        </Text>
         <Text style={footer}>
-          Se você não solicitou esta alteração, pode ignorar este e-mail com
-          segurança — sua senha atual continuará a mesma.
+          If you didn't request a password reset, you can safely ignore this
+          email. Your password will not be changed.
         </Text>
       </Container>
     </Body>
@@ -54,15 +46,12 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: 'Inter, -apple-system, "Segoe UI", Arial, sans-serif',
-}
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: 'hsl(222, 65%, 18%)',
+  color: '#000000',
   margin: '0 0 20px',
 }
 const text = {
@@ -72,11 +61,10 @@ const text = {
   margin: '0 0 25px',
 }
 const button = {
-  backgroundColor: 'hsl(222, 65%, 18%)',
+  backgroundColor: '#000000',
   color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: 'bold' as const,
-  borderRadius: '14px',
+  fontSize: '14px',
+  borderRadius: '8px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
