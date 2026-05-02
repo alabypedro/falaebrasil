@@ -15,22 +15,28 @@ Deno.serve(async (req) => {
     const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const authHeader = req.headers.get("Authorization") ?? "";
-    const userClient = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const admin = createClient(SUPABASE_URL, SERVICE);
-
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData.user) {
+    if (!authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const admin = createClient(SUPABASE_URL, SERVICE);
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await admin.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const callerId = claimsData.claims.sub as string;
+    const callerEmail = (claimsData.claims as any).email as string | undefined;
 
     // Verify caller is admin
     const { data: isAdminData } = await admin.rpc("has_role", {
-      _user_id: userData.user.id,
+      _user_id: callerId,
       _role: "admin",
     });
     if (!isAdminData) {
@@ -98,7 +104,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "remove") {
-      if (foundId === userData.user.id) {
+      if (foundId === callerId) {
         return new Response(JSON.stringify({ error: "Você não pode remover seu próprio admin" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
