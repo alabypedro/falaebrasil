@@ -92,6 +92,34 @@ function extractProductIds(body: any): string[] {
   return Array.from(ids);
 }
 
+/**
+ * Extract the PRIMARY product id of THIS specific invoice/event.
+ *
+ * Hubla emits one webhook per invoice (the main purchase + one extra invoice
+ * per order bump, with ids like "<root>-offer-1"). Each of those events
+ * also carries the FULL list of products bought together in `event.products`.
+ *
+ * If we credit voice seconds for every id in `event.products`, the same
+ * product gets credited multiple times across the sibling invoices (e.g.
+ * the course is credited by the main invoice AND by every order bump
+ * invoice that re-lists it). To avoid this we only grant credits for the
+ * single product this invoice actually represents.
+ */
+function extractPrimaryProductId(body: any): string | null {
+  const candidates = [
+    body?.event?.product?.id,
+    body?.event?.productId,
+    body?.event?.invoice?.product?.id,
+    body?.event?.invoice?.productId,
+    body?.event?.offer?.id,
+    body?.event?.offerId,
+    body?.product?.id,
+    body?.productId,
+  ];
+  for (const c of candidates) if (c) return String(c);
+  return null;
+}
+
 function extractEventId(body: any): string {
   return String(
     body?.id ||
