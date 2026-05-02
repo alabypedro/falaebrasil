@@ -131,10 +131,26 @@ export default function Communities() {
           </DialogHeader>
           <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
             {selected?.whatsapp_url ? (
-              <Button asChild className="w-full">
-                <a href={selected.whatsapp_url} target="_blank" rel="noopener noreferrer">
-                  Entrar no grupo <ExternalLink className="ml-1.5 h-4 w-4" />
-                </a>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  const url = selected.whatsapp_url!;
+                  // WhatsApp bloqueia abertura via iframe (ERR_BLOCKED_BY_RESPONSE).
+                  // Forçamos a navegação no contexto top (janela do navegador, fora do preview).
+                  try {
+                    const win = window.open(url, "_blank", "noopener,noreferrer");
+                    if (!win || win.closed || typeof win.closed === "undefined") {
+                      // popup bloqueado — fallback: navega a janela pai (top)
+                      if (window.top) window.top.location.href = url;
+                      else window.location.href = url;
+                    }
+                  } catch {
+                    if (window.top) window.top.location.href = url;
+                    else window.location.href = url;
+                  }
+                }}
+              >
+                Entrar no grupo <ExternalLink className="ml-1.5 h-4 w-4" />
               </Button>
             ) : (
               <Button disabled className="w-full">Link em breve</Button>
