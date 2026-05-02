@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
@@ -22,7 +23,6 @@ interface SignupEmailProps {
 }
 
 export const SignupEmail = ({
-  siteName,
   siteUrl,
   recipient,
   confirmationUrl,
@@ -32,6 +32,13 @@ export const SignupEmail = ({
     <Preview>Confirme seu e-mail para começar no Falaê Brasil!</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img
+          src="https://teastozdtgoogrpghpzj.supabase.co/storage/v1/object/public/avatars/email-assets/falae-brasil-logo.png"
+          alt="Falaê Brasil!"
+          width="80"
+          height="80"
+          style={logo}
+        />
         <Heading style={h1}>Bem-vindo(a) ao Falaê Brasil! 🎉</Heading>
         <Text style={text}>
           Que bom ter você aqui! Seu cadastro na plataforma{' '}
@@ -71,6 +78,7 @@ const main = {
   fontFamily: 'Inter, -apple-system, "Segoe UI", Arial, sans-serif',
 }
 const container = { padding: '20px 25px' }
+const logo = { margin: '0 0 20px', display: 'block' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,

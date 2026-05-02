@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -24,28 +25,28 @@ export const RecoveryEmail = ({
 }: RecoveryEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Redefinir sua senha no Falaê Brasil!</Preview>
+    <Preview>Redefina sua senha no Falaê Brasil!</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Redefinição de senha 🔐</Heading>
+        <Img
+          src="https://teastozdtgoogrpghpzj.supabase.co/storage/v1/object/public/avatars/email-assets/falae-brasil-logo.png"
+          alt="Falaê Brasil!"
+          width="80"
+          height="80"
+          style={logo}
+        />
+        <Heading style={h1}>Redefinir sua senha 🔒</Heading>
         <Text style={text}>
-          Recebemos um pedido para alterar a senha da sua conta no{' '}
-          <strong>Falaê Brasil!</strong>.
-        </Text>
-        <Text style={text}>
-          Para concluir o processo e cadastrar uma nova senha, clique no botão
-          abaixo. O link é pessoal e tem validade de 1 hora.
+          Recebemos um pedido para redefinir a senha da sua conta no
+          <strong> Falaê Brasil!</strong> Clique no botão abaixo para criar
+          uma nova senha.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Criar nova senha
+          Redefinir minha senha
         </Button>
-        <Text style={text}>
-          Após definir a nova senha, você poderá entrar normalmente na
-          plataforma e continuar praticando seu inglês.
-        </Text>
         <Text style={footer}>
-          Se você não solicitou esta alteração, pode ignorar este e-mail com
-          segurança — sua senha atual continuará a mesma.
+          Se você não solicitou a redefinição, pode ignorar este e-mail com
+          tranquilidade — sua senha continuará a mesma.
         </Text>
       </Container>
     </Body>
@@ -59,6 +60,7 @@ const main = {
   fontFamily: 'Inter, -apple-system, "Segoe UI", Arial, sans-serif',
 }
 const container = { padding: '20px 25px' }
+const logo = { margin: '0 0 20px', display: 'block' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
