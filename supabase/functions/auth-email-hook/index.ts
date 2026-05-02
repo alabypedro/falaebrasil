@@ -9,6 +9,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { WelcomePurchaseEmail } from '../_shared/email-templates/welcome-purchase.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +24,7 @@ const EMAIL_SUBJECTS: Record<string, string> = {
   recovery: 'Reset your password',
   email_change: 'Confirm your new email',
   reauthentication: 'Your verification code',
+  welcome_purchase: 'Bem-vindo ao Falaê Brasil! Crie sua conta',
 }
 
 // Template mapping
@@ -33,6 +35,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   recovery: RecoveryEmail,
   email_change: EmailChangeEmail,
   reauthentication: ReauthenticationEmail,
+  welcome_purchase: WelcomePurchaseEmail,
 }
 
 // Configuration
@@ -206,8 +209,34 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   // The email action type is in payload.data.action_type (e.g., "signup", "recovery")
   // payload.type is the hook event type ("auth")
-  const emailType = payload.data.action_type
+  let emailType = payload.data.action_type
   console.log('Received auth event', { emailType, email: payload.data.email, run_id })
+
+  // Special case: when the Hubla webhook creates a new student account, it
+  // triggers a "recovery" email so the student can set their password. We
+  // intercept that here and send the branded "welcome to Falaê Brasil"
+  // template instead, but ONLY if the user was created by Hubla and has
+  // never signed in before.
+  if (emailType === 'recovery') {
+    try {
+      const adminClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      )
+      const { data: list } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 })
+      const u = list?.users?.find(
+        (x: any) => x.email?.toLowerCase() === payload.data.email?.toLowerCase()
+      )
+      const fromHubla = u?.user_metadata?.from_hubla === true
+      const neverSignedIn = !u?.last_sign_in_at
+      if (fromHubla && neverSignedIn) {
+        emailType = 'welcome_purchase'
+        console.log('Switched recovery → welcome_purchase for new Hubla student', { email: payload.data.email })
+      }
+    } catch (err) {
+      console.error('Failed to check Hubla welcome eligibility', err)
+    }
+  }
 
   const EmailTemplate = EMAIL_TEMPLATES[emailType]
   if (!EmailTemplate) {
