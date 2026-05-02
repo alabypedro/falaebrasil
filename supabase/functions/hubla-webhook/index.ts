@@ -92,6 +92,34 @@ function extractProductIds(body: any): string[] {
   return Array.from(ids);
 }
 
+/**
+ * Extract the PRIMARY product id of THIS specific invoice/event.
+ *
+ * Hubla emits one webhook per invoice (the main purchase + one extra invoice
+ * per order bump, with ids like "<root>-offer-1"). Each of those events
+ * also carries the FULL list of products bought together in `event.products`.
+ *
+ * If we credit voice seconds for every id in `event.products`, the same
+ * product gets credited multiple times across the sibling invoices (e.g.
+ * the course is credited by the main invoice AND by every order bump
+ * invoice that re-lists it). To avoid this we only grant credits for the
+ * single product this invoice actually represents.
+ */
+function extractPrimaryProductId(body: any): string | null {
+  const candidates = [
+    body?.event?.product?.id,
+    body?.event?.productId,
+    body?.event?.invoice?.product?.id,
+    body?.event?.invoice?.productId,
+    body?.event?.offer?.id,
+    body?.event?.offerId,
+    body?.product?.id,
+    body?.productId,
+  ];
+  for (const c of candidates) if (c) return String(c);
+  return null;
+}
+
 function extractEventId(body: any): string {
   return String(
     body?.id ||
@@ -287,19 +315,28 @@ Deno.serve(async (req) => {
     // ---- VOICE CREDIT GRANTS (idempotent per event+product) ----
     const eventId = extractEventId(body);
     const creditResults: any[] = [];
-    for (const productId of productIds) {
+
+    // Only grant voice credits for the PRIMARY product of this invoice.
+    // Hubla sends one webhook per invoice and re-lists every sibling product
+    // inside `event.products`, so iterating `productIds` would credit the
+    // same product multiple times (once per sibling invoice). See
+    // extractPrimaryProductId() for details.
+    const primaryProductId = extractPrimaryProductId(body);
+    if (primaryProductId) {
       const { data: grantResult, error: grantErr } = await admin.rpc("grant_voice_credits", {
         _user_id: userId!,
         _hubla_event_id: eventId,
-        _hubla_product_id: productId,
+        _hubla_product_id: primaryProductId,
         _raw_payload: body,
       });
       if (grantErr) {
-        console.error("grant_voice_credits failed", { productId, eventId, grantErr });
-        creditResults.push({ productId, error: grantErr.message });
+        console.error("grant_voice_credits failed", { primaryProductId, eventId, grantErr });
+        creditResults.push({ productId: primaryProductId, error: grantErr.message });
       } else {
-        creditResults.push({ productId, ...grantResult });
+        creditResults.push({ productId: primaryProductId, ...grantResult });
       }
+    } else {
+      console.warn("No primary product id found in webhook payload — skipping voice credit grant");
     }
 
     // Send recovery link if new user (so they can set their password)
