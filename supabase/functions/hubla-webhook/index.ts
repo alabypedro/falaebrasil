@@ -173,19 +173,26 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    // Validate Hubla signature/secret. Hubla typically sends an `X-Hubla-Token` header.
-    if (HUBLA_SECRET) {
-      const provided =
-        req.headers.get("x-hubla-token") ||
-        req.headers.get("x-signature") ||
-        req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
-        "";
-      if (provided !== HUBLA_SECRET) {
-        return new Response(JSON.stringify({ error: "invalid signature" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // Validate Hubla signature/secret. Hubla sends an `X-Hubla-Token` header.
+    // SECURITY: if the secret is not configured we MUST reject — otherwise an
+    // attacker could forge purchase events and grant themselves course access.
+    if (!HUBLA_SECRET) {
+      console.error("HUBLA_WEBHOOK_SECRET is not configured — rejecting request");
+      return new Response(JSON.stringify({ error: "webhook not configured" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const provided =
+      req.headers.get("x-hubla-token") ||
+      req.headers.get("x-signature") ||
+      req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+      "";
+    if (provided !== HUBLA_SECRET) {
+      return new Response(JSON.stringify({ error: "invalid signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const body = await req.json().catch(() => ({}));
