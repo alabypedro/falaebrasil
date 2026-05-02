@@ -24,15 +24,15 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SERVICE);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await admin.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims?.sub) {
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !userData?.user?.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const callerId = claimsData.claims.sub as string;
-    const callerEmail = (claimsData.claims as any).email as string | undefined;
+    const callerId = userData.user.id;
+    const callerEmail = userData.user.email ?? undefined;
 
     // Verify caller is admin
     const { data: isAdminData } = await admin.rpc("has_role", {
