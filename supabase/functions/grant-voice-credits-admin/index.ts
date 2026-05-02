@@ -24,15 +24,15 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SERVICE);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsErr } = await admin.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims?.sub) {
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !userData?.user?.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const callerId = claimsData.claims.sub as string;
-    const callerEmail = (claimsData.claims as any).email as string | undefined;
+    const callerId = userData.user.id;
+    const callerEmail = userData.user.email ?? undefined;
 
     const { data: isAdminData } = await admin.rpc("has_role", {
       _user_id: callerId,
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     if (upErr) throw upErr;
 
     // Log grant for audit (idempotency key uses timestamp + admin id)
-    const grantEventId = `manual-${userData.user.id}-${Date.now()}`;
+    const grantEventId = `manual-${callerId}-${Date.now()}`;
     await admin.from("voice_credit_grants").insert({
       user_id: foundId,
       hubla_event_id: grantEventId,
