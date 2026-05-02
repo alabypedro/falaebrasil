@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
       // The frontend detects ?email=... and shows the "create password" form
       // with the email field locked (readOnly).
       const APP_URL = "https://falaebrasil.lovable.app";
-      const redirectTo = `${APP_URL}/auth?email=${encodeURIComponent(email)}`;
+      const redirectTo = `${APP_URL}/welcome?email=${encodeURIComponent(email)}`;
       // Use the public client's resetPasswordForEmail so Supabase Auth actually
       // SENDS the email (which triggers the auth-email-hook). admin.generateLink
       // only returns a link without sending — the hook never fires in that case.

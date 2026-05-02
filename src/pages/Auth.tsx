@@ -19,74 +19,15 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
-  // "Create password" mode — triggered when the user lands here from the
-  // welcome email link (Hubla onboarding). The recovery link auto-signs the
-  // user in and redirects to /auth?email=<email>.
-  const [isCreatePassword, setIsCreatePassword] = useState(false);
-  const [lockedUserId, setLockedUserId] = useState<string | null>(null);
-
+  // Backwards-compat: old Hubla welcome emails redirected to /auth?email=<email>.
+  // The new onboarding page lives at /welcome — forward any legacy link there
+  // so existing emails in inboxes keep working.
   useEffect(() => {
     const emailParam = searchParams.get("email");
-    if (!emailParam) return;
-
-    (async () => {
-      const { data } = await supabase.auth.getUser();
-      const sessionUser = data?.user;
-      if (sessionUser?.email) {
-        // Always trust the authenticated session email over the URL param
-        setEmail(sessionUser.email);
-        setLockedUserId(sessionUser.id);
-        const meta = (sessionUser.user_metadata ?? {}) as Record<string, any>;
-        setName(meta.full_name || meta.name || meta.display_name || "");
-        setIsCreatePassword(true);
-      } else {
-        // No session yet — still pre-fill and lock the email so the student
-        // sees their account being onboarded.
-        setEmail(emailParam);
-        setIsCreatePassword(true);
-      }
-    })();
-  }, [searchParams]);
-
-  const handleCreatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      toast.error("Informe seu nome.");
-      return;
+    if (emailParam) {
+      navigate(`/welcome?email=${encodeURIComponent(emailParam)}`, { replace: true });
     }
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const trimmedName = name.trim();
-      const { data: updated, error: updErr } = await supabase.auth.updateUser({
-        password,
-        data: {
-          full_name: trimmedName,
-          name: trimmedName,
-          display_name: trimmedName,
-        },
-      });
-      if (updErr) throw updErr;
-
-      const userId = updated?.user?.id ?? lockedUserId;
-      if (userId) {
-        await supabase
-          .from("profiles")
-          .update({ display_name: trimmedName })
-          .eq("user_id", userId);
-      }
-
-      toast.success("Conta ativada! Bem-vindo ao Falaê Brasil!");
-      navigate("/", { replace: true });
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao definir senha.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [searchParams, navigate]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,90 +63,6 @@ export default function Auth() {
       setLoading(false);
     }
   };
-
-  if (isCreatePassword) {
-    return (
-      <div className="relative min-h-screen flex items-center justify-center bg-gradient-hero p-4 page-transition overflow-hidden">
-        <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-accent/30 blur-3xl animate-blob" />
-        <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary-glow/30 blur-3xl animate-blob" style={{ animationDelay: "4s" }} />
-
-        <Card className="w-full max-w-md glass-strong shadow-elegant border-border/40 relative z-10 animate-scale-in">
-          <CardHeader className="text-center space-y-3">
-            <img
-              src={falaeLogo}
-              alt="Falaê Brasil!"
-              loading="eager"
-              decoding="async"
-              className="mx-auto block h-24 w-24 sm:h-20 sm:w-20 object-contain animate-float drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-            />
-            <CardTitle className="text-2xl font-display font-extrabold">Crie sua senha</CardTitle>
-            <CardDescription className="text-sm">
-              Bem-vindo! Defina seu nome e senha para acessar a plataforma.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreatePassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="name"
-                    placeholder="Seu nome"
-                    className="pl-9 h-11"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    className="pl-9 h-11 bg-muted cursor-not-allowed"
-                    value={email}
-                    readOnly
-                    disabled
-                    tabIndex={-1}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  E-mail vinculado à sua compra (não editável).
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Criar senha</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Mínimo 6 caracteres"
-                    className="pl-9 h-11"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-              </div>
-
-              <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
-                {loading ? "Salvando..." : "Criar conta e entrar"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (isForgot) {
     return (
