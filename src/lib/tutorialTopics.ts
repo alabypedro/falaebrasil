@@ -38,8 +38,8 @@ export const TUTORIAL_TOPICS = [
   },
   {
     slug: "comunidade",
-    title: "Comunidade Lets Falaê",
-    description: "Participe dos canais por nível e pratique com outros alunos.",
+    title: "Comunidades FB",
+    description: "Acesse os grupos de WhatsApp por nível e pratique com outros alunos do Falaê Brasil!",
     icon: PlayCircle,
     gradient: "bg-gradient-to-br from-accent to-accent/70",
   },
