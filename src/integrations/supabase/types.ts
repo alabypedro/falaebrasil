@@ -328,6 +328,36 @@ export type Database = {
         }
         Relationships: []
       }
+      install_tutorial_videos: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          platform: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          platform: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          platform?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       lesson_videos: {
         Row: {
           created_at: string
