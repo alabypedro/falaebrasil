@@ -148,7 +148,7 @@ export default function HublaProductsManager() {
               <div className="border-t pt-3 space-y-2">
                 <Label className="text-xs">Permissões liberadas por esta compra</Label>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center gap-2"><Switch checked={item.grants_course} disabled /> Curso A1</div>
+                  <div className="flex items-center gap-2"><Switch checked={item.grants_course} disabled /> Curso FB Básico PRO (A1)</div>
                   <div className="flex items-center gap-2"><Switch checked={item.grants_ebook1} disabled /> E-book 1</div>
                   <div className="flex items-center gap-2"><Switch checked={item.grants_ebook2} disabled /> E-book 2</div>
                   <div className="flex items-center gap-2"><Switch checked={item.grants_ebook3} disabled /> E-book 3</div>
