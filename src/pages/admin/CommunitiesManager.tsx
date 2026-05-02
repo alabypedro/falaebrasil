@@ -25,7 +25,7 @@ const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "f
 
 const accessLabels: Record<string, string> = {
   free: "Grátis (todos)",
-  a1: "Curso A1 (Essencial Pro)",
+  a1: "Curso FB Básico PRO (A1)",
   a2: "Curso A2",
   b1: "Curso B1",
   b2: "Curso B2",
@@ -168,7 +168,7 @@ export default function CommunitiesManager() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="free">Grátis (todos)</SelectItem>
-                  <SelectItem value="a1">Curso A1 (Essencial Pro)</SelectItem>
+                  <SelectItem value="a1">Curso FB Básico PRO (A1)</SelectItem>
                   <SelectItem value="a2">Curso A2</SelectItem>
                   <SelectItem value="b1">Curso B1</SelectItem>
                   <SelectItem value="b2">Curso B2</SelectItem>
