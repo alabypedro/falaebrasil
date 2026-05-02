@@ -4,25 +4,36 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PlayCircle } from "lucide-react";
 import { TUTORIAL_TOPICS, parseYoutube } from "@/lib/tutorialTopics";
+import { useOSDetection } from "@/hooks/useOSDetection";
 
 export default function Tutoriais() {
   const [videoBySlug, setVideoBySlug] = useState<Record<string, string | null>>({});
   const [active, setActive] = useState<{ title: string; embedUrl: string } | null>(null);
+  const platform = useOSDetection();
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
+      const [{ data }, { data: installRow }] = await Promise.all([
+        supabase
         .from("tutorials")
         .select("slug, video_url")
-        .eq("is_published", true);
+        .eq("is_published", true),
+        supabase
+        .from("install_tutorial_videos")
+        .select("video_url")
+        .eq("platform", platform)
+        .maybeSingle(),
+      ]);
       const map: Record<string, string | null> = {};
       (data ?? []).forEach((r: any) => {
         if (r.slug) map[r.slug] = r.video_url;
       });
+      // Override "instalar-app" with the OS-specific video managed in the dedicated admin tab
+      map["instalar-app"] = installRow?.video_url ?? null;
       setVideoBySlug(map);
     };
     load();
-  }, []);
+  }, [platform]);
 
   return (
     <div className="space-y-8 max-w-6xl page-transition">

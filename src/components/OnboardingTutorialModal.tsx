@@ -4,22 +4,15 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Smartphone, Apple, Monitor, PlayCircle } from "lucide-react";
-
-type DeviceType = "ios" | "android" | "desktop";
-
-function detectDevice(): DeviceType {
-  if (typeof navigator === "undefined") return "desktop";
-  const ua = navigator.userAgent || "";
-  if (/iPad|iPhone|iPod/.test(ua)) return "ios";
-  if (/Android/i.test(ua)) return "android";
-  return "desktop";
-}
+import { useOSDetection } from "@/hooks/useOSDetection";
+import { parseYoutube } from "@/lib/tutorialTopics";
 
 export default function OnboardingTutorialModal() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const device = useMemo(detectDevice, []);
+  const device = useOSDetection();
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -35,6 +28,19 @@ export default function OnboardingTutorialModal() {
     })();
     return () => { cancelled = true; };
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("install_tutorial_videos")
+        .select("video_url")
+        .eq("platform", device)
+        .maybeSingle();
+      if (!cancelled) setVideoUrl(data?.video_url ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [device]);
 
   const handleConfirm = async () => {
     if (!user) return;
@@ -64,10 +70,12 @@ export default function OnboardingTutorialModal() {
     }
     return {
       icon: <Monitor className="h-6 w-6 text-primary" />,
-      title: "Bem-vindo ao Portal!",
-      description: "Conheça em poucos minutos como aproveitar todos os recursos do Falaê Brasil!",
+      title: "Como instalar o App no seu computador",
+      description: "Assista ao vídeo abaixo para instalar o Falaê Brasil! no seu PC.",
     };
   })();
+
+  const yt = parseYoutube(videoUrl);
 
   return (
     <Dialog open={open} onOpenChange={() => { /* prevent outside close */ }}>
@@ -85,11 +93,23 @@ export default function OnboardingTutorialModal() {
           <DialogDescription>{content.description}</DialogDescription>
         </DialogHeader>
 
-        <div className="aspect-video w-full rounded-lg border border-dashed border-border bg-muted/40 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-          <PlayCircle className="h-10 w-10" />
-          <p className="text-sm font-medium">Espaço reservado para vídeo</p>
-          <p className="text-xs">Adicione aqui o embed do YouTube/Vimeo</p>
-        </div>
+        {yt ? (
+          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+            <iframe
+              src={yt.embedUrl}
+              className="w-full h-full"
+              title={content.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : (
+          <div className="aspect-video w-full rounded-lg border border-dashed border-border bg-muted/40 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+            <PlayCircle className="h-10 w-10" />
+            <p className="text-sm font-medium">Vídeo em breve</p>
+            <p className="text-xs">O administrador ainda não cadastrou este tutorial.</p>
+          </div>
+        )}
 
         <Button
           onClick={handleConfirm}

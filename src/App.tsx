@@ -32,6 +32,7 @@ import AdminsManager from "@/pages/admin/AdminsManager";
 import HublaProductsManager from "@/pages/admin/HublaProductsManager";
 import TutorialsManager from "@/pages/admin/TutorialsManager";
 import CommunitiesManager from "@/pages/admin/CommunitiesManager";
+import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosManager";
 import Success from "@/pages/Success";
 
 const queryClient = new QueryClient();
@@ -115,6 +116,7 @@ const App = () => (
                         <Route path="library" element={<LibraryManager />} />
                         <Route path="prompts" element={<PromptsManager />} />
                         <Route path="tutorials" element={<TutorialsManager />} />
+                        <Route path="install-videos" element={<InstallTutorialVideosManager />} />
                         <Route path="communities" element={<CommunitiesManager />} />
                         <Route path="admins" element={<AdminsManager />} />
                         <Route path="hubla" element={<HublaProductsManager />} />
