@@ -64,14 +64,10 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  // Allow logged-in users to stay on /auth when they're being onboarded
-  // via the welcome email link (URL contains ?email=...). Otherwise the
-  // recovery session would auto-redirect to "/" and skip the create-password screen.
-  const hasEmailParam =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).has("email");
   if (loading) return null;
-  if (user && !hasEmailParam) return <Navigate to="/" replace />;
+  // Hubla-onboarded users land on /welcome (separate route), so it's safe
+  // to always redirect logged-in users away from /auth.
+  if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
