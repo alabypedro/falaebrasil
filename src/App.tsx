@@ -13,6 +13,7 @@ import Library from "@/pages/Library";
 import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
+import Welcome from "@/pages/Welcome";
 import NotFound from "@/pages/NotFound";
 import QuizPlayer from "@/pages/QuizPlayer";
 import CourseDetail from "@/pages/CourseDetail";
@@ -84,6 +85,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/install" element={<Install />} />
             <Route
               path="/*"
