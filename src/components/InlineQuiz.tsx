@@ -150,7 +150,7 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm font-medium">{q.question_text}</p>
-        <RadioGroup value={answers[current]?.toString()} onValueChange={handleAnswer} className="space-y-2">
+        <RadioGroup key={current} value={answers[current] !== undefined ? answers[current].toString() : ""} onValueChange={handleAnswer} className="space-y-2">
           {q.options.map((opt, i) => (
             <div key={i} className="flex items-center gap-3 rounded-md border p-2.5 hover:bg-muted/50 cursor-pointer">
               <RadioGroupItem value={i.toString()} id={`iq-${i}`} />
