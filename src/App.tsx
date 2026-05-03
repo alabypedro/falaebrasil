@@ -33,6 +33,7 @@ import HublaProductsManager from "@/pages/admin/HublaProductsManager";
 import TutorialsManager from "@/pages/admin/TutorialsManager";
 import CommunitiesManager from "@/pages/admin/CommunitiesManager";
 import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosManager";
+import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
 import Success from "@/pages/Success";
 
 const queryClient = new QueryClient();
@@ -120,6 +121,7 @@ const App = () => (
                         <Route path="communities" element={<CommunitiesManager />} />
                         <Route path="admins" element={<AdminsManager />} />
                         <Route path="hubla" element={<HublaProductsManager />} />
+                        <Route path="welcome-email" element={<WelcomeEmailSender />} />
                       </Route>
                       <Route path="*" element={<NotFound />} />
                     </Routes>
