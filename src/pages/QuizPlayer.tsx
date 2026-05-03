@@ -220,7 +220,7 @@ export default function QuizPlayer() {
           <CardTitle className="text-lg">{q.question_text}</CardTitle>
         </CardHeader>
         <CardContent>
-          <RadioGroup value={answers[current]?.toString()} onValueChange={handleAnswer} className="space-y-3">
+          <RadioGroup key={current} value={answers[current] !== undefined ? answers[current].toString() : ""} onValueChange={handleAnswer} className="space-y-3">
             {q.options.map((opt, oIdx) => (
               <div key={oIdx} className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors cursor-pointer">
                 <RadioGroupItem value={oIdx.toString()} id={`opt-${oIdx}`} />
