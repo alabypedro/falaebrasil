@@ -26,23 +26,26 @@ export default function Dashboard() {
       const { data: courses } = await supabase.from("courses").select("id, title").eq("published", true).order("display_order");
       const { data: modules } = await supabase.from("modules").select("id, course_id");
       const { data: lessons } = await supabase.from("lessons").select("id, module_id");
-      const { data: progress } = await supabase.from("user_progress").select("lesson_id").eq("user_id", user.id);
+      const { data: videos } = await supabase.from("lesson_videos").select("id, lesson_id");
+      const { data: vprog } = await supabase.from("user_video_progress").select("video_id").eq("user_id", user.id);
 
-      const completedIds = new Set((progress || []).map((p) => p.lesson_id));
-      setCompletedCount(completedIds.size);
+      const completedVideoIds = new Set((vprog || []).map((p) => p.video_id));
+      setCompletedCount(completedVideoIds.size);
 
       const modCourse: Record<string, string> = {};
       (modules || []).forEach((m) => { modCourse[m.id] = m.course_id; });
+      const lessonCourse: Record<string, string> = {};
+      (lessons || []).forEach((l) => { const cid = modCourse[l.module_id]; if (cid) lessonCourse[l.id] = cid; });
 
-      const courseLessons: Record<string, string[]> = {};
-      (lessons || []).forEach((l) => {
-        const cid = modCourse[l.module_id];
-        if (cid) { if (!courseLessons[cid]) courseLessons[cid] = []; courseLessons[cid].push(l.id); }
+      const courseVideos: Record<string, string[]> = {};
+      (videos || []).forEach((v) => {
+        const cid = lessonCourse[v.lesson_id];
+        if (cid) { if (!courseVideos[cid]) courseVideos[cid] = []; courseVideos[cid].push(v.id); }
       });
 
       const result = (courses || []).map((c) => {
-        const ids = courseLessons[c.id] || [];
-        const done = ids.filter((id) => completedIds.has(id)).length;
+        const ids = courseVideos[c.id] || [];
+        const done = ids.filter((id) => completedVideoIds.has(id)).length;
         return { name: c.title, progress: ids.length > 0 ? Math.round((done / ids.length) * 100) : 0 };
       });
       setCourseProgress(result);
