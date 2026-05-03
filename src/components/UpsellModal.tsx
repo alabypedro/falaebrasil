@@ -94,7 +94,7 @@ export function UpsellModal({
 
         {requiresCourseFirst && (
           <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-            ⚠️ Os Order Bumps só podem ser adquiridos junto com o curso <strong>Essencial Pro A1</strong>.
+            ⚠️ Os Order Bumps só podem ser adquiridos junto com o curso <strong>Essential Pro A1</strong>.
           </div>
         )}
 

@@ -329,7 +329,7 @@ export default function CourseDetail() {
     );
   }
 
-  // Gating: bloqueia conteúdo se usuário não comprou o Essencial Pro A1 (admins veem tudo)
+  // Gating: bloqueia conteúdo se usuário não comprou o Essential Pro A1 (admins veem tudo)
   if (!isAdmin && !profile?.has_course_access) {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-4">
@@ -338,7 +338,7 @@ export default function CourseDetail() {
         </div>
         <h1 className="text-2xl font-bold">Conteúdo bloqueado</h1>
         <p className="text-muted-foreground">
-          Para acessar o curso <strong>{course.title}</strong> você precisa adquirir o <strong>Essencial Pro A1</strong>.
+          Para acessar o curso <strong>{course.title}</strong> você precisa adquirir o <strong>Essential Pro A1</strong>.
         </p>
         <Button onClick={() => navigate("/courses")}>Ver detalhes do curso</Button>
       </div>

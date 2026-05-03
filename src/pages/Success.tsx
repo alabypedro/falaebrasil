@@ -43,11 +43,11 @@ export default function Success() {
           )}
           {hasCourse && hasAnyEbook ? (
             <p className="text-muted-foreground">
-              <strong>Bem-vindo ao Essencial Pro A1!</strong> Seus materiais extras também já estão disponíveis.
+              <strong>Bem-vindo ao Essential Pro A1!</strong> Seus materiais extras também já estão disponíveis.
             </p>
           ) : hasCourse ? (
             <p className="text-muted-foreground">
-              <strong>Bem-vindo ao Essencial Pro A1!</strong> Seu curso já está liberado.
+              <strong>Bem-vindo ao Essential Pro A1!</strong> Seu curso já está liberado.
             </p>
           ) : (
             <p className="text-muted-foreground">
