@@ -310,26 +310,28 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update profile with access flags + customer id (merge, only set true → never demote)
-    const { data: currentProfile } = await admin
-      .from("profiles")
-      .select("has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access")
-      .eq("user_id", userId!)
-      .maybeSingle();
+    // Update profile with access flags + customer id.
+    // CRITICAL: Hubla fires one webhook per invoice (main purchase + one per
+    // order bump) and they run in parallel. A read-modify-write merge causes
+    // a lost-update race: webhook B reads the profile BEFORE webhook A's
+    // write lands, then writes back its own (false) values for the columns
+    // that webhook A just enabled. To avoid that, we only issue UPDATEs for
+    // the columns this specific invoice GRANTS as true. Setting `x = true`
+    // is idempotent across concurrent writers.
+    const updatePayload: Record<string, any> = {};
+    if (grants.has_course_access) updatePayload.has_course_access = true;
+    if (grants.has_ebook1_access) updatePayload.has_ebook1_access = true;
+    if (grants.has_ebook2_access) updatePayload.has_ebook2_access = true;
+    if (grants.has_ebook3_access) updatePayload.has_ebook3_access = true;
+    if (customerId) updatePayload.hubla_customer_id = customerId;
 
-    const merged = {
-      has_course_access: grants.has_course_access || currentProfile?.has_course_access || false,
-      has_ebook1_access: grants.has_ebook1_access || currentProfile?.has_ebook1_access || false,
-      has_ebook2_access: grants.has_ebook2_access || currentProfile?.has_ebook2_access || false,
-      has_ebook3_access: grants.has_ebook3_access || currentProfile?.has_ebook3_access || false,
-      hubla_customer_id: customerId ?? undefined,
-    };
-
-    const { error: updErr } = await admin
-      .from("profiles")
-      .update(merged)
-      .eq("user_id", userId!);
-    if (updErr) throw updErr;
+    if (Object.keys(updatePayload).length > 0) {
+      const { error: updErr } = await admin
+        .from("profiles")
+        .update(updatePayload)
+        .eq("user_id", userId!);
+      if (updErr) throw updErr;
+    }
 
     // ---- VOICE CREDIT GRANTS (idempotent per event+product) ----
     const eventId = extractEventId(body);
@@ -370,19 +372,27 @@ Deno.serve(async (req) => {
     // welcome email is sent exactly once per user, no matter how many
     // sibling invoices Hubla fires.
     const lastSignIn = found?.last_sign_in_at ?? null;
-    const { data: profileGuard } = await admin
-      .from("profiles")
-      .select("welcome_email_sent_at")
-      .eq("user_id", userId!)
-      .maybeSingle();
-    const alreadySent = !!profileGuard?.welcome_email_sent_at;
-    const shouldSendWelcome = (createdNewUser || !lastSignIn) && !alreadySent;
-    if (shouldSendWelcome) {
-      // Mark BEFORE sending to avoid races between concurrent webhooks.
-      await admin
+    const eligibleForWelcome = createdNewUser || !lastSignIn;
+    let shouldSendWelcome = false;
+    if (eligibleForWelcome) {
+      // Atomic claim: only one concurrent webhook will succeed in flipping
+      // welcome_email_sent_at from NULL → now(). The others get 0 rows back
+      // and skip sending. This avoids the race where 5 sibling webhooks all
+      // read NULL at the same time and each sends a separate email
+      // (with rotating recovery tokens that invalidate each other).
+      const claimedAt = new Date().toISOString();
+      const { data: claimRows, error: claimErr } = await admin
         .from("profiles")
-        .update({ welcome_email_sent_at: new Date().toISOString() })
-        .eq("user_id", userId!);
+        .update({ welcome_email_sent_at: claimedAt })
+        .eq("user_id", userId!)
+        .is("welcome_email_sent_at", null)
+        .select("user_id");
+      if (claimErr) {
+        console.error("welcome email claim failed", claimErr);
+      }
+      shouldSendWelcome = !!claimRows && claimRows.length > 0;
+    }
+    if (shouldSendWelcome) {
 
       // Always redirect new students to the /auth page with their email pre-filled.
       // The frontend detects ?email=... and shows the "create password" form

@@ -93,7 +93,7 @@ function CourseCard({
         </div>
         {locked ? (
           <Badge variant="default" className="w-full justify-center py-1.5 gap-1.5">
-            <Lock className="h-3 w-3" /> Comprar Essencial Pro A1
+            <Lock className="h-3 w-3" /> Comprar Essential Pro A1
           </Badge>
         ) : (
           <div className="space-y-2">
@@ -284,9 +284,9 @@ export default function Courses() {
         open={showUpsell}
         onOpenChange={setShowUpsell}
         productKey="essencial_pro_a1"
-        productName={coursePrice?.display_name ?? "Essencial Pro A1"}
+        productName={coursePrice?.display_name ?? "Essential Pro A1"}
         checkoutUrl={coursePrice?.checkout_url ?? null}
-        description="Para acessar o conteúdo do curso Essencial Pro A1 você precisa adquirir o curso."
+        description="Para acessar o conteúdo do curso Essential Pro A1 você precisa adquirir o curso."
       />
     </div>
   );
