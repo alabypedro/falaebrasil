@@ -132,6 +132,32 @@ function extractEventId(body: any): string {
   );
 }
 
+/**
+ * Returns a stable id that is identical across all sibling webhooks of the
+ * SAME purchase (main invoice + each order-bump invoice).
+ *
+ * Hubla emits one webhook per (invoice × product). For a single purchase it
+ * generates a main invoice and one extra invoice per order bump, with ids
+ * shaped like "<root>" and "<root>-offer-N". If we dedupe voice credits by
+ * the per-webhook event id, the same product gets credited multiple times
+ * (once per sibling invoice that re-lists it). Using the ROOT invoice id as
+ * the dedupe key collapses all siblings of a purchase into one transaction
+ * so each product is granted exactly once per purchase, while distinct
+ * future purchases still get their own credits.
+ */
+function extractPurchaseDedupeId(body: any): string {
+  const invoiceId =
+    body?.event?.invoice?.id ||
+    body?.event?.invoiceId ||
+    body?.invoice?.id ||
+    body?.invoiceId ||
+    null;
+  if (invoiceId) {
+    return String(invoiceId).replace(/-offer-\d+$/i, "");
+  }
+  return extractEventId(body);
+}
+
 function extractProductNames(body: any): string[] {
   const names = new Set<string>();
   const candidates = [
@@ -335,6 +361,7 @@ Deno.serve(async (req) => {
 
     // ---- VOICE CREDIT GRANTS (idempotent per event+product) ----
     const eventId = extractEventId(body);
+    const purchaseId = extractPurchaseDedupeId(body);
     const creditResults: any[] = [];
 
     // Only grant voice credits for the PRIMARY product of this invoice.
@@ -346,7 +373,7 @@ Deno.serve(async (req) => {
     if (primaryProductId) {
       const { data: grantResult, error: grantErr } = await admin.rpc("grant_voice_credits", {
         _user_id: userId!,
-        _hubla_event_id: eventId,
+        _hubla_event_id: purchaseId,
         _hubla_product_id: primaryProductId,
         _raw_payload: body,
       });
