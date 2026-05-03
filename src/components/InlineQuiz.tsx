@@ -16,7 +16,7 @@ interface Question {
   display_order: number;
 }
 
-export default function InlineQuiz({ quizId }: { quizId: string }) {
+export default function InlineQuiz({ quizId, onNext, hasNext }: { quizId: string; onNext?: () => void; hasNext?: boolean }) {
   const { user } = useAuth();
   const [quiz, setQuiz] = useState<{ id: string; title: string; passing_score: number } | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -42,12 +42,30 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
       setXpEarned(0);
       setResults({});
       setLoading(true);
-      const [{ data: q }, { data: qs }] = await Promise.all([
+      const [{ data: q }, { data: qs }, { data: prev }] = await Promise.all([
         supabase.from("quizzes").select("id, title, passing_score").eq("id", quizId).single(),
         supabase.from("quiz_questions_public" as any).select("*").eq("quiz_id", quizId).order("display_order"),
+        supabase.rpc("get_latest_quiz_attempt" as any, { _quiz_id: quizId }),
       ]);
       if (q) setQuiz(q);
-      if (qs) setQuestions(qs.map((item: any) => ({ ...item, options: item.options as string[] })));
+      const loadedQs = qs ? qs.map((item: any) => ({ ...item, options: item.options as string[] })) : [];
+      if (qs) setQuestions(loadedQs);
+      const r = prev as any;
+      if (r && r.results) {
+        const resultsMap: Record<string, { correct: boolean; correct_option_index: number }> = {};
+        const answersByIdx: Record<number, number> = {};
+        (r.results ?? []).forEach((res: any, idx: number) => {
+          resultsMap[res.question_id] = { correct: res.correct, correct_option_index: res.correct_option_index };
+          if (res.user_answer !== null && res.user_answer !== undefined) {
+            answersByIdx[idx] = res.user_answer;
+          }
+        });
+        setResults(resultsMap);
+        setAnswers(answersByIdx);
+        setScore(r.score ?? 0);
+        setPassed(r.passed ?? false);
+        setSubmitted(true);
+      }
       setLoading(false);
     };
     load();
@@ -143,6 +161,11 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
             );
           })}
           <Button variant="outline" size="sm" onClick={retry}><RotateCcw className="h-3.5 w-3.5 mr-1" />Tentar Novamente</Button>
+          {passed && hasNext && onNext && (
+            <Button size="sm" onClick={onNext} className="ml-2">
+              Próxima Unidade <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
