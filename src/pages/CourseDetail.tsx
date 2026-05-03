@@ -92,6 +92,8 @@ export default function CourseDetail() {
   const [activeVideoIdx, setActiveVideoIdx] = useState(0);
   const [completedVideos, setCompletedVideos] = useState<Set<string>>(new Set());
   const [markingVideo, setMarkingVideo] = useState(false);
+  const [allCourseVideos, setAllCourseVideos] = useState<{ id: string; lesson_id: string }[]>([]);
+  const [completedCourseVideos, setCompletedCourseVideos] = useState<Set<string>>(new Set());
 
   const loadData = async () => {
     if (!courseId || !user) return;
@@ -122,6 +124,24 @@ export default function CourseDetail() {
             return (a.display_order ?? 0) - (b.display_order ?? 0);
           });
           setLessons(ordered);
+          // Load all videos for this course + user's completion
+          const lessonIds = ordered.map(l => l.id);
+          const { data: vids } = await supabase
+            .from("lesson_videos")
+            .select("id, lesson_id")
+            .in("lesson_id", lessonIds);
+          const allVids = (vids ?? []) as { id: string; lesson_id: string }[];
+          setAllCourseVideos(allVids);
+          if (allVids.length > 0) {
+            const { data: prog } = await supabase
+              .from("user_video_progress")
+              .select("video_id")
+              .eq("user_id", user.id)
+              .in("video_id", allVids.map(v => v.id));
+            setCompletedCourseVideos(new Set((prog ?? []).map(p => p.video_id)));
+          } else {
+            setCompletedCourseVideos(new Set());
+          }
           if (!activeLesson && ordered.length > 0) {
             const completedIds = new Set((progressData ?? []).map((p) => p.lesson_id));
             // Resume on first non-completed lesson; if all done, last lesson
@@ -204,6 +224,7 @@ export default function CourseDetail() {
         return;
       }
       setCompletedVideos(prev => { const next = new Set(prev); next.delete(videoId); return next; });
+      setCompletedCourseVideos(prev => { const next = new Set(prev); next.delete(videoId); return next; });
       const result = data as { removed?: boolean; xp_deducted?: number } | null;
       if (result?.removed && (result.xp_deducted ?? 0) > 0) {
         toast.success(`Vídeo desmarcado • -${result.xp_deducted} XP`);
@@ -219,6 +240,7 @@ export default function CourseDetail() {
         return;
       }
       setCompletedVideos(prev => new Set(prev).add(videoId));
+      setCompletedCourseVideos(prev => new Set(prev).add(videoId));
       const result = data as { awarded?: boolean; xp_earned?: number } | null;
       if (result?.awarded && (result.xp_earned ?? 0) > 0) {
         toast.success(`+${result.xp_earned} XP! Vídeo concluído 🎉`);
@@ -258,9 +280,9 @@ export default function CourseDetail() {
     setResetting(false);
   };
 
-  const totalLessons = lessons.length;
-  const completedCount = lessons.filter((l) => completedLessons.has(l.id)).length;
-  const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+  const totalVideos = allCourseVideos.length;
+  const completedVideosCount = allCourseVideos.filter(v => completedCourseVideos.has(v.id)).length;
+  const progressPct = totalVideos > 0 ? Math.round((completedVideosCount / totalVideos) * 100) : 0;
 
   if (loading) {
     return (
@@ -321,8 +343,8 @@ export default function CourseDetail() {
           </div>
           <div className="flex items-center gap-3 mt-3">
             <Progress value={progressPct} className="h-2 flex-1 max-w-xs" />
-            <span className="text-xs text-muted-foreground">{completedCount}/{totalLessons} aulas • {progressPct}%</span>
-            {completedCount > 0 && (
+            <span className="text-xs text-muted-foreground">{completedVideosCount}/{totalVideos} aulas • {progressPct}%</span>
+            {completedVideosCount > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" size="sm" disabled={resetting}>
