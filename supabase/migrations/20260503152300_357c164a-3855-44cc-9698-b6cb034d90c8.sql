@@ -1,0 +1,1 @@
+UPDATE auth.users SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"from_hubla": true}'::jsonb WHERE email='zanalaby@hotmail.com';

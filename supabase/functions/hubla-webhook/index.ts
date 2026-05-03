@@ -274,6 +274,18 @@ Deno.serve(async (req) => {
 
     if (found) {
       userId = found.id;
+      // Make sure from_hubla flag is present so the auth-email-hook knows
+      // to send the branded welcome template when this user gets a recovery
+      // link (first-time password setup after purchase).
+      if (found.user_metadata?.from_hubla !== true) {
+        try {
+          await admin.auth.admin.updateUserById(found.id, {
+            user_metadata: { ...(found.user_metadata || {}), from_hubla: true, full_name: fullName },
+          });
+        } catch (e) {
+          console.warn("failed to set from_hubla flag on existing user", e);
+        }
+      }
     } else {
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
@@ -346,9 +358,16 @@ Deno.serve(async (req) => {
       console.warn("No primary product id found in webhook payload — skipping voice credit grant");
     }
 
-    // Send recovery link if new user (so they can set their password)
+    // Send the welcome / set-password email when:
+    //  - we just created the user (first-ever purchase), OR
+    //  - the user already existed but has never signed in (e.g. account was
+    //    pre-created by a prior failed flow, or by a previous purchase whose
+    //    welcome email never arrived). This guarantees every paying student
+    //    gets the welcome email at least once.
     let recoveryLink: string | null = null;
-    if (createdNewUser) {
+    const lastSignIn = found?.last_sign_in_at ?? null;
+    const shouldSendWelcome = createdNewUser || !lastSignIn;
+    if (shouldSendWelcome) {
       // Always redirect new students to the /auth page with their email pre-filled.
       // The frontend detects ?email=... and shows the "create password" form
       // with the email field locked (readOnly).
@@ -380,7 +399,7 @@ Deno.serve(async (req) => {
         created_new_user: createdNewUser,
         granted: grants,
         matched_products: matched.map((m: any) => m.product_key),
-        recovery_link_sent: createdNewUser,
+        recovery_link_sent: shouldSendWelcome,
         voice_credits: creditResults,
         event_id: eventId,
       }),
