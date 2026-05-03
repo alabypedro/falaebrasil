@@ -488,9 +488,20 @@ export default function CourseDetail() {
               </Card>
 
               {/* Inline Quiz */}
-              {lessonQuizId && (
-                <InlineQuiz quizId={lessonQuizId} />
-              )}
+              {lessonQuizId && (() => {
+                const idx = lessons.findIndex(l => l.id === activeLesson.id);
+                const next = idx >= 0 && idx < lessons.length - 1 ? lessons[idx + 1] : null;
+                return (
+                  <InlineQuiz
+                    quizId={lessonQuizId}
+                    hasNext={!!next}
+                    onNext={next ? () => {
+                      setActiveLesson(next);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    } : undefined}
+                  />
+                );
+              })()}
             </>
           ) : (
             <Card className="p-12 text-center text-muted-foreground">
@@ -511,19 +522,22 @@ export default function CourseDetail() {
               <Accordion type="multiple" defaultValue={modules.map((m) => m.id)} className="w-full">
                 {modules.map((mod) => {
                   const modLessons = lessons.filter((l) => l.module_id === mod.id);
-                  const modCompleted = modLessons.filter((l) => completedLessons.has(l.id)).length;
+                  const modVideos = allCourseVideos.filter(v => modLessons.some(l => l.id === v.lesson_id));
+                  const modCompleted = modVideos.filter(v => completedCourseVideos.has(v.id)).length;
+                  const modTotal = modVideos.length;
                   return (
                     <AccordionItem key={mod.id} value={mod.id} className="border-b-0">
                       <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline">
                         <div className="flex items-center gap-2 text-left">
                           <span className="font-medium">{mod.title}</span>
-                          <span className="text-[10px] text-muted-foreground">{modCompleted}/{modLessons.length}</span>
+                          <span className="text-[10px] text-muted-foreground">{modCompleted}/{modTotal}</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="pb-0">
                         {modLessons.map((lesson) => {
                           const isActive = activeLesson?.id === lesson.id;
-                          const isDone = completedLessons.has(lesson.id);
+                          const lessonVids = allCourseVideos.filter(v => v.lesson_id === lesson.id);
+                          const isDone = lessonVids.length > 0 && lessonVids.every(v => completedCourseVideos.has(v.id));
                           return (
                             <button
                               key={lesson.id}
