@@ -82,7 +82,7 @@ function CourseCard({
               {course.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{course.description}</p>
               )}
-              <p className="text-xs text-muted-foreground">{course.totalLessons} units</p>
+              <p className="text-xs text-muted-foreground">{course.totalLessons} Módulos</p>
             </div>
           </div>
           {locked ? (

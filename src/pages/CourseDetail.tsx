@@ -143,10 +143,49 @@ export default function CourseDetail() {
             setCompletedCourseVideos(new Set());
           }
           if (!activeLesson && ordered.length > 0) {
-            const completedIds = new Set((progressData ?? []).map((p) => p.lesson_id));
-            // Resume on first non-completed lesson; if all done, last lesson
-            const nextLesson = ordered.find((l) => !completedIds.has(l.id)) ?? ordered[ordered.length - 1];
-            setActiveLesson(nextLesson);
+            // Resume: find first module (unit) that is not fully complete.
+            // A module is complete only when ALL its videos are watched AND ALL its quizzes are passed.
+            const completedVidSet = new Set((allVids.length > 0
+              ? (await supabase
+                  .from("user_video_progress")
+                  .select("video_id")
+                  .eq("user_id", user.id)
+                  .in("video_id", allVids.map(v => v.id))
+                ).data ?? []
+              : []
+            ).map(p => p.video_id));
+
+            const lessonIdsAll = ordered.map(l => l.id);
+            const { data: quizzesData } = await supabase
+              .from("quizzes")
+              .select("id, lesson_id")
+              .in("lesson_id", lessonIdsAll);
+            const allQuizzes = (quizzesData ?? []) as { id: string; lesson_id: string }[];
+            const { data: attemptsData } = allQuizzes.length > 0 ? await supabase
+              .from("quiz_attempts")
+              .select("quiz_id, passed")
+              .eq("user_id", user.id)
+              .in("quiz_id", allQuizzes.map(q => q.id)) : { data: [] as any[] };
+            const passedQuizIds = new Set((attemptsData ?? []).filter((a: any) => a.passed).map((a: any) => a.quiz_id));
+
+            const lessonByModule: Record<string, Lesson[]> = {};
+            ordered.forEach(l => { (lessonByModule[l.module_id] ||= []).push(l); });
+
+            let resumeLesson: Lesson | null = null;
+            for (const m of modulesData) {
+              const modLessons = lessonByModule[m.id] ?? [];
+              const modLessonIds = new Set(modLessons.map(l => l.id));
+              const modVids = allVids.filter(v => modLessonIds.has(v.lesson_id));
+              const modQuizzes = allQuizzes.filter(q => modLessonIds.has(q.lesson_id));
+              const allVidsDone = modVids.length > 0 && modVids.every(v => completedVidSet.has(v.id));
+              const allQuizzesDone = modQuizzes.every(q => passedQuizIds.has(q.id));
+              const moduleComplete = allVidsDone && allQuizzesDone && modVids.length > 0;
+              if (!moduleComplete && modLessons.length > 0) {
+                resumeLesson = modLessons[0];
+                break;
+              }
+            }
+            setActiveLesson(resumeLesson ?? ordered[ordered.length - 1]);
           }
         }
       }
