@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle, Users, Smartphone } from "lucide-react";
+import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle, Users, Smartphone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNav = [
@@ -15,6 +15,7 @@ const adminNav = [
   { to: "/admin/install-videos", icon: Smartphone, label: "Vídeos de Instalação" },
   { to: "/admin/admins", icon: ShieldCheck, label: "Admins" },
   { to: "/admin/hubla", icon: ShoppingCart, label: "Vendas Hubla" },
+  { to: "/admin/welcome-email", icon: Mail, label: "Email Boas-vindas" },
 ];
 
 export default function AdminLayout() {
