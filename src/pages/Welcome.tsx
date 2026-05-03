@@ -24,6 +24,8 @@ export default function Welcome() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [lockedUserId, setLockedUserId] = useState<string | null>(null);
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -33,10 +35,12 @@ export default function Welcome() {
       if (sessionUser?.email) {
         setEmail(sessionUser.email);
         setLockedUserId(sessionUser.id);
+        setHasSession(true);
         const meta = (sessionUser.user_metadata ?? {}) as Record<string, any>;
         setName(meta.full_name || meta.name || meta.display_name || "");
       } else if (emailParam) {
         setEmail(emailParam);
+        setHasSession(false);
       } else {
         // No session and no email → user shouldn't be here
         navigate("/auth", { replace: true });
@@ -46,6 +50,12 @@ export default function Welcome() {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasSession) {
+      toast.error(
+        "Seu link expirou. Reenvie o email de ativação clicando no botão abaixo."
+      );
+      return;
+    }
     if (!name.trim()) {
       toast.error("Informe seu nome.");
       return;
@@ -84,6 +94,24 @@ export default function Welcome() {
     }
   };
 
+  const handleResend = async () => {
+    if (!email) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/welcome?email=${encodeURIComponent(email)}`,
+      });
+      if (error) throw error;
+      toast.success(
+        "Enviamos um novo link de ativação para seu email. Use APENAS o email mais recente."
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Não foi possível reenviar o link.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-hero p-4 page-transition overflow-hidden">
       <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-accent/30 blur-3xl animate-blob" />
@@ -104,6 +132,25 @@ export default function Welcome() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {hasSession === false && (
+            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm">
+              <p className="font-semibold text-destructive">Link expirado</p>
+              <p className="mt-1 text-muted-foreground">
+                Esse link de ativação não é mais válido (provavelmente você
+                clicou em um email antigo). Clique abaixo para receber um novo
+                link e use APENAS o email mais recente.
+              </p>
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-3 w-full"
+                onClick={handleResend}
+                disabled={resending || !email}
+              >
+                {resending ? "Enviando..." : "Reenviar link de ativação"}
+              </Button>
+            </div>
+          )}
           <form onSubmit={handleCreateAccount} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nome</Label>

@@ -360,14 +360,30 @@ Deno.serve(async (req) => {
 
     // Send the welcome / set-password email when:
     //  - we just created the user (first-ever purchase), OR
-    //  - the user already existed but has never signed in (e.g. account was
-    //    pre-created by a prior failed flow, or by a previous purchase whose
-    //    welcome email never arrived). This guarantees every paying student
-    //    gets the welcome email at least once.
-    let recoveryLink: string | null = null;
+    //  - the user already existed but has never signed in
+    //
+    // CRITICAL: Hubla emits one webhook per invoice (main purchase + one per
+    // order bump). Sending one recovery email per webhook would invalidate
+    // all but the LAST token (Supabase rotates the recovery token on every
+    // call), causing the student to receive N emails where only one works.
+    // We use `profiles.welcome_email_sent_at` as a one-shot guard so the
+    // welcome email is sent exactly once per user, no matter how many
+    // sibling invoices Hubla fires.
     const lastSignIn = found?.last_sign_in_at ?? null;
-    const shouldSendWelcome = createdNewUser || !lastSignIn;
+    const { data: profileGuard } = await admin
+      .from("profiles")
+      .select("welcome_email_sent_at")
+      .eq("user_id", userId!)
+      .maybeSingle();
+    const alreadySent = !!profileGuard?.welcome_email_sent_at;
+    const shouldSendWelcome = (createdNewUser || !lastSignIn) && !alreadySent;
     if (shouldSendWelcome) {
+      // Mark BEFORE sending to avoid races between concurrent webhooks.
+      await admin
+        .from("profiles")
+        .update({ welcome_email_sent_at: new Date().toISOString() })
+        .eq("user_id", userId!);
+
       // Always redirect new students to the /auth page with their email pre-filled.
       // The frontend detects ?email=... and shows the "create password" form
       // with the email field locked (readOnly).
@@ -387,6 +403,11 @@ Deno.serve(async (req) => {
       );
       if (resetErr) {
         console.error("resetPasswordForEmail failed", resetErr);
+        // Roll back the guard so a retry/next-event can send the email.
+        await admin
+          .from("profiles")
+          .update({ welcome_email_sent_at: null })
+          .eq("user_id", userId!);
       }
       // The auth-email-hook intercepts this and sends the branded
       // "welcome_purchase" template (single source of truth for the welcome email).

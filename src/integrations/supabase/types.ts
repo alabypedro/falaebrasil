@@ -530,6 +530,7 @@ export type Database = {
           updated_at: string
           user_id: string
           user_type: string
+          welcome_email_sent_at: string | null
           xp: number
         }
         Insert: {
@@ -550,6 +551,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_type?: string
+          welcome_email_sent_at?: string | null
           xp?: number
         }
         Update: {
@@ -570,6 +572,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_type?: string
+          welcome_email_sent_at?: string | null
           xp?: number
         }
         Relationships: []
