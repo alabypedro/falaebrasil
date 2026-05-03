@@ -143,8 +143,7 @@ export default function CourseDetail() {
             setCompletedCourseVideos(new Set());
           }
           if (!activeLesson && ordered.length > 0) {
-            // Resume: find first module (unit) that is not fully complete.
-            // A module is complete only when ALL its videos are watched AND ALL its quizzes are passed.
+            // Resume: find first lesson (Unit) where not all videos watched OR quiz not passed.
             const completedVidSet = new Set((allVids.length > 0
               ? (await supabase
                   .from("user_video_progress")
@@ -168,24 +167,14 @@ export default function CourseDetail() {
               .in("quiz_id", allQuizzes.map(q => q.id)) : { data: [] as any[] };
             const passedQuizIds = new Set((attemptsData ?? []).filter((a: any) => a.passed).map((a: any) => a.quiz_id));
 
-            const lessonByModule: Record<string, Lesson[]> = {};
-            ordered.forEach(l => { (lessonByModule[l.module_id] ||= []).push(l); });
-
-            let resumeLesson: Lesson | null = null;
-            for (const m of modulesData) {
-              const modLessons = lessonByModule[m.id] ?? [];
-              const modLessonIds = new Set(modLessons.map(l => l.id));
-              const modVids = allVids.filter(v => modLessonIds.has(v.lesson_id));
-              const modQuizzes = allQuizzes.filter(q => modLessonIds.has(q.lesson_id));
-              const allVidsDone = modVids.length > 0 && modVids.every(v => completedVidSet.has(v.id));
-              const allQuizzesDone = modQuizzes.every(q => passedQuizIds.has(q.id));
-              const moduleComplete = allVidsDone && allQuizzesDone && modVids.length > 0;
-              if (!moduleComplete && modLessons.length > 0) {
-                resumeLesson = modLessons[0];
-                break;
-              }
-            }
-            setActiveLesson(resumeLesson ?? ordered[ordered.length - 1]);
+            const resumeLesson = ordered.find((l) => {
+              const lVids = allVids.filter(v => v.lesson_id === l.id);
+              const lQuizzes = allQuizzes.filter(q => q.lesson_id === l.id);
+              const allVidsDone = lVids.length > 0 && lVids.every(v => completedVidSet.has(v.id));
+              const allQuizzesDone = lQuizzes.every(q => passedQuizIds.has(q.id));
+              return !(allVidsDone && allQuizzesDone);
+            }) ?? ordered[ordered.length - 1];
+            setActiveLesson(resumeLesson);
           }
         }
       }
