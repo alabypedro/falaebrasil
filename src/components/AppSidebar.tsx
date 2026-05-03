@@ -37,10 +37,18 @@ const navItems = [
 ];
 
 export default function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpen, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    } else {
+      setOpen(false);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
@@ -81,6 +89,7 @@ export default function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
+                      onClick={handleNavClick}
                       className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
                     >
@@ -99,6 +108,7 @@ export default function AppSidebar() {
                   <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Admin" : undefined}>
                     <NavLink
                       to="/admin"
+                      onClick={handleNavClick}
                       className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
                     >
