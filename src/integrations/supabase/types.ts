@@ -1125,6 +1125,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_latest_quiz_attempt: { Args: { _quiz_id: string }; Returns: Json }
       grant_voice_credits: {
         Args: {
           _hubla_event_id: string
