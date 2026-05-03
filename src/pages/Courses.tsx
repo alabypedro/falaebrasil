@@ -149,31 +149,22 @@ export default function Courses() {
 
       const { data: modules } = await supabase.from("modules").select("id, course_id");
       const { data: lessons } = await supabase.from("lessons").select("id, module_id");
-      const { data: progress } = await supabase.from("user_progress").select("lesson_id").eq("user_id", user.id);
       const { data: videos } = await supabase.from("lesson_videos").select("id, lesson_id");
       const { data: videoProgress } = await supabase
         .from("user_video_progress")
         .select("video_id")
         .eq("user_id", user.id);
       const { data: quizzes } = await supabase.from("quizzes").select("id, lesson_id");
-      const { data: quizQuestions } = await supabase.from("quiz_questions").select("id, quiz_id");
+      const { data: quizQuestions } = await supabase
+        .from("quiz_questions_public" as any)
+        .select("id, quiz_id");
       const { data: quizAttempts } = await supabase
         .from("quiz_attempts")
         .select("quiz_id, score, passed")
         .eq("user_id", user.id);
 
-      const completedLessonIds = new Set((progress || []).map((p) => p.lesson_id));
       const moduleToCourseLookup: Record<string, string> = {};
       (modules || []).forEach((m) => { moduleToCourseLookup[m.id] = m.course_id; });
-
-      const courseLessons: Record<string, string[]> = {};
-      (lessons || []).forEach((l) => {
-        const courseId = moduleToCourseLookup[l.module_id];
-        if (courseId) {
-          if (!courseLessons[courseId]) courseLessons[courseId] = [];
-          courseLessons[courseId].push(l.id);
-        }
-      });
 
       // Map lesson -> course for videos & quizzes
       const lessonToCourse: Record<string, string> = {};
@@ -201,7 +192,7 @@ export default function Courses() {
       });
 
       const questionsCountByQuiz: Record<string, number> = {};
-      (quizQuestions || []).forEach((q) => {
+      ((quizQuestions || []) as any[]).forEach((q: any) => {
         questionsCountByQuiz[q.quiz_id] = (questionsCountByQuiz[q.quiz_id] || 0) + 1;
       });
 
@@ -214,13 +205,10 @@ export default function Courses() {
       });
 
       const result: CourseWithProgress[] = coursesData.map((c) => {
-        const lessonIds = courseLessons[c.id] || [];
-        const completed = lessonIds.filter((id) => completedLessonIds.has(id)).length;
-        const pct = lessonIds.length > 0 ? Math.round((completed / lessonIds.length) * 100) : 0;
-
-        // XP from videos: 25 each
+        // Progress is based on watched videos vs total videos in course (matches CourseDetail & Dashboard)
         const vids = courseVideos[c.id] || [];
         const watched = vids.filter((id) => completedVideoIds.has(id)).length;
+        const pct = vids.length > 0 ? Math.round((watched / vids.length) * 100) : 0;
         const videoXpEarned = watched * 25;
         const videoXpTotal = vids.length * 25;
 
@@ -240,8 +228,8 @@ export default function Courses() {
 
         return {
           ...c,
-          totalLessons: lessonIds.length,
-          completedLessons: completed,
+          totalLessons: (modules || []).filter((m) => m.course_id === c.id).length,
+          completedLessons: watched,
           progress: pct,
           earnedXp: videoXpEarned + quizXpEarned,
           totalXp: videoXpTotal + quizXpTotal,

@@ -344,28 +344,6 @@ export default function CourseDetail() {
           <div className="flex items-center gap-3 mt-3">
             <Progress value={progressPct} className="h-2 flex-1 max-w-xs" />
             <span className="text-xs text-muted-foreground">{completedVideosCount}/{totalVideos} aulas • {progressPct}%</span>
-            {completedVideosCount > 0 && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={resetting}>
-                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                    Resetar progresso
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Resetar progresso deste curso?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Todas as aulas deste curso serão marcadas como não assistidas e o XP correspondente (25 por aula) será descontado do seu total. Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleResetCourse}>Resetar</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
           </div>
         </div>
       </div>
