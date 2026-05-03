@@ -31,6 +31,17 @@ export default function InlineQuiz({ quizId }: { quizId: string }) {
 
   useEffect(() => {
     const load = async () => {
+      // Reset state when switching to a different quiz
+      setQuiz(null);
+      setQuestions([]);
+      setCurrent(0);
+      setAnswers({});
+      setSubmitted(false);
+      setScore(0);
+      setPassed(false);
+      setXpEarned(0);
+      setResults({});
+      setLoading(true);
       const [{ data: q }, { data: qs }] = await Promise.all([
         supabase.from("quizzes").select("id, title, passing_score").eq("id", quizId).single(),
         supabase.from("quiz_questions_public" as any).select("*").eq("quiz_id", quizId).order("display_order"),
