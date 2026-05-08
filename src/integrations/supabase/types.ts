@@ -516,6 +516,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           has_course_access: boolean
           has_ebook1_access: boolean
           has_ebook2_access: boolean
@@ -538,6 +539,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           has_course_access?: boolean
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
@@ -560,6 +562,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           has_course_access?: boolean
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
