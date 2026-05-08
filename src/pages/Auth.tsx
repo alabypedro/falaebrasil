@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, User, Phone } from "lucide-react";
+import { Mail, Lock, User, Phone, Check, X } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 
 export default function Auth() {
@@ -19,6 +19,22 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const passwordChecks = {
+    length: password.length >= 8 && password.length <= 70,
+    lower: /[a-z]/.test(password),
+    upper: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+    symbol: /[^A-Za-z0-9]/.test(password),
+  };
+  const passwordValid = Object.values(passwordChecks).every(Boolean);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const phoneValid = phone.trim().length >= 8;
+  const nameValid = name.trim().length > 0;
+  const signUpValid = nameValid && phoneValid && emailValid && passwordValid;
+  const signInValid = emailValid && password.length > 0;
+  const forgotValid = emailValid;
 
   // Backwards-compat: old Hubla welcome emails redirected to /auth?email=<email>.
   // The new onboarding page lives at /welcome — forward any legacy link there
@@ -53,6 +69,12 @@ export default function Auth() {
         });
         if (error) throw error;
         toast.success("Cadastro realizado! Verifique seu email para confirmar.");
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          setIsSignUp(false);
+        }, 1500);
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -61,7 +83,7 @@ export default function Auth() {
     } catch (err: any) {
       toast.error(err.message || "Erro na autenticação.");
     } finally {
-      setLoading(false);
+      if (!success) setLoading(false);
     }
   };
 
@@ -103,7 +125,7 @@ export default function Auth() {
                   />
                 </div>
               </div>
-              <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
+              <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading || !forgotValid}>
                 {loading ? "Enviando..." : "Enviar Link"}
               </Button>
               <Button type="button" variant="ghost" className="w-full" onClick={() => setIsForgot(false)}>
