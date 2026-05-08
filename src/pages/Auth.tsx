@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, User } from "lucide-react";
+import { Mail, Lock, User, Phone } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 
 export default function Auth() {
@@ -18,6 +18,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Backwards-compat: old Hubla welcome emails redirected to /auth?email=<email>.
   // The new onboarding page lives at /welcome — forward any legacy link there
@@ -47,7 +48,7 @@ export default function Auth() {
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { full_name: name },
+            data: { full_name: name, phone },
           },
         });
         if (error) throw error;
@@ -154,6 +155,24 @@ export default function Auth() {
                     className="pl-9 h-11"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(11) 99999-9999"
+                    className="pl-9 h-11"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     required
                   />
                 </div>
