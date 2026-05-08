@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, User } from "lucide-react";
+import { Mail, Lock, User, Check, X } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 
 /**
@@ -26,6 +26,17 @@ export default function Welcome() {
   const [lockedUserId, setLockedUserId] = useState<string | null>(null);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   const [resending, setResending] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const passwordChecks = {
+    length: password.length >= 8 && password.length <= 70,
+    lower: /[a-z]/.test(password),
+    upper: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+    symbol: /[^A-Za-z0-9]/.test(password),
+  };
+  const passwordValid = Object.values(passwordChecks).every(Boolean);
+  const formValid = name.trim().length > 0 && passwordValid;
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -56,14 +67,7 @@ export default function Welcome() {
       );
       return;
     }
-    if (!name.trim()) {
-      toast.error("Informe seu nome.");
-      return;
-    }
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres.");
-      return;
-    }
+    if (!formValid) return;
     setLoading(true);
     try {
       const trimmedName = name.trim();
@@ -86,12 +90,14 @@ export default function Welcome() {
       }
 
       toast.success("Conta ativada! Bem-vindo ao Falaê Brasil!");
-      navigate("/", { replace: true });
+      setSuccess(true);
+      setTimeout(() => navigate("/", { replace: true }), 1500);
     } catch (err: any) {
       toast.error(err.message || "Erro ao ativar conta.");
-    } finally {
       setLoading(false);
+      return;
     }
+    // keep loading=true on success so the button stays disabled until redirect
   };
 
   const handleResend = async () => {
@@ -171,16 +177,17 @@ export default function Welcome() {
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-emerald-500" />
                 <Input
                   id="email"
                   type="email"
-                  className="pl-9 h-11 bg-muted cursor-not-allowed"
+                  className="pl-9 pr-9 h-11 bg-muted cursor-not-allowed border-emerald-500/60 focus-visible:ring-emerald-500/40"
                   value={email}
                   readOnly
                   disabled
                   tabIndex={-1}
                 />
+                <Check className="absolute right-3 top-3 h-4 w-4 text-emerald-500" />
               </div>
               <p className="text-xs text-muted-foreground">
                 E-mail vinculado à sua compra (não editável).
@@ -194,18 +201,44 @@ export default function Welcome() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Crie uma senha segura"
                   className="pl-9 h-11"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
+                  maxLength={70}
                 />
               </div>
+              <ul className="mt-2 space-y-1 text-xs">
+                {[
+                  { ok: passwordChecks.length, label: "De 8 a 70 caracteres" },
+                  { ok: passwordChecks.lower, label: "Letra minúscula" },
+                  { ok: passwordChecks.upper, label: "Letra maiúscula" },
+                  { ok: passwordChecks.number, label: "Número" },
+                  { ok: passwordChecks.symbol, label: "Símbolo (Ex: !@#$%)" },
+                ].map((r) => (
+                  <li key={r.label} className="flex items-center gap-2">
+                    {r.ok ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <X className="h-3.5 w-3.5 text-destructive" />
+                    )}
+                    <span className={r.ok ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}>
+                      {r.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
-              {loading ? "Salvando..." : "Criar conta e entrar"}
+            <Button
+              type="submit"
+              variant="gradient"
+              className="w-full h-11"
+              disabled={loading || success || !formValid || !hasSession}
+            >
+              {success ? "Conta criada!" : loading ? "Salvando..." : "Criar Conta"}
             </Button>
           </form>
         </CardContent>
