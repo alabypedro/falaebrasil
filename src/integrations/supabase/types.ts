@@ -524,6 +524,7 @@ export type Database = {
           hubla_customer_id: string | null
           id: string
           level: string
+          phone: string | null
           scripted_balance: number
           streak_days: number
           unscripted_balance: number
@@ -545,6 +546,7 @@ export type Database = {
           hubla_customer_id?: string | null
           id?: string
           level?: string
+          phone?: string | null
           scripted_balance?: number
           streak_days?: number
           unscripted_balance?: number
@@ -566,6 +568,7 @@ export type Database = {
           hubla_customer_id?: string | null
           id?: string
           level?: string
+          phone?: string | null
           scripted_balance?: number
           streak_days?: number
           unscripted_balance?: number
