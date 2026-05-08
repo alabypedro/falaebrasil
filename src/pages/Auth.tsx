@@ -204,17 +204,25 @@ export default function Auth() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className={`absolute left-3 top-3 h-4 w-4 ${emailValid ? "text-emerald-500" : "text-muted-foreground"}`} />
                 <Input
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
-                  className="pl-9 h-11"
+                  className={`pl-9 pr-9 h-11 ${emailValid ? "border-emerald-500/60 focus-visible:ring-emerald-500/40" : ""}`}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
+                {emailValid && (
+                  <Check className="absolute right-3 top-3 h-4 w-4 text-emerald-500" />
+                )}
               </div>
+              {isSignUp && email.length > 0 && !emailValid && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <X className="h-3 w-3" /> Precisamos de um e-mail válido
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -240,13 +248,47 @@ export default function Auth() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={isSignUp ? 8 : 6}
+                  maxLength={isSignUp ? 70 : undefined}
                 />
               </div>
+              {isSignUp && (
+                <ul className="mt-2 space-y-1 text-xs">
+                  {[
+                    { ok: passwordChecks.length, label: "De 8 a 70 caracteres" },
+                    { ok: passwordChecks.lower, label: "Letra minúscula" },
+                    { ok: passwordChecks.upper, label: "Letra maiúscula" },
+                    { ok: passwordChecks.number, label: "Número" },
+                    { ok: passwordChecks.symbol, label: "Símbolo (Ex: !@#$%)" },
+                  ].map((r) => (
+                    <li key={r.label} className="flex items-center gap-2">
+                      {r.ok ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 text-destructive" />
+                      )}
+                      <span className={r.ok ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}>
+                        {r.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
-            <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
-              {loading ? "Carregando..." : isSignUp ? "Criar Conta" : "Entrar"}
+            <Button
+              type="submit"
+              variant="gradient"
+              className="w-full h-11"
+              disabled={loading || success || (isSignUp ? !signUpValid : !signInValid)}
+            >
+              {success
+                ? "Conta criada!"
+                : loading
+                ? "Carregando..."
+                : isSignUp
+                ? "Criar Conta"
+                : "Entrar"}
             </Button>
           </form>
 
