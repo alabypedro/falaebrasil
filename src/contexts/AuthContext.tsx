@@ -19,6 +19,9 @@ interface AuthContextType {
     has_ebook3_access: boolean;
     scripted_balance: number;
     unscripted_balance: number;
+    subscription_status: string;
+    subscription_grace_until: string | null;
+    subscription_current_period_end: string | null;
   } | null;
   refreshProfile: () => Promise<void>;
 }
@@ -60,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("display_name, avatar_url, level, xp, streak_days, has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access, scripted_balance, unscripted_balance")
+      .select("display_name, avatar_url, level, xp, streak_days, has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access, scripted_balance, unscripted_balance, subscription_status, subscription_grace_until, subscription_current_period_end")
       .eq("user_id", user.id)
       .single();
     if (data) setProfile(data as any);
