@@ -132,6 +132,36 @@ function extractEventId(body: any): string {
   );
 }
 
+function extractSubscriptionId(body: any): string | null {
+  return (
+    body?.event?.subscription?.id ||
+    body?.event?.subscriptionId ||
+    body?.subscription?.id ||
+    body?.subscriptionId ||
+    body?.event?.invoice?.subscriptionId ||
+    body?.event?.invoice?.subscription?.id ||
+    null
+  );
+}
+
+function extractNextBillingDate(body: any): string | null {
+  const candidates = [
+    body?.event?.subscription?.nextBillingDate,
+    body?.event?.subscription?.nextChargeDate,
+    body?.event?.subscription?.currentPeriodEnd,
+    body?.event?.nextBillingDate,
+    body?.event?.invoice?.nextBillingDate,
+    body?.subscription?.nextBillingDate,
+  ];
+  for (const c of candidates) {
+    if (c) {
+      const d = new Date(c);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+  }
+  return null;
+}
+
 /**
  * Returns a stable id that is identical across all sibling webhooks of the
  * SAME purchase (main invoice + each order-bump invoice).
@@ -229,12 +259,25 @@ Deno.serve(async (req) => {
     console.log("HUBLA_RAW_PAYLOAD", JSON.stringify(body));
     console.log("HUBLA_EVENT_TYPE", eventType);
 
-    // Only process successful purchase events
-    const isPurchase =
-      /sale|purchase|order|payment/i.test(eventType) &&
-      !/refund|cancel|chargeback/i.test(eventType);
+    // Classify event:
+    //  - paid:    successful purchase / subscription invoice paid → grant access
+    //  - failed:  invoice payment failed / past due → start 10-day grace
+    //  - canceled subscription canceled / refunded / chargeback → block access
+    const isPaid =
+      /paid|approved|completed|active/i.test(eventType) &&
+      !/refund|cancel|chargeback|fail/i.test(eventType);
+    const isFailed =
+      /payment_failed|invoice\.failed|past_due|overdue/i.test(eventType);
+    const isCanceled =
+      /canceled|cancelled|refund|chargeback|expired|terminated/i.test(eventType);
+    // Legacy one-time purchase events
+    const isLegacyPurchase =
+      /sale|purchase|order/i.test(eventType) &&
+      !/refund|cancel|chargeback|fail/i.test(eventType);
 
-    if (!isPurchase) {
+    const isGrantingEvent = isPaid || isLegacyPurchase;
+
+    if (!isGrantingEvent && !isFailed && !isCanceled) {
       return new Response(JSON.stringify({ ok: true, ignored: eventType }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -246,6 +289,58 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    const subscriptionId = extractSubscriptionId(body);
+    const nextBilling = extractNextBillingDate(body);
+
+    // ---- Handle subscription failure / cancellation paths ----
+    // For these we just need to look up the user by email and update flags.
+    if (isFailed || isCanceled) {
+      const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const u = list?.users?.find((x) => x.email?.toLowerCase() === email.toLowerCase());
+      if (!u) {
+        return new Response(JSON.stringify({ ok: true, warning: "user not found", email }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (isCanceled) {
+        // Immediate block — student canceled or chargeback
+        const { error } = await admin
+          .from("profiles")
+          .update({
+            subscription_status: "canceled",
+            subscription_grace_until: null,
+            has_course_access: false,
+            has_ebook1_access: false,
+            has_ebook2_access: false,
+            has_ebook3_access: false,
+          })
+          .eq("user_id", u.id);
+        if (error) throw error;
+        return new Response(
+          JSON.stringify({ ok: true, action: "subscription_canceled", user_id: u.id }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // isFailed → start 10-day grace if not already running
+      const graceUntil = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await admin
+        .from("profiles")
+        .update({
+          subscription_status: "past_due",
+          subscription_grace_until: graceUntil,
+        })
+        .eq("user_id", u.id)
+        // Only set grace if not already in past_due (don't reset on repeat failures)
+        .neq("subscription_status", "past_due");
+      if (error) throw error;
+      return new Response(
+        JSON.stringify({ ok: true, action: "marked_past_due", user_id: u.id, grace_until: graceUntil }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const customerId = extractCustomerId(body);
@@ -357,6 +452,22 @@ Deno.serve(async (req) => {
         .update(updatePayload)
         .eq("user_id", userId!);
       if (updErr) throw updErr;
+    }
+
+    // ---- Subscription renewal / activation: clear past_due, set active ----
+    const isSubscriptionProduct = matched.some((m: any) => m.is_subscription);
+    if (isSubscriptionProduct || subscriptionId) {
+      const subUpdate: Record<string, any> = {
+        subscription_status: "active",
+        subscription_grace_until: null,
+      };
+      if (subscriptionId) subUpdate.hubla_subscription_id = subscriptionId;
+      if (nextBilling) subUpdate.subscription_current_period_end = nextBilling;
+      const { error: subErr } = await admin
+        .from("profiles")
+        .update(subUpdate)
+        .eq("user_id", userId!);
+      if (subErr) console.error("subscription update failed", subErr);
     }
 
     // ---- VOICE CREDIT GRANTS (idempotent per event+product) ----

@@ -292,6 +292,7 @@ export type Database = {
           hubla_product_id: string | null
           hubla_product_name: string | null
           id: string
+          is_subscription: boolean
           price_cents: number
           product_key: string
           updated_at: string
@@ -307,6 +308,7 @@ export type Database = {
           hubla_product_id?: string | null
           hubla_product_name?: string | null
           id?: string
+          is_subscription?: boolean
           price_cents?: number
           product_key: string
           updated_at?: string
@@ -322,6 +324,7 @@ export type Database = {
           hubla_product_id?: string | null
           hubla_product_name?: string | null
           id?: string
+          is_subscription?: boolean
           price_cents?: number
           product_key?: string
           updated_at?: string
@@ -523,11 +526,15 @@ export type Database = {
           has_ebook3_access: boolean
           has_seen_tutorial: boolean
           hubla_customer_id: string | null
+          hubla_subscription_id: string | null
           id: string
           level: string
           phone: string | null
           scripted_balance: number
           streak_days: number
+          subscription_current_period_end: string | null
+          subscription_grace_until: string | null
+          subscription_status: string
           unscripted_balance: number
           updated_at: string
           user_id: string
@@ -546,11 +553,15 @@ export type Database = {
           has_ebook3_access?: boolean
           has_seen_tutorial?: boolean
           hubla_customer_id?: string | null
+          hubla_subscription_id?: string | null
           id?: string
           level?: string
           phone?: string | null
           scripted_balance?: number
           streak_days?: number
+          subscription_current_period_end?: string | null
+          subscription_grace_until?: string | null
+          subscription_status?: string
           unscripted_balance?: number
           updated_at?: string
           user_id: string
@@ -569,11 +580,15 @@ export type Database = {
           has_ebook3_access?: boolean
           has_seen_tutorial?: boolean
           hubla_customer_id?: string | null
+          hubla_subscription_id?: string | null
           id?: string
           level?: string
           phone?: string | null
           scripted_balance?: number
           streak_days?: number
+          subscription_current_period_end?: string | null
+          subscription_grace_until?: string | null
+          subscription_status?: string
           unscripted_balance?: number
           updated_at?: string
           user_id?: string
@@ -1131,6 +1146,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_overdue_subscriptions: { Args: never; Returns: Json }
       get_latest_quiz_attempt: { Args: { _quiz_id: string }; Returns: Json }
       grant_voice_credits: {
         Args: {
