@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Sun, Moon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import XPBadge from "@/components/XPBadge";
+import SubscriptionStatusBanner from "@/components/SubscriptionStatusBanner";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -72,6 +73,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Button>
             </div>
           </header>
+          <SubscriptionStatusBanner />
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             {children}
           </main>
