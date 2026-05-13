@@ -34,6 +34,8 @@ import TutorialsManager from "@/pages/admin/TutorialsManager";
 import CommunitiesManager from "@/pages/admin/CommunitiesManager";
 import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosManager";
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
+import ContractsManager from "@/pages/admin/ContractsManager";
+import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
 
 const queryClient = new QueryClient();
@@ -99,6 +101,7 @@ const App = () => (
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/tutoriais" element={<Tutoriais />} />
                       <Route path="/communities" element={<Communities />} />
+                      <Route path="/contratos" element={<Contratos />} />
                       <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                       <Route path="/success" element={<Success />} />
                       <Route
@@ -119,6 +122,7 @@ const App = () => (
                         <Route path="tutorials" element={<TutorialsManager />} />
                         <Route path="install-videos" element={<InstallTutorialVideosManager />} />
                         <Route path="communities" element={<CommunitiesManager />} />
+                        <Route path="contracts" element={<ContractsManager />} />
                         <Route path="admins" element={<AdminsManager />} />
                         <Route path="hubla" element={<HublaProductsManager />} />
                         <Route path="welcome-email" element={<WelcomeEmailSender />} />

@@ -8,6 +8,7 @@ import {
   HelpCircle,
   Download,
   Users,
+  FileText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +34,7 @@ const navItems = [
   { title: "Biblioteca BST", url: "/library", icon: Library },
   { title: "Comunidades FB", url: "/communities", icon: Users },
   { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },
+  { title: "Contratos", url: "/contratos", icon: FileText },
   { title: "Instalar App", url: "/install", icon: Download },
 ];
 

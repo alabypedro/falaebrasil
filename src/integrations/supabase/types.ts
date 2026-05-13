@@ -88,6 +88,39 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          created_at: string
+          file_name: string | null
+          file_path: string | null
+          id: string
+          tier: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          tier: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          tier?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       course_progress: {
         Row: {
           completed: boolean
