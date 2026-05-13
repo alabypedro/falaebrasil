@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, MessageCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 
 interface Community {
   id: string;
@@ -20,10 +21,11 @@ interface Community {
   whatsapp_url: string | null;
   access_key: string;
   required_tier: "open" | "pro" | "vip";
+  all_tiers: boolean;
   sort_order: number;
 }
 
-const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as "open" | "pro" | "vip", sort_order: 0 };
+const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as "open" | "pro" | "vip", all_tiers: false, sort_order: 0 };
 
 const tierLabels: Record<string, string> = {
   open: "OPEN (todos)",
@@ -72,6 +74,7 @@ export default function CommunitiesManager() {
       whatsapp_url: item.whatsapp_url ?? "",
       access_key: item.access_key,
       required_tier: item.required_tier ?? "open",
+      all_tiers: !!item.all_tiers,
       sort_order: item.sort_order,
     });
     setOpen(true);
@@ -86,6 +89,7 @@ export default function CommunitiesManager() {
       whatsapp_url: form.whatsapp_url.trim() || null,
       access_key: form.access_key,
       required_tier: form.required_tier,
+      all_tiers: form.all_tiers,
       sort_order: form.sort_order,
     };
     if (editing) {
@@ -215,9 +219,13 @@ export default function CommunitiesManager() {
                   {item.description && <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={item.required_tier && item.required_tier !== "open" ? "default" : "outline"} className="text-[10px] uppercase">
-                    {item.required_tier ?? "open"}
-                  </Badge>
+                  {item.all_tiers ? (
+                    <Badge variant="default" className="text-[10px] uppercase">Todos</Badge>
+                  ) : (
+                    <Badge variant={item.required_tier && item.required_tier !== "open" ? "default" : "outline"} className="text-[10px] uppercase">
+                      {item.required_tier ?? "open"}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {item.whatsapp_url ? <span>✅</span> : "—"}
@@ -267,6 +275,15 @@ export default function CommunitiesManager() {
               <p className="text-xs text-muted-foreground">
                 Define o plano mínimo necessário para entrar nesta comunidade. Alunos com plano inferior veem o grupo trancado com popup de upgrade.
               </p>
+            </div>
+            <div className="flex items-start justify-between gap-3 rounded-md border p-3">
+              <div className="space-y-0.5">
+                <Label>Liberar para todos os planos</Label>
+                <p className="text-xs text-muted-foreground">
+                  Quando ativo, OPEN, PRO e VIP entram neste grupo (ignora o "Acesso requerido" acima).
+                </p>
+              </div>
+              <Switch checked={form.all_tiers} onCheckedChange={(v) => setForm({ ...form, all_tiers: !!v })} />
             </div>
             <div className="space-y-2">
               <Label>Ordem de exibição</Label>
