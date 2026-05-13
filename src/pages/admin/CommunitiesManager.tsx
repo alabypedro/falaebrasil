@@ -19,18 +19,16 @@ interface Community {
   description: string | null;
   whatsapp_url: string | null;
   access_key: string;
-  required_tier: "open" | "pro";
+  required_tier: "open" | "pro" | "vip";
   sort_order: number;
 }
 
-const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as "open" | "pro", sort_order: 0 };
+const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as "open" | "pro" | "vip", sort_order: 0 };
 
-const accessLabels: Record<string, string> = {
-  free: "Grátis (todos)",
-  a1: "Curso FB Básico PRO (A1)",
-  a2: "Curso A2",
-  b1: "Curso B1",
-  b2: "Curso B2",
+const tierLabels: Record<string, string> = {
+  open: "OPEN (todos)",
+  pro: "PRO",
+  vip: "VIP",
 };
 
 export default function CommunitiesManager() {
@@ -198,14 +196,13 @@ export default function CommunitiesManager() {
               <TableHead>Ordem</TableHead>
               <TableHead>Título</TableHead>
               <TableHead>Plano mín.</TableHead>
-              <TableHead>Acesso</TableHead>
               <TableHead>Link</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma comunidade cadastrada.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma comunidade cadastrada.</TableCell></TableRow>
             )}
             {items.map((item) => (
               <TableRow key={item.id}>
@@ -218,13 +215,8 @@ export default function CommunitiesManager() {
                   {item.description && <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={item.required_tier === "pro" ? "default" : "outline"} className="text-[10px] uppercase">
+                  <Badge variant={item.required_tier && item.required_tier !== "open" ? "default" : "outline"} className="text-[10px] uppercase">
                     {item.required_tier ?? "open"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={item.access_key === "free" ? "outline" : "default"} className="text-[10px]">
-                    {accessLabels[item.access_key] ?? item.access_key}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
@@ -264,29 +256,16 @@ export default function CommunitiesManager() {
             </div>
             <div className="space-y-2">
               <Label>Acesso requerido</Label>
-              <Select value={form.access_key} onValueChange={(v) => setForm({ ...form, access_key: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Grátis (todos)</SelectItem>
-                  <SelectItem value="a1">Curso FB Básico PRO (A1)</SelectItem>
-                  <SelectItem value="a2">Curso A2</SelectItem>
-                  <SelectItem value="b1">Curso B1</SelectItem>
-                  <SelectItem value="b2">Curso B2</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Define qual nível libera esta comunidade. Vinculado ao mesmo desbloqueio do curso.</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Plano mínimo</Label>
               <Select value={form.required_tier} onValueChange={(v: any) => setForm({ ...form, required_tier: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open">OPEN (todos)</SelectItem>
-                  <SelectItem value="pro">PRO (apenas alunos PRO/VIP)</SelectItem>
+                  <SelectItem value="pro">PRO (apenas PRO/VIP)</SelectItem>
+                  <SelectItem value="vip">VIP (apenas VIP)</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Alunos OPEN veem grupos PRO trancados com popup de upgrade. Alunos PRO/VIP veem grupos OPEN trancados sem popup.
+                Define o plano mínimo necessário para entrar nesta comunidade. Alunos com plano inferior veem o grupo trancado com popup de upgrade.
               </p>
             </div>
             <div className="space-y-2">
