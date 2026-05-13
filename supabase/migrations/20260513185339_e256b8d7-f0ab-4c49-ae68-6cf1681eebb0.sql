@@ -1,0 +1,2 @@
+ALTER TABLE public.fb_communities DROP CONSTRAINT IF EXISTS fb_communities_required_tier_check;
+ALTER TABLE public.fb_communities ADD CONSTRAINT fb_communities_required_tier_check CHECK (required_tier IN ('open','pro','vip','kids','teens'));
