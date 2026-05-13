@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +26,12 @@ interface Course {
 }
 
 const levels = ["A1", "A2", "B1", "B2"];
-const tiers = [
+const adultTiers = [
   { value: "open", label: "OPEN" },
   { value: "pro", label: "PRO" },
   { value: "vip", label: "VIP" },
+];
+const youthTiers = [
   { value: "teens", label: "TEENS" },
   { value: "kids", label: "KIDS" },
 ];
@@ -175,7 +177,17 @@ export default function CoursesManager() {
               <Label>Hierarquia (tier)</Label>
               <Select value={form.required_tier} onValueChange={(v) => setForm({ ...form, required_tier: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{tiers.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Adultos (18+)</SelectLabel>
+                    {adultTiers.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  </SelectGroup>
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>Crianças e adolescentes</SelectLabel>
+                    {youthTiers.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
