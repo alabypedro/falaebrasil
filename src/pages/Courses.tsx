@@ -16,6 +16,7 @@ interface CourseWithProgress {
   category: string;
   description: string | null;
   thumbnail_url: string | null;
+  required_tier: string;
   totalLessons: number;
   completedLessons: number;
   progress: number;
@@ -141,7 +142,7 @@ export default function Courses() {
 
       const { data: coursesData } = await supabase
         .from("courses")
-        .select("id, title, level, category, description, thumbnail_url")
+        .select("id, title, level, category, description, thumbnail_url, required_tier")
         .eq("published", true)
         .order("display_order");
 
@@ -252,7 +253,37 @@ export default function Courses() {
   }
 
   const isLocked = !isAdmin && !profile?.has_course_access;
-  const visibleCourses = courses;
+
+  const userTier = (profile?.plan_tier ?? "open").toLowerCase();
+  const isTeens = userTier === "teens";
+  const isKids = userTier === "kids";
+
+  const allowedTiers: string[] = isAdmin
+    ? ["open", "pro", "vip", "teens", "kids"]
+    : isTeens
+    ? ["teens"]
+    : isKids
+    ? ["kids"]
+    : ["open", "pro", "vip"];
+
+  const visibleCourses = courses.filter((c) =>
+    allowedTiers.includes((c.required_tier ?? "open").toLowerCase())
+  );
+
+  const groups: { key: string; title: string; tiers: string[] }[] = [
+    { key: "adults", title: "Adultos", tiers: ["open", "pro", "vip"] },
+    { key: "teens", title: "Teens", tiers: ["teens"] },
+    { key: "kids", title: "Kids", tiers: ["kids"] },
+  ];
+
+  const visibleGroups = groups
+    .map((g) => ({
+      ...g,
+      courses: visibleCourses.filter((c) =>
+        g.tiers.includes((c.required_tier ?? "open").toLowerCase())
+      ),
+    }))
+    .filter((g) => g.courses.length > 0);
 
   return (
     <div className="space-y-6 max-w-6xl page-transition">
@@ -263,20 +294,32 @@ export default function Courses() {
         </p>
       </div>
 
-      <div className="animate-fade-up" style={{ "--delay": "100ms" } as React.CSSProperties}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visibleCourses.map((course, i) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              index={i}
-              locked={isLocked}
-              onLockedClick={() => setShowUpsell(true)}
-            />
-          ))}
-        </div>
-        {visibleCourses.length === 0 && (
-          <p className="text-center text-muted-foreground py-8 animate-fade-in">Nenhum curso publicado.</p>
+      <div
+        className="animate-fade-up grid gap-6 lg:grid-cols-3"
+        style={{ "--delay": "100ms" } as React.CSSProperties}
+      >
+        {visibleGroups.map((group) => (
+          <section key={group.key} className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              {group.title}
+            </h2>
+            <div className="grid gap-4 grid-cols-1">
+              {group.courses.map((course, i) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  index={i}
+                  locked={isLocked}
+                  onLockedClick={() => setShowUpsell(true)}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+        {visibleGroups.length === 0 && (
+          <p className="text-center text-muted-foreground py-8 animate-fade-in lg:col-span-3">
+            Nenhum curso publicado.
+          </p>
         )}
       </div>
 
