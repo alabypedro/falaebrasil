@@ -15,6 +15,7 @@ interface Community {
   whatsapp_url: string | null;
   access_key: string;
   required_tier: "open" | "pro" | "vip";
+  all_tiers: boolean;
   sort_order: number;
 }
 
@@ -50,9 +51,9 @@ export default function Communities() {
   }, []);
 
   // Acesso exato ao tier: VIP não entra em grupos OPEN/PRO; PRO não entra em OPEN.
-  // Admin mantém acesso total.
-  const hasTierAccess = (requiredTier: "open" | "pro" | "vip") =>
-    isAdmin || userTier === requiredTier;
+  // Admin mantém acesso total. Grupos com all_tiers=true liberam para todos.
+  const hasAccess = (item: Community) =>
+    isAdmin || item.all_tiers || userTier === (item.required_tier ?? "open");
 
   if (loading) {
     return (
@@ -107,7 +108,7 @@ export default function Communities() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => {
           const required = item.required_tier ?? "open";
-          const locked = !hasTierAccess(required);
+          const locked = !hasAccess(item);
           // Aluno com plano inferior vendo grupo de plano superior → popup de upgrade
           // Aluno com plano superior vendo grupo de plano inferior → trancado SEM popup
           // Popup de upsell só quando o usuário tem plano INFERIOR ao requerido.
