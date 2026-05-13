@@ -33,7 +33,7 @@ const TIER_LABELS: Record<Tier, string> = {
   pro: "Aluno PRO (18+)",
   vip: "Aluno VIP (18+)",
 };
-const TIER_ORDER: Tier[] = ["kids", "teens", "open", "pro"];
+const TIER_ORDER: Tier[] = ["open", "pro", "teens", "kids"];
 
 function SubfolderRow({
   item,
