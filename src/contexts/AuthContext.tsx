@@ -17,7 +17,7 @@ interface AuthContextType {
     has_ebook1_access: boolean;
     has_ebook2_access: boolean;
     has_ebook3_access: boolean;
-    plan_tier: "open" | "pro" | "vip";
+    plan_tier: "open" | "pro" | "vip" | "kids" | "teens";
     scripted_balance: number;
     unscripted_balance: number;
     subscription_status: string;
