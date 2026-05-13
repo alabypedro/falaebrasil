@@ -270,11 +270,11 @@ export default function Courses() {
     allowedTiers.includes((c.required_tier ?? "open").toLowerCase())
   );
 
-  const groups: { key: string; title: string; tiers: string[] }[] = [
-    { key: "adults", title: "OPEN", tiers: ["open", "pro", "vip"] },
-    { key: "teens", title: "Teens", tiers: ["teens"] },
-    { key: "kids", title: "Kids", tiers: ["kids"] },
-  ];
+   const groups: { key: string; title: string; tiers: string[] }[] = [
+     { key: "adults", title: "KIDS (8 - 12 ANOS)", tiers: ["open", "pro", "vip"] },
+     { key: "teens", title: "Teens", tiers: ["teens"] },
+     { key: "kids", title: "Kids", tiers: ["kids"] },
+   ];
 
   const visibleGroups = groups
     .map((g) => ({
