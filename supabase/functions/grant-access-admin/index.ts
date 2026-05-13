@@ -8,6 +8,9 @@ const corsHeaders = {
 
 const ACCESS_FIELDS = [
   "has_course_access",
+  "has_a2_access",
+  "has_b1_access",
+  "has_b2_access",
   "has_ebook1_access",
   "has_ebook2_access",
   "has_ebook3_access",
