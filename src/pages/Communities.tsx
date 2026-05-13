@@ -49,8 +49,10 @@ export default function Communities() {
     })();
   }, []);
 
+  // Acesso exato ao tier: VIP não entra em grupos OPEN/PRO; PRO não entra em OPEN.
+  // Admin mantém acesso total.
   const hasTierAccess = (requiredTier: "open" | "pro" | "vip") =>
-    tierRank(userTier) >= tierRank(requiredTier);
+    isAdmin || userTier === requiredTier;
 
   if (loading) {
     return (
@@ -108,10 +110,10 @@ export default function Communities() {
           const locked = !hasTierAccess(required);
           // Aluno com plano inferior vendo grupo de plano superior → popup de upgrade
           // Aluno com plano superior vendo grupo de plano inferior → trancado SEM popup
+          // Popup de upsell só quando o usuário tem plano INFERIOR ao requerido.
+          // Plano superior vê trancado sem popup.
           const showUpsell =
-            locked &&
-            ((required === "pro" && userTier === "open") ||
-              (required === "vip" && userTier !== "vip"));
+            locked && tierRank(userTier) < tierRank(required);
           return (
             <Card key={item.id} className={`hover:shadow-md transition-shadow ${locked ? "opacity-90" : ""}`}>
               <CardContent className="p-5 space-y-3">
