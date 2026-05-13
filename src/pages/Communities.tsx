@@ -35,6 +35,54 @@ const TIER_LABELS: Record<Tier, string> = {
 };
 const TIER_ORDER: Tier[] = ["kids", "teens", "open", "pro"];
 
+function SubfolderRow({
+  item,
+  isOpen,
+  onToggle,
+  onJoin,
+}: {
+  item: Community;
+  isOpen: boolean;
+  onToggle: () => void;
+  onJoin: () => void;
+}) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors text-left"
+      >
+        <ChevronRight
+          className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`}
+        />
+        {isOpen ? (
+          <FolderOpen className="h-4 w-4 text-primary shrink-0" />
+        ) : (
+          <Folder className="h-4 w-4 text-primary shrink-0" />
+        )}
+        <span className="text-sm text-foreground truncate">{item.title}</span>
+      </button>
+      {isOpen && (
+        <div className="ml-7 pl-3 py-2 border-l border-border space-y-2">
+          {item.description && (
+            <p className="text-xs text-muted-foreground">{item.description}</p>
+          )}
+          {item.whatsapp_url ? (
+            <Button size="sm" variant="outline" onClick={onJoin}>
+              <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Entrar no grupo
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" disabled>
+              Link em breve
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Communities() {
   const [items, setItems] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
