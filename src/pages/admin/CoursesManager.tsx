@@ -22,11 +22,19 @@ interface Course {
   published: boolean;
   thumbnail_url: string | null;
   category: string;
+  required_tier: string;
 }
 
 const levels = ["A1", "A2", "B1", "B2"];
+const tiers = [
+  { value: "open", label: "OPEN" },
+  { value: "pro", label: "PRO" },
+  { value: "vip", label: "VIP" },
+  { value: "teens", label: "TEENS" },
+  { value: "kids", label: "KIDS" },
+];
 
-const emptyForm = { title: "", description: "", level: "A1", display_order: 0, published: false, thumbnail_url: "", category: "transversal" };
+const emptyForm = { title: "", description: "", level: "A1", display_order: 0, published: false, thumbnail_url: "", category: "transversal", required_tier: "open" };
 
 export default function CoursesManager() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -47,7 +55,7 @@ export default function CoursesManager() {
 
   const openEdit = (c: Course) => {
     setEditing(c);
-    setForm({ title: c.title, description: c.description ?? "", level: c.level, display_order: c.display_order, published: c.published, thumbnail_url: c.thumbnail_url ?? "", category: c.category });
+    setForm({ title: c.title, description: c.description ?? "", level: c.level, display_order: c.display_order, published: c.published, thumbnail_url: c.thumbnail_url ?? "", category: c.category, required_tier: c.required_tier ?? "open" });
     setOpen(true);
   };
 
@@ -67,7 +75,7 @@ export default function CoursesManager() {
   const save = async () => {
     if (!form.title.trim()) { toast.error("Título obrigatório"); return; }
     setLoading(true);
-    const payload = { title: form.title.trim(), description: form.description.trim() || null, level: form.level, display_order: form.display_order, published: form.published, thumbnail_url: form.thumbnail_url.trim() || null, category: form.category };
+    const payload = { title: form.title.trim(), description: form.description.trim() || null, level: form.level, display_order: form.display_order, published: form.published, thumbnail_url: form.thumbnail_url.trim() || null, category: form.category, required_tier: form.required_tier };
 
     if (editing) {
       const { error } = await supabase.from("courses").update(payload).eq("id", editing.id);
@@ -161,6 +169,13 @@ export default function CoursesManager() {
               <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{levels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Hierarquia (tier)</Label>
+              <Select value={form.required_tier} onValueChange={(v) => setForm({ ...form, required_tier: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{tiers.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
