@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const VALID_TIERS = ["open", "pro", "vip"] as const;
+const VALID_TIERS = ["open", "pro", "vip", "kids", "teens"] as const;
 type Tier = typeof VALID_TIERS[number];
 
 Deno.serve(async (req) => {
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
       });
     }
     if (!VALID_TIERS.includes(tier)) {
-      return new Response(JSON.stringify({ error: "Tier inválido (use open, pro ou vip)" }), {
+      return new Response(JSON.stringify({ error: "Tier inválido (use open, pro, vip, kids ou teens)" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

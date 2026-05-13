@@ -14,24 +14,20 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
+type Tier = "open" | "pro" | "vip" | "kids" | "teens";
+
 interface Community {
   id: string;
   title: string;
   description: string | null;
   whatsapp_url: string | null;
   access_key: string;
-  required_tier: "open" | "pro" | "vip";
+  required_tier: Tier;
   all_tiers: boolean;
   sort_order: number;
 }
 
-const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as "open" | "pro" | "vip", all_tiers: false, sort_order: 0 };
-
-const tierLabels: Record<string, string> = {
-  open: "OPEN (todos)",
-  pro: "PRO",
-  vip: "VIP",
-};
+const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as Tier, all_tiers: false, sort_order: 0 };
 
 export default function CommunitiesManager() {
   const [items, setItems] = useState<Community[]>([]);
@@ -42,7 +38,7 @@ export default function CommunitiesManager() {
 
   // Plan tier por email
   const [tierEmail, setTierEmail] = useState("");
-  const [tierValue, setTierValue] = useState<"open" | "pro" | "vip">("pro");
+  const [tierValue, setTierValue] = useState<Tier>("pro");
   const [tierBusy, setTierBusy] = useState(false);
 
   // Link do professor (VIP)
@@ -159,6 +155,8 @@ export default function CommunitiesManager() {
                 <SelectItem value="open">OPEN</SelectItem>
                 <SelectItem value="pro">PRO</SelectItem>
                 <SelectItem value="vip">VIP</SelectItem>
+                <SelectItem value="kids">KIDS</SelectItem>
+                <SelectItem value="teens">TEENS</SelectItem>
               </SelectContent>
             </Select>
             <Button onClick={setTier} disabled={tierBusy}>
@@ -270,10 +268,12 @@ export default function CommunitiesManager() {
                   <SelectItem value="open">OPEN (todos)</SelectItem>
                   <SelectItem value="pro">PRO (apenas PRO/VIP)</SelectItem>
                   <SelectItem value="vip">VIP (apenas VIP)</SelectItem>
+                  <SelectItem value="kids">KIDS (apenas KIDS)</SelectItem>
+                  <SelectItem value="teens">TEENS (apenas TEENS)</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Define o plano mínimo necessário para entrar nesta comunidade. Alunos com plano inferior veem o grupo trancado com popup de upgrade.
+                Define qual plano pode entrar nesta comunidade. KIDS e TEENS são audiências isoladas (não veem grupos OPEN/PRO/VIP nem entre si). Alunos com plano inferior em OPEN/PRO/VIP veem o grupo trancado com popup de upgrade.
               </p>
             </div>
             <div className="flex items-start justify-between gap-3 rounded-md border p-3">
