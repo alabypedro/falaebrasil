@@ -72,18 +72,18 @@ export default function UpgradeButton() {
                 </div>
                 <ul className="space-y-2 text-sm text-foreground flex-1">
                   <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Tudo do plano OPEN</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Grupos de WhatsApp por nível (A1, A2, B1, B2)</li>
-                  <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Tira-dúvidas com outros alunos</li>
+                   <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Aulas ao vivo via Zoom em grupos</li>
+                   <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Acesso aos níveis e horários que quiser toda semana</li>
                 </ul>
                 {proUrl ? (
                   <Button asChild className="w-full mt-4">
                     <a href={proUrl} target="_blank" rel="noopener noreferrer">
                       Assinar PRO <ExternalLink className="ml-1.5 h-4 w-4" />
                     </a>
-                  </Button>
-                ) : (
-                  <Button disabled className="w-full mt-4">Em breve</Button>
-                )}
+                   </Button>
+                 ) : (
+                   <Button disabled className="w-full mt-4">Saiba Mais</Button>
+                 )}
               </div>
             )}
 
@@ -102,18 +102,18 @@ export default function UpgradeButton() {
               </div>
               <ul className="space-y-2 text-sm text-foreground flex-1">
                 <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Tudo do plano PRO</li>
-                <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Chat 1:1 com o professor</li>
-                <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Aulas particulares (sem aula em grupo)</li>
+                 <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Aulas em grupos fechados ou particulares (1:1)</li>
+                 <li className="flex gap-2"><Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" /> Horário fixo semanal</li>
               </ul>
               {vipUrl ? (
                 <Button asChild className="w-full mt-4">
                   <a href={vipUrl} target="_blank" rel="noopener noreferrer">
                     Assinar VIP <ExternalLink className="ml-1.5 h-4 w-4" />
                   </a>
-                </Button>
-              ) : (
-                <Button disabled className="w-full mt-4">Em breve</Button>
-              )}
+                   </Button>
+                 ) : (
+                   <Button disabled className="w-full mt-4">Saiba Mais</Button>
+                 )}
             </div>
           </div>
         </DialogContent>
