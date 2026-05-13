@@ -14,6 +14,14 @@ interface CourseProgress {
   progress: number;
 }
 
+const desiredOrder = ["A1", "A2", "B1", "B2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
+
+function extractCode(title: string): string | null {
+  const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2)\b/i);
+  if (m) return m[1].toUpperCase();
+  return null;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
@@ -23,7 +31,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: courses } = await supabase.from("courses").select("id, title").eq("published", true).order("display_order");
+      const { data: courses } = await supabase.from("courses").select("id, title, level, required_tier").eq("published", true).order("display_order");
       const { data: modules } = await supabase.from("modules").select("id, course_id");
       const { data: lessons } = await supabase.from("lessons").select("id, module_id");
       const { data: videos } = await supabase.from("lesson_videos").select("id, lesson_id");
@@ -43,15 +51,30 @@ export default function Dashboard() {
         if (cid) { if (!courseVideos[cid]) courseVideos[cid] = []; courseVideos[cid].push(v.id); }
       });
 
-      const result = (courses || []).map((c) => {
-        const ids = courseVideos[c.id] || [];
-        const done = ids.filter((id) => completedVideoIds.has(id)).length;
-        return { name: c.title, progress: ids.length > 0 ? Math.round((done / ids.length) * 100) : 0 };
-      });
+      const userTier = (profile?.plan_tier ?? "open").toLowerCase();
+      const allowedTiers =
+        userTier === "teens" ? ["teens"]
+        : userTier === "kids" ? ["kids"]
+        : ["open", "pro", "vip"];
+
+      const result = (courses || [])
+        .filter((c: any) => allowedTiers.includes((c.required_tier ?? "open").toLowerCase()))
+        .map((c: any) => {
+          const ids = courseVideos[c.id] || [];
+          const done = ids.filter((id) => completedVideoIds.has(id)).length;
+          const code = (c.level || extractCode(c.title) || "").toUpperCase();
+          return {
+            name: code || c.title,
+            code,
+            progress: ids.length > 0 ? Math.round((done / ids.length) * 100) : 0,
+          };
+        })
+        .filter((r) => desiredOrder.includes(r.code))
+        .sort((a, b) => desiredOrder.indexOf(a.code) - desiredOrder.indexOf(b.code));
       setCourseProgress(result);
     };
     load();
-  }, [user]);
+  }, [user, profile?.plan_tier]);
 
   const stats = [
     { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
