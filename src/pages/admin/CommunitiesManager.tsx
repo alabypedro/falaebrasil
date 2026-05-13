@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, MessageCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase as sb } from "@/integrations/supabase/client";
 
 interface Community {
   id: string;
