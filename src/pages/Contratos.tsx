@@ -64,7 +64,7 @@ export default function Contratos() {
                       rel="noopener noreferrer"
                     >
                       <Download className="h-4 w-4 mr-1.5" />
-                      Baixar PDF
+                      Abrir contrato
                     </a>
                   </Button>
                 ) : (
