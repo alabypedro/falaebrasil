@@ -250,6 +250,7 @@ export type Database = {
       fb_communities: {
         Row: {
           access_key: string
+          all_tiers: boolean
           created_at: string
           description: string | null
           id: string
@@ -261,6 +262,7 @@ export type Database = {
         }
         Insert: {
           access_key?: string
+          all_tiers?: boolean
           created_at?: string
           description?: string | null
           id?: string
@@ -272,6 +274,7 @@ export type Database = {
         }
         Update: {
           access_key?: string
+          all_tiers?: boolean
           created_at?: string
           description?: string | null
           id?: string

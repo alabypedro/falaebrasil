@@ -1,0 +1,2 @@
+ALTER TABLE public.fb_communities ADD COLUMN IF NOT EXISTS all_tiers boolean NOT NULL DEFAULT false;
+UPDATE public.fb_communities SET all_tiers = true WHERE id IN ('3f39edf5-e938-4e85-8af9-bad8635d5469','4f89a198-f591-43c9-a069-dbf19fd59a6b');
