@@ -35,7 +35,7 @@ export default function HublaProductsManager() {
       .select("*")
       .order("price_cents", { ascending: false });
     if (error) { toast.error(error.message); return; }
-    if (data) setItems(data as HublaProduct[]);
+    if (data) setItems((data as HublaProduct[]).filter((p) => p.product_key !== "plano_pro" && p.product_key !== "plano_vip"));
   };
 
   useEffect(() => { load(); }, []);
