@@ -520,6 +520,9 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          has_a2_access: boolean
+          has_b1_access: boolean
+          has_b2_access: boolean
           has_course_access: boolean
           has_ebook1_access: boolean
           has_ebook2_access: boolean
@@ -547,6 +550,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          has_a2_access?: boolean
+          has_b1_access?: boolean
+          has_b2_access?: boolean
           has_course_access?: boolean
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
@@ -574,6 +580,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          has_a2_access?: boolean
+          has_b1_access?: boolean
+          has_b2_access?: boolean
           has_course_access?: boolean
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
