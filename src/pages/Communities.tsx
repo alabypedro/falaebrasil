@@ -8,18 +8,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 
+type Tier = "open" | "pro" | "vip" | "kids" | "teens";
+
 interface Community {
   id: string;
   title: string;
   description: string | null;
   whatsapp_url: string | null;
   access_key: string;
-  required_tier: "open" | "pro" | "vip";
+  required_tier: Tier;
   all_tiers: boolean;
   sort_order: number;
 }
 
-const tierRank = (t?: string | null) => (t === "vip" ? 3 : t === "pro" ? 2 : 1);
+// OPEN/PRO/VIP têm hierarquia. KIDS e TEENS são isolados (rank 0) — sem upsell entre eles.
+const tierRank = (t?: string | null) =>
+  t === "vip" ? 3 : t === "pro" ? 2 : t === "open" ? 1 : 0;
+const isHierarchical = (t?: string | null) => t === "open" || t === "pro" || t === "vip";
 
 export default function Communities() {
   const [items, setItems] = useState<Community[]>([]);
@@ -32,7 +37,7 @@ export default function Communities() {
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
 
-  const userTier: "open" | "pro" | "vip" = isAdmin ? "vip" : ((profile?.plan_tier as any) ?? "open");
+  const userTier: Tier = isAdmin ? "vip" : ((profile?.plan_tier as Tier) ?? "open");
 
   useEffect(() => {
     (async () => {
@@ -111,10 +116,13 @@ export default function Communities() {
           const locked = !hasAccess(item);
           // Aluno com plano inferior vendo grupo de plano superior → popup de upgrade
           // Aluno com plano superior vendo grupo de plano inferior → trancado SEM popup
-          // Popup de upsell só quando o usuário tem plano INFERIOR ao requerido.
-          // Plano superior vê trancado sem popup.
+          // Popup de upsell só quando o usuário tem plano INFERIOR ao requerido,
+          // e apenas dentro da hierarquia OPEN→PRO→VIP. KIDS/TEENS são isolados.
           const showUpsell =
-            locked && tierRank(userTier) < tierRank(required);
+            locked &&
+            isHierarchical(userTier) &&
+            isHierarchical(required) &&
+            tierRank(userTier) < tierRank(required);
           return (
             <Card key={item.id} className={`hover:shadow-md transition-shadow ${locked ? "opacity-90" : ""}`}>
               <CardContent className="p-5 space-y-3">
