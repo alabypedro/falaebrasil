@@ -39,7 +39,7 @@ const levelBadgeLabels: Record<string, string> = {
 };
 
 const courseTitleLabels: Record<string, string> = {
-  A1: "FB Básico PRO (A1)",
+   A1: "FB Pós-Int (B2)",
   A2: "FB A2",
   B1: "FB B1",
   B2: "FB B2",
