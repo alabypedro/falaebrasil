@@ -292,6 +292,7 @@ export type Database = {
           grants_ebook1: boolean
           grants_ebook2: boolean
           grants_ebook3: boolean
+          grants_tier: string | null
           hubla_product_id: string | null
           hubla_product_name: string | null
           id: string
@@ -308,6 +309,7 @@ export type Database = {
           grants_ebook1?: boolean
           grants_ebook2?: boolean
           grants_ebook3?: boolean
+          grants_tier?: string | null
           hubla_product_id?: string | null
           hubla_product_name?: string | null
           id?: string
@@ -324,6 +326,7 @@ export type Database = {
           grants_ebook1?: boolean
           grants_ebook2?: boolean
           grants_ebook3?: boolean
+          grants_tier?: string | null
           hubla_product_id?: string | null
           hubla_product_name?: string | null
           id?: string
