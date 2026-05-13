@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Trash2, ShieldCheck, UserPlus, KeyRound } from "lucide-react";
+import { Loader2, Trash2, ShieldCheck, UserPlus, KeyRound, Users } from "lucide-react";
 
 type AdminEntry = { user_id: string; email: string | null };
 
 const ACCESS_OPTIONS: { id: string; label: string }[] = [
   { id: "has_course_access", label: "FB Básico PRO (A1)" },
+  { id: "has_a2_access", label: "Curso A2" },
+  { id: "has_b1_access", label: "Curso B1" },
+  { id: "has_b2_access", label: "Curso B2" },
   { id: "has_ebook1_access", label: "Ebook 1" },
   { id: "has_ebook2_access", label: "Ebook 2" },
   { id: "has_ebook3_access", label: "Ebook 3" },
@@ -25,6 +28,8 @@ export default function AdminsManager() {
   const [grantEmail, setGrantEmail] = useState("");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [grantBusy, setGrantBusy] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState<Record<string, boolean>>({});
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -93,6 +98,30 @@ export default function AdminsManager() {
     setSelected({});
   };
 
+  const handleBulkGrant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const accesses = Object.entries(bulkSelected).filter(([, v]) => v).map(([k]) => k);
+    if (accesses.length === 0) {
+      toast.error("Selecione ao menos um entregável");
+      return;
+    }
+    const labels = ACCESS_OPTIONS.filter((o) => accesses.includes(o.id)).map((o) => o.label).join(", ");
+    if (!confirm(`Liberar [${labels}] para TODOS os usuários cadastrados? Esta ação é irreversível em massa.`)) {
+      return;
+    }
+    setBulkBusy(true);
+    const { data, error } = await supabase.functions.invoke("grant-access-bulk", {
+      body: { accesses, grant: true },
+    });
+    setBulkBusy(false);
+    if (error || data?.error) {
+      toast.error(data?.error ?? "Erro ao liberar acesso em massa");
+      return;
+    }
+    toast.success(`Acesso liberado para todos os usuários${data?.affected ? ` (${data.affected} perfis)` : ""}`);
+    setBulkSelected({});
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -157,6 +186,45 @@ export default function AdminsManager() {
           </form>
           <p className="text-xs text-muted-foreground mt-3">
             O usuário precisa já ter uma conta cadastrada com esse email. O acesso será liberado imediatamente.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Users className="h-4 w-4" /> Liberar entregáveis para TODOS os usuários
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleBulkGrant} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {ACCESS_OPTIONS.map((opt) => (
+                <label
+                  key={opt.id}
+                  className="flex items-center gap-2 rounded-md border border-border px-3 py-2 cursor-pointer hover:bg-muted/40"
+                >
+                  <Checkbox
+                    checked={!!bulkSelected[opt.id]}
+                    onCheckedChange={(v) =>
+                      setBulkSelected((s) => ({ ...s, [opt.id]: !!v }))
+                    }
+                  />
+                  <span className="text-sm">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <Button
+              type="submit"
+              disabled={bulkBusy}
+              variant="destructive"
+              className="w-full sm:w-auto"
+            >
+              {bulkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Liberar para TODOS os usuários"}
+            </Button>
+          </form>
+          <p className="text-xs text-muted-foreground mt-3">
+            ⚠️ Atenção: marca o(s) acesso(s) selecionado(s) como liberado em todos os perfis cadastrados na plataforma. Use com cuidado.
           </p>
         </CardContent>
       </Card>
