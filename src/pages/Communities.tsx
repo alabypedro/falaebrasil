@@ -49,7 +49,7 @@ export default function Communities() {
     })();
   }, []);
 
-  const hasTierAccess = (requiredTier: "open" | "pro") =>
+  const hasTierAccess = (requiredTier: "open" | "pro" | "vip") =>
     tierRank(userTier) >= tierRank(requiredTier);
 
   if (loading) {
