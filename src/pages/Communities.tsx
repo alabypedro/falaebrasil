@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { MessageCircle, Lock, ExternalLink, GraduationCap, Crown } from "lucide-react";
+import { MessageCircle, Lock, ExternalLink, GraduationCap, Crown, Folder, FolderOpen, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -26,6 +26,63 @@ const tierRank = (t?: string | null) =>
   t === "vip" ? 3 : t === "pro" ? 2 : t === "open" ? 1 : 0;
 const isHierarchical = (t?: string | null) => t === "open" || t === "pro" || t === "vip";
 
+const TIER_LABELS: Record<Tier, string> = {
+  kids: "Aluno KIDS (8 - 12 anos)",
+  teens: "Aluno TEENS (13 - 17 anos)",
+  open: "Aluno OPEN (18+)",
+  pro: "Aluno PRO (18+)",
+  vip: "Aluno VIP (18+)",
+};
+const TIER_ORDER: Tier[] = ["kids", "teens", "open", "pro"];
+
+function SubfolderRow({
+  item,
+  isOpen,
+  onToggle,
+  onJoin,
+}: {
+  item: Community;
+  isOpen: boolean;
+  onToggle: () => void;
+  onJoin: () => void;
+}) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors text-left"
+      >
+        <ChevronRight
+          className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`}
+        />
+        {isOpen ? (
+          <FolderOpen className="h-4 w-4 text-primary shrink-0" />
+        ) : (
+          <Folder className="h-4 w-4 text-primary shrink-0" />
+        )}
+        <span className="text-sm text-foreground truncate">{item.title}</span>
+      </button>
+      {isOpen && (
+        <div className="ml-7 pl-3 py-2 border-l border-border space-y-2">
+          {item.description && (
+            <p className="text-xs text-muted-foreground">{item.description}</p>
+          )}
+          {item.whatsapp_url ? (
+            <Button size="sm" variant="outline" onClick={onJoin}>
+              <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Entrar no grupo
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" disabled>
+              Link em breve
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Communities() {
   const [items, setItems] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +91,7 @@ export default function Communities() {
   const [proCheckoutUrl, setProCheckoutUrl] = useState<string | null>(null);
   const [vipCheckoutUrl, setVipCheckoutUrl] = useState<string | null>(null);
   const [teacherUrl, setTeacherUrl] = useState<string | null>(null);
+  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
 
@@ -69,6 +127,38 @@ export default function Communities() {
   }
 
   const upsellCheckoutUrl = upsellTier === "vip" ? vipCheckoutUrl : proCheckoutUrl;
+
+  const generalItems = items.filter((i) => i.all_tiers);
+  const groupedByTier: Record<Tier, Community[]> = {
+    kids: [], teens: [], open: [], pro: [], vip: [],
+  };
+  items.filter((i) => !i.all_tiers).forEach((i) => {
+    const t = (i.required_tier ?? "open") as Tier;
+    groupedByTier[t].push(i);
+  });
+
+  const toggleFolder = (key: string) => setOpenFolders((p) => ({ ...p, [key]: !p[key] }));
+
+  const tierFolderLocked = (tier: Tier) => {
+    if (isAdmin) return false;
+    return userTier !== tier;
+  };
+  const handleTierFolderClick = (tier: Tier) => {
+    const locked = tierFolderLocked(tier);
+    if (!locked) {
+      toggleFolder(`tier-${tier}`);
+      return;
+    }
+    // upsell only when user has lower hierarchical tier than required
+    if (
+      isHierarchical(userTier) &&
+      isHierarchical(tier) &&
+      tierRank(userTier) < tierRank(tier)
+    ) {
+      setUpsellTier(tier as "pro" | "vip");
+    }
+    // else: silently locked (KIDS/TEENS isolation, or downgrade)
+  };
 
   return (
     <div className="space-y-6 max-w-6xl page-transition">
@@ -110,80 +200,89 @@ export default function Communities() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((item) => {
-          const required = item.required_tier ?? "open";
-          const locked = !hasAccess(item);
-          // Aluno com plano inferior vendo grupo de plano superior → popup de upgrade
-          // Aluno com plano superior vendo grupo de plano inferior → trancado SEM popup
-          // Popup de upsell só quando o usuário tem plano INFERIOR ao requerido,
-          // e apenas dentro da hierarquia OPEN→PRO→VIP. KIDS/TEENS são isolados.
-          const showUpsell =
-            locked &&
-            isHierarchical(userTier) &&
-            isHierarchical(required) &&
-            tierRank(userTier) < tierRank(required);
-          return (
-            <Card key={item.id} className={`hover:shadow-md transition-shadow ${locked ? "opacity-90" : ""}`}>
-              <CardContent className="p-5 space-y-3">
-                <div className="flex items-start justify-between">
-                  <span className={`text-4xl ${locked ? "grayscale" : ""}`}>💬</span>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge variant={required === "pro" ? "default" : "secondary"} className="text-[10px] border-0 uppercase">
-                      {required}
+      {/* === Folder-style hierarchy === */}
+      <Card>
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex items-center gap-2 pb-3 mb-2 border-b">
+            <FolderOpen className="h-5 w-5 text-primary" />
+            <h2 className="font-semibold text-foreground">Comunidades FB</h2>
+          </div>
+
+          {/* General (all_tiers) groups at the root */}
+          {generalItems.length > 0 && (
+            <div className="space-y-1 mb-2">
+              {generalItems.map((item) => (
+                <SubfolderRow
+                  key={item.id}
+                  item={item}
+                  isOpen={!!openFolders[item.id]}
+                  onToggle={() => toggleFolder(item.id)}
+                  onJoin={() => setSelected(item)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Tier folders */}
+          <div className="space-y-1">
+            {TIER_ORDER.map((tier) => {
+              const tierItems = groupedByTier[tier];
+              if (tierItems.length === 0) return null;
+              const folderKey = `tier-${tier}`;
+              const isOpen = !!openFolders[folderKey];
+              const locked = tierFolderLocked(tier);
+              return (
+                <div key={tier}>
+                  <button
+                    type="button"
+                    onClick={() => handleTierFolderClick(tier)}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-accent/50 transition-colors text-left"
+                  >
+                    <ChevronRight
+                      className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${isOpen && !locked ? "rotate-90" : ""}`}
+                    />
+                    {isOpen && !locked ? (
+                      <FolderOpen className="h-5 w-5 text-primary shrink-0" />
+                    ) : (
+                      <Folder className={`h-5 w-5 shrink-0 ${locked ? "text-muted-foreground" : "text-primary"}`} />
+                    )}
+                    <span className={`font-medium text-sm ${locked ? "text-muted-foreground" : "text-foreground"}`}>
+                      {TIER_LABELS[tier]}
+                    </span>
+                    <Badge variant="secondary" className="text-[10px] border-0 uppercase ml-1">
+                      {tier}
                     </Badge>
                     {locked && (
-                      <Badge variant="secondary" className="text-[10px] border-0 gap-1">
+                      <Badge variant="secondary" className="text-[10px] border-0 gap-1 ml-auto">
                         <Lock className="h-3 w-3" /> Bloqueado
                       </Badge>
                     )}
-                  </div>
+                  </button>
+                  {isOpen && !locked && (
+                    <div className="ml-6 pl-3 border-l border-border space-y-1 my-1">
+                      {tierItems.map((item) => (
+                        <SubfolderRow
+                          key={item.id}
+                          item={item}
+                          isOpen={!!openFolders[item.id]}
+                          onToggle={() => toggleFolder(item.id)}
+                          onJoin={() => setSelected(item)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
-                </div>
-                {locked && showUpsell ? (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setUpsellTier("pro")}
-                  >
-                    <Lock className="mr-1.5 h-3.5 w-3.5" /> Desbloquear PRO
-                  </Button>
-                ) : locked && showUpsell ? (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setUpsellTier(required as "pro" | "vip")}
-                  >
-                    <Lock className="mr-1.5 h-3.5 w-3.5" /> Desbloquear {String(required).toUpperCase()}
-                  </Button>
-                ) : locked ? (
-                  <Button variant="outline" size="sm" className="w-full" disabled>
-                    <Lock className="mr-1.5 h-3.5 w-3.5" /> Bloqueado
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setSelected(item)}
-                  >
-                    <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Grupo de WhatsApp
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-        {items.length === 0 && (
-          <p className="text-center text-muted-foreground py-8 col-span-full">
-            Nenhuma comunidade disponível.
-          </p>
-        )}
-      </div>
+              );
+            })}
+          </div>
+
+          {items.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">
+              Nenhuma comunidade disponível.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Modal de acesso ao grupo */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
