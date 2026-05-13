@@ -60,7 +60,7 @@ export default function CommunitiesManager() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    sb.from("vip_config").select("teacher_chat_url").eq("id", 1).maybeSingle()
+    supabase.from("vip_config").select("teacher_chat_url").eq("id", 1).maybeSingle()
       .then(({ data }) => setTeacherUrl(data?.teacher_chat_url ?? ""));
   }, []);
 
@@ -111,8 +111,8 @@ export default function CommunitiesManager() {
   const setTier = async () => {
     if (!tierEmail.trim()) { toast.error("Informe o email"); return; }
     setTierBusy(true);
-    const { data: { session } } = await sb.auth.getSession();
-    const { data, error } = await sb.functions.invoke("set-plan-tier-admin", {
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data, error } = await supabase.functions.invoke("set-plan-tier-admin", {
       body: { email: tierEmail.trim(), tier: tierValue },
       headers: { Authorization: `Bearer ${session?.access_token}` },
     });
@@ -127,7 +127,7 @@ export default function CommunitiesManager() {
 
   const saveTeacherUrl = async () => {
     setTeacherBusy(true);
-    const { error } = await sb.from("vip_config")
+    const { error } = await supabase.from("vip_config")
       .update({ teacher_chat_url: teacherUrl.trim() || null, updated_at: new Date().toISOString() })
       .eq("id", 1);
     setTeacherBusy(false);
