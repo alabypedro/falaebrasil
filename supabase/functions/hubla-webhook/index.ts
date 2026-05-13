@@ -306,7 +306,8 @@ Deno.serve(async (req) => {
       }
 
       if (isCanceled) {
-        // Immediate block — student canceled or chargeback
+        // Immediate block — student canceled or chargeback.
+        // Also rebaixa para o plano OPEN (perde grupos PRO / aula particular VIP).
         const { error } = await admin
           .from("profiles")
           .update({
@@ -316,6 +317,7 @@ Deno.serve(async (req) => {
             has_ebook1_access: false,
             has_ebook2_access: false,
             has_ebook3_access: false,
+            plan_tier: "open",
           })
           .eq("user_id", u.id);
         if (error) throw error;
@@ -383,6 +385,17 @@ Deno.serve(async (req) => {
       has_ebook2_access: matched.some((m: any) => m.grants_ebook2),
       has_ebook3_access: matched.some((m: any) => m.grants_ebook3),
     };
+
+    // Plano (open/pro/vip) que esta compra concede, se algum.
+    // Se múltiplos produtos casarem, escolhemos o mais alto.
+    const tierRank = (t: string | null | undefined) =>
+      t === "vip" ? 3 : t === "pro" ? 2 : 1;
+    let grantedTier: "pro" | "vip" | null = null;
+    for (const m of matched as any[]) {
+      if (m.grants_tier && tierRank(m.grants_tier) > tierRank(grantedTier)) {
+        grantedTier = m.grants_tier as "pro" | "vip";
+      }
+    }
 
     // Find or create user by email
     let userId: string | null = null;
@@ -452,6 +465,23 @@ Deno.serve(async (req) => {
         .update(updatePayload)
         .eq("user_id", userId!);
       if (updErr) throw updErr;
+    }
+
+    // Promoção de plano (apenas sobe — nunca rebaixa por compra parcial).
+    if (grantedTier) {
+      const { data: currentProfile } = await admin
+        .from("profiles")
+        .select("plan_tier")
+        .eq("user_id", userId!)
+        .maybeSingle();
+      const currentRank = tierRank(currentProfile?.plan_tier);
+      if (tierRank(grantedTier) > currentRank) {
+        const { error: tierErr } = await admin
+          .from("profiles")
+          .update({ plan_tier: grantedTier })
+          .eq("user_id", userId!);
+        if (tierErr) console.error("plan_tier update failed", tierErr);
+      }
     }
 
     // ---- Subscription renewal / activation: clear past_due, set active ----
