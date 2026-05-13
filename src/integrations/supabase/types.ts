@@ -163,6 +163,7 @@ export type Database = {
           id: string
           level: string
           published: boolean
+          required_tier: string
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -175,6 +176,7 @@ export type Database = {
           id?: string
           level?: string
           published?: boolean
+          required_tier?: string
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -187,6 +189,7 @@ export type Database = {
           id?: string
           level?: string
           published?: boolean
+          required_tier?: string
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
