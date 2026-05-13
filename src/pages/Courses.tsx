@@ -271,7 +271,7 @@ export default function Courses() {
   );
 
   const groups: { key: string; title: string; tiers: string[] }[] = [
-    { key: "adults", title: "Adultos", tiers: ["open", "pro", "vip"] },
+    { key: "adults", title: "OPEN", tiers: ["open", "pro", "vip"] },
     { key: "teens", title: "Teens", tiers: ["teens"] },
     { key: "kids", title: "Kids", tiers: ["kids"] },
   ];
