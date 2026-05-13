@@ -8,6 +8,7 @@ import { LogOut, Sun, Moon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import XPBadge from "@/components/XPBadge";
 import SubscriptionStatusBanner from "@/components/SubscriptionStatusBanner";
+import UpgradeButton from "@/components/UpgradeButton";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -34,6 +35,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <header className="sticky top-0 z-40 h-16 flex items-center justify-between border-b border-border/50 bg-background/70 backdrop-blur-xl backdrop-saturate-150 px-4 md:px-6 animate-fade-in">
             <SidebarTrigger className="ml-0 press-effect rounded-lg hover:bg-accent/10" />
             <div className="flex items-center gap-2 sm:gap-3">
+              <UpgradeButton />
               <Button
                 size="icon"
                 variant="ghost"
