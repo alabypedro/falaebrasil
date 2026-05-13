@@ -14,7 +14,7 @@ interface Community {
   description: string | null;
   whatsapp_url: string | null;
   access_key: string;
-  required_tier: "open" | "pro";
+  required_tier: "open" | "pro" | "vip";
   sort_order: number;
 }
 
@@ -106,9 +106,12 @@ export default function Communities() {
         {items.map((item) => {
           const required = item.required_tier ?? "open";
           const locked = !hasTierAccess(required);
-          // Aluno OPEN vendo grupo PRO → popup de upgrade
-          // Aluno PRO/VIP vendo grupo OPEN → trancado SEM popup
-          const showUpsell = locked && required === "pro" && userTier === "open";
+          // Aluno com plano inferior vendo grupo de plano superior → popup de upgrade
+          // Aluno com plano superior vendo grupo de plano inferior → trancado SEM popup
+          const showUpsell =
+            locked &&
+            ((required === "pro" && userTier === "open") ||
+              (required === "vip" && userTier !== "vip"));
           return (
             <Card key={item.id} className={`hover:shadow-md transition-shadow ${locked ? "opacity-90" : ""}`}>
               <CardContent className="p-5 space-y-3">
@@ -136,6 +139,15 @@ export default function Communities() {
                     onClick={() => setUpsellTier("pro")}
                   >
                     <Lock className="mr-1.5 h-3.5 w-3.5" /> Desbloquear PRO
+                  </Button>
+                ) : locked && showUpsell ? (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setUpsellTier(required as "pro" | "vip")}
+                  >
+                    <Lock className="mr-1.5 h-3.5 w-3.5" /> Desbloquear {String(required).toUpperCase()}
                   </Button>
                 ) : locked ? (
                   <Button variant="outline" size="sm" className="w-full" disabled>
