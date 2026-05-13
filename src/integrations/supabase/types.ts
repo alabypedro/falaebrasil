@@ -253,6 +253,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          required_tier: string
           sort_order: number
           title: string
           updated_at: string
@@ -263,6 +264,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          required_tier?: string
           sort_order?: number
           title: string
           updated_at?: string
@@ -273,6 +275,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          required_tier?: string
           sort_order?: number
           title?: string
           updated_at?: string
@@ -289,6 +292,7 @@ export type Database = {
           grants_ebook1: boolean
           grants_ebook2: boolean
           grants_ebook3: boolean
+          grants_tier: string | null
           hubla_product_id: string | null
           hubla_product_name: string | null
           id: string
@@ -305,6 +309,7 @@ export type Database = {
           grants_ebook1?: boolean
           grants_ebook2?: boolean
           grants_ebook3?: boolean
+          grants_tier?: string | null
           hubla_product_id?: string | null
           hubla_product_name?: string | null
           id?: string
@@ -321,6 +326,7 @@ export type Database = {
           grants_ebook1?: boolean
           grants_ebook2?: boolean
           grants_ebook3?: boolean
+          grants_tier?: string | null
           hubla_product_id?: string | null
           hubla_product_name?: string | null
           id?: string
@@ -533,6 +539,7 @@ export type Database = {
           id: string
           level: string
           phone: string | null
+          plan_tier: string
           scripted_balance: number
           streak_days: number
           subscription_current_period_end: string | null
@@ -563,6 +570,7 @@ export type Database = {
           id?: string
           level?: string
           phone?: string | null
+          plan_tier?: string
           scripted_balance?: number
           streak_days?: number
           subscription_current_period_end?: string | null
@@ -593,6 +601,7 @@ export type Database = {
           id?: string
           level?: string
           phone?: string | null
+          plan_tier?: string
           scripted_balance?: number
           streak_days?: number
           subscription_current_period_end?: string | null
@@ -923,6 +932,24 @@ export type Database = {
           },
         ]
       }
+      vip_config: {
+        Row: {
+          id: number
+          teacher_chat_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          teacher_chat_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          teacher_chat_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       voice_credit_grants: {
         Row: {
           created_at: string
@@ -1174,6 +1201,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_tier: { Args: { _required: string }; Returns: boolean }
       level_rank: { Args: { _level: string }; Returns: number }
       move_to_dlq: {
         Args: {
@@ -1195,6 +1223,7 @@ export type Database = {
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
+      tier_rank: { Args: { _tier: string }; Returns: number }
       uncomplete_video: { Args: { _video_id: string }; Returns: Json }
     }
     Enums: {

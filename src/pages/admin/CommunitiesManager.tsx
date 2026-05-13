@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, MessageCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Community {
   id: string;
@@ -18,10 +19,11 @@ interface Community {
   description: string | null;
   whatsapp_url: string | null;
   access_key: string;
+  required_tier: "open" | "pro";
   sort_order: number;
 }
 
-const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", sort_order: 0 };
+const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as "open" | "pro", sort_order: 0 };
 
 const accessLabels: Record<string, string> = {
   free: "Grátis (todos)",
@@ -38,6 +40,15 @@ export default function CommunitiesManager() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
 
+  // Plan tier por email
+  const [tierEmail, setTierEmail] = useState("");
+  const [tierValue, setTierValue] = useState<"open" | "pro" | "vip">("pro");
+  const [tierBusy, setTierBusy] = useState(false);
+
+  // Link do professor (VIP)
+  const [teacherUrl, setTeacherUrl] = useState("");
+  const [teacherBusy, setTeacherBusy] = useState(false);
+
   const load = async () => {
     const { data } = await supabase
       .from("fb_communities")
@@ -48,6 +59,11 @@ export default function CommunitiesManager() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    supabase.from("vip_config").select("teacher_chat_url").eq("id", 1).maybeSingle()
+      .then(({ data }) => setTeacherUrl(data?.teacher_chat_url ?? ""));
+  }, []);
+
   const openNew = () => { setEditing(null); setForm({ ...emptyForm, sort_order: items.length + 1 }); setOpen(true); };
 
   const openEdit = (item: Community) => {
@@ -57,6 +73,7 @@ export default function CommunitiesManager() {
       description: item.description ?? "",
       whatsapp_url: item.whatsapp_url ?? "",
       access_key: item.access_key,
+      required_tier: item.required_tier ?? "open",
       sort_order: item.sort_order,
     });
     setOpen(true);
@@ -70,6 +87,7 @@ export default function CommunitiesManager() {
       description: form.description.trim() || null,
       whatsapp_url: form.whatsapp_url.trim() || null,
       access_key: form.access_key,
+      required_tier: form.required_tier,
       sort_order: form.sort_order,
     };
     if (editing) {
@@ -90,8 +108,84 @@ export default function CommunitiesManager() {
     else { toast.success("Comunidade excluída"); load(); }
   };
 
+  const setTier = async () => {
+    if (!tierEmail.trim()) { toast.error("Informe o email"); return; }
+    setTierBusy(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data, error } = await supabase.functions.invoke("set-plan-tier-admin", {
+      body: { email: tierEmail.trim(), tier: tierValue },
+      headers: { Authorization: `Bearer ${session?.access_token}` },
+    });
+    setTierBusy(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error ?? error?.message ?? "Falha ao atualizar plano");
+    } else {
+      toast.success(`Plano ${tierValue.toUpperCase()} aplicado a ${tierEmail}`);
+      setTierEmail("");
+    }
+  };
+
+  const saveTeacherUrl = async () => {
+    setTeacherBusy(true);
+    const { error } = await supabase.from("vip_config")
+      .update({ teacher_chat_url: teacherUrl.trim() || null, updated_at: new Date().toISOString() })
+      .eq("id", 1);
+    setTeacherBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Link do professor atualizado!");
+  };
+
   return (
     <div className="space-y-4">
+      {/* === Plano por email (OPEN/PRO/VIP) === */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Definir plano de um aluno por email</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            <strong>OPEN</strong>: acesso a tudo, sem grupos WhatsApp. <strong>PRO</strong>: + grupos WhatsApp por nível. <strong>VIP</strong>: + chat 1:1 com o professor.
+          </p>
+          <div className="grid sm:grid-cols-[1fr_140px_auto] gap-2">
+            <Input
+              type="email"
+              value={tierEmail}
+              onChange={(e) => setTierEmail(e.target.value)}
+              placeholder="aluno@email.com"
+            />
+            <Select value={tierValue} onValueChange={(v: any) => setTierValue(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="open">OPEN</SelectItem>
+                <SelectItem value="pro">PRO</SelectItem>
+                <SelectItem value="vip">VIP</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={setTier} disabled={tierBusy}>
+              {tierBusy ? "Aplicando..." : "Aplicar"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* === Link do professor (VIP) === */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Link de aula particular (VIP)</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Link único usado por todos os alunos VIP para falar com o professor (WhatsApp, Calendly, etc).
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={teacherUrl}
+              onChange={(e) => setTeacherUrl(e.target.value)}
+              placeholder="https://wa.me/55... ou https://calendly.com/..."
+            />
+            <Button onClick={saveTeacherUrl} disabled={teacherBusy}>
+              {teacherBusy ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-semibold">Comunidades FB</h2>
         <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Nova Comunidade</Button>
@@ -103,6 +197,7 @@ export default function CommunitiesManager() {
             <TableRow>
               <TableHead>Ordem</TableHead>
               <TableHead>Título</TableHead>
+              <TableHead>Plano mín.</TableHead>
               <TableHead>Acesso</TableHead>
               <TableHead>Link</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -110,7 +205,7 @@ export default function CommunitiesManager() {
           </TableHeader>
           <TableBody>
             {items.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma comunidade cadastrada.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhuma comunidade cadastrada.</TableCell></TableRow>
             )}
             {items.map((item) => (
               <TableRow key={item.id}>
@@ -121,6 +216,11 @@ export default function CommunitiesManager() {
                     {item.title}
                   </div>
                   {item.description && <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={item.required_tier === "pro" ? "default" : "outline"} className="text-[10px] uppercase">
+                    {item.required_tier ?? "open"}
+                  </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant={item.access_key === "free" ? "outline" : "default"} className="text-[10px]">
@@ -175,6 +275,19 @@ export default function CommunitiesManager() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">Define qual nível libera esta comunidade. Vinculado ao mesmo desbloqueio do curso.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Plano mínimo</Label>
+              <Select value={form.required_tier} onValueChange={(v: any) => setForm({ ...form, required_tier: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">OPEN (todos)</SelectItem>
+                  <SelectItem value="pro">PRO (apenas alunos PRO/VIP)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Alunos OPEN veem grupos PRO trancados com popup de upgrade. Alunos PRO/VIP veem grupos OPEN trancados sem popup.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Ordem de exibição</Label>
