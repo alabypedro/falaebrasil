@@ -252,7 +252,7 @@ export default function Courses() {
   }
 
   const isLocked = !isAdmin && !profile?.has_course_access;
-  const visibleCourses = isAdmin ? courses : courses.filter((c) => c.level === "A1");
+  const visibleCourses = courses;
 
   return (
     <div className="space-y-6 max-w-6xl page-transition">
