@@ -272,7 +272,7 @@ export default function Courses() {
 
    const groups: { key: string; title: string; tiers: string[] }[] = [
      { key: "adults", title: "KIDS (8 - 12 ANOS)", tiers: ["open", "pro", "vip"] },
-     { key: "teens", title: "Teens", tiers: ["teens"] },
+     { key: "teens", title: "ADULTOS (18+)", tiers: ["teens"] },
      { key: "kids", title: "TEENS (13 - 17 ANOS)", tiers: ["kids"] },
    ];
 
