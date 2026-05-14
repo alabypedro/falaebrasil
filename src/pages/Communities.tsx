@@ -187,7 +187,7 @@ export default function Communities() {
           {userTier === "vip" && teacherUrl ? (
             <Button asChild>
               <a href={teacherUrl} target="_blank" rel="noopener noreferrer">
-                Conversar agora <ExternalLink className="ml-1.5 h-4 w-4" />
+                 Conversar{"\n"} <ExternalLink className="ml-1.5 h-4 w-4" />
               </a>
             </Button>
           ) : userTier === "vip" ? (
