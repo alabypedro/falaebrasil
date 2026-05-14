@@ -271,9 +271,9 @@ export default function Courses() {
   );
 
    const groups: { key: string; title: string; tiers: string[] }[] = [
-     { key: "adults", title: "KIDS (8 - 12 ANOS)", tiers: ["open", "pro", "vip"] },
+     { key: "adults", title: "Adultos (18+)", tiers: ["open", "pro", "vip"] },
      { key: "teens", title: "TEENS (13 - 17 ANOS)", tiers: ["teens"] },
-     { key: "kids", title: "TEENS (13 - 17 ANOS)", tiers: ["kids"] },
+     { key: "kids", title: "KIDS (8 - 12 ANOS)", tiers: ["kids"] },
    ];
 
   const visibleGroups = groups
