@@ -295,7 +295,7 @@ export default function Courses() {
       </div>
 
       <div
-        className="animate-fade-up grid gap-6 lg:grid-cols-3"
+        className="animate-fade-up space-y-8"
         style={{ "--delay": "100ms" } as React.CSSProperties}
       >
         {visibleGroups.map((group) => (
@@ -303,7 +303,7 @@ export default function Courses() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {group.title}
             </h2>
-            <div className="grid gap-4 grid-cols-1">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {group.courses.map((course, i) => (
                 <CourseCard
                   key={course.id}
@@ -317,7 +317,7 @@ export default function Courses() {
           </section>
         ))}
         {visibleGroups.length === 0 && (
-          <p className="text-center text-muted-foreground py-8 animate-fade-in lg:col-span-3">
+          <p className="text-center text-muted-foreground py-8 animate-fade-in">
             Nenhum curso publicado.
           </p>
         )}
