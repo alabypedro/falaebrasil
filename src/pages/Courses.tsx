@@ -42,7 +42,7 @@ const courseTitleLabels: Record<string, string> = {
    A1: "FB Pós-Int (B2)",
   A2: "FB A2",
   B1: "FB B1",
-  B2: "FB B2",
+  B2: "FB Interm (B1)",
 };
 
 function CourseCard({
@@ -273,7 +273,7 @@ export default function Courses() {
    const groups: { key: string; title: string; tiers: string[] }[] = [
      { key: "adults", title: "KIDS (8 - 12 ANOS)", tiers: ["open", "pro", "vip"] },
      { key: "teens", title: "Teens", tiers: ["teens"] },
-     { key: "kids", title: "Kids", tiers: ["kids"] },
+     { key: "kids", title: "TEENS (13 - 17 ANOS)", tiers: ["kids"] },
    ];
 
   const visibleGroups = groups
