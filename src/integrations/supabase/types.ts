@@ -974,16 +974,19 @@ export type Database = {
       vip_config: {
         Row: {
           id: number
+          paid_chat_url: string | null
           teacher_chat_url: string | null
           updated_at: string
         }
         Insert: {
           id?: number
+          paid_chat_url?: string | null
           teacher_chat_url?: string | null
           updated_at?: string
         }
         Update: {
           id?: number
+          paid_chat_url?: string | null
           teacher_chat_url?: string | null
           updated_at?: string
         }

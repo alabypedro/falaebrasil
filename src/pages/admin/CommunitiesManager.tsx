@@ -45,6 +45,10 @@ export default function CommunitiesManager() {
   const [teacherUrl, setTeacherUrl] = useState("");
   const [teacherBusy, setTeacherBusy] = useState(false);
 
+  // Link de chat (PRO + VIP)
+  const [paidChatUrl, setPaidChatUrl] = useState("");
+  const [paidChatBusy, setPaidChatBusy] = useState(false);
+
   const load = async () => {
     const { data } = await supabase
       .from("fb_communities")
@@ -56,8 +60,11 @@ export default function CommunitiesManager() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    supabase.from("vip_config").select("teacher_chat_url").eq("id", 1).maybeSingle()
-      .then(({ data }) => setTeacherUrl(data?.teacher_chat_url ?? ""));
+    supabase.from("vip_config").select("teacher_chat_url, paid_chat_url").eq("id", 1).maybeSingle()
+      .then(({ data }) => {
+        setTeacherUrl((data as any)?.teacher_chat_url ?? "");
+        setPaidChatUrl((data as any)?.paid_chat_url ?? "");
+      });
   }, []);
 
   const openNew = () => { setEditing(null); setForm({ ...emptyForm, sort_order: items.length + 1 }); setOpen(true); };
@@ -133,6 +140,16 @@ export default function CommunitiesManager() {
     else toast.success("Link do professor atualizado!");
   };
 
+  const savePaidChatUrl = async () => {
+    setPaidChatBusy(true);
+    const { error } = await supabase.from("vip_config")
+      .update({ paid_chat_url: paidChatUrl.trim() || null, updated_at: new Date().toISOString() } as any)
+      .eq("id", 1);
+    setPaidChatBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Link de chat PRO/VIP atualizado!");
+  };
+
   return (
     <div className="space-y-4">
       {/* === Plano por email (OPEN/PRO/VIP) === */}
@@ -181,6 +198,26 @@ export default function CommunitiesManager() {
             />
             <Button onClick={saveTeacherUrl} disabled={teacherBusy}>
               {teacherBusy ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* === Link de chat WhatsApp (PRO + VIP) === */}
+      <Card>
+        <CardHeader><CardTitle className="text-base">Chat WhatsApp (PRO e VIP)</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Link de conversa no WhatsApp disponível para alunos dos planos pagos PRO e VIP.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={paidChatUrl}
+              onChange={(e) => setPaidChatUrl(e.target.value)}
+              placeholder="https://wa.me/55..."
+            />
+            <Button onClick={savePaidChatUrl} disabled={paidChatBusy}>
+              {paidChatBusy ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </CardContent>
