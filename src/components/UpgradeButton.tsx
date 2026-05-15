@@ -16,13 +16,14 @@ export default function UpgradeButton() {
   useEffect(() => {
     if (!open) return;
     supabase
-      .from("hubla_product_mapping")
-      .select("product_key, checkout_url")
-      .in("product_key", ["plano_pro", "plano_vip"])
+      .from("vip_config")
+      .select("paid_chat_url")
+      .eq("id", 1)
+      .maybeSingle()
       .then(({ data }) => {
-        const m = data ?? [];
-        setProUrl(m.find((x: any) => x.product_key === "plano_pro")?.checkout_url ?? null);
-        setVipUrl(m.find((x: any) => x.product_key === "plano_vip")?.checkout_url ?? null);
+        const chatUrl = (data as any)?.paid_chat_url ?? null;
+        setProUrl(chatUrl);
+        setVipUrl(chatUrl);
       });
   }, [open]);
 
@@ -78,7 +79,7 @@ export default function UpgradeButton() {
                 {proUrl ? (
                   <Button asChild className="w-full mt-4">
                     <a href={proUrl} target="_blank" rel="noopener noreferrer">
-                      Assinar PRO <ExternalLink className="ml-1.5 h-4 w-4" />
+                      Conversar sobre PRO <ExternalLink className="ml-1.5 h-4 w-4" />
                     </a>
                    </Button>
                  ) : (
@@ -108,7 +109,7 @@ export default function UpgradeButton() {
               {vipUrl ? (
                 <Button asChild className="w-full mt-4">
                   <a href={vipUrl} target="_blank" rel="noopener noreferrer">
-                    Assinar VIP <ExternalLink className="ml-1.5 h-4 w-4" />
+                    Conversar sobre VIP <ExternalLink className="ml-1.5 h-4 w-4" />
                   </a>
                    </Button>
                  ) : (
