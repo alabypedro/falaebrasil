@@ -1,0 +1,1 @@
+ALTER TABLE public.vip_config ADD COLUMN IF NOT EXISTS paid_chat_url text;
