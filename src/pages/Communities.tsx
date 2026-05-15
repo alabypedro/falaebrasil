@@ -91,6 +91,7 @@ export default function Communities() {
   const [proCheckoutUrl, setProCheckoutUrl] = useState<string | null>(null);
   const [vipCheckoutUrl, setVipCheckoutUrl] = useState<string | null>(null);
   const [teacherUrl, setTeacherUrl] = useState<string | null>(null);
+  const [paidChatUrl, setPaidChatUrl] = useState<string | null>(null);
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
@@ -101,11 +102,12 @@ export default function Communities() {
     (async () => {
       const [communitiesRes, teacherRes, mappingRes] = await Promise.all([
         supabase.from("fb_communities").select("*").order("sort_order", { ascending: true }),
-        supabase.from("vip_config").select("teacher_chat_url").eq("id", 1).maybeSingle(),
+        supabase.from("vip_config").select("teacher_chat_url, paid_chat_url").eq("id", 1).maybeSingle(),
         supabase.from("hubla_product_mapping").select("product_key, checkout_url").in("product_key", ["plano_pro", "plano_vip"]),
       ]);
       if (communitiesRes.data) setItems(communitiesRes.data as Community[]);
       setTeacherUrl(teacherRes.data?.teacher_chat_url ?? null);
+      setPaidChatUrl((teacherRes.data as any)?.paid_chat_url ?? null);
       const mapping = mappingRes.data ?? [];
       setProCheckoutUrl(mapping.find((m: any) => m.product_key === "plano_pro")?.checkout_url ?? null);
       setVipCheckoutUrl(mapping.find((m: any) => m.product_key === "plano_vip")?.checkout_url ?? null);
@@ -334,7 +336,13 @@ export default function Communities() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
-            {upsellCheckoutUrl ? (
+            {paidChatUrl ? (
+              <Button asChild className="w-full">
+                <a href={paidChatUrl} target="_blank" rel="noopener noreferrer">
+                  Conversar sobre {upsellTier === "vip" ? "VIP" : "PRO"} <ExternalLink className="ml-1.5 h-4 w-4" />
+                </a>
+              </Button>
+            ) : upsellCheckoutUrl ? (
               <Button asChild className="w-full">
                 <a href={upsellCheckoutUrl} target="_blank" rel="noopener noreferrer">
                   Comprar agora <ExternalLink className="ml-1.5 h-4 w-4" />
