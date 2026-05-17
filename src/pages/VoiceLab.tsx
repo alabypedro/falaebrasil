@@ -118,11 +118,27 @@ export default function VoiceLab() {
     const loadCourses = async () => {
       const { data } = await supabase
         .from("courses")
-        .select("id, title, published, display_order")
+        .select("id, title, level, published, display_order")
         .order("display_order");
+      const desiredOrder = ["A1","A2","B1","B2","T1","T2","T3","T4","K1","K2","K3","K4"];
+      const extractCode = (title: string, level?: string | null) => {
+        const fromLevel = (level || "").toUpperCase();
+        if (desiredOrder.includes(fromLevel)) return fromLevel;
+        const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2)\b/i);
+        return m ? m[1].toUpperCase() : "";
+      };
       const list = ((data as any[]) || [])
         .filter((c) => c.published)
-        .map((c) => ({ id: c.id, title: c.title }));
+        .map((c) => ({ id: c.id, title: c.title, _code: extractCode(c.title, c.level) }))
+        .sort((a, b) => {
+          const ai = desiredOrder.indexOf(a._code);
+          const bi = desiredOrder.indexOf(b._code);
+          if (ai === -1 && bi === -1) return 0;
+          if (ai === -1) return 1;
+          if (bi === -1) return -1;
+          return ai - bi;
+        })
+        .map(({ id, title }) => ({ id, title }));
       setCourses(list);
     };
     loadCourses();
