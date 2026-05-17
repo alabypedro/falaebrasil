@@ -174,10 +174,57 @@ export default function VoiceLab() {
 
   // Default to the first course when not opened from a specific lesson
   useEffect(() => {
-    if (!activeCourseId && !lessonIdParam && courses.length > 0) {
+    if (activeCourseId || lessonIdParam || courses.length === 0) return;
+    const pickDefault = async () => {
+      // Try the course the student is currently progressing on (most recent video completion)
+      if (user) {
+        const { data: progress } = await supabase
+          .from("user_video_progress")
+          .select("video_id, completed_at")
+          .eq("user_id", user.id)
+          .order("completed_at", { ascending: false })
+          .limit(20);
+        const videoIds = (progress || []).map((p: any) => p.video_id);
+        if (videoIds.length > 0) {
+          const { data: videos } = await supabase
+            .from("lesson_videos")
+            .select("id, lesson_id")
+            .in("id", videoIds);
+          const lessonIds = Array.from(new Set((videos || []).map((v: any) => v.lesson_id)));
+          if (lessonIds.length > 0) {
+            const { data: lessons } = await supabase
+              .from("lessons")
+              .select("id, module_id")
+              .in("id", lessonIds);
+            const moduleIds = Array.from(new Set((lessons || []).map((l: any) => l.module_id)));
+            if (moduleIds.length > 0) {
+              const { data: mods } = await supabase
+                .from("modules")
+                .select("id, course_id")
+                .in("id", moduleIds);
+              const videoToCourse: Record<string, string> = {};
+              const lessonToCourse: Record<string, string> = {};
+              const moduleToCourse: Record<string, string> = {};
+              (mods || []).forEach((m: any) => { moduleToCourse[m.id] = m.course_id; });
+              (lessons || []).forEach((l: any) => { const cid = moduleToCourse[l.module_id]; if (cid) lessonToCourse[l.id] = cid; });
+              (videos || []).forEach((v: any) => { const cid = lessonToCourse[v.lesson_id]; if (cid) videoToCourse[v.id] = cid; });
+              const courseIds = new Set(courses.map((c) => c.id));
+              for (const p of progress || []) {
+                const cid = videoToCourse[(p as any).video_id];
+                if (cid && courseIds.has(cid)) {
+                  setActiveCourseId(cid);
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+      // Fallback: first in the sorted list (A1 when available)
       setActiveCourseId(courses[0].id);
-    }
-  }, [courses, activeCourseId, lessonIdParam]);
+    };
+    pickDefault();
+  }, [courses, activeCourseId, lessonIdParam, user]);
 
   // Fetch all practice phrases for the active course (no random, ordered)
   useEffect(() => {
