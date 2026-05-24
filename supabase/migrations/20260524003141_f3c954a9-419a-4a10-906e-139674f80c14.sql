@@ -1,0 +1,1 @@
+REVOKE SELECT ON public.quiz_questions_public FROM anon;
