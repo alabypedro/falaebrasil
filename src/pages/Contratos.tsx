@@ -29,8 +29,13 @@ export default function Contratos() {
     })();
   }, []);
 
-  const getUrl = (path: string) =>
-    supabase.storage.from("contracts").getPublicUrl(path).data.publicUrl;
+  const openContract = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from("contracts")
+      .createSignedUrl(path, 60 * 10); // 10 min
+    if (error || !data?.signedUrl) return;
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -57,15 +62,9 @@ export default function Contratos() {
               </CardHeader>
               <CardContent>
                 {c.file_path ? (
-                  <Button asChild className="w-full">
-                    <a
-                      href={getUrl(c.file_path)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Download className="h-4 w-4 mr-1.5" />
-                      Abrir contrato
-                    </a>
+                  <Button className="w-full" onClick={() => openContract(c.file_path!)}>
+                    <Download className="h-4 w-4 mr-1.5" />
+                    Abrir contrato
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">

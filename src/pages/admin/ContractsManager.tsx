@@ -90,8 +90,16 @@ export default function ContractsManager() {
     }
   };
 
-  const getUrl = (path: string) =>
-    supabase.storage.from("contracts").getPublicUrl(path).data.publicUrl;
+  const openContract = async (path: string) => {
+    const { data, error } = await supabase.storage
+      .from("contracts")
+      .createSignedUrl(path, 60 * 10);
+    if (error || !data?.signedUrl) {
+      toast({ title: "Erro ao abrir", description: error?.message ?? "URL inválida", variant: "destructive" });
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="space-y-6">
@@ -123,10 +131,12 @@ export default function ContractsManager() {
                   <div className="flex items-center justify-between gap-2 text-sm rounded-md border border-border bg-muted/30 px-3 py-2">
                     <span className="truncate">{c.file_name}</span>
                     <div className="flex gap-1 shrink-0">
-                      <Button asChild size="sm" variant="ghost">
-                        <a href={getUrl(c.file_path)} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4" />
-                        </a>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openContract(c.file_path!)}
+                      >
+                        <Download className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
