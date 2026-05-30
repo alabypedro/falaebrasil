@@ -360,7 +360,8 @@ export default function VoiceLab() {
 
       if (user) {
         // Calculate session score (average of accuracy, fluency, prosody)
-        const sessionScore = (normalized.accuracy + normalized.fluency + normalized.prosody) / 3;
+        const rawAvg = (normalized.accuracy + normalized.fluency + normalized.prosody) / 3;
+        const sessionScore = Math.round(rawAvg * 10) / 10;
         
         // Save session
         const { error: insertError } = await supabase.from("voice_sessions").insert({
