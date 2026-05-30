@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface UpsellModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  productKey: "essencial_pro_a1" | "ebook1" | "ebook2" | "ebook3";
+  productKey: string;
   productName: string;
   checkoutUrl: string | null;
   description?: string;
@@ -32,7 +32,7 @@ export function UpsellModal({
       const { data: mapping } = await supabase
         .from("hubla_product_mapping")
         .select("hubla_product_id")
-        .eq("product_key", productKey)
+        .or(`product_key.eq.${productKey},hubla_product_id.eq.${productKey}`)
         .maybeSingle();
       if (!mapping?.hubla_product_id) {
         if (active) setCredits(null);
@@ -94,7 +94,7 @@ export function UpsellModal({
 
         {requiresCourseFirst && (
           <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
-            ⚠️ Os Order Bumps só podem ser adquiridos junto com o curso <strong>Essential Pro A1</strong>.
+            ⚠️ Os Order Bumps só podem ser adquiridos junto com o curso <strong>Falaê Brasil!</strong>.
           </div>
         )}
 
