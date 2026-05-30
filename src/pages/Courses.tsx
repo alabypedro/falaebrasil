@@ -136,7 +136,7 @@ export default function Courses() {
       const { data: prodData } = await supabase
         .from("hubla_product_mapping")
         .select("display_name, checkout_url")
-        .eq("product_key", "essencial_pro_a1")
+        .eq("hubla_product_id", "7YNOATVITU1bdajEeUGU")
         .maybeSingle();
       if (prodData) setCoursePrice(prodData as any);
 
@@ -326,8 +326,8 @@ export default function Courses() {
       <UpsellModal
         open={showUpsell}
         onOpenChange={setShowUpsell}
-        productKey="essencial_pro_a1"
-        productName={coursePrice?.display_name ?? "Essential Pro A1"}
+        productKey="7YNOATVITU1bdajEeUGU"
+        productName={coursePrice?.display_name ?? "Plano OPEN"}
         checkoutUrl={coursePrice?.checkout_url ?? null}
         description="Para acessar o conteúdo do curso Falaê Brasil! você precisa adquirir o curso."
       />
