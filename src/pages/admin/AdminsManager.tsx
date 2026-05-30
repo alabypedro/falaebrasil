@@ -11,13 +11,13 @@ import { Loader2, Trash2, ShieldCheck, UserPlus, KeyRound, Users } from "lucide-
 type AdminEntry = { user_id: string; email: string | null };
 
 const ACCESS_OPTIONS: { id: string; label: string }[] = [
-  { id: "has_course_access", label: "FB Básico PRO (A1)" },
+  { id: "has_course_access", label: "Falaê Brasil! (Plano OPEN)" },
   { id: "has_a2_access", label: "Curso A2" },
   { id: "has_b1_access", label: "Curso B1" },
   { id: "has_b2_access", label: "Curso B2" },
-  { id: "has_ebook1_access", label: "Ebook 1" },
-  { id: "has_ebook2_access", label: "Ebook 2" },
-  { id: "has_ebook3_access", label: "Ebook 3" },
+  { id: "has_ebook1_access", label: "Biblioteca (Anfitrião Soberano)" },
+  { id: "has_ebook2_access", label: "Biblioteca (Decodificador de Gringo)" },
+  { id: "has_ebook3_access", label: "Biblioteca (Vocabulário de Poder)" },
 ];
 
 export default function AdminsManager() {

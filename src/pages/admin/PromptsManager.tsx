@@ -36,8 +36,8 @@ export default function PromptsManager() {
 
   // Manual credits grant
   const [grantEmail, setGrantEmail] = useState("");
-  const [grantScripted, setGrantScripted] = useState<string>("600");
-  const [grantUnscripted, setGrantUnscripted] = useState<string>("300");
+  const [grantScripted, setGrantScripted] = useState<string>("1800");
+  const [grantUnscripted, setGrantUnscripted] = useState<string>("1800");
   const [grantBusy, setGrantBusy] = useState(false);
 
   const handleGrantCredits = async (e: React.FormEvent) => {
@@ -197,7 +197,7 @@ export default function PromptsManager() {
             </Button>
           </form>
           <p className="text-[11px] text-muted-foreground mt-2">
-            Os valores são <strong>somados</strong> ao saldo atual do aluno. Use 600s scripted + 300s unscripted para conceder o equivalente a 1 módulo padrão.
+            Os valores são <strong>somados</strong> ao saldo atual do aluno. Use 1800s scripted + 1800s unscripted para conceder o equivalente a 1 mês padrão do Plano OPEN.
           </p>
         </CardContent>
       </Card>
