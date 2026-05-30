@@ -136,7 +136,7 @@ export default function Dashboard() {
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-2">
                             <GraduationCap className="h-5 w-5 text-primary" />
-                            Meu Desempenho
+                            Meu Desempenho Mensal
                           </DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 py-2">
