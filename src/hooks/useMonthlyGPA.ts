@@ -41,6 +41,7 @@ export function useMonthlyGPA(userId: string | undefined): MonthlyGPA {
       const quizAvg = quizScores.length ? quizScores.reduce((a, b) => a + b, 0) / quizScores.length : null;
 
       const voiceAvg = (v: any): number | null => {
+        // Average of accuracy, fluency and prosody
         const parts = [v.accuracy_score, v.fluency_score, v.prosody_score].filter((x) => typeof x === "number");
         if (!parts.length) return null;
         return parts.reduce((a: number, b: number) => a + b, 0) / parts.length;
@@ -52,6 +53,7 @@ export function useMonthlyGPA(userId: string | undefined): MonthlyGPA {
       const bestScripted = scriptedScores.length ? Math.max(...scriptedScores) : null;
       const bestUnscripted = unscriptedScores.length ? Math.max(...unscriptedScores) : null;
 
+      // GPA calculation: (QuizAvg + BestScripted + BestUnscripted) / componentsPresent
       const components = [quizAvg, bestScripted, bestUnscripted].filter((n): n is number => n !== null);
       const gpa = components.length ? components.reduce((a, b) => a + b, 0) / components.length : null;
       const { letter, points } = gpa !== null ? letterFor(gpa) : { letter: "—", points: null };
