@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Flame, BookOpen, Trophy, ArrowRight } from "lucide-react";
+import { Zap, Flame, BookOpen, Trophy, ArrowRight, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import OnboardingTutorialModal from "@/components/OnboardingTutorialModal";
+import { useMonthlyGPA } from "@/hooks/useMonthlyGPA";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CourseProgress {
   name: string;
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const { profile, user } = useAuth();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
+  const gpaData = useMonthlyGPA(user?.id);
 
   useEffect(() => {
     if (!user) return;
@@ -79,6 +82,16 @@ export default function Dashboard() {
   const stats = [
     { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
     { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
+    {
+      label: "GPA do Mês",
+      value: gpaData.gpa !== null ? `${gpaData.letter} · ${gpaData.gpa.toFixed(1)}` : "—",
+      icon: GraduationCap,
+      gradient: "bg-gradient-to-br from-primary to-primary/70",
+      iconColor: "text-primary-foreground",
+      tooltip: gpaData.gpa !== null
+        ? `Quizzes: ${gpaData.quizAvg?.toFixed(1) ?? "—"} | Scripted: ${gpaData.bestScripted?.toFixed(1) ?? "—"} | Unscripted: ${gpaData.bestUnscripted?.toFixed(1) ?? "—"}${gpaData.gpaPoints !== null ? ` · GPA ${gpaData.gpaPoints.toFixed(1)}` : ""}`
+        : "Faça quizzes e práticas no IA Falaê para gerar sua nota.",
+    },
     { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
     { label: "Streak", value: `${profile?.streak_days ?? 0} dias`, icon: Flame, gradient: "bg-gradient-to-br from-destructive to-destructive/70", iconColor: "text-destructive-foreground" },
   ];
@@ -95,22 +108,33 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {stats.map((stat: any, i) => (
           <Card
             key={stat.label}
             className="animate-fade-up hover-lift card-shine cursor-default border-border/50 overflow-hidden relative"
             style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
           >
-            <CardContent className="flex items-center gap-4 p-5 relative">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
-                <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
-              </div>
-              <div>
-                <p className="text-2xl font-display font-extrabold text-foreground tabular-nums">{stat.value}</p>
-                <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
-              </div>
-            </CardContent>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CardContent className="flex items-center gap-4 p-5 relative">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
+                      <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-display font-extrabold text-foreground tabular-nums">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
+                    </div>
+                  </CardContent>
+                </TooltipTrigger>
+                {stat.tooltip && (
+                  <TooltipContent side="bottom" className="max-w-xs text-xs">
+                    {stat.tooltip}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </Card>
         ))}
       </div>
