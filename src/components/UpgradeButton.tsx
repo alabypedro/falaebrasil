@@ -38,7 +38,7 @@ export default function UpgradeButton() {
         className="hidden sm:inline-flex bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 text-primary-foreground gap-1.5"
       >
         <Sparkles className="h-3.5 w-3.5" />
-        Upgrade
+        Upgrade de plano
       </Button>
       <Button
         size="icon"

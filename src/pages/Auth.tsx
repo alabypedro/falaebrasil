@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, User, Phone, Check, X } from "lucide-react";
+import { Mail, Lock, User, Phone, Check, X, Eye, EyeOff } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 
 export default function Auth() {
@@ -20,6 +20,7 @@ export default function Auth() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const passwordChecks = {
     length: password.length >= 8 && password.length <= 70,
@@ -242,15 +243,24 @@ export default function Auth() {
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-9 h-11"
+                  className="pl-9 pr-10 h-11"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={isSignUp ? 8 : 6}
                   maxLength={isSignUp ? 70 : undefined}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {isSignUp && (
                 <ul className="mt-2 space-y-1 text-xs">
