@@ -124,7 +124,15 @@ Deno.serve(async (req) => {
       EnableProsodyAssessment: true,
     };
 
-    const pronAssessmentHeader = btoa(JSON.stringify(pronAssessmentParams));
+    // Encode as base64 of UTF-8 bytes (btoa alone fails on non-Latin1 characters
+    // like curly quotes, accented letters, em-dashes etc. that may appear in referenceText).
+    const pronAssessmentJson = JSON.stringify(pronAssessmentParams);
+    const pronAssessmentBytes = new TextEncoder().encode(pronAssessmentJson);
+    let binaryString = "";
+    for (let i = 0; i < pronAssessmentBytes.length; i++) {
+      binaryString += String.fromCharCode(pronAssessmentBytes[i]);
+    }
+    const pronAssessmentHeader = btoa(binaryString);
     const sessionId = crypto.randomUUID().replace(/-/g, "");
     const url = `https://${AZURE_SPEECH_REGION}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed&X-ConnectionId=${sessionId}`;
 
