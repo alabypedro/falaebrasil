@@ -145,11 +145,11 @@ export default function Dashboard() {
                             <span className="font-bold text-primary">{gpaData.quizAvg?.toFixed(1) ?? "—"}</span>
                           </div>
                           <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
-                            <span className="text-sm font-medium">Melhor Scripted (Mês)</span>
+                            <span className="text-sm font-medium">Maior nota de voz com script</span>
                             <span className="font-bold text-primary">{gpaData.bestScripted?.toFixed(1) ?? "—"}</span>
                           </div>
                           <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
-                            <span className="text-sm font-medium">Melhor Unscripted (Mês)</span>
+                            <span className="text-sm font-medium">Maior nota de voz sem script</span>
                             <span className="font-bold text-primary">{gpaData.bestUnscripted?.toFixed(1) ?? "—"}</span>
                           </div>
                           <p className="text-[10px] text-muted-foreground text-center">
