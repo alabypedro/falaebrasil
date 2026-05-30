@@ -84,7 +84,7 @@ export default function Dashboard() {
     { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
     { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
     {
-      label: "GPA do Mês",
+      label: "Média da nota",
       value: gpaData.gpa !== null ? `${gpaData.letter} · ${gpaData.gpa.toFixed(1)}` : "—",
       icon: GraduationCap,
       gradient: "bg-gradient-to-br from-primary to-primary/70",
@@ -94,7 +94,6 @@ export default function Dashboard() {
         : "Faça quizzes e práticas no IA Falaê para gerar sua nota.",
     },
     { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
-    { label: "Streak", value: `${profile?.streak_days ?? 0} dias`, icon: Flame, gradient: "bg-gradient-to-br from-destructive to-destructive/70", iconColor: "text-destructive-foreground" },
   ];
 
   return (
