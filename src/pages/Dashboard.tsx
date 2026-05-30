@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Flame, BookOpen, Trophy, ArrowRight, GraduationCap } from "lucide-react";
+import { Zap, Flame, BookOpen, Trophy, ArrowRight, GraduationCap, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import OnboardingTutorialModal from "@/components/OnboardingTutorialModal";
 import { useMonthlyGPA } from "@/hooks/useMonthlyGPA";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface CourseProgress {
   name: string;
@@ -109,34 +110,86 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {stats.map((stat: any, i) => (
-          <Card
-            key={stat.label}
-            className="animate-fade-up hover-lift card-shine cursor-default border-border/50 overflow-hidden relative"
-            style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
-          >
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <CardContent className="flex items-center gap-4 p-5 relative">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
-                      <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-display font-extrabold text-foreground tabular-nums">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
-                    </div>
-                  </CardContent>
-                </TooltipTrigger>
-                {stat.tooltip && (
-                  <TooltipContent side="bottom" className="max-w-xs text-xs">
-                    {stat.tooltip}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          </Card>
-        ))}
+        {stats.map((stat: any, i) => {
+          const isGPA = stat.label === "GPA do Mês";
+          const cardContent = (
+            <CardContent className="flex items-center gap-4 p-5 relative">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
+                <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-display font-extrabold text-foreground tabular-nums truncate">{stat.value}</p>
+                  {isGPA && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary transition-colors shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <GraduationCap className="h-5 w-5 text-primary" />
+                            Meu Desempenho
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-2">
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
+                            <span className="text-sm font-medium">Média dos Quizzes</span>
+                            <span className="font-bold text-primary">{gpaData.quizAvg?.toFixed(1) ?? "—"}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
+                            <span className="text-sm font-medium">Melhor Scripted (Mês)</span>
+                            <span className="font-bold text-primary">{gpaData.bestScripted?.toFixed(1) ?? "—"}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
+                            <span className="text-sm font-medium">Melhor Unscripted (Mês)</span>
+                            <span className="font-bold text-primary">{gpaData.bestUnscripted?.toFixed(1) ?? "—"}</span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground text-center">
+                            A média GPA é calculada a partir destes três pilares.
+                          </p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
+              </div>
+            </CardContent>
+          );
+
+          return (
+            <Card
+              key={stat.label}
+              className="animate-fade-up hover-lift card-shine cursor-default border-border/50 overflow-hidden relative"
+              style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
+            >
+              {isGPA ? (
+                cardContent
+              ) : (
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {cardContent}
+                    </TooltipTrigger>
+                    {stat.tooltip && (
+                      <TooltipContent side="bottom" className="max-w-xs text-xs">
+                        {stat.tooltip}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
       {courseProgress.length > 0 && (
