@@ -84,7 +84,7 @@ export default function Dashboard() {
     { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
     { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
     {
-      label: "Média da nota",
+      label: "Sua Nota Média",
       value: gpaData.gpa !== null ? `${gpaData.letter} · ${gpaData.gpa.toFixed(1)}` : "—",
       icon: GraduationCap,
       gradient: "bg-gradient-to-br from-primary to-primary/70",
@@ -110,7 +110,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat: any, i) => {
-          const isGPA = stat.label === "Média da nota";
+          const isGPA = stat.label === "Sua Nota Média";
           const cardContent = (
             <CardContent className="flex items-center gap-4 p-5 relative">
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
