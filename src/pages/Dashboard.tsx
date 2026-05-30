@@ -108,9 +108,9 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat: any, i) => {
-          const isGPA = stat.label === "GPA do Mês";
+          const isGPA = stat.label === "Média da nota";
           const cardContent = (
             <CardContent className="flex items-center gap-4 p-5 relative">
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
