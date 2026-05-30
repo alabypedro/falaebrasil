@@ -42,9 +42,15 @@ export function useMonthlyGPA(userId: string | undefined): MonthlyGPA {
 
       const voiceAvg = (v: any): number | null => {
         // Average of accuracy, fluency and prosody
-        const parts = [v.accuracy_score, v.fluency_score, v.prosody_score].filter((x) => typeof x === "number");
+        const parts = [
+          v.accuracy_score,
+          v.fluency_score,
+          v.prosody_score,
+        ].filter((x) => typeof x === "number");
         if (!parts.length) return null;
-        return parts.reduce((a: number, b: number) => a + b, 0) / parts.length;
+        const avg = parts.reduce((a: number, b: number) => a + b, 0) / parts.length;
+        // Match VoiceLab rounding logic: Math.round(value * 10) / 10
+        return Math.round(avg * 10) / 10;
       };
 
       const scriptedScores = (voices ?? []).filter((v: any) => v.mode === "scripted").map(voiceAvg).filter((n): n is number => n !== null);
