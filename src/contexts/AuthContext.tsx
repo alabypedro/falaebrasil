@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   profile: {
+    id: string;
     display_name: string | null;
     avatar_url: string | null;
     level: string;
@@ -20,6 +21,8 @@ interface AuthContextType {
     plan_tier: "open" | "pro" | "vip" | "kids" | "teens";
     scripted_balance: number;
     unscripted_balance: number;
+    best_scripted_score: number;
+    best_unscripted_score: number;
     subscription_status: string;
     subscription_grace_until: string | null;
     subscription_current_period_end: string | null;
@@ -64,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("display_name, avatar_url, level, xp, streak_days, has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access, plan_tier, scripted_balance, unscripted_balance, subscription_status, subscription_grace_until, subscription_current_period_end")
+      .select("id, display_name, avatar_url, level, xp, streak_days, has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access, plan_tier, scripted_balance, unscripted_balance, best_scripted_score, best_unscripted_score, subscription_status, subscription_grace_until, subscription_current_period_end")
       .eq("user_id", user.id)
       .single();
     if (data) setProfile(data as any);

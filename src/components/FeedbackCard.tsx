@@ -20,6 +20,7 @@ export interface FeedbackScores {
 interface FeedbackCardProps {
   scores: FeedbackScores | null;
   suggestions?: string[];
+  isNewHighScore?: boolean;
 }
 
 function getScoreColor(score: number) {
@@ -35,7 +36,7 @@ function getSnrLabel(snr: number) {
   return { label: "Baixo", color: "text-destructive" };
 }
 
-export default function FeedbackCard({ scores, suggestions }: FeedbackCardProps) {
+export default function FeedbackCard({ scores, suggestions, isNewHighScore }: FeedbackCardProps) {
   if (!scores) {
     return (
       <Card className="border-dashed animate-fade-in">
@@ -59,7 +60,21 @@ export default function FeedbackCard({ scores, suggestions }: FeedbackCardProps)
     <Card className="animate-scale-in">
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center justify-between">
-          <span>Feedback de Pronúncia</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span>Feedback de Pronúncia</span>
+              {isNewHighScore && (
+                <Badge className="bg-gradient-accent animate-bounce text-[10px] py-0 px-2 h-5 font-bold border-0">
+                  NOVO RECORDE!
+                </Badge>
+              )}
+            </div>
+            {isNewHighScore && (
+              <p className="text-xs font-bold text-accent animate-pulse">
+                Parabéns, essa foi sua melhor nota! 🏆
+              </p>
+            )}
+          </div>
           <span className={`text-2xl font-bold animate-xp-pop ${getScoreColor(overall)}`}>{overall}/100</span>
         </CardTitle>
       </CardHeader>

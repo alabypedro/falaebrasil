@@ -98,6 +98,7 @@ export default function VoiceLab() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [promptsLoading, setPromptsLoading] = useState(true);
   const [analyzedId, setAnalyzedId] = useState<string | null>(null);
+  const [isNewHighScore, setIsNewHighScore] = useState(false);
 
   // Course selector + phrases of the active course
   const [courses, setCourses] = useState<CourseOption[]>([]);
@@ -302,6 +303,7 @@ export default function VoiceLab() {
     setFeedback(null);
     setTranscription(null);
     setSuggestions([]);
+    setIsNewHighScore(false);
 
     try {
       const formData = new FormData();
@@ -357,14 +359,43 @@ export default function VoiceLab() {
       void refreshProfile();
 
       if (user) {
-        await supabase.from("voice_sessions").insert({
-          user_id: user.id, mode,
+        // Calculate session score (average of accuracy, fluency, prosody)
+        const sessionScore = (normalized.accuracy + normalized.fluency + normalized.prosody) / 3;
+        
+        // Save session
+        const { error: insertError } = await supabase.from("voice_sessions").insert({
+          user_id: user.id, 
+          mode,
           text_analyzed: normalized.transcription || null,
           accuracy_score: normalized.accuracy,
           fluency_score: normalized.fluency,
           prosody_score: normalized.prosody,
           grammar_feedback: `Completeness: ${normalized.completeness}%`,
         });
+
+        if (insertError) {
+          console.error("Error saving voice session:", insertError);
+        }
+
+        // Check for new high score
+        const currentBest = mode === "scripted" 
+          ? (profile?.best_scripted_score || 0) 
+          : (profile?.best_unscripted_score || 0);
+
+        if (sessionScore > currentBest) {
+          setIsNewHighScore(true);
+          const updateData = mode === "scripted" 
+            ? { best_scripted_score: sessionScore } 
+            : { best_unscripted_score: sessionScore };
+          
+          await supabase
+            .from("profiles")
+            .update(updateData as any)
+            .eq("id", profile?.id);
+            
+          // Refresh profile again to get updated high scores for GPA calculation
+          void refreshProfile();
+        }
       }
 
       // Generate AI-powered specific feedback
@@ -415,6 +446,7 @@ export default function VoiceLab() {
     setFeedback(null);
     setTranscription(null);
     setSuggestions([]);
+    setIsNewHighScore(false);
     if (mode === "unscripted") {
       void fetchUnscriptedTopic();
     }
