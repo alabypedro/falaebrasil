@@ -29,6 +29,8 @@ const levelColors: Record<string, string> = {
   A2: "bg-accent/15 text-accent",
   B1: "bg-xp/15 text-xp",
   B2: "bg-innovation/15 text-innovation",
+  C1: "bg-primary/15 text-primary",
+  C2: "bg-destructive/15 text-destructive",
 };
 
 const levelBadgeLabels: Record<string, string> = {
@@ -36,6 +38,8 @@ const levelBadgeLabels: Record<string, string> = {
   A2: "A2",
   B1: "B1",
   B2: "B2",
+  C1: "C1",
+  C2: "C2",
 };
 
 const courseTitleLabels: Record<string, string> = {
