@@ -384,11 +384,13 @@ export default function VoiceLab() {
 
         if (sessionScore > currentBest) {
           setIsNewHighScore(true);
-          const updateField = mode === "scripted" ? "best_scripted_score" : "best_unscripted_score";
+          const updateData = mode === "scripted" 
+            ? { best_scripted_score: sessionScore } 
+            : { best_unscripted_score: sessionScore };
           
           await supabase
             .from("profiles")
-            .update({ [updateField]: sessionScore })
+            .update(updateData as any)
             .eq("id", profile?.id);
             
           // Refresh profile again to get updated high scores for GPA calculation
