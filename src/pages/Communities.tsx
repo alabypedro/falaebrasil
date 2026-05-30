@@ -117,8 +117,14 @@ export default function Communities() {
 
   // Acesso exato ao tier: VIP não entra em grupos OPEN/PRO; PRO não entra em OPEN.
   // Admin mantém acesso total. Grupos com all_tiers=true liberam para todos.
-  const hasAccess = (item: Community) =>
-    isAdmin || item.all_tiers || userTier === (item.required_tier ?? "open");
+  const hasAccess = (item: Community) => {
+    if (isAdmin || item.all_tiers) return true;
+    
+    // OPEN tier has access to all groups marked as 'open'
+    if (userTier === "open" && item.required_tier === "open") return true;
+    
+    return userTier === (item.required_tier ?? "open");
+  };
 
   if (loading) {
     return (
