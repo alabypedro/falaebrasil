@@ -84,7 +84,7 @@ export default function Dashboard() {
     { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
     { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
     {
-      label: "GPA do Mês",
+      label: "Média da nota",
       value: gpaData.gpa !== null ? `${gpaData.letter} · ${gpaData.gpa.toFixed(1)}` : "—",
       icon: GraduationCap,
       gradient: "bg-gradient-to-br from-primary to-primary/70",
@@ -94,7 +94,6 @@ export default function Dashboard() {
         : "Faça quizzes e práticas no IA Falaê para gerar sua nota.",
     },
     { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
-    { label: "Streak", value: `${profile?.streak_days ?? 0} dias`, icon: Flame, gradient: "bg-gradient-to-br from-destructive to-destructive/70", iconColor: "text-destructive-foreground" },
   ];
 
   return (
@@ -109,9 +108,9 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat: any, i) => {
-          const isGPA = stat.label === "GPA do Mês";
+          const isGPA = stat.label === "Média da nota";
           const cardContent = (
             <CardContent className="flex items-center gap-4 p-5 relative">
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${stat.gradient} shadow-soft-md hover-bounce`}>
