@@ -92,9 +92,9 @@ function CourseCard({
             <CheckCircle className="h-5 w-5 text-success flex-shrink-0 animate-xp-pop" />
           ) : null}
         </div>
-        {locked ? (
+          {locked ? (
           <Badge variant="default" className="w-full justify-center py-1.5 gap-1.5">
-            <Lock className="h-3 w-3" /> Comprar Essential Pro A1
+            <Lock className="h-3 w-3" /> Comprar Falaê Brasil!
           </Badge>
         ) : (
           <div className="space-y-2">
@@ -329,7 +329,7 @@ export default function Courses() {
         productKey="essencial_pro_a1"
         productName={coursePrice?.display_name ?? "Essential Pro A1"}
         checkoutUrl={coursePrice?.checkout_url ?? null}
-        description="Para acessar o conteúdo do curso Essential Pro A1 você precisa adquirir o curso."
+        description="Para acessar o conteúdo do curso Falaê Brasil! você precisa adquirir o curso."
       />
     </div>
   );

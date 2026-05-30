@@ -338,7 +338,7 @@ export default function CourseDetail() {
         </div>
         <h1 className="text-2xl font-bold">Conteúdo bloqueado</h1>
         <p className="text-muted-foreground">
-          Para acessar o curso <strong>{course.title}</strong> você precisa adquirir o <strong>Essential Pro A1</strong>.
+          Para acessar o curso <strong>{course.title}</strong> você precisa adquirir o <strong>Falaê Brasil!</strong>.
         </p>
         <Button onClick={() => navigate("/courses")}>Ver detalhes do curso</Button>
       </div>
