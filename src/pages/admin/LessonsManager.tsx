@@ -90,6 +90,7 @@ export default function LessonsManager() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videos, setVideos] = useState<LessonVideo[]>([]);
   const [videoCounts, setVideoCounts] = useState<Record<string, number>>({});
+  const [readingPdf, setReadingPdf] = useState<{ url: string; title: string } | null>(null);
 
   const load = async () => {
     const [{ data: lsn }, { data: mods }, { data: vids }] = await Promise.all([
