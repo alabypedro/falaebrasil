@@ -45,20 +45,15 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
     };
   }, [isOpen]);
 
-  // Append toolbar=0 to the URL to hide the native PDF toolbar in many browsers
-  const protectedUrl = url.includes("#") 
-    ? url.split("#")[0] + "#toolbar=0&navpanes=0" 
-    : url + "#toolbar=0&navpanes=0";
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className={`p-0 gap-0 overflow-hidden bg-black/95 border-none transition-all duration-300 ${
-          isFullscreen ? "max-w-none w-screen h-screen rounded-none" : "max-w-5xl w-[95vw] h-[90vh]"
+        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 ${
+          isFullscreen ? "max-w-none w-screen h-screen rounded-none z-[100]" : "max-w-5xl w-[95vw] h-[90vh]"
         }`}
       >
         <DialogHeader className="p-4 flex flex-row items-center justify-between bg-zinc-900 border-b border-zinc-800 space-y-0">
-          <DialogTitle className="text-zinc-100 text-base font-medium truncate max-w-[70%]">
+          <DialogTitle className="text-zinc-100 text-sm md:text-base font-medium truncate max-w-[70%]">
             {title}
           </DialogTitle>
           <div className="flex items-center gap-2">
@@ -82,27 +77,26 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
           </div>
         </DialogHeader>
 
-        <div className="relative flex-1 w-full h-full select-none bg-zinc-900">
+        <div className="relative flex-1 w-full h-full bg-zinc-900 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
           {/* 
-            This div is a protection layer that catches right-clicks and 
-            makes it harder to interact with the iframe's internal controls.
-            We leave the pointer events auto so users can still scroll if the browser allows.
+            The "Blocked by Chrome" error usually happens when using iframe hash parameters 
+            or when the PDF viewer plugin is restricted in a specific container.
+            
+            We'll use a standard <iframe> without parameters to ensure maximum compatibility.
           */}
           <iframe
-            src={protectedUrl}
-            className="w-full h-full border-none pointer-events-auto"
+            src={url}
+            className="w-full h-full border-none"
             title={title}
-            onContextMenu={(e) => e.preventDefault()}
+            style={{ width: '100%', height: '100%' }}
+            allow="autoplay"
           />
           
           {/* CSS to help block printing */}
           <style dangerouslySetInnerHTML={{ __html: `
             @media print {
               body { display: none !important; }
-            }
-            /* Hide the download/print overlay that some browsers show on hover */
-            iframe::-webkit-scrollbar {
-              display: none;
+              iframe, embed, object { display: none !important; }
             }
           `}} />
         </div>
