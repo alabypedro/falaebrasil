@@ -40,6 +40,7 @@ export default function LibraryManager() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [filterType, setFilterType] = useState<string>("all");
+  const [readingItem, setReadingItem] = useState<{ url: string; title: string } | null>(null);
 
   const load = async () => {
     const { data } = await supabase.from("library_bst").select("*").order("created_at", { ascending: false });
