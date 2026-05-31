@@ -353,7 +353,15 @@ export default function LessonsManager() {
               <Label>PDF da Aula</Label>
               <div className="flex gap-2 items-center">
                 <Input type="file" accept="application/pdf" onChange={(e) => handleFileUpload(e, "pdf")} disabled={uploadingPdf} />
-                {form.pdf_url && <a href={form.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver PDF</a>}
+                {form.pdf_url && (
+                  <button 
+                    type="button"
+                    onClick={() => setReadingPdf({ url: form.pdf_url, title: form.title })}
+                    className="text-xs text-accent hover:underline whitespace-nowrap bg-transparent border-none cursor-pointer"
+                  >
+                    Ver PDF
+                  </button>
+                )}
               </div>
               {uploadingPdf && <p className="text-xs text-muted-foreground">Enviando PDF...</p>}
             </div>
