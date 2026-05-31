@@ -398,7 +398,7 @@ export default function CourseDetail() {
           {activeLesson ? (
             <>
               {embedUrl && (
-                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                <div className="relative aspect-video rounded-lg overflow-hidden bg-black" onContextMenu={(e) => e.preventDefault()}>
                   {isDirectVideo ? (
                     <video
                       src={embedUrl}
@@ -407,12 +407,20 @@ export default function CourseDetail() {
                       onEnded={() => activeVideo && handleVideoComplete(activeVideo.id)}
                     />
                   ) : (
-                    <iframe
-                      src={embedUrl}
-                      className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                    <>
+                      <iframe
+                        src={embedUrl}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                      {/* Camadas de proteção invisíveis para dificultar o compartilhamento */}
+                      {/* Topo: Bloqueia Título, Compartilhar e Assistir mais tarde */}
+                      <div className="absolute top-0 left-0 w-full h-[60px] z-10 cursor-default" />
+                      {/* Cantos inferiores: Bloqueia botões de compartilhamento extras e logo do YouTube */}
+                      <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10 cursor-default" />
+                      <div className="absolute bottom-0 left-0 w-[80px] h-[50px] z-10 cursor-default" />
+                    </>
                   )}
                 </div>
               )}
