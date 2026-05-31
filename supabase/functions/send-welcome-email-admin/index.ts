@@ -53,10 +53,8 @@ Deno.serve(async (req) => {
       if (!data.users.length || data.users.length < 200) break;
       page++;
     }
-    // If the user doesn't exist yet (e.g. Hubla webhook hasn't fired or was
-    // ignored), create them on the fly so the admin can still send the
-    // branded welcome email. The user will set their password via the
-    // recovery link in the email.
+
+    // If the user doesn't exist yet, create them.
     if (!foundId) {
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
         email,
@@ -72,12 +70,62 @@ Deno.serve(async (req) => {
       foundMeta = created.user.user_metadata || { from_hubla: true };
     }
 
-    // Make sure `from_hubla` flag is set so auth-email-hook serves the
-    // branded welcome_purchase template instead of the generic recovery one.
+    // Ensure `from_hubla` flag is set
     if (foundMeta.from_hubla !== true) {
       await admin.auth.admin.updateUserById(foundId, {
         user_metadata: { ...foundMeta, from_hubla: true },
       });
+    }
+
+    // ---- AUTO-GRANT PLANO OPEN IF NEW OR NO ACCESS ----
+    // If the admin is forcing a welcome email, we should ensure they have the
+    // baseline access (Plano OPEN) so they don't land on an empty dashboard.
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("has_course_access, scripted_balance")
+      .eq("user_id", foundId)
+      .single();
+
+    if (!profile?.has_course_access) {
+      console.log("Auto-granting Plano OPEN to manual onboardee", { email });
+      
+      // Grant basic access via profile
+      await admin
+        .from("profiles")
+        .update({
+          has_course_access: true,
+          has_ebook1_access: true,
+          has_ebook2_access: true,
+          has_ebook3_access: true,
+          plan_tier: "open",
+          subscription_status: "active",
+          scripted_balance: 1800,
+          unscripted_balance: 1800,
+        })
+        .eq("user_id", foundId);
+
+      // Grant A1-C2 courses
+      const { data: openMapping } = await admin
+        .from("hubla_product_mapping")
+        .select("id")
+        .eq("product_key", "essencial_pro_a1")
+        .maybeSingle();
+
+      if (openMapping) {
+        const { data: courseLinks } = await admin
+          .from("hubla_product_courses")
+          .select("course_id")
+          .eq("product_mapping_id", openMapping.id);
+        
+        if (courseLinks && courseLinks.length > 0) {
+          const rows = courseLinks.map(c => ({
+            user_id: foundId,
+            course_id: c.course_id,
+            source: "manual_admin"
+          }));
+          await admin.from("user_course_access").upsert(rows, { onConflict: "user_id,course_id" });
+        }
+      }
     }
 
     // Reset the one-shot guard so a new welcome email is allowed.
