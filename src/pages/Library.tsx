@@ -131,6 +131,7 @@ export default function Library() {
   const [products, setProducts] = useState<Record<string, ProductInfo>>({});
   const [loading, setLoading] = useState(true);
   const [upsellItem, setUpsellItem] = useState<LibraryItem | null>(null);
+  const [readingItem, setReadingItem] = useState<LibraryItem | null>(null);
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
 
