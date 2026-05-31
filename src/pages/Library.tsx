@@ -206,6 +206,7 @@ export default function Library() {
                     item={item}
                     locked={locked}
                     onUnlockClick={() => setUpsellItem(item)}
+                    onReadClick={(item) => setReadingItem(item)}
                   />
                 );
               })}
