@@ -388,6 +388,15 @@ export default function LessonsManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {readingPdf && (
+        <PdfReader
+          isOpen={!!readingPdf}
+          onClose={() => setReadingPdf(null)}
+          url={readingPdf.url}
+          title={readingPdf.title}
+        />
+      )}
     </div>
   );
 }
