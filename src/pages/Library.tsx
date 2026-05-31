@@ -104,10 +104,13 @@ function ItemCard({
           <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
         </div>
         {item.type === "ebook" && item.file_url ? (
-          <Button variant="outline" size="sm" className="w-full" asChild>
-            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
-              <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
-            </a>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full" 
+            onClick={() => onReadClick(item)}
+          >
+            <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
           </Button>
         ) : item.type === "audiobook" && item.audio_url ? (
           <div className="space-y-2">
