@@ -52,8 +52,8 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
           isFullscreen ? "max-w-none w-screen h-screen rounded-none z-[100]" : "max-w-5xl w-[95vw] h-[90vh]"
         }`}
       >
-        <DialogHeader className="p-2 px-4 flex flex-row items-center justify-between bg-zinc-900 border-b border-zinc-800 space-y-0 min-h-0 h-10 md:h-12">
-          <DialogTitle className="text-zinc-100 text-xs md:text-sm font-medium truncate max-w-[70%]">
+        <DialogHeader className="p-1 px-3 flex flex-row items-center justify-between bg-zinc-900 border-b border-zinc-800 space-y-0 min-h-0 h-8 md:h-10">
+          <DialogTitle className="text-zinc-100 text-[10px] md:text-xs font-medium truncate max-w-[70%] leading-none">
             {title}
           </DialogTitle>
           <div className="flex items-center gap-2">
