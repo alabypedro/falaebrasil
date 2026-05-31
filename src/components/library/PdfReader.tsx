@@ -79,13 +79,11 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
 
         <div className="relative flex-1 w-full h-full bg-zinc-900 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
           {/* 
-            The "Blocked by Chrome" error usually happens when using iframe hash parameters 
-            or when the PDF viewer plugin is restricted in a specific container.
-            
-            We'll use a standard <iframe> without parameters to ensure maximum compatibility.
+            Adding #toolbar=0 to the URL helps hide the browser's native PDF toolbar 
+            (including the download and print buttons) in many browsers.
           */}
           <iframe
-            src={url}
+            src={`${url}#toolbar=0`}
             className="w-full h-full border-none"
             title={title}
             style={{ width: '100%', height: '100%' }}
