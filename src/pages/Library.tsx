@@ -113,8 +113,14 @@ function ItemCard({
             <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
           </Button>
         ) : item.type === "audiobook" && item.audio_url ? (
-          <div className="space-y-2">
-            <audio src={item.audio_url} controls className="w-full h-9" />
+          <div className=\"space-y-2\">
+            <audio 
+              src={item.audio_url} 
+              controls 
+              controlsList=\"nodownload\" 
+              onContextMenu={(e) => e.preventDefault()}
+              className=\"w-full h-9\" 
+            />
           </div>
         ) : (
           <Button variant="outline" size="sm" className="w-full" disabled>
