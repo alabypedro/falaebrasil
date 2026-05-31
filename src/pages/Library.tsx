@@ -229,6 +229,14 @@ export default function Library() {
           description={`Para acessar "${upsellItem.title}" você precisa adquirir o Order Bump correspondente junto com o curso Essential Pro A1.`}
         />
       )}
+      {readingItem && readingItem.file_url && (
+        <PdfReader
+          isOpen={!!readingItem}
+          onClose={() => setReadingItem(null)}
+          url={readingItem.file_url}
+          title={readingItem.title}
+        />
+      )}
     </div>
   );
 }
