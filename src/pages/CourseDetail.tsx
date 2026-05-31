@@ -496,10 +496,13 @@ export default function CourseDetail() {
                     </div>
                     <div className="flex flex-wrap gap-2 md:flex-shrink-0 md:justify-end">
                       {activeLesson.pdf_url && (
-                        <Button variant="outline" size="sm" asChild className="flex-1 min-w-[110px] md:flex-none">
-                          <a href={activeLesson.pdf_url} target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-4 w-4 mr-1" /> PDF
-                          </a>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setReadingPdf({ url: activeLesson.pdf_url!, title: activeLesson.title })}
+                          className="flex-1 min-w-[110px] md:flex-none"
+                        >
+                          <FileText className="h-4 w-4 mr-1" /> PDF
                         </Button>
                       )}
                       {activeLesson.practice_text && (
