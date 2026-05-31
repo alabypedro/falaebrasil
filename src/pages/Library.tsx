@@ -113,13 +113,13 @@ function ItemCard({
             <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
           </Button>
         ) : item.type === "audiobook" && item.audio_url ? (
-          <div className=\"space-y-2\">
+          <div className="space-y-2">
             <audio 
               src={item.audio_url} 
               controls 
-              controlsList=\"nodownload\" 
+              controlsList="nodownload" 
               onContextMenu={(e) => e.preventDefault()}
-              className=\"w-full h-9\" 
+              className="w-full h-9" 
             />
           </div>
         ) : (
