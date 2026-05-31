@@ -48,7 +48,7 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 [&>button]:hidden ${
+        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 flex flex-col [&>button]:hidden ${
           isFullscreen ? "max-w-none w-screen h-screen rounded-none z-[100]" : "max-w-5xl w-[95vw] h-[90vh]"
         }`}
       >
@@ -77,7 +77,7 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
           </div>
         </DialogHeader>
 
-        <div className="relative flex-1 w-full h-full bg-zinc-900 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
+        <div className="relative flex-1 w-full bg-zinc-900 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
           {/* 
             Adding #toolbar=0 to the URL helps hide the browser's native PDF toolbar 
             (including the download and print buttons) in many browsers.
