@@ -99,8 +99,6 @@ Deno.serve(async (req) => {
           has_ebook3_access: true,
           plan_tier: "open",
           subscription_status: "active",
-          scripted_balance: 1800,
-          unscripted_balance: 1800,
         })
         .eq("user_id", foundId);
 
