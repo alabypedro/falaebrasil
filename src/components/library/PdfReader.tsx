@@ -83,7 +83,7 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
             (including the download and print buttons) in many browsers.
           */}
           <iframe
-            src={`${url}#toolbar=0`}
+            src={`${url}#toolbar=0&navpanes=0&scrollbar=0`}
             className="w-full h-full border-none"
             title={title}
             style={{ width: '100%', height: '100%' }}
