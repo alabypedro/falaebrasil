@@ -94,7 +94,7 @@ export default function Tutoriais() {
             <DialogTitle>{active?.title}</DialogTitle>
           </DialogHeader>
           {active && (
-            <div className="aspect-video w-full overflow-hidden rounded-md bg-black">
+            <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black" onContextMenu={(e) => e.preventDefault()}>
               <iframe
                 src={active.embedUrl}
                 className="w-full h-full"
@@ -102,6 +102,10 @@ export default function Tutoriais() {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
+              {/* Camadas de proteção invisíveis */}
+              <div className="absolute top-0 left-0 w-full h-[60px] z-10 cursor-default" />
+              <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10 cursor-default" />
+              <div className="absolute bottom-0 left-0 w-[80px] h-[50px] z-10 cursor-default" />
             </div>
           )}
         </DialogContent>

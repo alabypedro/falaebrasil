@@ -94,7 +94,7 @@ export default function OnboardingTutorialModal() {
         </DialogHeader>
 
         {yt ? (
-          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black" onContextMenu={(e) => e.preventDefault()}>
             <iframe
               src={yt.embedUrl}
               className="w-full h-full"
@@ -102,6 +102,10 @@ export default function OnboardingTutorialModal() {
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+            {/* Camadas de proteção invisíveis */}
+            <div className="absolute top-0 left-0 w-full h-[60px] z-10 cursor-default" />
+            <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10 cursor-default" />
+            <div className="absolute bottom-0 left-0 w-[80px] h-[50px] z-10 cursor-default" />
           </div>
         ) : (
           <div className="aspect-video w-full rounded-lg border border-dashed border-border bg-muted/40 flex flex-col items-center justify-center gap-2 text-muted-foreground">
