@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Maximize2, Minimize2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { X, Maximize2, Minimize2, ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut } from "lucide-react";
 import { Document, Page, pdfjs } from 'react-pdf';
 
 // Configure PDF.js worker
