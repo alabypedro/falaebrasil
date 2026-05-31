@@ -600,6 +600,15 @@ export default function CourseDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {readingPdf && (
+        <PdfReader
+          isOpen={!!readingPdf}
+          onClose={() => setReadingPdf(null)}
+          url={readingPdf.url}
+          title={readingPdf.title}
+        />
+      )}
     </div>
   );
 }
