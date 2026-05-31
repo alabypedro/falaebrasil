@@ -181,6 +181,7 @@ function extractPurchaseDedupeId(body: any): string {
     body?.event?.invoiceId ||
     body?.invoice?.id ||
     body?.invoiceId ||
+    body?.event?.subscription?.lastInvoice?.id ||
     null;
   if (invoiceId) {
     return String(invoiceId).replace(/-offer-\d+$/i, "");
