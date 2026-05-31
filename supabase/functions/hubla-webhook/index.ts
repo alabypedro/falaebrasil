@@ -264,12 +264,12 @@ Deno.serve(async (req) => {
     //  - failed:  invoice payment failed / past due → start 10-day grace
     //  - canceled subscription canceled / refunded / chargeback → block access
     const isPaid =
-      /paid|approved|completed|active/i.test(eventType) &&
+      /paid|approved|completed|active|activated|succeeded|renewed|reactivated/i.test(eventType) &&
       !/refund|cancel|chargeback|fail/i.test(eventType);
     const isFailed =
-      /payment_failed|invoice\.failed|past_due|overdue/i.test(eventType);
+      /payment_failed|invoice\.failed|past_due|overdue|payment\.failed/i.test(eventType);
     const isCanceled =
-      /canceled|cancelled|refund|chargeback|expired|terminated/i.test(eventType);
+      /canceled|cancelled|deactivated|refund|chargeback|expired|terminated/i.test(eventType);
     // Legacy one-time purchase events
     const isLegacyPurchase =
       /sale|purchase|order/i.test(eventType) &&
