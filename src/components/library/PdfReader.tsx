@@ -48,12 +48,12 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 ${
+        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 [&>button]:hidden ${
           isFullscreen ? "max-w-none w-screen h-screen rounded-none z-[100]" : "max-w-5xl w-[95vw] h-[90vh]"
         }`}
       >
-        <DialogHeader className="p-4 flex flex-row items-center justify-between bg-zinc-900 border-b border-zinc-800 space-y-0">
-          <DialogTitle className="text-zinc-100 text-sm md:text-base font-medium truncate max-w-[70%]">
+        <DialogHeader className="p-1 px-3 flex flex-row items-center justify-between bg-zinc-900 border-b border-zinc-800 space-y-0 min-h-0 h-8 md:h-10">
+          <DialogTitle className="text-zinc-100 text-[10px] md:text-xs font-medium truncate max-w-[70%] leading-none">
             {title}
           </DialogTitle>
           <div className="flex items-center gap-2">
@@ -79,13 +79,11 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
 
         <div className="relative flex-1 w-full h-full bg-zinc-900 overflow-hidden" onContextMenu={(e) => e.preventDefault()}>
           {/* 
-            The "Blocked by Chrome" error usually happens when using iframe hash parameters 
-            or when the PDF viewer plugin is restricted in a specific container.
-            
-            We'll use a standard <iframe> without parameters to ensure maximum compatibility.
+            Adding #toolbar=0 to the URL helps hide the browser's native PDF toolbar 
+            (including the download and print buttons) in many browsers.
           */}
           <iframe
-            src={url}
+            src={`${url}#toolbar=0&navpanes=0&scrollbar=0`}
             className="w-full h-full border-none"
             title={title}
             style={{ width: '100%', height: '100%' }}
