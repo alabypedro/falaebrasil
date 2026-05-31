@@ -48,7 +48,7 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 ${
+        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 [&>button]:hidden ${
           isFullscreen ? "max-w-none w-screen h-screen rounded-none z-[100]" : "max-w-5xl w-[95vw] h-[90vh]"
         }`}
       >
