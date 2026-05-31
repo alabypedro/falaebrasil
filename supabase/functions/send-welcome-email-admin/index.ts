@@ -53,7 +53,24 @@ Deno.serve(async (req) => {
       if (!data.users.length || data.users.length < 200) break;
       page++;
     }
-    if (!foundId) return json({ error: "Usuário não encontrado com esse email" }, 404);
+    // If the user doesn't exist yet (e.g. Hubla webhook hasn't fired or was
+    // ignored), create them on the fly so the admin can still send the
+    // branded welcome email. The user will set their password via the
+    // recovery link in the email.
+    if (!foundId) {
+      const { data: created, error: createErr } = await admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        password: crypto.randomUUID() + crypto.randomUUID(),
+        user_metadata: { from_hubla: true },
+      });
+      if (createErr || !created?.user?.id) {
+        console.error("createUser failed in welcome-email-admin", createErr);
+        return json({ error: createErr?.message ?? "Falha ao criar usuário" }, 500);
+      }
+      foundId = created.user.id;
+      foundMeta = created.user.user_metadata || { from_hubla: true };
+    }
 
     // Make sure `from_hubla` flag is set so auth-email-hook serves the
     // branded welcome_purchase template instead of the generic recovery one.
