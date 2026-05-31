@@ -901,6 +901,36 @@ export type Database = {
         }
         Relationships: []
       }
+      token_recharge_log: {
+        Row: {
+          id: string
+          month: number
+          recharged_at: string | null
+          scripted_amount: number
+          unscripted_amount: number
+          users_count: number
+          year: number
+        }
+        Insert: {
+          id?: string
+          month: number
+          recharged_at?: string | null
+          scripted_amount: number
+          unscripted_amount: number
+          users_count: number
+          year: number
+        }
+        Update: {
+          id?: string
+          month?: number
+          recharged_at?: string | null
+          scripted_amount?: number
+          unscripted_amount?: number
+          users_count?: number
+          year?: number
+        }
+        Relationships: []
+      }
       tutorials: {
         Row: {
           created_at: string
@@ -1337,6 +1367,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recharge_monthly_tokens: { Args: never; Returns: undefined }
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
