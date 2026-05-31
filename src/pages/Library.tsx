@@ -57,10 +57,12 @@ function ItemCard({
   item,
   locked,
   onUnlockClick,
+  onReadClick,
 }: {
   item: LibraryItem;
   locked: boolean;
   onUnlockClick: () => void;
+  onReadClick: (item: LibraryItem) => void;
 }) {
   // Defesa em profundidade: se a URL não veio (a view safe nulifica quando não há acesso),
   // tratamos como bloqueado independentemente do que o estado do client diga.
