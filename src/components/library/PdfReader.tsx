@@ -45,20 +45,19 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
     };
   }, [isOpen]);
 
-  // Append toolbar=0 to the URL to hide the native PDF toolbar in many browsers
-  const protectedUrl = url.includes("#") 
-    ? url.split("#")[0] + "#toolbar=0&navpanes=0" 
-    : url + "#toolbar=0&navpanes=0";
+  // Use a more reliable URL format for embedding
+  // We add #toolbar=0 to suggest the browser to hide the UI
+  const protectedUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0`;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className={`p-0 gap-0 overflow-hidden bg-black/95 border-none transition-all duration-300 ${
-          isFullscreen ? "max-w-none w-screen h-screen rounded-none" : "max-w-5xl w-[95vw] h-[90vh]"
+        className={`p-0 gap-0 overflow-hidden bg-black border-none transition-all duration-300 ${
+          isFullscreen ? "max-w-none w-screen h-screen rounded-none z-[100]" : "max-w-5xl w-[95vw] h-[90vh]"
         }`}
       >
         <DialogHeader className="p-4 flex flex-row items-center justify-between bg-zinc-900 border-b border-zinc-800 space-y-0">
-          <DialogTitle className="text-zinc-100 text-base font-medium truncate max-w-[70%]">
+          <DialogTitle className="text-zinc-100 text-sm md:text-base font-medium truncate max-w-[70%]">
             {title}
           </DialogTitle>
           <div className="flex items-center gap-2">
@@ -82,26 +81,33 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
           </div>
         </DialogHeader>
 
-        <div className="relative flex-1 w-full h-full select-none bg-zinc-900">
+        <div className="relative flex-1 w-full h-full bg-zinc-900 overflow-hidden">
           {/* 
-            This div is a protection layer that catches right-clicks and 
-            makes it harder to interact with the iframe's internal controls.
-            We leave the pointer events auto so users can still scroll if the browser allows.
+            The <embed> tag is often more reliable than <iframe> for PDFs
+            to avoid "Blocked by Chrome" security errors.
           */}
-          <iframe
+          <embed
             src={protectedUrl}
-            className="w-full h-full border-none pointer-events-auto"
-            title={title}
+            type="application/pdf"
+            className="w-full h-full border-none"
+            style={{ width: '100%', height: '100%' }}
+          />
+          
+          {/* 
+            Invisible protection overlay for right-click on the embed area
+          */}
+          <div 
+            className="absolute inset-0 pointer-events-none z-10" 
             onContextMenu={(e) => e.preventDefault()}
           />
           
-          {/* CSS to help block printing */}
+          {/* CSS to help block printing and hide extra scrollbars */}
           <style dangerouslySetInnerHTML={{ __html: `
             @media print {
               body { display: none !important; }
+              iframe, embed, object { display: none !important; }
             }
-            /* Hide the download/print overlay that some browsers show on hover */
-            iframe::-webkit-scrollbar {
+            ::-webkit-scrollbar {
               display: none;
             }
           `}} />
