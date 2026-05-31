@@ -467,6 +467,35 @@ Deno.serve(async (req) => {
       if (updErr) throw updErr;
     }
 
+    // ---- Per-course grants (from hubla_product_courses join) ----
+    // For every matched product, grant access to each linked course in
+    // user_course_access. Idempotent via the (user_id, course_id) unique key.
+    try {
+      const matchedIds = matched.map((m: any) => m.id);
+      if (matchedIds.length > 0) {
+        const { data: courseLinks } = await admin
+          .from("hubla_product_courses")
+          .select("course_id")
+          .in("product_mapping_id", matchedIds);
+        const courseIds = Array.from(
+          new Set((courseLinks ?? []).map((r: any) => r.course_id))
+        );
+        if (courseIds.length > 0) {
+          const rows = courseIds.map((cid) => ({
+            user_id: userId!,
+            course_id: cid,
+            source: "hubla",
+          }));
+          const { error: caErr } = await admin
+            .from("user_course_access")
+            .upsert(rows, { onConflict: "user_id,course_id" });
+          if (caErr) console.error("user_course_access upsert failed", caErr);
+        }
+      }
+    } catch (e) {
+      console.error("per-course grant failed", e);
+    }
+
     // Promoção de plano (apenas sobe — nunca rebaixa por compra parcial).
     if (grantedTier) {
       const { data: currentProfile } = await admin

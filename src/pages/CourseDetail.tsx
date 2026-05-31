@@ -94,6 +94,7 @@ export default function CourseDetail() {
   const [markingVideo, setMarkingVideo] = useState(false);
   const [allCourseVideos, setAllCourseVideos] = useState<{ id: string; lesson_id: string }[]>([]);
   const [completedCourseVideos, setCompletedCourseVideos] = useState<Set<string>>(new Set());
+  const [hasIndividualGrant, setHasIndividualGrant] = useState(false);
 
   const loadData = async () => {
     if (!courseId || !user) return;
@@ -103,6 +104,15 @@ export default function CourseDetail() {
       supabase.from("modules").select("*").eq("course_id", courseId).order("display_order"),
       supabase.from("user_progress").select("lesson_id").eq("user_id", user.id),
     ]);
+
+    // Check if user has an individual grant for this course (via Hubla purchase)
+    const { data: grantRow } = await supabase
+      .from("user_course_access")
+      .select("course_id")
+      .eq("user_id", user.id)
+      .eq("course_id", courseId)
+      .maybeSingle();
+    setHasIndividualGrant(!!grantRow);
 
     if (courseData) setCourse(courseData);
     if (modulesData) {
@@ -330,7 +340,7 @@ export default function CourseDetail() {
   }
 
   // Gating: bloqueia conteúdo se usuário não comprou o Essential Pro A1 (admins veem tudo)
-  if (!isAdmin && !profile?.has_course_access) {
+  if (!isAdmin && !profile?.has_course_access && !hasIndividualGrant) {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-4">
         <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
