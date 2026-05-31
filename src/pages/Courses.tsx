@@ -130,6 +130,7 @@ export default function Courses() {
   const [loading, setLoading] = useState(true);
   const [showUpsell, setShowUpsell] = useState(false);
   const [coursePrice, setCoursePrice] = useState<{ display_name: string; checkout_url: string | null } | null>(null);
+  const [grantedCourseIds, setGrantedCourseIds] = useState<Set<string>>(new Set());
   const { user, profile } = useAuth();
   const { isAdmin } = useAdmin();
 
@@ -143,6 +144,12 @@ export default function Courses() {
         .eq("hubla_product_id", "7YNOATVITU1bdajEeUGU")
         .maybeSingle();
       if (prodData) setCoursePrice(prodData as any);
+
+      const { data: granted } = await supabase
+        .from("user_course_access")
+        .select("course_id")
+        .eq("user_id", user.id);
+      setGrantedCourseIds(new Set((granted ?? []).map((g: any) => g.course_id)));
 
       const { data: coursesData } = await supabase
         .from("courses")
@@ -256,7 +263,7 @@ export default function Courses() {
     );
   }
 
-  const isLocked = !isAdmin && !profile?.has_course_access;
+  const isLocked = !isAdmin && !profile?.has_course_access && grantedCourseIds.size === 0;
 
   const userTier = (profile?.plan_tier ?? "open").toLowerCase();
   const isTeens = userTier === "teens";
@@ -271,7 +278,8 @@ export default function Courses() {
     : ["open", "pro", "vip"];
 
   const visibleCourses = courses.filter((c) =>
-    allowedTiers.includes((c.required_tier ?? "open").toLowerCase())
+    allowedTiers.includes((c.required_tier ?? "open").toLowerCase()) ||
+    grantedCourseIds.has(c.id)
   );
 
    const groups: { key: string; title: string; tiers: string[] }[] = [
