@@ -55,8 +55,11 @@ export function parseYoutube(url: string | null | undefined): { id: string; embe
   if (!id) return null;
   return {
     id,
-    // Adicionamos parâmetros para reduzir botões de compartilhamento e logo do YouTube
-    embedUrl: `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&showinfo=0`,
+    // Bloqueamos compartilhamento e distrações:
+    // modestbranding=1 (oculta logo), rel=0 (apenas vídeos do canal), 
+    // controls=1 (mantém play/pause mas dificultamos acesso externo), 
+    // disablekb=1 (desativa atalhos de teclado), iv_load_policy=3 (oculta anotações)
+    embedUrl: `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&showinfo=0&controls=1&disablekb=1`,
     thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
   };
 }
