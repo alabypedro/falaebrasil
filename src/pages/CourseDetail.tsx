@@ -69,11 +69,9 @@ function getEmbedUrl(url: string): string | null {
   if (!url) return null;
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]+)/);
   if (ytMatch) {
-    // Adicionamos parâmetros para reduzir distrações e botões de compartilhamento
-    // modestbranding=1 oculta o logo do YouTube na barra de controle
-    // rel=0 mostra apenas vídeos relacionados do próprio canal ao final
-    // iv_load_policy=3 oculta as anotações do vídeo
-    return `https://www.youtube.com/embed/${ytMatch[1]}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&controls=1`;
+    // Mesma lógica centralizada para bloquear compartilhamento e logo do YouTube
+    // Adicionamos autoplay=1 para conveniência e disablekb=1 para segurança extra
+    return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&controls=1&disablekb=1`;
   }
   return url;
 }

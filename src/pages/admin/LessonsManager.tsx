@@ -48,7 +48,7 @@ function parseVideo(url: string): VideoInfo | null {
     return {
       provider: "youtube",
       id: yt[1],
-      embedUrl: `https://www.youtube.com/embed/${yt[1]}`,
+      embedUrl: `https://www.youtube.com/embed/${yt[1]}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&controls=1&disablekb=1`,
       openUrl: `https://youtu.be/${yt[1]}`,
     };
   }
@@ -57,7 +57,7 @@ function parseVideo(url: string): VideoInfo | null {
     return {
       provider: "youtube",
       id: trimmed,
-      embedUrl: `https://www.youtube.com/embed/${trimmed}`,
+      embedUrl: `https://www.youtube.com/embed/${trimmed}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&controls=1&disablekb=1`,
       openUrl: `https://youtu.be/${trimmed}`,
     };
   }

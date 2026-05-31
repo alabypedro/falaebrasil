@@ -155,13 +155,17 @@ export default function TutorialsManager() {
                 </div>
 
                 {info && (
-                  <div className="aspect-video w-full overflow-hidden rounded-md border bg-black">
+                  <div className="relative aspect-video w-full overflow-hidden rounded-md border bg-black" onContextMenu={(e) => e.preventDefault()}>
                     <iframe
-                      src={`https://www.youtube.com/embed/${info.id}`}
+                      src={info.embedUrl}
                       className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     />
+                    {/* Camadas de proteção invisíveis para dificultar o compartilhamento */}
+                    <div className="absolute top-0 left-0 w-full h-[60px] z-10 cursor-default" />
+                    <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10 cursor-default" />
+                    <div className="absolute bottom-0 left-0 w-[80px] h-[50px] z-10 cursor-default" />
                   </div>
                 )}
 
