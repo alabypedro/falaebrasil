@@ -45,8 +45,7 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
     };
   }, [isOpen]);
 
-  // Some browsers block embedding PDFs with hash parameters in certain contexts
-  // If the previous attempt failed, let's try the most basic URL first
+  // Use the direct URL. Adding #toolbar=0 can sometimes cause blocks in certain browser versions.
   const displayUrl = url;
 
   return (
@@ -83,27 +82,33 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
 
         <div className="relative flex-1 w-full h-full bg-zinc-900 overflow-hidden">
           {/* 
-            Using an <iframe> with the most basic settings to maximize compatibility.
-            Chrome's "Blocked" error is often sensitive to specific headers or tag types.
+            Using <object> with an <iframe> fallback is the most robust way to embed PDFs.
+            This helps avoid "Blocked by Chrome" errors by letting the browser choose 
+             the best plugin handler.
           */}
-          <iframe
-            src={displayUrl}
+          <object
+            data={displayUrl}
+            type="application/pdf"
             className="w-full h-full border-none"
-            title={title}
             style={{ width: '100%', height: '100%' }}
-          />
+          >
+            <iframe
+              src={displayUrl}
+              className="w-full h-full border-none"
+              title={title}
+              style={{ width: '100%', height: '100%' }}
+            />
+          </object>
           
           {/* 
-            Invisible overlay to prevent easy right-clicks on the PDF viewer area.
-            Note: This may prevent internal PDF scrolling in some browsers, 
-            so we use pointer-events-none but still catch the context menu on the parent.
+            Invisible protection overlay
           */}
           <div 
             className="absolute inset-0 z-10 pointer-events-none" 
             onContextMenu={(e) => e.preventDefault()}
           />
           
-          {/* CSS to help block printing */}
+          {/* CSS to help block printing and hide scrollbars */}
           <style dangerouslySetInnerHTML={{ __html: `
             @media print {
               body { display: none !important; }
