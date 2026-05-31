@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Save, ExternalLink, Copy } from "lucide-react";
@@ -22,26 +23,65 @@ interface HublaProduct {
   grants_ebook3: boolean;
 }
 
+interface CourseRow {
+  id: string;
+  title: string;
+  level: string;
+  required_tier: string;
+}
+
 const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 const WEBHOOK_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/hubla-webhook`;
 
 export default function HublaProductsManager() {
   const [items, setItems] = useState<HublaProduct[]>([]);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  // map<product_mapping_id, Set<course_id>>
+  const [productCourses, setProductCourses] = useState<Record<string, Set<string>>>({});
 
   const load = async () => {
-    const { data, error } = await supabase
+    const [{ data, error }, { data: courseData }, { data: linkData }] = await Promise.all([
+      supabase
       .from("hubla_product_mapping")
       .select("*")
-      .order("price_cents", { ascending: false });
+      .order("price_cents", { ascending: false }),
+      supabase
+        .from("courses")
+        .select("id, title, level, required_tier")
+        .eq("published", true)
+        .order("display_order"),
+      supabase
+        .from("hubla_product_courses")
+        .select("product_mapping_id, course_id"),
+    ]);
     if (error) { toast.error(error.message); return; }
     if (data) setItems((data as HublaProduct[]).filter((p) => p.product_key !== "plano_pro" && p.product_key !== "plano_vip"));
+    if (courseData) setCourses(courseData as CourseRow[]);
+    if (linkData) {
+      const map: Record<string, Set<string>> = {};
+      for (const row of linkData as any[]) {
+        if (!map[row.product_mapping_id]) map[row.product_mapping_id] = new Set();
+        map[row.product_mapping_id].add(row.course_id);
+      }
+      setProductCourses(map);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   const updateField = (id: string, field: keyof HublaProduct, value: any) => {
     setItems((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
+  };
+
+  const toggleCourse = (productId: string, courseId: string, checked: boolean) => {
+    setProductCourses((prev) => {
+      const next = { ...prev };
+      const set = new Set(next[productId] ?? []);
+      if (checked) set.add(courseId); else set.delete(courseId);
+      next[productId] = set;
+      return next;
+    });
   };
 
   const save = async (item: HublaProduct) => {
@@ -55,9 +95,22 @@ export default function HublaProductsManager() {
         price_cents: item.price_cents,
       })
       .eq("id", item.id);
+    if (error) { setSavingId(null); toast.error(error.message); return; }
+
+    // Sync hubla_product_courses: delete-all + re-insert is simplest
+    const selected = Array.from(productCourses[item.id] ?? []);
+    const { error: delErr } = await supabase
+      .from("hubla_product_courses")
+      .delete()
+      .eq("product_mapping_id", item.id);
+    if (delErr) { setSavingId(null); toast.error(delErr.message); return; }
+    if (selected.length > 0) {
+      const rows = selected.map((cid) => ({ product_mapping_id: item.id, course_id: cid }));
+      const { error: insErr } = await supabase.from("hubla_product_courses").insert(rows);
+      if (insErr) { setSavingId(null); toast.error(insErr.message); return; }
+    }
     setSavingId(null);
-    if (error) toast.error(error.message);
-    else toast.success(`${item.display_name} salvo!`);
+    toast.success(`${item.display_name} salvo!`);
   };
 
   const copyWebhook = () => {
@@ -152,6 +205,39 @@ export default function HublaProductsManager() {
                   <div className="flex items-center gap-2"><Switch checked={item.grants_ebook1} disabled /> E-book 1</div>
                   <div className="flex items-center gap-2"><Switch checked={item.grants_ebook2} disabled /> E-book 2</div>
                   <div className="flex items-center gap-2"><Switch checked={item.grants_ebook3} disabled /> E-book 3</div>
+                </div>
+              </div>
+
+              <div className="border-t pt-3 space-y-2">
+                <Label className="text-xs">
+                  Cursos liberados ao comprar este produto
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Marque todos os cursos que devem ser desbloqueados automaticamente
+                  para o aluno quando ele finalizar esta compra na Hubla.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  {courses.map((c) => {
+                    const checked = productCourses[item.id]?.has(c.id) ?? false;
+                    return (
+                      <label
+                        key={c.id}
+                        className="flex items-center gap-2 text-sm rounded-md border border-border/50 px-2 py-1.5 cursor-pointer hover:bg-muted/40"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) => toggleCourse(item.id, c.id, !!v)}
+                        />
+                        <span className="flex-1">{c.title}</span>
+                        <span className="text-[10px] uppercase text-muted-foreground font-mono">
+                          {c.level} · {c.required_tier}
+                        </span>
+                      </label>
+                    );
+                  })}
+                  {courses.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Nenhum curso publicado.</p>
+                  )}
                 </div>
               </div>
 
