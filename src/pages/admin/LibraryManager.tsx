@@ -205,7 +205,15 @@ export default function LibraryManager() {
               <Label>Arquivo PDF / E-book</Label>
               <div className="flex gap-2 items-center">
                 <Input type="file" accept="application/pdf,application/epub+zip" onChange={(e) => handleUpload(e, "file_url")} disabled={uploadingFile} />
-                {form.file_url && <a href={form.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver arquivo</a>}
+                {form.file_url && (
+                  <button 
+                    type="button"
+                    onClick={() => setReadingItem({ url: form.file_url, title: form.title })}
+                    className="text-xs text-accent hover:underline whitespace-nowrap bg-transparent border-none cursor-pointer"
+                  >
+                    Ver arquivo
+                  </button>
+                )}
               </div>
               {uploadingFile && <p className="text-xs text-muted-foreground">Enviando...</p>}
             </div>
