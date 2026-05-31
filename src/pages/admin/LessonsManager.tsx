@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Video, FileText, ExternalLink, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { PdfReader } from "@/components/library/PdfReader";
 
 interface Lesson {
   id: string;
@@ -89,6 +90,7 @@ export default function LessonsManager() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videos, setVideos] = useState<LessonVideo[]>([]);
   const [videoCounts, setVideoCounts] = useState<Record<string, number>>({});
+  const [readingPdf, setReadingPdf] = useState<{ url: string; title: string } | null>(null);
 
   const load = async () => {
     const [{ data: lsn }, { data: mods }, { data: vids }] = await Promise.all([
@@ -351,7 +353,15 @@ export default function LessonsManager() {
               <Label>PDF da Aula</Label>
               <div className="flex gap-2 items-center">
                 <Input type="file" accept="application/pdf" onChange={(e) => handleFileUpload(e, "pdf")} disabled={uploadingPdf} />
-                {form.pdf_url && <a href={form.pdf_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver PDF</a>}
+                {form.pdf_url && (
+                  <button 
+                    type="button"
+                    onClick={() => setReadingPdf({ url: form.pdf_url, title: form.title })}
+                    className="text-xs text-accent hover:underline whitespace-nowrap bg-transparent border-none cursor-pointer"
+                  >
+                    Ver PDF
+                  </button>
+                )}
               </div>
               {uploadingPdf && <p className="text-xs text-muted-foreground">Enviando PDF...</p>}
             </div>
@@ -378,6 +388,15 @@ export default function LessonsManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {readingPdf && (
+        <PdfReader
+          isOpen={!!readingPdf}
+          onClose={() => setReadingPdf(null)}
+          url={readingPdf.url}
+          title={readingPdf.title}
+        />
+      )}
     </div>
   );
 }

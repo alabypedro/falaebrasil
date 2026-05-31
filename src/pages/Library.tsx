@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
+import { PdfReader } from "@/components/library/PdfReader";
 
 interface LibraryItem {
   id: string;
@@ -56,10 +57,12 @@ function ItemCard({
   item,
   locked,
   onUnlockClick,
+  onReadClick,
 }: {
   item: LibraryItem;
   locked: boolean;
   onUnlockClick: () => void;
+  onReadClick: (item: LibraryItem) => void;
 }) {
   // Defesa em profundidade: se a URL não veio (a view safe nulifica quando não há acesso),
   // tratamos como bloqueado independentemente do que o estado do client diga.
@@ -101,10 +104,13 @@ function ItemCard({
           <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
         </div>
         {item.type === "ebook" && item.file_url ? (
-          <Button variant="outline" size="sm" className="w-full" asChild>
-            <a href={item.file_url} target="_blank" rel="noopener noreferrer">
-              <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
-            </a>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full" 
+            onClick={() => onReadClick(item)}
+          >
+            <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
           </Button>
         ) : item.type === "audiobook" && item.audio_url ? (
           <div className="space-y-2">
@@ -125,6 +131,7 @@ export default function Library() {
   const [products, setProducts] = useState<Record<string, ProductInfo>>({});
   const [loading, setLoading] = useState(true);
   const [upsellItem, setUpsellItem] = useState<LibraryItem | null>(null);
+  const [readingItem, setReadingItem] = useState<LibraryItem | null>(null);
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
 
@@ -199,6 +206,7 @@ export default function Library() {
                     item={item}
                     locked={locked}
                     onUnlockClick={() => setUpsellItem(item)}
+                    onReadClick={(item) => setReadingItem(item)}
                   />
                 );
               })}
@@ -219,6 +227,14 @@ export default function Library() {
           checkoutUrl={upsellProduct?.checkout_url ?? null}
           requiresCourseFirst={!profile?.has_course_access}
           description={`Para acessar "${upsellItem.title}" você precisa adquirir o Order Bump correspondente junto com o curso Essential Pro A1.`}
+        />
+      )}
+      {readingItem && readingItem.file_url && (
+        <PdfReader
+          isOpen={!!readingItem}
+          onClose={() => setReadingItem(null)}
+          url={readingItem.file_url}
+          title={readingItem.title}
         />
       )}
     </div>

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, BookOpen, Headphones } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { PdfReader } from "@/components/library/PdfReader";
 
 interface LibraryItem {
   id: string;
@@ -39,6 +40,7 @@ export default function LibraryManager() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [filterType, setFilterType] = useState<string>("all");
+  const [readingItem, setReadingItem] = useState<{ url: string; title: string } | null>(null);
 
   const load = async () => {
     const { data } = await supabase.from("library_bst").select("*").order("created_at", { ascending: false });
@@ -203,7 +205,15 @@ export default function LibraryManager() {
               <Label>Arquivo PDF / E-book</Label>
               <div className="flex gap-2 items-center">
                 <Input type="file" accept="application/pdf,application/epub+zip" onChange={(e) => handleUpload(e, "file_url")} disabled={uploadingFile} />
-                {form.file_url && <a href={form.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline whitespace-nowrap">Ver arquivo</a>}
+                {form.file_url && (
+                  <button 
+                    type="button"
+                    onClick={() => setReadingItem({ url: form.file_url, title: form.title })}
+                    className="text-xs text-accent hover:underline whitespace-nowrap bg-transparent border-none cursor-pointer"
+                  >
+                    Ver arquivo
+                  </button>
+                )}
               </div>
               {uploadingFile && <p className="text-xs text-muted-foreground">Enviando...</p>}
             </div>
@@ -222,6 +232,15 @@ export default function LibraryManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {readingItem && (
+        <PdfReader
+          isOpen={!!readingItem}
+          onClose={() => setReadingItem(null)}
+          url={readingItem.url}
+          title={readingItem.title}
+        />
+      )}
     </div>
   );
 }

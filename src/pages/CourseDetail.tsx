@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
+import { PdfReader } from "@/components/library/PdfReader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,6 +100,7 @@ export default function CourseDetail() {
   const [allCourseVideos, setAllCourseVideos] = useState<{ id: string; lesson_id: string }[]>([]);
   const [completedCourseVideos, setCompletedCourseVideos] = useState<Set<string>>(new Set());
   const [hasIndividualGrant, setHasIndividualGrant] = useState(false);
+  const [readingPdf, setReadingPdf] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = async () => {
     if (!courseId || !user) return;
@@ -494,10 +496,13 @@ export default function CourseDetail() {
                     </div>
                     <div className="flex flex-wrap gap-2 md:flex-shrink-0 md:justify-end">
                       {activeLesson.pdf_url && (
-                        <Button variant="outline" size="sm" asChild className="flex-1 min-w-[110px] md:flex-none">
-                          <a href={activeLesson.pdf_url} target="_blank" rel="noopener noreferrer">
-                            <FileText className="h-4 w-4 mr-1" /> PDF
-                          </a>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setReadingPdf({ url: activeLesson.pdf_url!, title: activeLesson.title })}
+                          className="flex-1 min-w-[110px] md:flex-none"
+                        >
+                          <FileText className="h-4 w-4 mr-1" /> PDF
                         </Button>
                       )}
                       {activeLesson.practice_text && (
@@ -595,6 +600,15 @@ export default function CourseDetail() {
           </CardContent>
         </Card>
       </div>
+
+      {readingPdf && (
+        <PdfReader
+          isOpen={!!readingPdf}
+          onClose={() => setReadingPdf(null)}
+          url={readingPdf.url}
+          title={readingPdf.title}
+        />
+      )}
     </div>
   );
 }
