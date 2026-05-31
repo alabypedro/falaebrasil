@@ -322,6 +322,42 @@ export type Database = {
         }
         Relationships: []
       }
+      hubla_product_courses: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          product_mapping_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          product_mapping_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          product_mapping_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hubla_product_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hubla_product_courses_product_mapping_id_fkey"
+            columns: ["product_mapping_id"]
+            isOneToOne: false
+            referencedRelation: "hubla_product_mapping"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hubla_product_mapping: {
         Row: {
           checkout_url: string | null
@@ -901,6 +937,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_course_access: {
+        Row: {
+          course_id: string
+          granted_at: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          granted_at?: string
+          id?: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          granted_at?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_course_access_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_progress: {
         Row: {
           completed_at: string
@@ -1242,6 +1310,7 @@ export type Database = {
         Returns: Json
       }
       has_bst_item_access: { Args: { _access_key: string }; Returns: boolean }
+      has_course_access: { Args: { _course_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
