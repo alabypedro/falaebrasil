@@ -25,6 +25,7 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
   const [pageNumber, setPageNumber] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [scale, setScale] = useState(1.0);
 
   useEffect(() => {
     const updateWidth = () => {
