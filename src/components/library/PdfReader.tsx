@@ -125,6 +125,24 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800 h-7 w-7 md:h-8 md:w-8 hidden md:flex"
+                onClick={() => setScale(prev => Math.max(0.5, prev - 0.1))}
+                title="Diminuir zoom"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800 h-7 w-7 md:h-8 md:w-8 hidden md:flex"
+                onClick={() => setScale(prev => Math.min(2, prev + 0.1))}
+                title="Aumentar zoom"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 className="text-zinc-400 hover:text-white hover:bg-zinc-800 h-7 w-7 md:h-8 md:w-8"
                 onClick={() => setIsFullscreen(!isFullscreen)}
                 title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
