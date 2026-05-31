@@ -232,6 +232,15 @@ export default function LibraryManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {readingItem && (
+        <PdfReader
+          isOpen={!!readingItem}
+          onClose={() => setReadingItem(null)}
+          url={readingItem.url}
+          title={readingItem.title}
+        />
+      )}
     </div>
   );
 }
