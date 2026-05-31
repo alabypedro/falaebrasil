@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
+import { PdfReader } from "@/components/library/PdfReader";
 
 interface LibraryItem {
   id: string;
