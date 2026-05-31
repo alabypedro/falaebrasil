@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
+import { PdfReader } from "@/components/library/PdfReader";
 import {
   AlertDialog,
   AlertDialogAction,
