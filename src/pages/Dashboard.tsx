@@ -30,7 +30,7 @@ export default function Dashboard() {
   const { profile, user } = useAuth();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
-  const gpaData = useMonthlyGPA(user?.id);
+  const gpaData = useGPA(user?.id);
 
   useEffect(() => {
     if (!user) return;
