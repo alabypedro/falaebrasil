@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import OnboardingTutorialModal from "@/components/OnboardingTutorialModal";
-import { useMonthlyGPA } from "@/hooks/useMonthlyGPA";
+import { useGPA } from "@/hooks/useGPA";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
