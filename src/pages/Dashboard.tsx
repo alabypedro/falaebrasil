@@ -152,7 +152,7 @@ export default function Dashboard() {
                             <span className="font-bold text-primary">{gpaData.bestUnscripted?.toFixed(1) ?? "—"}</span>
                           </div>
                           <p className="text-[10px] text-muted-foreground text-center">
-                            A média GPA é calculada a partir destes três pilares.
+                            A média é calculada a partir destes três pilares.
                           </p>
                         </div>
                       </DialogContent>
