@@ -33,11 +33,19 @@ export function useMonthlyGPA(userId: string | undefined): MonthlyGPA {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
       const [{ data: quizzes }, { data: voices }] = await Promise.all([
-        supabase.from("quiz_attempts").select("score, created_at").eq("user_id", userId).gte("created_at", monthStart),
+        supabase.from("quiz_attempts").select("quiz_id, score, created_at").eq("user_id", userId).gte("created_at", monthStart).order('created_at', { ascending: false }),
         supabase.from("voice_sessions").select("mode, accuracy_score, fluency_score, prosody_score, created_at").eq("user_id", userId).gte("created_at", monthStart),
       ]);
 
-      const quizScores = (quizzes ?? []).map((q: any) => Number(q.score)).filter((n) => !isNaN(n));
+      // Use a Map to keep only the most recent attempt per quiz_id
+      const latestQuizzes = new Map<string, number>();
+      (quizzes ?? []).forEach((q: any) => {
+        if (!latestQuizzes.has(q.quiz_id)) {
+          latestQuizzes.set(q.quiz_id, Number(q.score));
+        }
+      });
+
+      const quizScores = Array.from(latestQuizzes.values()).filter((n) => !isNaN(n));
       const quizAvg = quizScores.length ? quizScores.reduce((a, b) => a + b, 0) / quizScores.length : null;
 
       const voiceAvg = (v: any): number | null => {
