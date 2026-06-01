@@ -96,11 +96,26 @@ export default function InlineQuiz({ quizId, onNext, hasNext }: { quizId: string
     setSubmitted(true);
   };
 
-  const retry = () => {
+  const retry = async () => {
+    if (!user || !quizId) return;
+    
+    // Zera a nota no banco de dados deletando a tentativa
+    const { error } = await supabase
+      .from("quiz_attempts")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("quiz_id", quizId);
+      
+    if (error) {
+      console.error("Erro ao resetar quiz:", error);
+    }
+
     setAnswers({});
     setCurrent(0);
     setSubmitted(false);
     setResults({});
+    setScore(0);
+    setPassed(false);
   };
 
   if (loading) return null;
