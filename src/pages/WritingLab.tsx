@@ -223,12 +223,21 @@ export default function WritingLab() {
                   {m.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
                 <div className={cn(
-                  "rounded-2xl px-4 py-2 text-sm",
+                  "rounded-2xl px-4 py-2 text-sm relative group",
                   m.role === 'user' 
                     ? "bg-primary text-primary-foreground rounded-tr-none" 
                     : "bg-sidebar-accent/80 text-sidebar-foreground rounded-tl-none border border-sidebar-border/30"
                 )}>
                   <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                  {m.role === 'assistant' && (
+                    <button 
+                      onClick={() => speakMessage(m.content)}
+                      className="absolute -right-8 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-primary"
+                      title="Ouvir mensagem"
+                    >
+                      <Volume2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
