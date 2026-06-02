@@ -451,7 +451,7 @@ export default function ListeningLab() {
         </CardHeader>
         
         <CardContent className="flex-1 space-y-6">
-          {currentPart === 1 && (
+          {currentPart === 1 && currentContent.part1 && (
             <div className="space-y-6">
               <div className="aspect-video relative rounded-lg overflow-hidden bg-muted border">
                 {currentContent.part1.image_url ? (
@@ -461,7 +461,7 @@ export default function ListeningLab() {
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {currentContent.part1.options.map((opt: any, i: number) => (
+                {(currentContent.part1.options || []).map((opt: any, i: number) => (
                   <div key={i} className="flex flex-col gap-2">
                     <Button 
                       variant={currentAnswer === i ? "default" : "outline"} 
