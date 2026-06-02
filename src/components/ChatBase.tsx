@@ -356,7 +356,22 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       </div>
 
       {mode === 'writing' && (
-        <Card className="mb-6 bg-accent/5 border-accent/20">
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {(Object.keys(levels) as Array<keyof typeof levels>).map((level) => (
+              <Button
+                key={level}
+                variant={selectedLevel === level ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedLevel(level)}
+                className="w-12 h-12 rounded-full font-bold"
+              >
+                {level}
+              </Button>
+            ))}
+          </div>
+
+          <Card className="bg-accent/5 border-accent/20">
           <div className="p-6 text-center space-y-3">
             <p className="text-xs text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
             {topicLoading ? (
