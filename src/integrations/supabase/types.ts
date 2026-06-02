@@ -619,6 +619,36 @@ export type Database = {
         }
         Relationships: []
       }
+      listening_lessons: {
+        Row: {
+          content: Json
+          created_at: string
+          description: string | null
+          id: string
+          level: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          level?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          level?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       modules: {
         Row: {
           course_id: string
