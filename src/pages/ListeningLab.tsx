@@ -413,55 +413,7 @@ export default function ListeningLab() {
     );
   }
 
-  // Normalize content: lessons may use either the legacy { part1, part2, part3, part4 }
-  // schema, or the newer { parts: [...] } array schema. Convert the array form to legacy.
-  const normalizeContent = (raw: any) => {
-    if (!raw) return null;
-    if (raw.part1) return raw;
-    if (!Array.isArray(raw.parts)) return null;
-    const findPart = (n: number) => raw.parts.find((p: any) => p.part_number === n) || raw.parts[n - 1];
-    const p1 = findPart(1) || {};
-    const p2 = findPart(2) || {};
-    const p3 = findPart(3) || {};
-    const p4 = findPart(4) || {};
-    return {
-      part1: {
-        image_url: p1.image_url || raw.image_url,
-        correct_index: p1.correct_index ?? 0,
-        options: (p1.options || []).map((o: any) => (typeof o === "string" ? { script: o } : o)),
-      },
-      part2: (p2.questions || []).map((q: any) => ({
-        question_script: q.question_script || q.question,
-        correct_index: q.correct_index ?? 0,
-        options: (q.options || []).map((o: any) => (typeof o === "string" ? { script: o } : o)),
-      })),
-      part3: {
-        dialogue: p3.dialogue || [],
-        questions: (p3.questions || []).map((q: any) => ({
-          enunciado: q.enunciado || q.question,
-          correct_index: q.correct_index ?? 0,
-          options: (q.options || []).map((o: any) => (typeof o === "string" ? o : o.script)),
-        })),
-      },
-      part4: {
-        script: p4.script || p4.text,
-        questions: (p4.questions || []).map((q: any) => ({
-          enunciado: q.enunciado || q.question,
-          correct_index: q.correct_index ?? 0,
-          options: (q.options || []).map((o: any) => (typeof o === "string" ? o : o.script)),
-        })),
-      },
-    };
-  };
-  const currentContent = normalizeContent(selectedLesson.content);
-  if (!currentContent) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center space-y-4">
-        <p className="text-muted-foreground">Esta lição está em formato incompatível.</p>
-        <Button onClick={() => setSelectedLesson(null)}>Voltar</Button>
-      </div>
-    );
-  }
+  const currentContent = selectedLesson.content;
   const currentAnswer = answers[`${currentPart}-${currentQuestionInPart}`];
 
   return (
