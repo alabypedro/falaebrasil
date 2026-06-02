@@ -37,6 +37,8 @@ import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
 import ContractsManager from "@/pages/admin/ContractsManager";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
+import { useEffect } from "react";
+import { registerPushNotification, updateLastActivity } from "@/services/pushNotifications";
 
 const queryClient = new QueryClient();
 
@@ -78,15 +80,12 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 const App = () => {
   useEffect(() => {
     const initNotifications = async () => {
-      // Pedir permissão e registrar apenas se o usuário estiver logado
-      // O registerPushNotification já verifica internamente se tem usuário
       await registerPushNotification();
       await updateLastActivity();
     };
     
     initNotifications();
 
-    // Atualizar atividade ao interagir com a página
     const handleActivity = () => updateLastActivity();
     window.addEventListener('mousedown', handleActivity);
     window.addEventListener('keydown', handleActivity);
@@ -98,68 +97,69 @@ const App = () => {
   }, []);
 
   return (
-
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/welcome" element={<Welcome />} />
-            <Route path="/install" element={<Install />} />
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/courses" element={<Courses />} />
-                      <Route path="/courses/:courseId" element={<CourseDetail />} />
-                      <Route path="/voice-lab" element={<VoiceLab />} />
-                      <Route path="/library" element={<Library />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/tutoriais" element={<Tutoriais />} />
-                      <Route path="/communities" element={<Communities />} />
-                      <Route path="/contratos" element={<Contratos />} />
-                      <Route path="/quiz/:quizId" element={<QuizPlayer />} />
-                      <Route path="/success" element={<Success />} />
-                      <Route
-                        path="/admin/*"
-                        element={
-                          <AdminRoute>
-                            <AdminLayout />
-                          </AdminRoute>
-                        }
-                      >
-                        <Route index element={<AdminDashboard />} />
-                        <Route path="courses" element={<CoursesManager />} />
-                        <Route path="modules" element={<ModulesManager />} />
-                        <Route path="lessons" element={<LessonsManager />} />
-                        <Route path="quizzes" element={<QuizzesManager />} />
-                        <Route path="library" element={<LibraryManager />} />
-                        <Route path="prompts" element={<PromptsManager />} />
-                        <Route path="tutorials" element={<TutorialsManager />} />
-                        <Route path="install-videos" element={<InstallTutorialVideosManager />} />
-                        <Route path="communities" element={<CommunitiesManager />} />
-                        <Route path="contracts" element={<ContractsManager />} />
-                        <Route path="admins" element={<AdminsManager />} />
-                        <Route path="hubla" element={<HublaProductsManager />} />
-                        <Route path="welcome-email" element={<WelcomeEmailSender />} />
-                      </Route>
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/welcome" element={<Welcome />} />
+              <Route path="/install" element={<Install />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/courses" element={<Courses />} />
+                        <Route path="/courses/:courseId" element={<CourseDetail />} />
+                        <Route path="/voice-lab" element={<VoiceLab />} />
+                        <Route path="/library" element={<Library />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/tutoriais" element={<Tutoriais />} />
+                        <Route path="/communities" element={<Communities />} />
+                        <Route path="/contratos" element={<Contratos />} />
+                        <Route path="/quiz/:quizId" element={<QuizPlayer />} />
+                        <Route path="/success" element={<Success />} />
+                        <Route
+                          path="/admin/*"
+                          element={
+                            <AdminRoute>
+                              <AdminLayout />
+                            </AdminRoute>
+                          }
+                        >
+                          <Route index element={<AdminDashboard />} />
+                          <Route path="courses" element={<CoursesManager />} />
+                          <Route path="modules" element={<ModulesManager />} />
+                          <Route path="lessons" element={<LessonsManager />} />
+                          <Route path="quizzes" element={<QuizzesManager />} />
+                          <Route path="library" element={<LibraryManager />} />
+                          <Route path="prompts" element={<PromptsManager />} />
+                          <Route path="tutorials" element={<TutorialsManager />} />
+                          <Route path="install-videos" element={<InstallTutorialVideosManager />} />
+                          <Route path="communities" element={<CommunitiesManager />} />
+                          <Route path="contracts" element={<ContractsManager />} />
+                          <Route path="admins" element={<AdminsManager />} />
+                          <Route path="hubla" element={<HublaProductsManager />} />
+                          <Route path="welcome-email" element={<WelcomeEmailSender />} />
+                        </Route>
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
