@@ -26,7 +26,7 @@ export default function WritingLab() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { isRecording, startRecording, stopRecording, recordings } = useAudioRecorder();
 
