@@ -146,16 +146,17 @@ export default function ListeningManager() {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `lesson-images/${fileName}`;
+      const filePath = `listening/${fileName}`;
+      const bucketName = 'lesson-files';
 
       const { error: uploadError } = await supabase.storage
-        .from('listening-images')
+        .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('listening-images')
+        .from(bucketName)
         .getPublicUrl(filePath);
 
       updatePart1("image_url", publicUrl);
