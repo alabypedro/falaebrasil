@@ -37,23 +37,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    let recent: string[] = [];
+    let requestedLevel: string | null = null;
+    try {
+      const body = await req.json();
+      if (Array.isArray(body?.recent)) {
+        recent = body.recent.filter((s: unknown): s is string => typeof s === "string").slice(0, 8);
+      }
+      requestedLevel = body?.level;
+    } catch (_) {
+      // no body is fine
+    }
+
     const { data: profile } = await userClient
       .from("profiles")
       .select("level")
       .eq("user_id", userData.user.id)
       .single();
 
-    const userLevel = profile?.level || "A1";
-
-    let recent: string[] = [];
-    try {
-      const body = await req.json();
-      if (Array.isArray(body?.recent)) {
-        recent = body.recent.filter((s: unknown): s is string => typeof s === "string").slice(0, 8);
-      }
-    } catch (_) {
-      // no body is fine
-    }
+    const userLevel = requestedLevel || profile?.level || "A1";
 
     if (!LOVABLE_API_KEY) {
       const fallback = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
