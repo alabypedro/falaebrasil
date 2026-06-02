@@ -9,6 +9,7 @@ import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Courses from "@/pages/Courses";
 import VoiceLab from "@/pages/VoiceLab";
+import WritingLab from "@/pages/WritingLab";
 import Library from "@/pages/Library";
 import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
