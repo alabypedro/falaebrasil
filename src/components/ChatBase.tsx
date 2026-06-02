@@ -487,28 +487,6 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
                 />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  {isRecording ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={stopRecording}
-                      className="h-7 w-7 text-destructive animate-pulse"
-                    >
-                      <Square className="h-4 w-4 fill-current" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => startRecording()}
-                      disabled={isLoading}
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
-                    >
-                      <Mic className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
               </div>
               {mode === 'writing' && (
