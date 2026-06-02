@@ -395,6 +395,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             </Button>
           </div>
         </Card>
+        </div>
       )}
 
       <Card className="flex-1 overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50">
