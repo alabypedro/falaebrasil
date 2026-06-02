@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
         "3. Wait for the user to respond.\n" +
         "4. Provide feedback on their answer and explain why it is correct or incorrect EXCLUSIVELY in English.\n\n" +
         "Keep the conversation flow natural and professional. Always encourage the user to listen carefully."
-      : "Você é uma banca avaliadora oficial de proficiência em inglês (padrão TOEIC/CEFR). O aluno recebeu a tarefa de escrever um storytelling sobre uma foto ou tema. Analise o texto enviado pelo aluno e retorne sempre um feedback estruturado contendo: Nota Geral (0-100), Erros Gramaticais (com correção e explicação em português), Vocabulário e Sugestão de Melhoria. Continue a conversa incentivando o aluno a escrever mais.";
+      : "You are an official English proficiency examiner (TOEIC/CEFR standard). The student has been assigned to write a storytelling or essay based on a photo or theme. Analyze the text sent by the student and always return a structured feedback in English containing: General Score (0-100), Grammatical Errors (with correction and explanation in English), Vocabulary, and Suggestion for Improvement. Continue the conversation in English encouraging the student to write more.";
 
     const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-02-15-preview`;
 
