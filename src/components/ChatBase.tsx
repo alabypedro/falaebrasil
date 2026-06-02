@@ -31,6 +31,16 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [currentTopic, setCurrentTopic] = useState<string | null>(null);
   const [topicLoading, setTopicLoading] = useState(false);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
+  const [selectedLevel, setSelectedLevel] = useState<'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>('A1');
+
+  const levels = {
+    'A1': 100,
+    'A2': 150,
+    'B1': 200,
+    'B2': 250,
+    'C1': 300,
+    'C2': 350
+  };
 
   const { isRecording, startRecording, stopRecording, recordings } = useAudioRecorder();
 
