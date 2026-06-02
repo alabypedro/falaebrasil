@@ -327,10 +327,10 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                         "absolute -right-8 top-1 transition-opacity p-1 hover:text-primary",
                         currentSpeakingId === m.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                       )}
-                      title={currentSpeakingId === m.id && !isPaused ? "Pausar" : "Ouvir"}
+                      title={currentSpeakingId === m.id && isSpeaking && !isPaused ? "Pausar" : "Ouvir"}
                     >
-                      {currentSpeakingId === m.id && isSpeaking && !isPaused ? (
-                        <Pause className="h-4 w-4" />
+                      {currentSpeakingId === m.id && isSpeaking ? (
+                        isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />
                       ) : (
                         <Volume2 className="h-4 w-4" />
                       )}
