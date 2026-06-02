@@ -429,14 +429,40 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             }}
             className="flex items-center gap-2"
           >
-            <div className="relative flex-1 flex flex-col gap-1">
-              <Input
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder={mode === 'writing' ? "Escreva seu texto (máx 100 palavras)..." : "Escreva algo..."}
-                disabled={isLoading}
-                className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
-              />
+            <div className="flex-1 flex flex-col gap-1">
+              <div className="relative">
+                <Input
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder={mode === 'writing' ? "Escreva seu texto (máx 100 palavras)..." : "Escreva algo..."}
+                  disabled={isLoading}
+                  className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {isRecording ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={stopRecording}
+                      className="h-7 w-7 text-destructive animate-pulse"
+                    >
+                      <Square className="h-4 w-4 fill-current" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => startRecording()}
+                      disabled={isLoading}
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
               {mode === 'writing' && (
                 <div className={cn(
                   "text-[10px] self-end px-1",
@@ -445,30 +471,6 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   {inputText.trim().split(/\s+/).filter(Boolean).length}/100 palavras
                 </div>
               )}
-              <div className="absolute right-2 top-[18px] -translate-y-1/2 flex items-center gap-1">
-                {isRecording ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={stopRecording}
-                    className="h-7 w-7 text-destructive animate-pulse"
-                  >
-                    <Square className="h-4 w-4 fill-current" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => startRecording()}
-                    disabled={isLoading}
-                    className="h-7 w-7 text-muted-foreground hover:text-primary"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
             </div>
             <Button 
               type="submit" 
