@@ -300,23 +300,115 @@ export default function ListeningLab() {
   }
 
   if (finished) {
+    const content = selectedLesson.content;
+    const questionsList = [
+      {
+        question: "Descrição de Foto",
+        userAnswer: answers['1-0'],
+        correctAnswer: content.part1.correct_index,
+        options: content.part1.options.map((o: any) => `Alternativa ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
+      },
+      ...content.part2.map((q: any, i: number) => ({
+        question: `Pergunta & Resposta ${i + 1}`,
+        userAnswer: answers[`2-${i}`],
+        correctAnswer: q.correct_index,
+        options: q.options.map((o: any, idx: number) => `Resposta ${String.fromCharCode(65 + idx)}`)
+      })),
+      ...content.part3.questions.map((q: any, i: number) => ({
+        question: q.enunciado,
+        userAnswer: answers[`3-${i}`],
+        correctAnswer: q.correct_index,
+        options: q.options
+      })),
+      ...content.part4.questions.map((q: any, i: number) => ({
+        question: q.enunciado,
+        userAnswer: answers[`4-${i}`],
+        correctAnswer: q.correct_index,
+        options: q.options
+      }))
+    ];
+
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <Card className="text-center p-8">
-          <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-3xl font-bold mb-2">Prática Finalizada!</h2>
-          <p className="text-muted-foreground mb-6">Você completou as 10 questões da lição.</p>
+      <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
+        <Card className="text-center p-8 bg-card/50 backdrop-blur-sm border-white/10 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/50 via-primary to-primary/50" />
+          <div className="flex justify-center mb-6">
+            <div className="p-4 rounded-full bg-green-500/10 text-green-500 border border-green-500/20">
+              <CheckCircle2 className="h-12 w-12" />
+            </div>
+          </div>
+          <h2 className="text-4xl font-black mb-2 tracking-tight">Prática Finalizada!</h2>
+          <p className="text-muted-foreground mb-8 text-lg">Você completou as 10 questões da lição.</p>
           
-          <div className="bg-muted p-6 rounded-xl mb-8">
-            <p className="text-sm uppercase text-muted-foreground font-semibold">Sua Pontuação</p>
-            <p className="text-5xl font-black text-primary mt-1">{score} <span className="text-2xl text-muted-foreground">/ 10</span></p>
+          <div className="bg-muted/30 p-8 rounded-2xl mb-8 border border-white/5 inline-block min-w-[300px]">
+            <p className="text-xs uppercase text-muted-foreground font-black tracking-widest mb-2">SUA PONTUAÇÃO</p>
+            <p className="text-7xl font-black text-primary flex items-baseline justify-center gap-2">
+              {score} <span className="text-3xl text-muted-foreground/50 font-medium">/ 10</span>
+            </p>
           </div>
 
           <div className="flex gap-4 justify-center">
-            <Button variant="outline" onClick={() => setSelectedLesson(null)}>Voltar para Lições</Button>
-            <Button onClick={() => startLesson(selectedLesson)}>Tentar Novamente</Button>
+            <Button variant="outline" size="lg" className="rounded-full px-8" onClick={() => setSelectedLesson(null)}>
+              Voltar para Lições
+            </Button>
+            <Button size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20" onClick={() => startLesson(selectedLesson)}>
+              Tentar Novamente
+            </Button>
           </div>
         </Card>
+
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold px-2">Revisão da Prática</h3>
+          <div className="grid gap-4">
+            {questionsList.map((q, idx) => {
+              const isCorrect = q.userAnswer === q.correctAnswer;
+              return (
+                <div 
+                  key={idx} 
+                  className={cn(
+                    "p-6 rounded-2xl border transition-all duration-300",
+                    isCorrect 
+                      ? "bg-green-500/5 border-green-500/20" 
+                      : "bg-red-500/5 border-red-500/20"
+                  )}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "mt-1 p-1.5 rounded-full border shrink-0",
+                      isCorrect ? "text-green-500 border-green-500/20 bg-green-500/10" : "text-red-500 border-red-500/20 bg-red-500/10"
+                    )}>
+                      {isCorrect ? <CheckCircle2 className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <p className="font-bold text-lg leading-tight">{idx + 1}. {q.question}</p>
+                      <div className="space-y-1 text-sm">
+                        <p className={cn(
+                          "flex items-center gap-2",
+                          isCorrect ? "text-green-500/90" : "text-red-500/90"
+                        )}>
+                          <span className="font-semibold">Sua:</span> {q.options[q.userAnswer] || "Não respondida"}
+                        </p>
+                        <p className="text-muted-foreground flex items-center gap-2">
+                          <span className="font-semibold">Correta:</span> {isCorrect ? q.options[q.correctAnswer] : "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex justify-center pt-8">
+          <Button 
+            variant="ghost" 
+            className="gap-2 text-muted-foreground hover:text-primary transition-colors"
+            onClick={() => setSelectedLesson(null)}
+          >
+            <RotateCcw className="h-4 w-4" /> Tentar Outra Lição
+          </Button>
+        </div>
       </div>
     );
   }
