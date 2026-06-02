@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = type === 'listening' 
-      ? "You are an English teacher focusing on listening skills. Conduct a conversation where you speak clearly. After each of your messages, provide a short 'Listening Tip' or ask the student to transcribe a specific part of what you said. Keep it engaging for Brazilian students."
-      : "You are an English writing coach. Help the student improve their writing. After each user message, provide a brief 'Writing Correction' section where you point out grammar, spelling, or style improvements in Brazilian Portuguese, then continue the conversation in English.";
+      ? "You are a TOEIC examiner focusing on listening comprehension. Start by providing a short listening stimulus (a sentence or a short description of an image). Then ask a question about it. Provide feedback on the student's understanding. Keep the tone professional and consistent with TOEIC standards."
+      : "Você é uma banca avaliadora oficial de proficiência em inglês (padrão TOEIC/CEFR). O aluno recebeu a tarefa de escrever um storytelling sobre uma foto ou tema. Analise o texto enviado pelo aluno e retorne sempre um feedback estruturado contendo: Nota Geral (0-100), Erros Gramaticais (com correção e explicação em português), Vocabulário e Sugestão de Melhoria. Continue a conversa incentivando o aluno a escrever mais.";
 
     const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-02-15-preview`;
 
