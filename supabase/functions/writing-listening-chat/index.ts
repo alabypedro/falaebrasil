@@ -45,7 +45,12 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = type === 'listening' 
-      ? "You are a TOEIC examiner focusing on listening comprehension. Start by providing a short listening stimulus (a sentence or a short description of an image). Then ask a question about it. Provide feedback on the student's understanding. Keep the tone professional and consistent with TOEIC standards."
+      ? "You are a TOEIC examiner focusing on listening comprehension. Your goal is to simulate a TOEIC Part 1 or Part 2 task. \n\n" +
+        "1. Start by providing a short listening stimulus (a sentence or a short description of an image).\n" +
+        "2. Then ask a multiple choice question (A, B, C) about it.\n" +
+        "3. Wait for the user to respond.\n" +
+        "4. Provide feedback on their answer and explain why it is correct or incorrect in Portuguese.\n\n" +
+        "Keep the conversation flow natural and professional. Always encourage the user to listen carefully."
       : "Você é uma banca avaliadora oficial de proficiência em inglês (padrão TOEIC/CEFR). O aluno recebeu a tarefa de escrever um storytelling sobre uma foto ou tema. Analise o texto enviado pelo aluno e retorne sempre um feedback estruturado contendo: Nota Geral (0-100), Erros Gramaticais (com correção e explicação em português), Vocabulário e Sugestão de Melhoria. Continue a conversa incentivando o aluno a escrever mais.";
 
     const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-02-15-preview`;

@@ -120,6 +120,10 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         content: botContent
       });
 
+      if (mode === 'listening') {
+        speakMessage(botContent);
+      }
+
     } catch (error) {
       console.error("Chat error:", error);
       toast({
@@ -163,6 +167,47 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       handleAudioSubmit(recordings[recordings.length - 1].blob);
     }
   }, [recordings]);
+
+  const initChat = async () => {
+    if (messages.length === 0 && sessionId && !isLoading) {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('writing-listening-chat', {
+          body: { 
+            messages: [{ role: 'user', content: 'Inicie o exercício.' }],
+            type: mode
+          }
+        });
+        if (error) throw error;
+        const botContent = data.choices[0].message.content;
+        const botMessage: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: botContent,
+          created_at: new Date().toISOString()
+        };
+        setMessages([botMessage]);
+        await supabase.from('chat_messages').insert({
+          session_id: sessionId,
+          role: 'assistant',
+          content: botContent
+        });
+        if (mode === 'listening') {
+          speakMessage(botContent);
+        }
+      } catch (error) {
+        console.error("Init chat error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (sessionId && messages.length === 0) {
+      initChat();
+    }
+  }, [sessionId]);
 
   const speakMessage = async (text: string) => {
     try {
