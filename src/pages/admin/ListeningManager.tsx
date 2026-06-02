@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Mic, Image as ImageIcon, MessageSquare, FileText, X, Upload, Loader2 as Spinner } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 interface ListeningLesson {
   id: string;
