@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,7 +35,6 @@ export default function WritingLab() {
     if (!user) return;
     
     const initSession = async () => {
-      // Find active session or create new
       const { data: session } = await supabase
         .from('chat_sessions')
         .select('*')
@@ -48,7 +47,6 @@ export default function WritingLab() {
 
       if (session) {
         setSessionId(session.id);
-        // Load messages
         const { data: msgs } = await supabase
           .from('chat_messages')
           .select('*')
@@ -94,14 +92,12 @@ export default function WritingLab() {
     setIsLoading(true);
 
     try {
-      // 1. Save user message
       await supabase.from('chat_messages').insert({
         session_id: sessionId,
         role: 'user',
         content: text
       });
 
-      // 2. Call Edge Function
       const { data, error } = await supabase.functions.invoke('writing-listening-chat', {
         body: { 
           messages: messages.concat(userMessage).map(m => ({ role: m.role, content: m.content })),
@@ -121,7 +117,6 @@ export default function WritingLab() {
 
       setMessages(prev => [...prev, botMessage]);
 
-      // 3. Save bot message
       await supabase.from('chat_messages').insert({
         session_id: sessionId,
         role: 'assistant',
@@ -194,7 +189,7 @@ export default function WritingLab() {
       </div>
 
       <Card className="flex-1 overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50">
-        <ScrollArea className="flex-1 p-4" viewportRef={scrollRef}>
+        <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
@@ -243,6 +238,7 @@ export default function WritingLab() {
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
