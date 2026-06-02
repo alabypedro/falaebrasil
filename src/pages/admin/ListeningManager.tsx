@@ -279,10 +279,51 @@ export default function ListeningManager() {
               <TabsContent value="part1" className="space-y-4 pt-4">
                 <Card>
                   <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Descrição de Foto (1 Questão)</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
+CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label>URL da Imagem</Label>
-                      <Input value={form.content.part1.image_url} onChange={(e) => updatePart1("image_url", e.target.value)} placeholder="https://..." />
+                      <Label>Imagem da Questão</Label>
+                      <div className="flex flex-col gap-3">
+                        {form.content.part1.image_url && (
+                          <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted group">
+                            <img 
+                              src={form.content.part1.image_url} 
+                              alt="Preview" 
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => updatePart1("image_url", "")}
+                                className="h-8"
+                              >
+                                <X className="h-4 w-4 mr-1" /> Remover
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Input 
+                            value={form.content.part1.image_url} 
+                            onChange={(e) => updatePart1("image_url", e.target.value)} 
+                            placeholder="URL da imagem ou faça upload..." 
+                            className="flex-1"
+                          />
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              disabled={isUploading}
+                            />
+                            <Button variant="outline" type="button" disabled={isUploading}>
+                              {isUploading ? <Spinner className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                              Upload
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <Label>Scripts de Áudio (Apenas Narrados)</Label>
