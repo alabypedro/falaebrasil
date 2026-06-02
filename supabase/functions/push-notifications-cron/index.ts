@@ -36,6 +36,7 @@ serve(async (req) => {
 
     if (profileError) throw profileError
 
+    console.log(`Checking for inactive students since: ${yesterday}`);
     const results = []
 
     for (const profile of profiles) {
@@ -52,6 +53,7 @@ serve(async (req) => {
       if (subscriptions && subscriptions.length > 0) {
         for (const sub of subscriptions) {
           try {
+            console.log(`Sending notification to user ${profile.id} (device: ${sub.subscription_data.endpoint})`);
             await webpush.sendNotification(
               sub.subscription_data,
               JSON.stringify({
@@ -61,7 +63,7 @@ serve(async (req) => {
               })
             )
           } catch (e) {
-            console.error('Erro ao enviar push:', e)
+            console.error(`Error sending push to user ${profile.id}:`, e)
           }
         }
 
