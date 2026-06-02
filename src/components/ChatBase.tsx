@@ -164,10 +164,22 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     }
   }, [recordings]);
 
-  const speakMessage = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    window.speechSynthesis.speak(utterance);
+  const speakMessage = async (text: string) => {
+    try {
+      // Tentar usar o Azure TTS se houver endpoint/key configurados no cliente (ou via edge function)
+      // Por enquanto, vamos melhorar a síntese nativa ou preparar para a chamada da Edge Function
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      
+      // Tentar encontrar uma voz masculina/feminina mais natural se disponível no browser
+      const voices = window.speechSynthesis.getVoices();
+      const naturalVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || voices[0];
+      if (naturalVoice) utterance.voice = naturalVoice;
+      
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error("Speech error:", error);
+    }
   };
 
   return (
