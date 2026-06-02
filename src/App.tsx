@@ -143,6 +143,7 @@ const App = () => {
                           <Route path="lessons" element={<LessonsManager />} />
                           <Route path="quizzes" element={<QuizzesManager />} />
                           <Route path="library" element={<LibraryManager />} />
+                          <Route path="listening" element={<ListeningManager />} />
                           <Route path="prompts" element={<PromptsManager />} />
                           <Route path="tutorials" element={<TutorialsManager />} />
                           <Route path="install-videos" element={<InstallTutorialVideosManager />} />
