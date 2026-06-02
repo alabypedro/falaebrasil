@@ -55,7 +55,12 @@ export default function WritingLab() {
           .eq('session_id', session.id)
           .order('created_at', { ascending: true });
         
-        if (msgs) setMessages(msgs);
+        if (msgs) {
+          setMessages(msgs.map(m => ({
+            ...m,
+            role: m.role as 'user' | 'assistant'
+          })));
+        }
       } else {
         const { data: newSession } = await supabase
           .from('chat_sessions')
