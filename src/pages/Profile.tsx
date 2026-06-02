@@ -90,8 +90,43 @@ export default function Profile() {
       return;
     }
 
+    if (file.size < 10 * 1024) {
+      toast.error("A imagem deve ter no mínimo 10KB.");
+      return;
+    }
+
     setUploading(true);
     try {
+      // Validar dimensões
+      const isImage = file.type.startsWith('image/');
+      if (isImage) {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        const dimensions = await new Promise<{ width: number, height: number }>((resolve) => {
+          img.onload = () => {
+            resolve({ width: img.width, height: img.height });
+            URL.revokeObjectURL(objectUrl);
+          };
+          img.onerror = () => {
+            resolve({ width: 0, height: 0 });
+            URL.revokeObjectURL(objectUrl);
+          };
+          img.src = objectUrl;
+        });
+
+        if (dimensions.width < 200 || dimensions.height < 200) {
+          toast.error("A imagem deve ter no mínimo 200x200 pixels.");
+          setUploading(false);
+          return;
+        }
+        if (dimensions.width > 4000 || dimensions.height > 4000) {
+          toast.error("A imagem deve ter no máximo 4000x4000 pixels.");
+          setUploading(false);
+          return;
+        }
+      }
+
       const ext = file.name.split(".").pop();
       const filePath = `${user.id}/avatar.${ext}`;
 
@@ -167,7 +202,15 @@ export default function Profile() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Foto de Perfil</CardTitle>
-          <CardDescription>Clique na foto para trocar.</CardDescription>
+          <CardDescription>
+            Clique na foto para trocar.
+            <div className="mt-2 text-[10px] text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-1 bg-muted/30 p-2 rounded-md border border-border/40">
+              <span>Dimensões:</span>
+              <span className="text-right">Min: 200x200px | Max: 4000x4000px</span>
+              <span>Tamanho:</span>
+              <span className="text-right">Min: 10KB | Max: 2048KB (2MB)</span>
+            </div>
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-4">
           <div
