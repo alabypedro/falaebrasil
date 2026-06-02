@@ -135,10 +135,11 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
     if (!text.trim() || !sessionId || isLoading) return;
     
-    if (mode === 'writing' && wordCount > 100) {
+    const currentMaxWords = levels[selectedLevel];
+    if (mode === 'writing' && wordCount > currentMaxWords) {
       toast({
-        title: "Limite de palavras excedido",
-        description: "O texto no Escrevaê deve ter no máximo 100 palavras.",
+        title: "Word limit exceeded",
+        description: `Your text for level ${selectedLevel} must have a maximum of ${currentMaxWords} words.`,
         variant: "destructive"
       });
       return;
