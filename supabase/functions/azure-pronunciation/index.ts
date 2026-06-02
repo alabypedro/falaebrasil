@@ -12,6 +12,34 @@ function toNullableScore(value: unknown): number | null {
     : null;
 }
 
+/**
+ * Robust base64 encoding for Uint8Array that works in all environments
+ * and avoids "characters outside of Latin1 range" errors.
+ */
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let result = "";
+  let i;
+  const l = bytes.length;
+  for (i = 2; i < l; i += 3) {
+    result += chars[bytes[i - 2] >> 2];
+    result += chars[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+    result += chars[((bytes[i - 1] & 0x0f) << 2) | (bytes[i] >> 6)];
+    result += chars[bytes[i] & 0x3f];
+  }
+  if (i === l + 1) {
+    result += chars[bytes[i - 2] >> 2];
+    result += chars[(bytes[i - 2] & 0x03) << 4];
+    result += "==";
+  } else if (i === l) {
+    result += chars[bytes[i - 2] >> 2];
+    result += chars[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+    result += chars[(bytes[i - 1] & 0x0f) << 2];
+    result += "=";
+  }
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
