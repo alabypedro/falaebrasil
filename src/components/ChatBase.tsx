@@ -508,9 +508,9 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               {mode === 'writing' && (
                 <div className={cn(
                   "text-[10px] self-end px-1",
-                  inputText.trim().split(/\s+/).filter(Boolean).length > 100 ? "text-destructive font-bold" : "text-muted-foreground"
+                  inputText.trim().split(/\s+/).filter(Boolean).length > levels[selectedLevel] ? "text-destructive font-bold" : "text-muted-foreground"
                 )}>
-                  {inputText.trim().split(/\s+/).filter(Boolean).length}/100 palavras
+                  {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} words
                 </div>
               )}
             </div>
