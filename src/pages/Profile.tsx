@@ -97,6 +97,36 @@ export default function Profile() {
 
     setUploading(true);
     try {
+      // Validar dimensões
+      const isImage = file.type.startsWith('image/');
+      if (isImage) {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        const dimensions = await new Promise<{ width: number, height: number }>((resolve) => {
+          img.onload = () => {
+            resolve({ width: img.width, height: img.height });
+            URL.revokeObjectURL(objectUrl);
+          };
+          img.onerror = () => {
+            resolve({ width: 0, height: 0 });
+            URL.revokeObjectURL(objectUrl);
+          };
+          img.src = objectUrl;
+        });
+
+        if (dimensions.width < 200 || dimensions.height < 200) {
+          toast.error("A imagem deve ter no mínimo 200x200 pixels.");
+          setUploading(false);
+          return;
+        }
+        if (dimensions.width > 4000 || dimensions.height > 4000) {
+          toast.error("A imagem deve ter no máximo 4000x4000 pixels.");
+          setUploading(false);
+          return;
+        }
+      }
+
       const ext = file.name.split(".").pop();
       const filePath = `${user.id}/avatar.${ext}`;
 
