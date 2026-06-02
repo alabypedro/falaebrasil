@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Mic, Image as ImageIcon, MessageSquare, FileText, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Mic, Image as ImageIcon, MessageSquare, FileText, X, Upload, Loader2 as Spinner } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -132,6 +132,37 @@ export default function ListeningManager() {
     else { toast.success("Lição excluída"); load(); }
   };
 
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `lesson-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('listening-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('listening-images')
+        .getPublicUrl(filePath);
+
+      updatePart1("image_url", publicUrl);
+      toast.success("Imagem enviada com sucesso!");
+    } catch (error: any) {
+      toast.error("Erro no upload: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const updatePart1 = (field: string, value: any) => {
     setForm(prev => ({
       ...prev,
@@ -250,8 +281,49 @@ export default function ListeningManager() {
                   <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Descrição de Foto (1 Questão)</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label>URL da Imagem</Label>
-                      <Input value={form.content.part1.image_url} onChange={(e) => updatePart1("image_url", e.target.value)} placeholder="https://..." />
+                      <Label>Imagem da Questão</Label>
+                      <div className="flex flex-col gap-3">
+                        {form.content.part1.image_url && (
+                          <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted group">
+                            <img 
+                              src={form.content.part1.image_url} 
+                              alt="Preview" 
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => updatePart1("image_url", "")}
+                                className="h-8"
+                              >
+                                <X className="h-4 w-4 mr-1" /> Remover
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Input 
+                            value={form.content.part1.image_url} 
+                            onChange={(e) => updatePart1("image_url", e.target.value)} 
+                            placeholder="URL da imagem ou faça upload..." 
+                            className="flex-1"
+                          />
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              disabled={isUploading}
+                            />
+                            <Button variant="outline" type="button" disabled={isUploading}>
+                              {isUploading ? <Spinner className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                              Upload
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <Label>Scripts de Áudio (Apenas Narrados)</Label>
