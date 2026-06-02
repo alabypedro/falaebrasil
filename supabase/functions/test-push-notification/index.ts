@@ -41,18 +41,25 @@ serve(async (req) => {
       })
     }
 
+    const results = []
     for (const sub of subscriptions) {
-      await webpush.sendNotification(
-        sub.subscription_data,
-        JSON.stringify({
-          title: 'Falaê Brasil! (Teste)',
-          body: 'Teste de notificação push bem-sucedido!',
-          url: '/'
-        })
-      )
+      try {
+        await webpush.sendNotification(
+          sub.subscription_data,
+          JSON.stringify({
+            title: 'Falaê Brasil! (Teste)',
+            body: 'Teste de notificação push bem-sucedido!',
+            url: '/'
+          })
+        )
+        results.push({ endpoint: sub.subscription_data.endpoint, status: 'success' })
+      } catch (err) {
+        console.error(`Error sending push to ${sub.subscription_data.endpoint}:`, err)
+        results.push({ endpoint: sub.subscription_data.endpoint, status: 'error', error: err.message })
+      }
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

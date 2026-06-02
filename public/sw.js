@@ -3,8 +3,10 @@ self.addEventListener("push", (event) => {
   const title = data.title || "Falaê Brasil!";
   const options = {
     body: data.body || "Vamos retomar o English? Lembre-se: inglês transversal é todos os dias. Cheers.",
-    icon: "/app-icon-192.png",
+    icon: "/falae-brasil-logo.png",
     badge: "/app-icon-192.png",
+    image: data.image || "/falae-brasil-logo.png",
+    vibrate: [100, 50, 100],
     data: {
       url: data.url || "/"
     }
