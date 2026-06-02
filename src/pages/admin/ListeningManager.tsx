@@ -279,7 +279,7 @@ export default function ListeningManager() {
               <TabsContent value="part1" className="space-y-4 pt-4">
                 <Card>
                   <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Descrição de Foto (1 Questão)</CardTitle></CardHeader>
-CardContent className="space-y-4">
+                  <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label>Imagem da Questão</Label>
                       <div className="flex flex-col gap-3">
