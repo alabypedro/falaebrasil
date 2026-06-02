@@ -369,15 +369,21 @@ export default function ListeningManager() {
                             placeholder="URL da imagem ou faça upload..." 
                             className="flex-1"
                           />
-                          <div className="relative">
+                          <div>
                             <input
                               type="file"
+                              ref={fileInputRef}
                               accept="image/*"
                               onChange={handleImageUpload}
-                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              className="hidden"
                               disabled={isUploading}
                             />
-                            <Button variant="outline" type="button" disabled={isUploading}>
+                            <Button 
+                              variant="outline" 
+                              type="button" 
+                              disabled={isUploading}
+                              onClick={() => fileInputRef.current?.click()}
+                            >
                               {isUploading ? <Spinner className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                               Upload
                             </Button>
