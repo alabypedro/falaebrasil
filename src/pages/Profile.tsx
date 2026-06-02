@@ -90,6 +90,11 @@ export default function Profile() {
       return;
     }
 
+    if (file.size < 10 * 1024) {
+      toast.error("A imagem deve ter no mínimo 10KB.");
+      return;
+    }
+
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
