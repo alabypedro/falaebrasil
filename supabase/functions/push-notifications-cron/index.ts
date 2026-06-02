@@ -27,19 +27,23 @@ serve(async (req) => {
       VAPID_PRIVATE_KEY
     )
 
-    // Buscar usuários inativos há mais de 24h
-    // E que não receberam notificação nas últimas 24h (podemos usar uma coluna last_notification no profile)
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id, last_activity, last_notification_sent')
-      .lt('last_activity', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-      .or(`last_notification_sent.is.null,last_notification_sent.lt.${new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()}`)
+      .lt('last_activity', yesterday)
 
     if (profileError) throw profileError
 
     const results = []
 
     for (const profile of profiles) {
+      // Verificar se já recebeu notificação nas últimas 24h
+      if (profile.last_notification_sent && new Date(profile.last_notification_sent) > new Date(yesterday)) {
+        continue;
+      }
+
       const { data: subscriptions } = await supabase
         .from('push_subscriptions')
         .select('subscription_data')
@@ -57,11 +61,10 @@ serve(async (req) => {
               })
             )
           } catch (e) {
-            console.error(\`Erro ao enviar para \${profile.id}:\`, e)
+            console.error('Erro ao enviar push:', e)
           }
         }
 
-        // Atualizar data de última notificação enviada
         await supabase
           .from('profiles')
           .update({ last_notification_sent: new Date().toISOString() })

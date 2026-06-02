@@ -41,11 +41,10 @@ export async function registerPushNotification() {
       .from("push_subscriptions")
       .upsert({
         user_id: user.id,
-        subscription_data: subscription.toJSON(),
+        subscription_data: subscription.toJSON() as any,
         updated_at: new Date().toISOString(),
-      }, {
-        onConflict: "user_id, subscription_data->>endpoint"
       });
+
 
     if (error) throw error;
     
