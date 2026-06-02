@@ -41,7 +41,7 @@ export function useGPA(userId: string | undefined): GPAData {
         supabase
           .from("profiles")
           .select("best_scripted_score, best_unscripted_score")
-          .eq("id", userId)
+          .eq("user_id", userId)
           .maybeSingle(),
       ]);
 
