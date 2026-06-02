@@ -1,0 +1,20 @@
+Generate a Supabase migration SQL file that inserts 36 listening lessons into the `listening_lessons` table.
+Each lesson MUST follow this structure:
+- title: string
+- level: 'A1', 'A2', or 'B1'
+- description: string
+- content: JSONB object with parts 1, 2, 3, and 4.
+    - part1: { "image_url": "...", "options": [{ "script": "..." }, ...], "correct_index": 0 } (1 question)
+    - part2: [{ "question_script": "...", "options": [{ "script": "..." }, ...], "correct_index": 0 }, ...] (3 questions)
+    - part3: { "dialogue": [{ "speaker": "...", "text": "..." }, ...], "questions": [{ "enunciado": "...", "options": ["...", "..."], "correct_index": 0 }, ...] } (3 questions)
+    - part4: { "script": "...", "questions": [{ "enunciado": "...", "options": ["...", "..."], "correct_index": 0 }, ...] } (3 questions)
+Total 10 questions per lesson.
+
+Themes:
+A1: Airport Immigration, Checking in at a Guesthouse, Beach Kiosk, Information Counter, Craft Fair, Street Market, Recyclable Craft Fair, Sharing Business Values, Factory Welcome, Factory Tour, Safety Protocols, Suppliers at Reception.
+A2: AirBnB Renting, Minas Cuisine, Bike Rental, Dentist Emergency, Ver-O-Peso Market, Climbing Gear, Natural Products, Artisanal Products, Hotel Complaints, Job Interview, Business Presentation, Travel Planning.
+B1: Meetings, Networking, Negotiation, Marketing, Socializing, Project Management, Customer Support, Finance, Hiring, Strategy, Workshops, Travel Logistics.
+
+Make the content realistic and educational for English learners. Use high-quality Unsplash image URLs for part1.
+Ensure the correct_index is varied (0, 1, or 2).
+Delete existing rows in listening_lessons before inserting to avoid duplicates.
