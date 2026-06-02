@@ -75,8 +75,30 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  useEffect(() => {
+    const initNotifications = async () => {
+      // Pedir permissão e registrar apenas se o usuário estiver logado
+      // O registerPushNotification já verifica internamente se tem usuário
+      await registerPushNotification();
+      await updateLastActivity();
+    };
+    
+    initNotifications();
+
+    // Atualizar atividade ao interagir com a página
+    const handleActivity = () => updateLastActivity();
+    window.addEventListener('mousedown', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+
+    return () => {
+      window.removeEventListener('mousedown', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+    };
+  }, []);
+
+  return (
+
     <TooltipProvider>
       <Toaster />
       <Sonner />

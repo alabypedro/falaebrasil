@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_notification_sent TIMESTAMP WITH TIME ZONE;
