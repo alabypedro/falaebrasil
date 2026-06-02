@@ -288,7 +288,7 @@ export default function ListeningLab() {
 
       <div className="space-y-2">
         <div className="flex justify-between text-xs font-medium text-muted-foreground">
-          <span>Questão {Object.keys(answers).length + 1} de 10</span>
+          <span>Questão {Object.keys(answers).length} de 10</span>
           <span>{Math.round((Object.keys(answers).length / 10) * 100)}%</span>
         </div>
         <Progress value={(Object.keys(answers).length / 10) * 100} className="h-2" />
