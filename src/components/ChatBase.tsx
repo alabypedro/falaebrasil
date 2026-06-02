@@ -391,7 +391,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               className="gap-1.5"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Novo tema
+              New topic
             </Button>
           </div>
         </Card>
@@ -404,7 +404,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
                 <Bot className="h-12 w-12 opacity-20" />
-                <p>Inicie uma conversa para começar a praticar!</p>
+                <p>Start a conversation to begin practicing!</p>
               </div>
             )}
             {messages.map((m) => (
