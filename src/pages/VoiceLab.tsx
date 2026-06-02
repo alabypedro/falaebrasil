@@ -392,7 +392,7 @@ export default function VoiceLab() {
           await supabase
             .from("profiles")
             .update(updateData as any)
-            .eq("id", profile?.id);
+            .eq("user_id", user.id);
             
           // Refresh profile again to get updated high scores for GPA calculation
           void refreshProfile();
