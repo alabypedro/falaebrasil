@@ -12,6 +12,34 @@ function toNullableScore(value: unknown): number | null {
     : null;
 }
 
+/**
+ * Robust base64 encoding for Uint8Array that works in all environments
+ * and avoids "characters outside of Latin1 range" errors.
+ */
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let result = "";
+  let i;
+  const l = bytes.length;
+  for (i = 2; i < l; i += 3) {
+    result += chars[bytes[i - 2] >> 2];
+    result += chars[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+    result += chars[((bytes[i - 1] & 0x0f) << 2) | (bytes[i] >> 6)];
+    result += chars[bytes[i] & 0x3f];
+  }
+  if (i === l + 1) {
+    result += chars[bytes[i - 2] >> 2];
+    result += chars[(bytes[i - 2] & 0x03) << 4];
+    result += "==";
+  } else if (i === l) {
+    result += chars[bytes[i - 2] >> 2];
+    result += chars[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+    result += chars[(bytes[i - 1] & 0x0f) << 2];
+    result += "=";
+  }
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -124,15 +152,10 @@ Deno.serve(async (req) => {
       EnableProsodyAssessment: true,
     };
 
-    // Encode as base64 of UTF-8 bytes (btoa alone fails on non-Latin1 characters
-    // like curly quotes, accented letters, em-dashes etc. that may appear in referenceText).
     const pronAssessmentJson = JSON.stringify(pronAssessmentParams);
     const pronAssessmentBytes = new TextEncoder().encode(pronAssessmentJson);
-    let binaryString = "";
-    for (let i = 0; i < pronAssessmentBytes.length; i++) {
-      binaryString += String.fromCharCode(pronAssessmentBytes[i]);
-    }
-    const pronAssessmentHeader = btoa(binaryString);
+    const pronAssessmentHeader = uint8ArrayToBase64(pronAssessmentBytes);
+    
     const sessionId = crypto.randomUUID().replace(/-/g, "");
     const url = `https://${AZURE_SPEECH_REGION}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed&X-ConnectionId=${sessionId}`;
 
