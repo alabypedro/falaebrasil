@@ -19,6 +19,7 @@ export default function ListeningLab() {
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filterLevel, setFilterLevel] = useState<string>("all");
   
   // Game state
   const [currentPart, setCurrentPart] = useState<1 | 2 | 3 | 4>(1);
@@ -214,33 +215,80 @@ export default function ListeningLab() {
   }
 
   if (!selectedLesson) {
+    const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const filteredLessons = filterLevel === "all" 
+      ? lessons 
+      : lessons.filter(l => l.level === filterLevel);
+
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">IA Escutaê</h1>
-          <p className="text-muted-foreground mt-2">Escolha uma lição para praticar sua compreensão auditiva.</p>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="flex-1">
+            <h1 className="text-4xl font-black tracking-tight mb-2">IA Escutaê</h1>
+            <p className="text-muted-foreground">Escolha uma lição para praticar sua compreensão auditiva.</p>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant={filterLevel === "all" ? "default" : "outline"} 
+              size="sm"
+              onClick={() => setFilterLevel("all")}
+              className="rounded-full px-4"
+            >
+              Todos
+            </Button>
+            {levels.map(lvl => (
+              <Button 
+                key={lvl}
+                variant={filterLevel === lvl ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setFilterLevel(lvl)}
+                className="rounded-full px-4"
+              >
+                {lvl}
+              </Button>
+            ))}
+          </div>
         </div>
 
-        {lessons.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Headphones className="h-12 w-12 mx-auto text-muted-foreground opacity-20 mb-4" />
-            <p className="text-muted-foreground">Nenhuma lição disponível no momento.</p>
+        {filteredLessons.length === 0 ? (
+          <Card className="p-16 text-center border-dashed bg-muted/30">
+            <Headphones className="h-16 w-16 mx-auto text-muted-foreground opacity-20 mb-4" />
+            <p className="text-xl font-medium text-muted-foreground">Nenhuma lição encontrada para o nível {filterLevel}.</p>
+            {filterLevel !== "all" && (
+              <Button variant="link" onClick={() => setFilterLevel("all")} className="mt-2 text-primary">
+                Ver todas as lições
+              </Button>
+            )}
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {lessons.map((lesson) => (
-              <Card key={lesson.id} className="hover:border-primary cursor-pointer transition-colors group" onClick={() => startLesson(lesson)}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded">{lesson.level}</span>
-                    <Headphones className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+            {filteredLessons.map((lesson) => (
+              <Card 
+                key={lesson.id} 
+                className="hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 cursor-pointer transition-all duration-300 group flex flex-col border-white/5 bg-card/50 backdrop-blur-sm" 
+                onClick={() => startLesson(lesson)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-wider border border-primary/20">
+                      {lesson.level}
+                    </span>
+                    <div className="p-2 rounded-full bg-muted/50 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                      <Headphones className="h-4 w-4" />
+                    </div>
                   </div>
-                  <CardTitle className="mt-2">{lesson.title}</CardTitle>
-                  <CardDescription>{lesson.description}</CardDescription>
+                  <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors leading-tight mb-2">
+                    {lesson.title}
+                  </CardTitle>
+                  <CardDescription className="line-clamp-2 text-sm leading-relaxed">
+                    {lesson.description}
+                  </CardDescription>
                 </CardHeader>
-                <CardFooter>
-                  <Button variant="ghost" className="w-full justify-between">
-                    Começar Prática <ChevronRight className="h-4 w-4" />
+                <CardFooter className="mt-auto pt-4 border-t border-white/5">
+                  <Button variant="ghost" className="w-full justify-between hover:bg-primary hover:text-white transition-all group/btn">
+                    Começar Prática 
+                    <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
                 </CardFooter>
               </Card>
