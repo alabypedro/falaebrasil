@@ -132,6 +132,37 @@ export default function ListeningManager() {
     else { toast.success("Lição excluída"); load(); }
   };
 
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `lesson-images/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('listening-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('listening-images')
+        .getPublicUrl(filePath);
+
+      updatePart1("image_url", publicUrl);
+      toast.success("Imagem enviada com sucesso!");
+    } catch (error: any) {
+      toast.error("Erro no upload: " + error.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const updatePart1 = (field: string, value: any) => {
     setForm(prev => ({
       ...prev,
