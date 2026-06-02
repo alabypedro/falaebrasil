@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2, Pause, Play } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2, Pause, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,9 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
+  const [currentTopic, setCurrentTopic] = useState<string | null>(null);
+  const [topicLoading, setTopicLoading] = useState(false);
+  const [recentTopics, setRecentTopics] = useState<string[]>([]);
 
   const { isRecording, startRecording, stopRecording, recordings } = useAudioRecorder();
 
@@ -73,12 +76,48 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     initSession();
   }, [user, mode]);
 
+  const fetchWritingTopic = useCallback(async () => {
+    if (mode !== 'writing') return;
+    setTopicLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-writing-topic", {
+        body: { recent: recentTopics.slice(0, 6) },
+      });
+      if (error) throw error;
+      const topic = data?.topic;
+      if (topic) {
+        setCurrentTopic(topic);
+        setRecentTopics((prev) => [topic, ...prev.filter((t) => t !== topic)].slice(0, 8));
+      }
+    } catch (e) {
+      console.error("Failed to fetch writing topic", e);
+    } finally {
+      setTopicLoading(false);
+    }
+  }, [mode, recentTopics]);
+
+  useEffect(() => {
+    if (mode === 'writing' && !currentTopic && !topicLoading) {
+      fetchWritingTopic();
+    }
+  }, [mode, currentTopic, topicLoading, fetchWritingTopic]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async (text: string) => {
+    const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
     if (!text.trim() || !sessionId || isLoading) return;
+    
+    if (mode === 'writing' && wordCount > 100) {
+      toast({
+        title: "Limite de palavras excedido",
+        description: "O texto no Escrevaê deve ter no máximo 100 palavras.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -290,6 +329,33 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         <p className="text-muted-foreground">{description}</p>
       </div>
 
+      {mode === 'writing' && (
+        <Card className="mb-6 bg-accent/5 border-accent/20">
+          <div className="p-6 text-center space-y-3">
+            <p className="text-xs text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
+            {topicLoading ? (
+              <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Gerando tema com IA…</span>
+              </div>
+            ) : (
+              <p className="text-lg font-medium text-foreground">{currentTopic || "Carregando tema..."}</p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void fetchWritingTopic()}
+              disabled={topicLoading}
+              className="gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Novo tema
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <Card className="flex-1 overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50">
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
@@ -363,38 +429,48 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             }}
             className="flex items-center gap-2"
           >
-            <div className="relative flex-1">
-              <Input
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Escreva algo..."
-                disabled={isLoading}
-                className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                {isRecording ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={stopRecording}
-                    className="h-7 w-7 text-destructive animate-pulse"
-                  >
-                    <Square className="h-4 w-4 fill-current" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => startRecording()}
-                    disabled={isLoading}
-                    className="h-7 w-7 text-muted-foreground hover:text-primary"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                )}
+            <div className="flex-1 flex flex-col gap-1">
+              <div className="relative">
+                <Input
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  placeholder={mode === 'writing' ? "Escreva seu texto (máx 100 palavras)..." : "Escreva algo..."}
+                  disabled={isLoading}
+                  className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {isRecording ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={stopRecording}
+                      className="h-7 w-7 text-destructive animate-pulse"
+                    >
+                      <Square className="h-4 w-4 fill-current" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => startRecording()}
+                      disabled={isLoading}
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
+              {mode === 'writing' && (
+                <div className={cn(
+                  "text-[10px] self-end px-1",
+                  inputText.trim().split(/\s+/).filter(Boolean).length > 100 ? "text-destructive font-bold" : "text-muted-foreground"
+                )}>
+                  {inputText.trim().split(/\s+/).filter(Boolean).length}/100 palavras
+                </div>
+              )}
             </div>
             <Button 
               type="submit" 
