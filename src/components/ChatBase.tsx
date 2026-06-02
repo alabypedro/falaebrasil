@@ -106,7 +106,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     setTopicLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-writing-topic", {
-        body: { recent: recentTopics.slice(0, 6) },
+        body: { recent: recentTopics.slice(0, 6), level: selectedLevel },
       });
       if (error) throw error;
       const topic = data?.topic;
