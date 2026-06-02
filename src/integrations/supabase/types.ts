@@ -614,6 +614,7 @@ export type Database = {
           hubla_customer_id: string | null
           hubla_subscription_id: string | null
           id: string
+          last_activity: string | null
           level: string
           phone: string | null
           plan_tier: string
@@ -647,6 +648,7 @@ export type Database = {
           hubla_customer_id?: string | null
           hubla_subscription_id?: string | null
           id?: string
+          last_activity?: string | null
           level?: string
           phone?: string | null
           plan_tier?: string
@@ -680,6 +682,7 @@ export type Database = {
           hubla_customer_id?: string | null
           hubla_subscription_id?: string | null
           id?: string
+          last_activity?: string | null
           level?: string
           phone?: string | null
           plan_tier?: string
@@ -718,6 +721,30 @@ export type Database = {
           level?: string
           source_file?: string | null
           text?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          subscription_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          subscription_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          subscription_data?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
