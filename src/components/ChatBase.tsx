@@ -237,7 +237,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   }, [recordings]);
 
   const initChat = async () => {
-    if (messages.length === 0 && sessionId && !isLoading) {
+    if (mode === 'listening' && messages.length === 0 && sessionId && !isLoading) {
       setIsLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke('writing-listening-chat', {
@@ -279,7 +279,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     return () => {
       window.speechSynthesis.cancel();
     };
-  }, [sessionId]);
+  }, [sessionId, messages.length]);
 
   const speakMessage = async (text: string, messageId?: string) => {
     try {
