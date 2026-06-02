@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2 } from "lucide-react";
+import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2, Pause, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,9 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const { user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
 
   const { isRecording, startRecording, stopRecording, recordings } = useAudioRecorder();
 
@@ -119,9 +122,9 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         role: 'assistant',
         content: botContent
       });
-
+      
       if (mode === 'listening') {
-        speakMessage(botContent);
+        speakMessage(botContent, botMessage.id);
       }
 
     } catch (error) {
@@ -193,7 +196,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
           content: botContent
         });
         if (mode === 'listening') {
-          speakMessage(botContent);
+          speakMessage(botContent, botMessage.id);
         }
       } catch (error) {
         console.error("Init chat error:", error);
@@ -207,18 +210,34 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     if (sessionId && messages.length === 0) {
       initChat();
     }
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
   }, [sessionId]);
 
-  const speakMessage = async (text: string) => {
+  const speakMessage = async (text: string, messageId?: string) => {
     try {
-      // Tentar usar o Azure TTS se houver endpoint/key configurados no cliente (ou via edge function)
-      // Por enquanto, vamos melhorar a síntese nativa ou preparar para a chamada da Edge Function
+      // Se já estiver falando o mesmo texto, apenas alternar pause
+      if (currentSpeakingId === messageId && isSpeaking) {
+        if (isPaused) {
+          window.speechSynthesis.resume();
+          setIsPaused(false);
+        } else {
+          window.speechSynthesis.pause();
+          setIsPaused(true);
+        }
+        return;
+      }
+
+      // Se estiver falando outro texto, cancelar o anterior
+      window.speechSynthesis.cancel();
+      setIsPaused(false);
+      
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
       
       const voices = window.speechSynthesis.getVoices();
-      
-      // Prioridade para vozes Premium/Natural em inglês
       const preferredVoices = [
         "Google US English",
         "Microsoft Aria Online",
@@ -228,21 +247,39 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       ];
 
       let selectedVoice = voices.find(v => v.lang === "en-US" && preferredVoices.some(pv => v.name.includes(pv)));
-      
-      // Fallback para qualquer voz em inglês se a preferida não existir
       if (!selectedVoice) {
         selectedVoice = voices.find(v => v.lang.startsWith("en"));
       }
 
       if (selectedVoice) {
         utterance.voice = selectedVoice;
-        utterance.rate = 0.95; // Ligeiramente mais devagar para clareza
+        utterance.rate = 0.95;
         utterance.pitch = 1.0;
       }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        if (messageId) setCurrentSpeakingId(messageId);
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setIsPaused(false);
+        setCurrentSpeakingId(null);
+      };
+
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setIsPaused(false);
+        setCurrentSpeakingId(null);
+      };
       
       window.speechSynthesis.speak(utterance);
     } catch (error) {
       console.error("Speech error:", error);
+      setIsSpeaking(false);
+      setIsPaused(false);
+      setCurrentSpeakingId(null);
     }
   };
 
@@ -285,11 +322,18 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
                   {m.role === 'assistant' && (
                     <button 
-                      onClick={() => speakMessage(m.content)}
-                      className="absolute -right-8 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-primary"
-                      title="Ouvir mensagem"
+                      onClick={() => speakMessage(m.content, m.id)}
+                      className={cn(
+                        "absolute -right-8 top-1 transition-opacity p-1 hover:text-primary",
+                        currentSpeakingId === m.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      )}
+                      title={currentSpeakingId === m.id && isSpeaking ? (isPaused ? "Retomar" : "Pausar") : "Ouvir"}
                     >
-                      <Volume2 className="h-4 w-4" />
+                      {currentSpeakingId === m.id && isSpeaking ? (
+                        isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />
+                      ) : (
+                        <Volume2 className="h-4 w-4" />
+                      )}
                     </button>
                   )}
                 </div>
