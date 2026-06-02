@@ -36,6 +36,7 @@ serve(async (req) => {
 
     if (profileError) throw profileError
 
+    console.log(`Checking for inactive students since: ${yesterday}`);
     const results = []
 
     for (const profile of profiles) {
