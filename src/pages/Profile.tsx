@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Camera, ArrowLeft, Loader2, RotateCcw, Mic } from "lucide-react";
+import { Camera, ArrowLeft, Loader2, RotateCcw, Mic, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +41,15 @@ export default function Profile() {
     }>
   >([]);
   const [loadingGrants, setLoadingGrants] = useState(true);
+
+  useEffect(() => {
+    if (profile?.display_name) {
+      setDisplayName(profile.display_name);
+    }
+    if (profile?.avatar_url) {
+      setAvatarUrl(profile.avatar_url);
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (!user) return;
@@ -147,6 +156,11 @@ export default function Profile() {
     }
   };
 
+  const handleRemoveAvatar = async () => {
+    setAvatarUrl("");
+    toast.info("Foto removida. Lembre-se de salvar as alterações.");
+  };
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
@@ -212,25 +226,40 @@ export default function Profile() {
             </div>
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4">
-          <div
-            className="relative cursor-pointer group"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarUrl} />
-              <AvatarFallback className="text-xl bg-primary text-primary-foreground">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
-              {uploading ? (
-                <Loader2 className="h-6 w-6 text-primary-foreground animate-spin" />
-              ) : (
-                <Camera className="h-6 w-6 text-primary-foreground" />
-              )}
+        <CardContent className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-4">
+            <div
+              className="relative cursor-pointer group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Avatar className="h-32 w-32 border-4 border-muted shadow-lg">
+                <AvatarImage src={avatarUrl} className="object-cover" />
+                <AvatarFallback className="text-3xl bg-primary text-primary-foreground font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity border-4 border-transparent">
+                {uploading ? (
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-8 w-8 text-white" />
+                )}
+              </div>
             </div>
+            
+            {avatarUrl && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
+                onClick={handleRemoveAvatar}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remover foto
+              </Button>
+            )}
           </div>
+
           <input
             ref={fileInputRef}
             type="file"
