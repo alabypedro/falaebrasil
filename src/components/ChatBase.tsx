@@ -31,6 +31,16 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [currentTopic, setCurrentTopic] = useState<string | null>(null);
   const [topicLoading, setTopicLoading] = useState(false);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
+  const [selectedLevel, setSelectedLevel] = useState<'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>('A1');
+
+  const levels = {
+    'A1': 100,
+    'A2': 150,
+    'B1': 200,
+    'B2': 250,
+    'C1': 300,
+    'C2': 350
+  };
 
   const { isRecording, startRecording, stopRecording, recordings } = useAudioRecorder();
 
@@ -38,6 +48,21 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     if (!user) return;
     
     const initSession = async () => {
+      if (mode === 'writing') {
+        // Always create a new session or clear current for writing mode
+        const { data: newSession } = await supabase
+          .from('chat_sessions')
+          .insert({ user_id: user.id, type: mode })
+          .select()
+          .single();
+        
+        if (newSession) {
+          setSessionId(newSession.id);
+          setMessages([]);
+        }
+        return;
+      }
+
       const { data: session } = await supabase
         .from('chat_sessions')
         .select('*')
@@ -81,7 +106,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     setTopicLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-writing-topic", {
-        body: { recent: recentTopics.slice(0, 6) },
+        body: { recent: recentTopics.slice(0, 6), level: selectedLevel },
       });
       if (error) throw error;
       const topic = data?.topic;
@@ -103,6 +128,12 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   }, [mode, currentTopic, topicLoading, fetchWritingTopic]);
 
   useEffect(() => {
+    if (mode === 'writing' && currentTopic && !topicLoading) {
+      fetchWritingTopic();
+    }
+  }, [selectedLevel]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -110,10 +141,11 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
     if (!text.trim() || !sessionId || isLoading) return;
     
-    if (mode === 'writing' && wordCount > 100) {
+    const currentMaxWords = levels[selectedLevel];
+    if (mode === 'writing' && wordCount > currentMaxWords) {
       toast({
-        title: "Limite de palavras excedido",
-        description: "O texto no Escrevaê deve ter no máximo 100 palavras.",
+        title: "Word limit exceeded",
+        description: `Your text for level ${selectedLevel} must have a maximum of ${currentMaxWords} words.`,
         variant: "destructive"
       });
       return;
@@ -211,7 +243,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   }, [recordings]);
 
   const initChat = async () => {
-    if (messages.length === 0 && sessionId && !isLoading) {
+    if (mode === 'listening' && messages.length === 0 && sessionId && !isLoading) {
       setIsLoading(true);
       try {
         const { data, error } = await supabase.functions.invoke('writing-listening-chat', {
@@ -253,7 +285,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     return () => {
       window.speechSynthesis.cancel();
     };
-  }, [sessionId]);
+  }, [sessionId, messages.length]);
 
   const speakMessage = async (text: string, messageId?: string) => {
     try {
@@ -330,16 +362,31 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       </div>
 
       {mode === 'writing' && (
-        <Card className="mb-6 bg-accent/5 border-accent/20">
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {(Object.keys(levels) as Array<keyof typeof levels>).map((level) => (
+              <Button
+                key={level}
+                variant={selectedLevel === level ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedLevel(level)}
+                className="w-12 h-12 rounded-full font-bold"
+              >
+                {level}
+              </Button>
+            ))}
+          </div>
+
+          <Card className="bg-accent/5 border-accent/20">
           <div className="p-6 text-center space-y-3">
-            <p className="text-xs text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
+            <p className="text-xs text-accent font-semibold uppercase tracking-wide">Suggested Topic</p>
             {topicLoading ? (
               <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Gerando tema com IA…</span>
+                <span className="text-sm">Generating topic with IA…</span>
               </div>
             ) : (
-              <p className="text-lg font-medium text-foreground">{currentTopic || "Carregando tema..."}</p>
+              <p className="text-lg font-medium text-foreground">{currentTopic || "Loading topic..."}</p>
             )}
             <Button
               type="button"
@@ -350,10 +397,11 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               className="gap-1.5"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Novo tema
+              New topic
             </Button>
           </div>
         </Card>
+        </div>
       )}
 
       <Card className="flex-1 overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50">
@@ -362,7 +410,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
                 <Bot className="h-12 w-12 opacity-20" />
-                <p>Inicie uma conversa para começar a praticar!</p>
+                <p>Start a conversation to begin practicing!</p>
               </div>
             )}
             {messages.map((m) => (
@@ -434,7 +482,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                 <Input
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={mode === 'writing' ? "Escreva seu texto (máx 100 palavras)..." : "Escreva algo..."}
+                  placeholder={mode === 'writing' ? `Write your text (max ${levels[selectedLevel]} words)...` : "Write something..."}
                   disabled={isLoading}
                   className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
                 />
@@ -466,9 +514,9 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               {mode === 'writing' && (
                 <div className={cn(
                   "text-[10px] self-end px-1",
-                  inputText.trim().split(/\s+/).filter(Boolean).length > 100 ? "text-destructive font-bold" : "text-muted-foreground"
+                  inputText.trim().split(/\s+/).filter(Boolean).length > levels[selectedLevel] ? "text-destructive font-bold" : "text-muted-foreground"
                 )}>
-                  {inputText.trim().split(/\s+/).filter(Boolean).length}/100 palavras
+                  {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} words
                 </div>
               )}
             </div>

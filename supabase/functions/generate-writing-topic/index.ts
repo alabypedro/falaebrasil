@@ -7,14 +7,14 @@ const corsHeaders = {
 };
 
 const FALLBACK_TOPICS = [
-  "Escreva um e-mail curto convidando um colega para uma reunião de alinhamento.",
-  "Descreva suas principais responsabilidades no seu trabalho atual.",
-  "Escreva uma mensagem profissional de agradecimento após uma entrevista de emprego.",
-  "Como você explicaria um atraso em um projeto para um cliente por e-mail?",
-  "Escreva um parágrafo sobre seus objetivos de carreira para os próximos dois anos.",
-  "Como você pediria feedback sobre uma apresentação que realizou?",
-  "Escreva um e-mail curto se apresentando a um novo parceiro de negócios.",
-  "Descreva um desafio profissional que você superou recentemente.",
+  "Write a short email inviting a colleague to a meeting.",
+  "Describe your main responsibilities at your current job.",
+  "Write a professional thank-you message after a job interview.",
+  "Explain a project delay to a client via email.",
+  "Write a paragraph about your career goals for the next two years.",
+  "Ask for feedback on a presentation you just gave.",
+  "Write a short email introducing yourself to a new business partner.",
+  "Describe a professional challenge you recently overcame.",
 ];
 
 Deno.serve(async (req) => {
@@ -37,23 +37,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    let recent: string[] = [];
+    let requestedLevel: string | null = null;
+    try {
+      const body = await req.json();
+      if (Array.isArray(body?.recent)) {
+        recent = body.recent.filter((s: unknown): s is string => typeof s === "string").slice(0, 8);
+      }
+      requestedLevel = body?.level;
+    } catch (_) {
+      // no body is fine
+    }
+
     const { data: profile } = await userClient
       .from("profiles")
       .select("level")
       .eq("user_id", userData.user.id)
       .single();
 
-    const userLevel = profile?.level || "A1";
-
-    let recent: string[] = [];
-    try {
-      const body = await req.json();
-      if (Array.isArray(body?.recent)) {
-        recent = body.recent.filter((s: unknown): s is string => typeof s === "string").slice(0, 8);
-      }
-    } catch (_) {
-      // no body is fine
-    }
+    const userLevel = requestedLevel || profile?.level || "A1";
 
     if (!LOVABLE_API_KEY) {
       const fallback = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
@@ -62,18 +64,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Você gera UM tema de prática de ESCRITA (writing) em inglês para alunos brasileiros.
-O nível atual do aluno é: ${userLevel}.
+    const systemPrompt = `You generate ONE English writing practice topic for students.
+Current student level: ${userLevel}.
 
-REGRAS:
-- Responda SEMPRE em PORTUGUÊS do Brasil (apenas o enunciado do tema).
-- Alternar entre temas de VIDA COTIDIANA e situações PROFISSIONAIS.
-- Frequentemente peça para o aluno escrever um e-mail curto e objetivo (ex: e-mail profissional, convite, feedback, etc).
-- O tema deve ser adequado ao nível do aluno (${userLevel}). 
-- Frase curta (máx. 20 palavras), começa com um verbo no imperativo (Escreva, Descreva, Conte, Explique, Redija).
-- Termina com "em inglês."
-- NÃO use aspas, emojis, listas, markdown ou explicações. Só o enunciado.
-- Evite repetir temas recentes.`;
+RULES:
+- Respond ALWAYS in ENGLISH (the topic enunciation).
+- Alternate between DAILY LIFE and PROFESSIONAL situations.
+- Frequently ask the student to write a short and objective email (e.g., professional email, invitation, feedback, etc.).
+- The topic must be appropriate for the student's level (${userLevel}).
+- Short sentence (max 20 words), starting with an imperative verb (Write, Describe, Tell, Explain).
+- Ends with "in English."
+- DO NOT use quotes, emojis, lists, markdown, or explanations. Just the enunciation.
+- Avoid repeating recent topics.`;
 
     const userPrompt = recent.length
       ? `Gere um novo tema de escrita diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
