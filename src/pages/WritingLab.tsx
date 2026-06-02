@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones } from "lucide-react";
+import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
