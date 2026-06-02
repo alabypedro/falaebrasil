@@ -128,6 +128,12 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   }, [mode, currentTopic, topicLoading, fetchWritingTopic]);
 
   useEffect(() => {
+    if (mode === 'writing' && currentTopic && !topicLoading) {
+      fetchWritingTopic();
+    }
+  }, [selectedLevel]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
