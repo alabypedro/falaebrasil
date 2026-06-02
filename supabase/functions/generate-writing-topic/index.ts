@@ -7,14 +7,14 @@ const corsHeaders = {
 };
 
 const FALLBACK_TOPICS = [
-  "Escreva um e-mail curto convidando um colega para uma reunião de alinhamento.",
-  "Descreva suas principais responsabilidades no seu trabalho atual.",
-  "Escreva uma mensagem profissional de agradecimento após uma entrevista de emprego.",
-  "Como você explicaria um atraso em um projeto para um cliente por e-mail?",
-  "Escreva um parágrafo sobre seus objetivos de carreira para os próximos dois anos.",
-  "Como você pediria feedback sobre uma apresentação que realizou?",
-  "Escreva um e-mail curto se apresentando a um novo parceiro de negócios.",
-  "Descreva um desafio profissional que você superou recentemente.",
+  "Write a short email inviting a colleague to a meeting.",
+  "Describe your main responsibilities at your current job.",
+  "Write a professional thank-you message after a job interview.",
+  "Explain a project delay to a client via email.",
+  "Write a paragraph about your career goals for the next two years.",
+  "Ask for feedback on a presentation you just gave.",
+  "Write a short email introducing yourself to a new business partner.",
+  "Describe a professional challenge you recently overcame.",
 ];
 
 Deno.serve(async (req) => {
