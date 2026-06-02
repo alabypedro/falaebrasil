@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +73,7 @@ export default function ListeningManager() {
   const [form, setForm] = useState(emptyLesson);
   const [loading, setLoading] = useState(false);
   const [filterLevel, setFilterLevel] = useState<string>("all");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const { data, error } = await supabase.from("listening_lessons").select("*").order("created_at");
@@ -145,16 +146,17 @@ export default function ListeningManager() {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `lesson-images/${fileName}`;
+      const filePath = `listening/${fileName}`;
+      const bucketName = 'lesson-files';
 
       const { error: uploadError } = await supabase.storage
-        .from('listening-images')
+        .from(bucketName)
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('listening-images')
+        .from(bucketName)
         .getPublicUrl(filePath);
 
       updatePart1("image_url", publicUrl);
@@ -367,15 +369,21 @@ export default function ListeningManager() {
                             placeholder="URL da imagem ou faça upload..." 
                             className="flex-1"
                           />
-                          <div className="relative">
+                          <div>
                             <input
                               type="file"
+                              ref={fileInputRef}
                               accept="image/*"
                               onChange={handleImageUpload}
-                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              className="hidden"
                               disabled={isUploading}
                             />
-                            <Button variant="outline" type="button" disabled={isUploading}>
+                            <Button 
+                              variant="outline" 
+                              type="button" 
+                              disabled={isUploading}
+                              onClick={() => fileInputRef.current?.click()}
+                            >
                               {isUploading ? <Spinner className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                               Upload
                             </Button>
