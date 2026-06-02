@@ -615,6 +615,7 @@ export type Database = {
           hubla_subscription_id: string | null
           id: string
           last_activity: string | null
+          last_notification_sent: string | null
           level: string
           phone: string | null
           plan_tier: string
@@ -649,6 +650,7 @@ export type Database = {
           hubla_subscription_id?: string | null
           id?: string
           last_activity?: string | null
+          last_notification_sent?: string | null
           level?: string
           phone?: string | null
           plan_tier?: string
@@ -683,6 +685,7 @@ export type Database = {
           hubla_subscription_id?: string | null
           id?: string
           last_activity?: string | null
+          last_notification_sent?: string | null
           level?: string
           phone?: string | null
           plan_tier?: string

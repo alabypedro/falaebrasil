@@ -1,29 +1,29 @@
+self.addEventListener("push", (event) => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || "Falaê Brasil!";
+  const options = {
+    body: data.body || "Vamos retomar o English? Lembre-se: inglês transversal é todos os dias. Cheers.",
+    icon: "/app-icon-192.png",
+    badge: "/app-icon-192.png",
+    data: {
+      url: data.url || "/"
+    }
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
+});
+
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    (async () => {
-      await self.clients.claim();
-
-      const names = await caches.keys();
-      await Promise.all(names.map((name) => caches.delete(name)));
-
-      const clients = await self.clients.matchAll({
-        type: "window",
-        includeUncontrolled: true,
-      });
-
-      await Promise.all(
-        clients.map((client) => {
-          const url = new URL(client.url);
-          url.searchParams.set("sw-cleanup", Date.now().toString());
-          return client.navigate(url.toString());
-        })
-      );
-
-      await self.registration.unregister();
-    })()
-  );
+  event.waitUntil(self.clients.claim());
 });
