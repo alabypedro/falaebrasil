@@ -20,12 +20,20 @@ export async function registerPushNotification() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
+    // Register service worker
+    const registration = await navigator.serviceWorker.register("/sw.js", {
+      scope: "/",
+    });
+    console.log("Service Worker registered:", registration);
+
+    // Wait for the service worker to be ready
+    await navigator.serviceWorker.ready;
     
     // Check for existing subscription
     let subscription = await registration.pushManager.getSubscription();
     
     if (!subscription) {
+      console.log("No existing subscription found, subscribing...");
       const convertedVapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -34,7 +42,12 @@ export async function registerPushNotification() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.warn("User not authenticated, skipping subscription storage");
+      return;
+    }
+
+    console.log("Storing subscription for user:", user.id);
 
     // Store subscription in Supabase
     const { error } = await supabase
@@ -46,7 +59,10 @@ export async function registerPushNotification() {
       });
 
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error storing subscription in Supabase:", error);
+      throw error;
+    }
     
     console.log("Push notification registered successfully");
     return true;
