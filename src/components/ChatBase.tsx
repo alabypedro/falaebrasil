@@ -476,7 +476,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                 <Input
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder={mode === 'writing' ? "Escreva seu texto (máx 100 palavras)..." : "Escreva algo..."}
+                  placeholder={mode === 'writing' ? `Write your text (max ${levels[selectedLevel]} words)...` : "Write something..."}
                   disabled={isLoading}
                   className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
                 />
