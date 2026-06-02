@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Mic, Image as ImageIcon, MessageSquare, FileText, X, Upload, Loader2 as Spinner } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 interface ListeningLesson {
   id: string;
@@ -70,6 +72,7 @@ export default function ListeningManager() {
   const [editing, setEditing] = useState<ListeningLesson | null>(null);
   const [form, setForm] = useState(emptyLesson);
   const [loading, setLoading] = useState(false);
+  const [filterLevel, setFilterLevel] = useState<string>("all");
 
   const load = async () => {
     const { data, error } = await supabase.from("listening_lessons").select("*").order("created_at");
@@ -202,14 +205,69 @@ export default function ListeningManager() {
     }));
   };
 
+  const levelCounts = ["A1", "A2", "B1", "B2", "C1", "C2"].reduce((acc, lvl) => {
+    acc[lvl] = lessons.filter(l => l.level === lvl).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const filteredLessons = filterLevel === "all" 
+    ? lessons 
+    : lessons.filter(l => l.level === filterLevel);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Lições Estruturadas - IA Escutaê</h2>
-        <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Nova Lição</Button>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">IA Escutaê - Gestão</h2>
+          <p className="text-muted-foreground">Gerencie o catálogo de lições de compreensão auditiva.</p>
+        </div>
+        <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" /> Nova Lição</Button>
       </div>
 
-      <div className="rounded-md border">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {["A1", "A2", "B1", "B2", "C1", "C2"].map(lvl => (
+          <Card key={lvl} className={cn(
+            "cursor-pointer transition-all hover:border-primary/50",
+            filterLevel === lvl ? "border-primary bg-primary/5" : ""
+          )} onClick={() => setFilterLevel(filterLevel === lvl ? "all" : lvl)}>
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="text-xs font-black uppercase tracking-wider text-muted-foreground">{lvl}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold">{levelCounts[lvl] || 0}</span>
+                <span className="text-xs text-muted-foreground">/ 12</span>
+              </div>
+              <Progress 
+                value={((levelCounts[lvl] || 0) / 12) * 100} 
+                className="h-1 mt-2" 
+              />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium">Filtrar por Nível:</Label>
+          <Select value={filterLevel} onValueChange={setFilterLevel}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Todos os níveis" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os níveis</SelectItem>
+              {["A1", "A2", "B1", "B2", "C1", "C2"].map(l => (
+                <SelectItem key={l} value={l}>{l}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          Mostrando <strong>{filteredLessons.length}</strong> de <strong>{lessons.length}</strong> lições
+        </div>
+      </div>
+
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -223,7 +281,7 @@ export default function ListeningManager() {
             {lessons.length === 0 && (
               <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhuma lição cadastrada.</TableCell></TableRow>
             )}
-            {lessons.map((lesson) => (
+            {filteredLessons.map((lesson) => (
               <TableRow key={lesson.id}>
                 <TableCell className="font-medium">{lesson.title}</TableCell>
                 <TableCell>{lesson.level}</TableCell>
