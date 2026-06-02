@@ -370,23 +370,27 @@ export default function ListeningLab() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {currentContent.part1.options.map((opt: any, i: number) => (
-                  <Button 
-                    key={i} 
-                    variant={currentAnswer === i ? "default" : "outline"} 
-                    className="h-24 flex-col gap-2 relative"
-                    onClick={() => handleAnswer(i)}
-                  >
-                    <span className="text-lg font-bold">Alternativa {String.fromCharCode(65 + i)}</span>
-                    <div 
+                  <div key={i} className="flex flex-col gap-2">
+                    <Button 
+                      variant={currentAnswer === i ? "default" : "outline"} 
+                      className="h-24 flex-col gap-2 relative"
+                      onClick={() => handleAnswer(i)}
+                    >
+                      <span className="text-lg font-bold">Alternativa {String.fromCharCode(65 + i)}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className={cn(
-                        "p-2 rounded-full",
-                        currentAudioId === `p1-o-${i}` ? "bg-primary text-primary-foreground animate-pulse" : "bg-muted text-muted-foreground"
+                        "w-full gap-2",
+                        currentAudioId === `p1-o-${i}` ? "text-primary animate-pulse" : "text-muted-foreground"
                       )}
-                      onClick={(e) => { e.stopPropagation(); speak(opt.script, 'female', `p1-o-${i}`); }}
+                      onClick={() => speak(opt.script, 'female', `p1-o-${i}`)}
                     >
                       <Volume2 className="h-4 w-4" />
-                    </div>
-                  </Button>
+                      Ouvir Áudio
+                    </Button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -411,23 +415,27 @@ export default function ListeningLab() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                 {currentContent.part2[currentQuestionInPart].options.map((opt: any, i: number) => (
-                  <Button 
-                    key={i} 
-                    variant={currentAnswer === i ? "default" : "outline"} 
-                    className="h-24 flex-col gap-2 relative"
-                    onClick={() => handleAnswer(i)}
-                  >
-                    <span className="text-lg font-bold">Resposta {String.fromCharCode(65 + i)}</span>
-                    <div 
+                  <div key={i} className="flex flex-col gap-2">
+                    <Button 
+                      variant={currentAnswer === i ? "default" : "outline"} 
+                      className="h-24 flex-col gap-2 relative"
+                      onClick={() => handleAnswer(i)}
+                    >
+                      <span className="text-lg font-bold">Resposta {String.fromCharCode(65 + i)}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className={cn(
-                        "p-2 rounded-full",
-                        currentAudioId === `p2-q-${currentQuestionInPart}-o-${i}` ? "bg-primary text-primary-foreground animate-pulse" : "bg-muted text-muted-foreground"
+                        "w-full gap-2",
+                        currentAudioId === `p2-q-${currentQuestionInPart}-o-${i}` ? "text-primary animate-pulse" : "text-muted-foreground"
                       )}
-                      onClick={(e) => { e.stopPropagation(); speak(opt.script, 'female', `p2-q-${currentQuestionInPart}-o-${i}`); }}
+                      onClick={() => speak(opt.script, 'female', `p2-q-${currentQuestionInPart}-o-${i}`)}
                     >
                       <Volume2 className="h-4 w-4" />
-                    </div>
-                  </Button>
+                      Ouvir Áudio
+                    </Button>
+                  </div>
                 ))}
               </div>
             </div>
