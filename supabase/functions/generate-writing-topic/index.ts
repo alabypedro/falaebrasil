@@ -64,18 +64,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Você gera UM tema de prática de ESCRITA (writing) em inglês para alunos brasileiros.
-O nível atual do aluno é: ${userLevel}.
+    const systemPrompt = `You generate ONE English writing practice topic for students.
+Current student level: ${userLevel}.
 
-REGRAS:
-- Responda SEMPRE em PORTUGUÊS do Brasil (apenas o enunciado do tema).
-- Alternar entre temas de VIDA COTIDIANA e situações PROFISSIONAIS.
-- Frequentemente peça para o aluno escrever um e-mail curto e objetivo (ex: e-mail profissional, convite, feedback, etc).
-- O tema deve ser adequado ao nível do aluno (${userLevel}). 
-- Frase curta (máx. 20 palavras), começa com um verbo no imperativo (Escreva, Descreva, Conte, Explique, Redija).
-- Termina com "em inglês."
-- NÃO use aspas, emojis, listas, markdown ou explicações. Só o enunciado.
-- Evite repetir temas recentes.`;
+RULES:
+- Respond ALWAYS in ENGLISH (the topic enunciation).
+- Alternate between DAILY LIFE and PROFESSIONAL situations.
+- Frequently ask the student to write a short and objective email (e.g., professional email, invitation, feedback, etc.).
+- The topic must be appropriate for the student's level (${userLevel}).
+- Short sentence (max 20 words), starting with an imperative verb (Write, Describe, Tell, Explain).
+- Ends with "in English."
+- DO NOT use quotes, emojis, lists, markdown, or explanations. Just the enunciation.
+- Avoid repeating recent topics.`;
 
     const userPrompt = recent.length
       ? `Gere um novo tema de escrita diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
