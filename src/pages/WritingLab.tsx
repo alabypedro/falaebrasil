@@ -167,6 +167,12 @@ export default function WritingLab() {
     }
   }, [recordings]);
 
+  const speakMessage = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] max-w-4xl mx-auto px-4">
       <div className="flex items-center justify-between mb-6">
