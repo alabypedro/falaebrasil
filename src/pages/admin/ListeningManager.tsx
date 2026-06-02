@@ -91,11 +91,19 @@ export default function ListeningManager() {
 
   const openEdit = (lesson: ListeningLesson) => {
     setEditing(lesson);
+    const base = JSON.parse(JSON.stringify(emptyLesson.content));
+    const incoming = lesson.content && typeof lesson.content === "object" ? lesson.content : {};
+    const mergedContent = {
+      part1: { ...base.part1, ...(incoming.part1 || {}) },
+      part2: Array.isArray(incoming.part2) ? incoming.part2 : base.part2,
+      part3: { ...base.part3, ...(incoming.part3 || {}) },
+      part4: { ...base.part4, ...(incoming.part4 || {}) },
+    };
     setForm({
       title: lesson.title,
       description: lesson.description || "",
       level: lesson.level,
-      content: lesson.content
+      content: mergedContent,
     });
     setOpen(true);
   };
