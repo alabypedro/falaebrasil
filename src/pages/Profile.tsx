@@ -375,7 +375,7 @@ export default function Profile() {
         <CardHeader>
           <CardTitle className="text-base text-destructive">Zona de Perigo</CardTitle>
           <CardDescription>
-            Resete todo o seu progresso: zera XP, retorna ao nível A1, marca todas as aulas como não assistidas e apaga o histórico de quizzes.
+            Resete todo o seu progresso: zera XP, retorna ao nível A1, marca todas as aulas como não assistidas, apaga o histórico de quizzes e reseta suas melhores notas de voz.
           </CardDescription>
         </CardHeader>
         <CardContent>
