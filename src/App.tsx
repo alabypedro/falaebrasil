@@ -30,6 +30,7 @@ import LessonsManager from "@/pages/admin/LessonsManager";
 import QuizzesManager from "@/pages/admin/QuizzesManager";
 import LibraryManager from "@/pages/admin/LibraryManager";
 import PromptsManager from "@/pages/admin/PromptsManager";
+import ListeningManager from "@/pages/admin/ListeningManager";
 import AdminsManager from "@/pages/admin/AdminsManager";
 import HublaProductsManager from "@/pages/admin/HublaProductsManager";
 import TutorialsManager from "@/pages/admin/TutorialsManager";
@@ -143,6 +144,7 @@ const App = () => {
                           <Route path="lessons" element={<LessonsManager />} />
                           <Route path="quizzes" element={<QuizzesManager />} />
                           <Route path="library" element={<LibraryManager />} />
+                          <Route path="listening" element={<ListeningManager />} />
                           <Route path="prompts" element={<PromptsManager />} />
                           <Route path="tutorials" element={<TutorialsManager />} />
                           <Route path="install-videos" element={<InstallTutorialVideosManager />} />
