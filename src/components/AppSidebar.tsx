@@ -9,6 +9,7 @@ import {
   Download,
   Users,
   FileText,
+  MessageSquareText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +32,7 @@ const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Cursos Falaê Brasil! (FB)", url: "/courses", icon: BookOpen },
   { title: "IA Falaê", url: "/voice-lab", icon: Mic },
+  { title: "Chat Lab", url: "/chat-lab", icon: MessageSquareText },
   { title: "Biblioteca BST", url: "/library", icon: Library },
   { title: "Comunidades FB", url: "/communities", icon: Users },
   { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },
