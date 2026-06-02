@@ -124,15 +124,15 @@ Deno.serve(async (req) => {
       EnableProsodyAssessment: true,
     };
 
-    // Encode as base64 of UTF-8 bytes (btoa alone fails on non-Latin1 characters
-    // like curly quotes, accented letters, em-dashes etc. that may appear in referenceText).
+    // Encode as base64 of UTF-8 bytes.
+    // We use a robust method to avoid "characters outside of the Latin1 range" errors
+    // that can happen with btoa() when dealing with certain Unicode characters.
     const pronAssessmentJson = JSON.stringify(pronAssessmentParams);
     const pronAssessmentBytes = new TextEncoder().encode(pronAssessmentJson);
-    let binaryString = "";
-    for (let i = 0; i < pronAssessmentBytes.length; i++) {
-      binaryString += String.fromCharCode(pronAssessmentBytes[i]);
-    }
-    const pronAssessmentHeader = btoa(binaryString);
+    
+    // Using a manual base64 conversion or a robust built-in if available.
+    // In Deno, we can use the following approach which is safe for all bytes:
+    const pronAssessmentHeader = btoa(String.fromCharCode(...pronAssessmentBytes));
     const sessionId = crypto.randomUUID().replace(/-/g, "");
     const url = `https://${AZURE_SPEECH_REGION}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=detailed&X-ConnectionId=${sessionId}`;
 
