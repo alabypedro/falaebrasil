@@ -210,6 +210,10 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     if (sessionId && messages.length === 0) {
       initChat();
     }
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
   }, [sessionId]);
 
   const speakMessage = async (text: string, messageId?: string) => {
