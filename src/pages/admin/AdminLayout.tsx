@@ -9,6 +9,7 @@ const adminNav = [
   { to: "/admin/lessons", icon: FileText, label: "Lições" },
   { to: "/admin/quizzes", icon: HelpCircle, label: "Quizzes" },
   { to: "/admin/library", icon: Library, label: "Biblioteca BST" },
+  { to: "/admin/listening", icon: Mic, label: "IA Escutaê" },
   { to: "/admin/prompts", icon: Mic, label: "Textos IA Falaê" },
   { to: "/admin/communities", icon: Users, label: "Comunidades FB" },
   { to: "/admin/tutorials", icon: PlayCircle, label: "Tutoriais" },
