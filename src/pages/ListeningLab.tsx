@@ -34,6 +34,17 @@ export default function ListeningLab() {
   const synth = window.speechSynthesis;
 
   useEffect(() => {
+    // Load voices immediately
+    const loadVoices = () => {
+      synth.getVoices();
+    };
+    loadVoices();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = loadVoices;
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchLessons = async () => {
       const { data, error } = await supabase.from("listening_lessons").select("*").order("created_at");
       if (data) setLessons(data);
@@ -52,6 +63,37 @@ export default function ListeningLab() {
     synth.cancel();
   };
 
+  const getVoice = (gender: 'male' | 'female' = 'female') => {
+    const voices = synth.getVoices();
+    // Prefer Google/Premium English voices as they tend to be more "humanized"
+    const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+    
+    // Sort to prioritize high quality/natural voices if available
+    const sortedVoices = [...englishVoices].sort((a, b) => {
+      const premiumKeywords = ['Google', 'Premium', 'Natural', 'Enhanced', 'Neural'];
+      const aScore = premiumKeywords.reduce((acc, kw) => acc + (a.name.includes(kw) ? 1 : 0), 0);
+      const bScore = premiumKeywords.reduce((acc, kw) => acc + (b.name.includes(kw) ? 1 : 0), 0);
+      return bScore - aScore;
+    });
+
+    if (gender === 'female') {
+      return sortedVoices.find(v => 
+        v.name.includes('Female') || 
+        v.name.includes('Zira') || 
+        v.name.includes('Samantha') || 
+        v.name.includes('Google US English') ||
+        v.name.includes('Microsoft Aria')
+      ) || sortedVoices[0];
+    } else {
+      return sortedVoices.find(v => 
+        v.name.includes('Male') || 
+        v.name.includes('David') || 
+        v.name.includes('Google UK English Male') ||
+        v.name.includes('Microsoft Guy')
+      ) || sortedVoices[0];
+    }
+  };
+
   const speak = (text: string, voiceType: 'male' | 'female' = 'female', id: string) => {
     if (currentAudioId === id && isSpeaking) {
       synth.cancel();
@@ -64,17 +106,10 @@ export default function ListeningLab() {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     
-    const voices = synth.getVoices();
-    let voice;
-    
-    if (voiceType === 'female') {
-      voice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Female') || v.name.includes('Zira') || v.name.includes('Google US English') || v.name.includes('Samantha')));
-    } else {
-      voice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Male') || v.name.includes('David') || v.name.includes('Google UK English Male')));
-    }
-
+    const voice = getVoice(voiceType);
     if (voice) utterance.voice = voice;
-    utterance.rate = 0.9;
+    utterance.rate = 0.85; // Slightly slower for better clarity and less robotic feel
+    utterance.pitch = 1;
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -98,10 +133,9 @@ export default function ListeningLab() {
       await new Promise<void>((resolve) => {
         const utterance = new SpeechSynthesisUtterance(line.text);
         utterance.lang = "en-US";
-        const voices = synth.getVoices();
-        const voice = voices.find(v => v.lang.startsWith('en') && (line.speaker === 'female' ? v.name.includes('Female') || v.name.includes('Zira') : v.name.includes('Male') || v.name.includes('David')));
+        const voice = getVoice(line.speaker === 'female' ? 'female' : 'male');
         if (voice) utterance.voice = voice;
-        utterance.rate = 0.9;
+        utterance.rate = 0.85;
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => resolve();
         utterance.onerror = () => resolve();
