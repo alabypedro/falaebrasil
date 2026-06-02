@@ -216,10 +216,29 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "en-US";
       
-      // Tentar encontrar uma voz masculina/feminina mais natural se disponível no browser
       const voices = window.speechSynthesis.getVoices();
-      const naturalVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || voices[0];
-      if (naturalVoice) utterance.voice = naturalVoice;
+      
+      // Prioridade para vozes Premium/Natural em inglês
+      const preferredVoices = [
+        "Google US English",
+        "Microsoft Aria Online",
+        "Microsoft Guy Online",
+        "Samantha",
+        "Daniel"
+      ];
+
+      let selectedVoice = voices.find(v => v.lang === "en-US" && preferredVoices.some(pv => v.name.includes(pv)));
+      
+      // Fallback para qualquer voz em inglês se a preferida não existir
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang.startsWith("en"));
+      }
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        utterance.rate = 0.95; // Ligeiramente mais devagar para clareza
+        utterance.pitch = 1.0;
+      }
       
       window.speechSynthesis.speak(utterance);
     } catch (error) {
