@@ -73,6 +73,7 @@ export default function ListeningManager() {
   const [form, setForm] = useState(emptyLesson);
   const [loading, setLoading] = useState(false);
   const [filterLevel, setFilterLevel] = useState<string>("all");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const { data, error } = await supabase.from("listening_lessons").select("*").order("created_at");
