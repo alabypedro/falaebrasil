@@ -48,6 +48,21 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     if (!user) return;
     
     const initSession = async () => {
+      if (mode === 'writing') {
+        // Always create a new session or clear current for writing mode
+        const { data: newSession } = await supabase
+          .from('chat_sessions')
+          .insert({ user_id: user.id, type: mode })
+          .select()
+          .single();
+        
+        if (newSession) {
+          setSessionId(newSession.id);
+          setMessages([]);
+        }
+        return;
+      }
+
       const { data: session } = await supabase
         .from('chat_sessions')
         .select('*')
