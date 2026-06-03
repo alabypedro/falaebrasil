@@ -690,8 +690,10 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          best_listening_score: number | null
           best_scripted_score: number | null
           best_unscripted_score: number | null
+          best_writing_score: number | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -725,8 +727,10 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          best_listening_score?: number | null
           best_scripted_score?: number | null
           best_unscripted_score?: number | null
+          best_writing_score?: number | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -760,8 +764,10 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          best_listening_score?: number | null
           best_scripted_score?: number | null
           best_unscripted_score?: number | null
+          best_writing_score?: number | null
           created_at?: string
           display_name?: string | null
           email?: string | null
