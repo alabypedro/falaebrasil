@@ -148,6 +148,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
     if (!text.trim() || !sessionId || isLoading) return;
     
+    const startTime = Date.now();
     const currentMaxWords = levels[selectedLevel];
     if (mode === 'writing' && wordCount > currentMaxWords) {
       toast({
