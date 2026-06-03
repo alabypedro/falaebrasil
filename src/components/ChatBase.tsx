@@ -502,7 +502,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t border-sidebar-border/30 bg-sidebar/30">
+        <div className="p-2 sm:p-4 border-t border-sidebar-border/30 bg-sidebar/30">
           <form
             onSubmit={(e) => {
               e.preventDefault();
