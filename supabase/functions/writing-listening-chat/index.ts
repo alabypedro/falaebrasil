@@ -44,6 +44,15 @@ Deno.serve(async (req) => {
       throw new Error("Azure OpenAI configuration is missing");
     }
 
+    const cefrCriteria = {
+      'A1': 'Focus on basic vocabulary, correct use of "to be", present simple, and ability to introduce yourself or describe simple objects.',
+      'A2': 'Focus on past simple, future with "going to", comparative adjectives, and describing everyday tasks or personal background.',
+      'B1': 'Focus on present perfect, conditional sentences (type 1), relative clauses, and expressing opinions or ambitions.',
+      'B2': 'Focus on passive voice, all conditionals, modal verbs in the past, and ability to argue a point or explain detailed viewpoints.',
+      'C1': 'Focus on inversion, mixed conditionals, advanced phrasal verbs, and subtle nuances in formal and informal contexts.',
+      'C2': 'Focus on mastery of complex structures, idiomatic expressions, and ability to summarize information from different sources coherently.'
+    };
+
     const systemPrompt = type === 'listening' 
       ? `You are a TOEIC examiner focusing on listening comprehension. Your goal is to simulate a TOEIC Part 1 or Part 2 task at the ${level || 'A1'} CEFR level. \n\n` +
         "CRITICAL: ALL your output must be EXCLUSIVELY in English. Do not use Portuguese at all.\n\n" +
@@ -57,7 +66,8 @@ Deno.serve(async (req) => {
          - Grammatical Errors (with correction and explanation in English)
          - Vocabulary Analysis (appropriate for level ${level || 'A1'})
          - CEFR Level Evaluation (how close their writing is to the target ${level || 'A1'} level)
-         - Suggestion for Improvement. 
+         - CEFR Criteria Applied: ${cefrCriteria[level as keyof typeof cefrCriteria] || cefrCriteria['A1']}
+         - Suggestion for Improvement (Specific points to improve to reach or master ${level || 'A1'}). 
          
          Continue the conversation in English encouraging the student to write more.`;
 
