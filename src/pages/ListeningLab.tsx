@@ -15,7 +15,10 @@ interface ListeningLesson {
   content: any;
 }
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export default function ListeningLab() {
+  const { user } = useAuth();
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
