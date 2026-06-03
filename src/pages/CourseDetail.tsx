@@ -494,27 +494,48 @@ export default function CourseDetail() {
                         <p className="text-sm text-muted-foreground mt-1 break-words">{activeLesson.description}</p>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-2 md:flex-shrink-0 md:justify-end">
-                      {activeLesson.pdf_url && (
+                    <div className="flex flex-wrap gap-3 md:flex-shrink-0 md:justify-end">
+                      <div className="flex flex-col gap-2 w-full md:w-auto">
+                        {activeLesson.pdf_url && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setReadingPdf({ url: activeLesson.pdf_url!, title: activeLesson.title })}
+                            className="w-full md:min-w-[140px]"
+                          >
+                            <FileText className="h-4 w-4 mr-2" /> PDF
+                          </Button>
+                        )}
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => setReadingPdf({ url: activeLesson.pdf_url!, title: activeLesson.title })}
-                          className="flex-1 min-w-[110px] md:flex-none"
+                          onClick={() => navigate('/writing-lab')}
+                          className="w-full md:min-w-[140px]"
                         >
-                          <FileText className="h-4 w-4 mr-1" /> PDF
+                          <MessageSquare className="h-4 w-4 mr-2" /> IA Escreveaê
                         </Button>
-                      )}
-                      {activeLesson.practice_text && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/voice-lab?lesson=${activeLesson.id}`)}
-                          className="flex-1 min-w-[140px] md:flex-none"
+                      </div>
+                      
+                      <div className="flex flex-col gap-2 w-full md:w-auto">
+                        {activeLesson.practice_text && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/voice-lab?lesson=${activeLesson.id}`)}
+                            className="w-full md:min-w-[140px]"
+                          >
+                            <Mic className="h-4 w-4 mr-2" /> IA Falaê
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => navigate('/listening-lab')}
+                          className="w-full md:min-w-[140px]"
                         >
-                          <Mic className="h-4 w-4 mr-1" /> Praticar Pronúncia
+                          <Headphones className="h-4 w-4 mr-2" /> IA Escutaê
                         </Button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
