@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Video, FileText, ExternalLink, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Video, FileText, ExternalLink, Search, Filter, Eye, RefreshCw } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { PdfReader } from "@/components/library/PdfReader";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableRow } from "@/components/admin/SortableRow";
+import { BulkActions } from "@/components/admin/BulkActions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { LessonPreview } from "@/components/admin/LessonPreview";
 
 interface Lesson {
   id: string;
@@ -35,16 +41,12 @@ interface LessonVideo {
 
 const emptyForm = { module_id: "", title: "", description: "", video_url: "", pdf_url: "", practice_text: "", display_order: 0 };
 
-// Detect and normalize YouTube URLs / IDs
 type VideoInfo = { provider: "youtube"; id: string; embedUrl: string; openUrl: string };
 
 function parseVideo(url: string): VideoInfo | null {
   if (!url) return null;
   const trimmed = url.trim();
-  // YouTube full URL (watch, embed, shorts, youtu.be)
-  const yt = trimmed.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i,
-  );
+  const yt = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
   if (yt) {
     return {
       provider: "youtube",
@@ -53,7 +55,6 @@ function parseVideo(url: string): VideoInfo | null {
       openUrl: `https://youtu.be/${yt[1]}`,
     };
   }
-  // Bare YouTube ID (11 chars, letters/digits/_-)
   if (/^[\w-]{11}$/.test(trimmed)) {
     return {
       provider: "youtube",
@@ -71,9 +72,7 @@ function buildSlots(existing: LessonVideo[]): LessonVideo[] {
   const slots: LessonVideo[] = [];
   for (let i = 0; i < VIDEO_SLOTS; i++) {
     const found = existing.find((v) => v.display_order === i);
-    slots.push(
-      found ?? { title: `Videoaula ${i + 1}`, video_url: "", display_order: i },
-    );
+    slots.push(found ?? { title: `Videoaula ${i + 1}`, video_url: "", display_order: i });
   }
   return slots;
 }
@@ -85,12 +84,23 @@ export default function LessonsManager() {
   const [editing, setEditing] = useState<Lesson | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  
+  // Search and Filters
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterModule, setFilterModule] = useState<string>("all");
+  const [contentFilter, setContentFilter] = useState<"all" | "has_video" | "has_pdf">("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null);
+
   const [uploadingPdf, setUploadingPdf] = useState(false);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videos, setVideos] = useState<LessonVideo[]>([]);
   const [videoCounts, setVideoCounts] = useState<Record<string, number>>({});
-  const [readingPdf, setReadingPdf] = useState<{ url: string; title: string } | null>(null);
+  const [isFetchingTitle, setIsFetchingTitle] = useState<number | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const load = async () => {
     const [{ data: lsn }, { data: mods }, { data: vids }] = await Promise.all([
@@ -109,7 +119,16 @@ export default function LessonsManager() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = filterModule === "all" ? lessons : lessons.filter((l) => l.module_id === filterModule);
+  const filtered = useMemo(() => {
+    return lessons.filter((l) => {
+      const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesModule = filterModule === "all" || l.module_id === filterModule;
+      const matchesContent = contentFilter === "all" ? true :
+                             contentFilter === "has_video" ? (videoCounts[l.id] ?? (l.video_url ? 1 : 0)) > 0 :
+                             contentFilter === "has_pdf" ? !!l.pdf_url : true;
+      return matchesSearch && matchesModule && matchesContent;
+    });
+  }, [lessons, searchQuery, filterModule, contentFilter, videoCounts]);
 
   const openNew = () => {
     setEditing(null);
@@ -130,20 +149,38 @@ export default function LessonsManager() {
     setOpen(true);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "pdf" | "video") => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "pdf") => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const setUploading = type === "pdf" ? setUploadingPdf : setUploadingVideo;
-    setUploading(true);
-    const folder = type === "pdf" ? "pdfs" : "videos";
+    setUploadingPdf(true);
+    const folder = "pdfs";
     const path = `${folder}/${Date.now()}_${file.name}`;
     const { error } = await supabase.storage.from("lesson-files").upload(path, file);
-    if (error) { toast.error("Erro no upload: " + error.message); setUploading(false); return; }
+    if (error) { toast.error("Erro no upload: " + error.message); setUploadingPdf(false); return; }
     const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
-    const field = type === "pdf" ? "pdf_url" : "video_url";
-    setForm((prev) => ({ ...prev, [field]: data.publicUrl }));
-    setUploading(false);
-    toast.success(type === "pdf" ? "PDF enviado!" : "Vídeo enviado!");
+    setForm((prev) => ({ ...prev, pdf_url: data.publicUrl }));
+    setUploadingPdf(false);
+    toast.success("PDF enviado!");
+  };
+
+  const fetchYoutubeTitle = async (url: string, index: number) => {
+    const info = parseVideo(url);
+    if (!info) return;
+    setIsFetchingTitle(index);
+    try {
+      const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${info.id}&format=json`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.title) {
+          setVideos(prev => prev.map((v, i) => i === index ? { ...v, title: data.title } : v));
+          toast.success("Título recuperado!");
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching YT title", e);
+    } finally {
+      setIsFetchingTitle(null);
+    }
   };
 
   const save = async () => {
@@ -172,23 +209,37 @@ export default function LessonsManager() {
         const v = videos[i];
         const url = v.video_url.trim();
         if (!url) {
-          // If this slot existed before but was cleared, remove it
-          if (v.id) {
-            await supabase.from("lesson_videos").delete().eq("id", v.id);
-          }
+          if (v.id) await supabase.from("lesson_videos").delete().eq("id", v.id);
           continue;
         }
         const row = { lesson_id: lessonId, title: v.title.trim() || `Videoaula ${i + 1}`, video_url: url, display_order: i };
-        if (v.id) {
-          await supabase.from("lesson_videos").update(row).eq("id", v.id);
-        } else {
-          await supabase.from("lesson_videos").insert(row);
-        }
+        if (v.id) await supabase.from("lesson_videos").update(row).eq("id", v.id);
+        else await supabase.from("lesson_videos").insert(row);
       }
     }
 
     toast.success(editing ? "Lição atualizada!" : "Lição criada!");
     setOpen(false); setLoading(false); load();
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setLessons((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        
+        const updates = newItems
+          .filter(l => l.module_id === items[oldIndex].module_id)
+          .map((item, idx) => ({ id: item.id, display_order: idx }));
+        
+        Promise.all(updates.map(u => supabase.from("lessons").update({ display_order: u.display_order }).eq("id", u.id)))
+          .then(() => toast.success("Ordem atualizada"));
+          
+        return newItems;
+      });
+    }
   };
 
   const remove = async (id: string) => {
@@ -197,67 +248,126 @@ export default function LessonsManager() {
     else { toast.success("Lição excluída"); load(); }
   };
 
+  const bulkDelete = async () => {
+    const { error } = await supabase.from("lessons").delete().in("id", selectedIds);
+    if (error) toast.error(error.message);
+    else { toast.success("Lições excluídas"); setSelectedIds([]); load(); }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-lg font-semibold">Lições</h2>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-xl font-bold">Lições</h2>
+          <p className="text-sm text-muted-foreground">Gerencie o conteúdo das aulas</p>
+        </div>
         <div className="flex gap-2">
-          <Select value={filterModule} onValueChange={setFilterModule}>
-            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar por módulo" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os módulos</SelectItem>
-              {modules.map((m) => <SelectItem key={m.id} value={m.id}>{m.course_title} › {m.title}</SelectItem>)}
-            </SelectContent>
-          </Select>
           <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Nova Lição</Button>
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Ordem</TableHead>
-              <TableHead>Título</TableHead>
-              <TableHead>Módulo</TableHead>
-              <TableHead>Mídia</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma lição cadastrada.</TableCell></TableRow>
-            )}
-            {filtered.map((l) => (
-              <TableRow key={l.id}>
-                <TableCell className="font-mono text-xs">{l.display_order}</TableCell>
-                <TableCell className="font-medium">{l.title}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{(l.modules as any)?.title ?? "—"}</TableCell>
-                <TableCell className="flex gap-1">
-                  {(videoCounts[l.id] ?? (l.video_url ? 1 : 0)) > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-accent text-xs">
-                      <Video className="h-4 w-4" />
-                      {videoCounts[l.id] ?? 1}
-                    </span>
-                  )}
-                  {l.pdf_url && <FileText className="h-4 w-4 text-muted-foreground" />}
-                </TableCell>
-                <TableCell className="text-right space-x-1">
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(l)}><Pencil className="h-4 w-4" /></Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader><AlertDialogTitle>Excluir lição?</AlertDialogTitle><AlertDialogDescription>Quizzes vinculados também serão excluídos.</AlertDialogDescription></AlertDialogHeader>
-                      <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => remove(l.id)}>Excluir</AlertDialogAction></AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="flex flex-wrap items-center gap-3 bg-muted/30 p-4 rounded-lg border">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar por título..." 
+            className="pl-9 h-9" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <Select value={filterModule} onValueChange={setFilterModule}>
+          <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Módulo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os módulos</SelectItem>
+            {modules.map((m) => <SelectItem key={m.id} value={m.id}>{m.course_title} › {m.title}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={contentFilter} onValueChange={(v: any) => setContentFilter(v)}>
+          <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Conteúdo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="has_video">Com vídeo</SelectItem>
+            <SelectItem value="has_pdf">Com PDF</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
+      <div className="rounded-md border bg-card">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[30px]"></TableHead>
+                <TableHead className="w-[40px]">
+                  <Checkbox 
+                    checked={selectedIds.length === filtered.length && filtered.length > 0}
+                    onCheckedChange={(checked) => {
+                      if (checked) setSelectedIds(filtered.map(c => c.id));
+                      else setSelectedIds([]);
+                    }}
+                  />
+                </TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead>Módulo</TableHead>
+                <TableHead>Mídia</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">Nenhuma lição encontrada.</TableCell></TableRow>
+              )}
+              <SortableContext items={filtered.map(l => l.id)} strategy={verticalListSortingStrategy}>
+                {filtered.map((l) => (
+                  <SortableRow key={l.id} id={l.id}>
+                    <TableCell>
+                      <Checkbox 
+                        checked={selectedIds.includes(l.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) setSelectedIds([...selectedIds, l.id]);
+                          else setSelectedIds(selectedIds.filter(id => id !== l.id));
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div>
+                        <p>{l.title}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">Order: {l.display_order}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{(l.modules as any)?.title ?? "—"}</TableCell>
+                    <TableCell className="flex gap-2 items-center">
+                      {(videoCounts[l.id] ?? (l.video_url ? 1 : 0)) > 0 && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Video className="h-3 w-3" /> {videoCounts[l.id] ?? 1}
+                        </Badge>
+                      )}
+                      {l.pdf_url && <Badge variant="secondary"><FileText className="h-3 w-3" /></Badge>}
+                    </TableCell>
+                    <TableCell className="text-right space-x-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setPreviewLesson(l)} title="Ver como aluno"><Eye className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(l)}><Pencil className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>Excluir lição?</AlertDialogTitle><AlertDialogDescription>Lição será excluída permanentemente.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => remove(l.id)}>Excluir</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </SortableRow>
+                ))}
+              </SortableContext>
+            </TableBody>
+          </Table>
+        </DndContext>
+      </div>
+
+      <BulkActions selectedCount={selectedIds.length} onClear={() => setSelectedIds([])} onDelete={bulkDelete} label="lições" />
+      
+      {previewLesson && <LessonPreview lesson={previewLesson} open={!!previewLesson} onOpenChange={(o) => !o && setPreviewLesson(null)} />}
+      
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "Editar Lição" : "Nova Lição"}</DialogTitle></DialogHeader>
@@ -278,73 +388,54 @@ export default function LessonsManager() {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Videoaulas (10 slots)</Label>
-                <span className="text-[11px] text-muted-foreground">
-                  {videos.filter((v) => v.video_url.trim()).length}/{VIDEO_SLOTS} preenchidos
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Cada unidade tem 10 campos para URLs do YouTube. Preencha apenas os que precisar — slots vazios não aparecem para o aluno.
-              </p>
-
+              <Label>Videoaulas (10 slots)</Label>
               {videos.map((v, idx) => {
                 const info = parseVideo(v.video_url);
-                const label = info ? "YouTube" : null;
                 return (
                   <div key={v.id ?? `local-${idx}`} className="rounded-md border p-3 space-y-2 bg-muted/30">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-muted-foreground">#{idx + 1}</span>
                       <Input
                         value={v.title}
-                        onChange={(e) =>
-                          setVideos((prev) => prev.map((it, i) => (i === idx ? { ...it, title: e.target.value } : it)))
-                        }
-                        placeholder={`Título da videoaula ${idx + 1}`}
+                        onChange={(e) => setVideos(prev => prev.map((it, i) => i === idx ? { ...it, title: e.target.value } : it))}
+                        placeholder={`Título ${idx + 1}`}
                         className="h-8 text-sm"
                       />
+                      {v.video_url && info && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          disabled={isFetchingTitle === idx}
+                          onClick={() => fetchYoutubeTitle(v.video_url, idx)}
+                          title="Recuperar título do YouTube"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${isFetchingTitle === idx ? 'animate-spin' : ''}`} />
+                        </Button>
+                      )}
                       {v.video_url && (
                         <Button
                           type="button"
                           size="icon"
                           variant="ghost"
-                          title="Limpar este slot"
-                          onClick={() =>
-                            setVideos((prev) =>
-                              prev.map((it, i) =>
-                                i === idx ? { ...it, video_url: "" } : it,
-                              ),
-                            )
-                          }
+                          className="h-8 w-8"
+                          onClick={() => setVideos(prev => prev.map((it, i) => i === idx ? { ...it, video_url: "" } : it))}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>
                       )}
                     </div>
                     <Input
                       value={v.video_url}
-                      onChange={(e) =>
-                        setVideos((prev) => prev.map((it, i) => (i === idx ? { ...it, video_url: e.target.value } : it)))
-                      }
-                      placeholder="Link do YouTube (https://youtu.be/... ou https://youtube.com/watch?v=...)"
+                      onChange={(e) => setVideos(prev => prev.map((it, i) => i === idx ? { ...it, video_url: e.target.value } : it))}
+                      placeholder="Link do YouTube"
+                      onBlur={(e) => {
+                        if (e.target.value && !v.title.includes("Videoaula")) {
+                           // Option to auto-fetch on blur if empty
+                        }
+                      }}
                     />
-                    {v.video_url && info && (
-                      <div className="flex items-center gap-2 text-[11px] text-success">
-                        <Video className="h-3 w-3" />
-                        <span>{label} detectado (ID: {info.id})</span>
-                        <a
-                          href={info.openUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-auto inline-flex items-center gap-1 text-accent hover:underline"
-                        >
-                          Abrir <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    )}
-                    {v.video_url && !info && (
-                      <p className="text-[11px] text-warning">Link não reconhecido. Use uma URL válida do YouTube.</p>
-                    )}
                   </div>
                 );
               })}
@@ -353,29 +444,12 @@ export default function LessonsManager() {
               <Label>PDF da Aula</Label>
               <div className="flex gap-2 items-center">
                 <Input type="file" accept="application/pdf" onChange={(e) => handleFileUpload(e, "pdf")} disabled={uploadingPdf} />
-                {form.pdf_url && (
-                  <button 
-                    type="button"
-                    onClick={() => setReadingPdf({ url: form.pdf_url, title: form.title })}
-                    className="text-xs text-accent hover:underline whitespace-nowrap bg-transparent border-none cursor-pointer"
-                  >
-                    Ver PDF
-                  </button>
-                )}
+                {form.pdf_url && <Badge variant="outline">PDF ok</Badge>}
               </div>
-              {uploadingPdf && <p className="text-xs text-muted-foreground">Enviando PDF...</p>}
             </div>
             <div className="space-y-2">
               <Label>Texto para Prática de Voz</Label>
-              <Textarea
-                value={form.practice_text}
-                onChange={(e) => setForm({ ...form, practice_text: e.target.value })}
-                rows={4}
-                placeholder="Texto em inglês que o aluno lerá em voz alta no IA Falaê desta lição..."
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Este texto será carregado automaticamente quando o aluno entrar no IA Falaê a partir desta lição.
-              </p>
+              <Textarea value={form.practice_text} onChange={(e) => setForm({ ...form, practice_text: e.target.value })} rows={3} />
             </div>
             <div className="space-y-2">
               <Label>Ordem</Label>
@@ -388,15 +462,6 @@ export default function LessonsManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {readingPdf && (
-        <PdfReader
-          isOpen={!!readingPdf}
-          onClose={() => setReadingPdf(null)}
-          url={readingPdf.url}
-          title={readingPdf.title}
-        />
-      )}
     </div>
   );
 }
