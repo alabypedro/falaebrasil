@@ -458,12 +458,13 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   {m.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
                 <div className={cn(
-                  "rounded-2xl px-4 py-2 text-sm relative group",
+                  "rounded-2xl px-3 py-2 sm:px-4 sm:py-2 text-sm relative group",
                   m.role === 'user' 
-                    ? "bg-primary text-primary-foreground rounded-tr-none" 
-                    : "bg-sidebar-accent/80 text-sidebar-foreground rounded-tl-none border border-sidebar-border/30"
+                    ? "bg-primary text-primary-foreground rounded-tr-none shadow-md" 
+                    : "bg-sidebar-accent text-sidebar-foreground rounded-tl-none border border-sidebar-border shadow-sm"
                 )}>
                   <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+
                   {m.role === 'assistant' && (
                     <button 
                       onClick={() => speakMessage(m.content, m.id)}
