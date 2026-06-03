@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages, type, level } = await req.json();
+    const { messages, type, level, user_id } = await req.json();
 
     const AZURE_OPENAI_KEY = Deno.env.get("AZURE_OPENAI_KEY");
     const AZURE_OPENAI_ENDPOINT = Deno.env.get("AZURE_OPENAI_ENDPOINT");
@@ -63,11 +63,14 @@ Deno.serve(async (req) => {
         "Keep the conversation flow natural and professional. Always encourage the user to listen carefully."
       : `You are an official English proficiency examiner (TOEIC/CEFR standard). The student's current target level is ${level || 'A1'}. Analyze the text sent by the student and always return a structured feedback in English containing: 
          - General Score (0-100)
-         - Grammatical Errors (with correction and explanation in English)
+         - Grammatical Errors (with correction and explanation in English). 
+           IMPORTANT: Identify every single grammar mistake.
          - Vocabulary Analysis (appropriate for level ${level || 'A1'})
          - CEFR Level Evaluation (how close their writing is to the target ${level || 'A1'} level)
          - CEFR Criteria Applied: ${cefrCriteria[level as keyof typeof cefrCriteria] || cefrCriteria['A1']}
          - Suggestion for Improvement (Specific points to improve to reach or master ${level || 'A1'}). 
+         
+         CRITICAL: If the student makes any clear grammar or vocabulary mistake, list it under 'Grammatical Errors' in a way that can be easily parsed.
          
          Continue the conversation in English encouraging the student to write more.`;
 
@@ -96,6 +99,37 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
+    const botContent = result.choices[0].message.content;
+
+    // Async log challenges if errors found
+    if (type === 'writing' && user_id) {
+      const errorSection = botContent.match(/Grammatical Errors:([\s\S]*?)(Vocabulary Analysis|CEFR Level|$)/i);
+      if (errorSection && errorSection[1].trim()) {
+        const errors = errorSection[1].split(/\d+\./).filter(e => e.trim().length > 10);
+        for (const err of errors) {
+          try {
+            const lines = err.split('\n').map(l => l.trim()).filter(Boolean);
+            const original = lines[0]?.replace(/^["']|["']$/g, '') || '';
+            const correction = lines.find(l => l.toLowerCase().includes('correction:'))?.split(':')[1]?.trim() || '';
+            const explanation = lines.find(l => l.toLowerCase().includes('explanation:'))?.split(':')[1]?.trim() || '';
+            
+            if (original && correction) {
+              await supabase.from('fb_learning_challenges').insert({
+                user_id,
+                mistake_type: 'Grammar',
+                original_text: original,
+                corrected_text: correction,
+                explanation: explanation,
+                source_mode: 'writing'
+              });
+            }
+          } catch (e) {
+            console.error("Error parsing challenge:", e);
+          }
+        }
+      }
+    }
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

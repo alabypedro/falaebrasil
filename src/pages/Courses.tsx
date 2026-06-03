@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Lock, Zap } from "lucide-react";
+import { CheckCircle, Lock, Zap, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CourseWithProgress {
   id: string;
@@ -257,8 +258,41 @@ export default function Courses() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="space-y-6 max-w-6xl page-transition">
+        <div className="animate-fade-up">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96 mt-2" />
+        </div>
+        <div className="space-y-8 mt-8">
+          {[1, 2].map((group) => (
+            <section key={group} className="space-y-3">
+              <Skeleton className="h-4 w-32" />
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i} className="overflow-hidden border-border/50">
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <Skeleton className="h-12 w-12 rounded flex-shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-3 w-12" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-3 w-3/4" />
+                        </div>
+                      </div>
+                      <div className="space-y-2 pt-2">
+                        <Skeleton className="h-1.5 w-full" />
+                        <div className="flex justify-between">
+                          <Skeleton className="h-3 w-16" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     );
   }

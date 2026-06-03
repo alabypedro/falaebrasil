@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2, Pause, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -182,7 +182,8 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         body: { 
           messages: messages.concat(userMessage).map(m => ({ role: m.role, content: m.content })),
           type: mode,
-          level: selectedLevel
+          level: selectedLevel,
+          user_id: user.id
         }
       });
 
@@ -478,7 +479,24 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                     ? "bg-primary text-primary-foreground rounded-tr-none shadow-md" 
                     : "bg-sidebar-accent text-sidebar-foreground rounded-tl-none border border-sidebar-border shadow-sm"
                 )}>
-                  <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">
+                    {m.role === 'assistant' ? (
+                      m.content.split(/\s+/).map((word, i) => {
+                        const cleanWord = word.replace(/[.,!?;:()]/g, '');
+                        return (
+                          <span 
+                            key={i} 
+                            className="cursor-pointer hover:text-primary hover:underline underline-offset-4 decoration-primary/30"
+                            onClick={() => window.open(`https://translate.google.com/?sl=en&tl=pt&text=${encodeURIComponent(cleanWord)}&op=translate`, '_blank')}
+                          >
+                            {word}{' '}
+                          </span>
+                        );
+                      })
+                    ) : (
+                      m.content
+                    )}
+                  </p>
 
                   {m.role === 'assistant' && (
                     <button 

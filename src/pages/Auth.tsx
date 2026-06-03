@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, User, Phone, Check, X, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Phone, Check, X, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 import { Helmet } from "react-helmet-async";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { theme, toggleTheme } = useTheme();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -163,6 +165,17 @@ export default function Auth() {
       <div className="pointer-events-none absolute top-1/3 right-1/4 h-64 w-64 rounded-full bg-xp/20 blur-3xl animate-blob" style={{ animationDelay: "2s" }} />
 
       <Card className="w-full max-w-md glass-strong shadow-elegant border-border/40 relative z-10 animate-scale-in">
+        <div className="absolute top-4 right-4 z-20">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={toggleTheme}
+            title={theme === "light" ? "Modo escuro" : "Modo claro"}
+            className="press-effect rounded-lg hover:bg-accent/10 transition-all duration-300"
+          >
+            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </Button>
+        </div>
         <CardHeader className="text-center space-y-3">
           <img
             src={falaeLogo}

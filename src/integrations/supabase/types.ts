@@ -431,6 +431,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fb_learning_challenges: {
+        Row: {
+          corrected_text: string | null
+          created_at: string
+          explanation: string | null
+          id: string
+          last_occurred_at: string
+          mistake_type: string
+          occurrence_count: number | null
+          original_text: string | null
+          source_mode: string
+          user_id: string
+        }
+        Insert: {
+          corrected_text?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          last_occurred_at?: string
+          mistake_type: string
+          occurrence_count?: number | null
+          original_text?: string | null
+          source_mode: string
+          user_id: string
+        }
+        Update: {
+          corrected_text?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          last_occurred_at?: string
+          mistake_type?: string
+          occurrence_count?: number | null
+          original_text?: string | null
+          source_mode?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       hubla_product_courses: {
         Row: {
           course_id: string

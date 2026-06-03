@@ -350,6 +350,7 @@ export default function VoiceLab() {
         transcription: normalized.transcription,
         confidence: normalized.confidence,
         snr: normalized.snr,
+        words: data?.words || [], // Include words for visual feedback
       };
 
       setFeedback(mappedFeedback);
