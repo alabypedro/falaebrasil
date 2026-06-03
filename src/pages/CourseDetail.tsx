@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap } from "lucide-react";
+import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap, MessageSquare, Headphones } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
 import { PdfReader } from "@/components/library/PdfReader";
