@@ -179,7 +179,8 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       const { data, error } = await supabase.functions.invoke('writing-listening-chat', {
         body: { 
           messages: messages.concat(userMessage).map(m => ({ role: m.role, content: m.content })),
-          type: mode
+          type: mode,
+          level: selectedLevel
         }
       });
 
