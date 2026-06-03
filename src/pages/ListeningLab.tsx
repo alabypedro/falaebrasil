@@ -30,6 +30,7 @@ export default function ListeningLab() {
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
+  const [correctMap, setCorrectMap] = useState<Record<string, number>>({});
   
   // Audio state
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -50,8 +51,8 @@ export default function ListeningLab() {
 
   useEffect(() => {
     const fetchLessons = async () => {
-      const { data, error } = await supabase.from("listening_lessons").select("*").order("created_at");
-      if (data) setLessons(data);
+      const { data, error } = await supabase.rpc("get_listening_lessons_public" as any);
+      if (data) setLessons(data as ListeningLesson[]);
       setLoading(false);
     };
     fetchLessons();
@@ -64,6 +65,7 @@ export default function ListeningLab() {
     setAnswers({});
     setFinished(false);
     setScore(0);
+    setCorrectMap({});
     synth.cancel();
   };
 
@@ -183,50 +185,19 @@ export default function ListeningLab() {
   };
 
   const calculateResult = async () => {
-    let totalCorrect = 0;
-    const content = selectedLesson!.content;
-
-    // Part 1
-    if (answers['1-0'] === content.part1.correct_index) totalCorrect++;
-
-    // Part 2
-    for (let i = 0; i < 3; i++) {
-      if (answers[`2-${i}`] === content.part2[i].correct_index) totalCorrect++;
+    if (!selectedLesson) return;
+    const { data, error } = await supabase.rpc("grade_listening_lesson" as any, {
+      _lesson_id: selectedLesson.id,
+      _answers: answers as any,
+    });
+    if (error || !data) {
+      toast.error("Erro ao calcular nota: " + (error?.message ?? "desconhecido"));
+      return;
     }
-
-    // Part 3
-    for (let i = 0; i < 3; i++) {
-      if (answers[`3-${i}`] === content.part3.questions[i].correct_index) totalCorrect++;
-    }
-
-    // Part 4
-    for (let i = 0; i < 3; i++) {
-      if (answers[`4-${i}`] === content.part4.questions[i].correct_index) totalCorrect++;
-    }
-
-    const calculatedScore = totalCorrect * 10;
-    setScore(calculatedScore);
+    const result = data as any;
+    setScore(result.score ?? 0);
+    setCorrectMap((result.correct_answers ?? {}) as Record<string, number>);
     setFinished(true);
-
-    if (user) {
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("best_listening_score")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        const currentBest = profile?.best_listening_score || 0;
-        if (calculatedScore > currentBest) {
-          await supabase
-            .from("profiles")
-            .update({ best_listening_score: calculatedScore })
-            .eq("user_id", user.id);
-        }
-      } catch (err) {
-        console.error("Error updating best listening score:", err);
-      }
-    }
   };
 
   if (loading) {
@@ -329,25 +300,25 @@ export default function ListeningLab() {
       {
         question: "Descrição de Foto",
         userAnswer: answers['1-0'],
-        correctAnswer: content.part1.correct_index,
+        correctAnswer: correctMap['1-0'],
         options: content.part1.options.map((o: any) => `Alternativa ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
       },
       ...content.part2.map((q: any, i: number) => ({
         question: `Pergunta & Resposta ${i + 1}`,
         userAnswer: answers[`2-${i}`],
-        correctAnswer: q.correct_index,
+        correctAnswer: correctMap[`2-${i}`],
         options: q.options.map((o: any, idx: number) => `Resposta ${String.fromCharCode(65 + idx)}`)
       })),
       ...content.part3.questions.map((q: any, i: number) => ({
         question: q.enunciado,
         userAnswer: answers[`3-${i}`],
-        correctAnswer: q.correct_index,
+        correctAnswer: correctMap[`3-${i}`],
         options: q.options
       })),
       ...content.part4.questions.map((q: any, i: number) => ({
         question: q.enunciado,
         userAnswer: answers[`4-${i}`],
-        correctAnswer: q.correct_index,
+        correctAnswer: correctMap[`4-${i}`],
         options: q.options
       }))
     ];
