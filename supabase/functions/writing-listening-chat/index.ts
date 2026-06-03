@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages, type, level } = await req.json();
+    const { messages, type, level, user_id } = await req.json();
 
     const AZURE_OPENAI_KEY = Deno.env.get("AZURE_OPENAI_KEY");
     const AZURE_OPENAI_ENDPOINT = Deno.env.get("AZURE_OPENAI_ENDPOINT");
