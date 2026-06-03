@@ -345,6 +345,53 @@ export type Database = {
         }
         Relationships: []
       }
+      fb_cefr_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          mode: string
+          perceived_quality: number | null
+          response_time_ms: number | null
+          score: number | null
+          session_id: string
+          user_id: string
+          word_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          mode: string
+          perceived_quality?: number | null
+          response_time_ms?: number | null
+          score?: number | null
+          session_id: string
+          user_id: string
+          word_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          mode?: string
+          perceived_quality?: number | null
+          response_time_ms?: number | null
+          score?: number | null
+          session_id?: string
+          user_id?: string
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fb_cefr_metrics_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fb_communities: {
         Row: {
           access_key: string
