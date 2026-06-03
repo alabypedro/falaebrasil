@@ -182,30 +182,51 @@ export default function ListeningLab() {
     }
   };
 
-  const calculateResult = () => {
-    let totalScore = 0;
+  const calculateResult = async () => {
+    let totalCorrect = 0;
     const content = selectedLesson!.content;
 
     // Part 1
-    if (answers['1-0'] === content.part1.correct_index) totalScore++;
+    if (answers['1-0'] === content.part1.correct_index) totalCorrect++;
 
     // Part 2
     for (let i = 0; i < 3; i++) {
-      if (answers[`2-${i}`] === content.part2[i].correct_index) totalScore++;
+      if (answers[`2-${i}`] === content.part2[i].correct_index) totalCorrect++;
     }
 
     // Part 3
     for (let i = 0; i < 3; i++) {
-      if (answers[`3-${i}`] === content.part3.questions[i].correct_index) totalScore++;
+      if (answers[`3-${i}`] === content.part3.questions[i].correct_index) totalCorrect++;
     }
 
     // Part 4
     for (let i = 0; i < 3; i++) {
-      if (answers[`4-${i}`] === content.part4.questions[i].correct_index) totalScore++;
+      if (answers[`4-${i}`] === content.part4.questions[i].correct_index) totalCorrect++;
     }
 
-    setScore(totalScore);
+    const calculatedScore = totalCorrect * 10;
+    setScore(calculatedScore);
     setFinished(true);
+
+    if (user) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("best_listening_score")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const currentBest = profile?.best_listening_score || 0;
+        if (calculatedScore > currentBest) {
+          await supabase
+            .from("profiles")
+            .update({ best_listening_score: calculatedScore })
+            .eq("user_id", user.id);
+        }
+      } catch (err) {
+        console.error("Error updating best listening score:", err);
+      }
+    }
   };
 
   if (loading) {
