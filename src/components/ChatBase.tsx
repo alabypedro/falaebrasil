@@ -376,22 +376,22 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] max-w-4xl mx-auto px-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
+    <div className="flex flex-col h-[calc(100dvh-10rem)] max-w-4xl mx-auto px-4 pb-4">
+      <div className="mb-4">
+        <h1 className="text-xl font-bold tracking-tight">{title}</h1>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
       {mode === 'writing' && (
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-wrap gap-2 justify-center">
+        <div className="mb-4 space-y-3">
+          <div className="flex flex-wrap gap-1.5 justify-center">
             {(Object.keys(levels) as Array<keyof typeof levels>).map((level) => (
               <Button
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedLevel(level)}
-                className="w-12 h-12 rounded-full font-bold"
+                className="w-10 h-10 rounded-full font-bold text-xs shrink-0"
               >
                 {level}
               </Button>
@@ -399,31 +399,32 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
           </div>
 
           <Card className="bg-accent/5 border-accent/20">
-          <div className="p-6 text-center space-y-3">
-            <p className="text-xs text-accent font-semibold uppercase tracking-wide">Suggested Topic</p>
-            {topicLoading ? (
-              <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Generating topic with IA…</span>
-              </div>
-            ) : (
-              <p className="text-lg font-medium text-foreground">{currentTopic || "Loading topic..."}</p>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void fetchWritingTopic()}
-              disabled={topicLoading}
-              className="gap-1.5"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              New topic
-            </Button>
-          </div>
-        </Card>
+            <div className="p-3 text-center space-y-2">
+              <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Suggested Topic</p>
+              {topicLoading ? (
+                <div className="flex items-center justify-center gap-2 py-1 text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span className="text-xs">Generating topic with IA…</span>
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-foreground px-2">{currentTopic || "Loading topic..."}</p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void fetchWritingTopic()}
+                disabled={topicLoading}
+                className="h-8 gap-1.5 text-xs"
+              >
+                <Sparkles className="h-3 w-3" />
+                New topic
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
+
 
       <Card className="flex-1 overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50">
         <ScrollArea className="flex-1 p-4">
