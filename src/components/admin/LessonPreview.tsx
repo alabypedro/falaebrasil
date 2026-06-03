@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Video, FileText, Mic, Eye } from "lucide-react";
+import { Video, FileText, Mic, Eye, MessageSquareText, Headphones } from "lucide-react";
 import { PdfReader } from "@/components/library/PdfReader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -61,28 +61,48 @@ export function LessonPreview({ lesson, open, onOpenChange }: LessonPreviewProps
                     </p>
                   </div>
                   
-                  {lesson.pdf_url && (
-                    <div className="p-4 rounded-xl border bg-muted/30 flex items-center justify-between group hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-red-100 text-red-600">
-                          <FileText className="h-5 w-5" />
+                  <div className="flex flex-col gap-3">
+                    {lesson.pdf_url && (
+                      <div className="p-4 rounded-xl border bg-muted/30 flex items-center justify-between group hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-red-100 text-red-600">
+                            <FileText className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Material Complementar (PDF)</p>
+                            <p className="text-[10px] text-muted-foreground uppercase">Download disponível</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">Material Complementar (PDF)</p>
-                          <p className="text-[10px] text-muted-foreground uppercase">Download disponível</p>
-                        </div>
+                        <Button size="sm" variant="outline" onClick={() => setShowPdf(true)} className="gap-2">
+                          <Eye className="h-4 w-4" /> Visualizar
+                        </Button>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => setShowPdf(true)} className="gap-2">
-                        <Eye className="h-4 w-4" /> Visualizar
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button variant="outline" className="w-full gap-2 justify-start h-12">
+                        <MessageSquareText className="h-4 w-4 text-primary" />
+                        <div className="text-left">
+                          <div className="text-xs font-semibold">IA Escreveaê</div>
+                          <div className="text-[10px] text-muted-foreground">Praticar Escrita</div>
+                        </div>
+                      </Button>
+                      
+                      <Button variant="outline" className="w-full gap-2 justify-start h-12">
+                        <Headphones className="h-4 w-4 text-primary" />
+                        <div className="text-left">
+                          <div className="text-xs font-semibold">IA Escutaê</div>
+                          <div className="text-[10px] text-muted-foreground">Praticar Audição</div>
+                        </div>
                       </Button>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {lesson.practice_text && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-sm font-semibold">
-                      <Mic className="h-4 w-4 text-primary" /> Prática de Pronúncia (IA Falaê)
+                      <Mic className="h-4 w-4 text-primary" /> IA Falaê
                     </div>
                     <div className="p-6 rounded-xl border bg-primary/5 italic text-lg leading-relaxed shadow-inner">
                       "{lesson.practice_text}"
