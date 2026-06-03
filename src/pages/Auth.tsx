@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Mail, Lock, User, Phone, Check, X, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Phone, Check, X, Eye, EyeOff, Sun, Moon } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 import { Helmet } from "react-helmet-async";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Auth() {
   const navigate = useNavigate();
