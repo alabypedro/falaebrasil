@@ -84,9 +84,10 @@ Deno.serve(async (req) => {
       .single();
 
     const userLevel = requestedLevel || profile?.level || "A1";
+    const levelFallbacks = FALLBACK_TOPICS[userLevel as keyof typeof FALLBACK_TOPICS] || FALLBACK_TOPICS['A1'];
 
     if (!LOVABLE_API_KEY) {
-      const fallback = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
+      const fallback = levelFallbacks[Math.floor(Math.random() * levelFallbacks.length)];
       return new Response(JSON.stringify({ topic: fallback, source: "fallback" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -94,6 +95,13 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `You generate ONE English writing practice topic for students.
 Current student level: ${userLevel}.
+
+LEVEL-SPECIFIC EXAMPLES:
+- A1: "Introduce yourself to a new neighbor."
+- A2: "Invite a friend to lunch via email."
+- B1: "Explain a work problem to your boss."
+- B2: "Debate the pros/cons of artificial intelligence."
+- C1/C2: "Analyze the cultural impact of globalization."
 
 RULES:
 - Respond ALWAYS in ENGLISH (the topic enunciation).
@@ -125,18 +133,18 @@ RULES:
     });
 
     if (!aiResp.ok) {
-      const fallback = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
+      const fallback = levelFallbacks[Math.floor(Math.random() * levelFallbacks.length)];
       return new Response(JSON.stringify({ topic: fallback, source: "fallback-api-error" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await aiResp.json();
-    let topic: string = data?.choices?.[0]?.message?.content ?? "";
+    const aiData = await aiResp.json();
+    let topic: string = aiData?.choices?.[0]?.message?.content ?? "";
     topic = topic.trim().replace(/^["']|["']$/g, "").replace(/\n+/g, " ").trim();
     
     if (!topic || topic.length > 250) {
-      topic = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
+      topic = levelFallbacks[Math.floor(Math.random() * levelFallbacks.length)];
     }
 
     return new Response(JSON.stringify({ topic, source: "ai" }), {
