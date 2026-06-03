@@ -367,7 +367,7 @@ export default function ListeningLab() {
           <div className="bg-muted/30 p-8 rounded-2xl mb-8 border border-white/5 inline-block min-w-[300px]">
             <p className="text-xs uppercase text-muted-foreground font-black tracking-widest mb-2">SUA PONTUAÇÃO</p>
             <p className="text-7xl font-black text-primary flex items-baseline justify-center gap-2">
-              {score} <span className="text-3xl text-muted-foreground/50 font-medium">/ 10</span>
+              {score} <span className="text-3xl text-muted-foreground/50 font-medium">/ 100</span>
             </p>
           </div>
 
