@@ -383,11 +383,12 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-5rem)] sm:h-[calc(100dvh-10rem)] max-w-4xl mx-auto px-2 sm:px-4 pb-2 sm:pb-4 overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-10rem)] max-w-4xl mx-auto px-2 sm:px-4 pb-2 sm:pb-4 overflow-hidden relative">
       <div className="mb-2 sm:mb-4 shrink-0">
         <h1 className="text-lg sm:text-xl font-bold tracking-tight">{title}</h1>
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">{description}</p>
+        <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">{description}</p>
       </div>
+
 
 
       {mode === 'writing' && (
