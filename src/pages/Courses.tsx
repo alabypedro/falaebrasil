@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Lock, Zap } from "lucide-react";
+import { CheckCircle, Lock, Zap, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CourseWithProgress {
   id: string;
