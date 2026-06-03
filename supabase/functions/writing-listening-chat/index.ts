@@ -36,6 +36,35 @@ Deno.serve(async (req) => {
 
     const { messages, type, level, user_id } = await req.json();
 
+    // Validate messages: only user/assistant roles, capped count and size.
+    if (!Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "Invalid messages" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const MAX_MESSAGES = 20;
+    const MAX_CONTENT_LEN = 2000;
+    if (messages.length > MAX_MESSAGES) {
+      return new Response(JSON.stringify({ error: "Too many messages" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const safeMessages: { role: "user" | "assistant"; content: string }[] = [];
+    for (const m of messages) {
+      if (!m || typeof m !== "object") continue;
+      if (m.role !== "user" && m.role !== "assistant") continue;
+      if (typeof m.content !== "string") continue;
+      if (m.content.length > MAX_CONTENT_LEN) {
+        return new Response(JSON.stringify({ error: "Message too long" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      safeMessages.push({ role: m.role, content: m.content });
+    }
+
     const AZURE_OPENAI_KEY = Deno.env.get("AZURE_OPENAI_KEY");
     const AZURE_OPENAI_ENDPOINT = Deno.env.get("AZURE_OPENAI_ENDPOINT");
     const AZURE_OPENAI_DEPLOYMENT = Deno.env.get("AZURE_OPENAI_DEPLOYMENT_NAME");
@@ -85,7 +114,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages
+          ...safeMessages,
         ],
         temperature: 0.7,
         max_tokens: 800,
@@ -105,7 +134,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error("Error in writing-listening-chat:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "An internal error occurred. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

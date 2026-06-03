@@ -318,8 +318,7 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("Error in azure-pronunciation:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message, fallback: true }), {
+    return new Response(JSON.stringify({ error: "An internal error occurred. Please try again.", fallback: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
