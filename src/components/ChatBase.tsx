@@ -388,9 +388,6 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         <h1 className="text-lg sm:text-xl font-bold tracking-tight">{title}</h1>
         <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">{description}</p>
       </div>
-
-
-
       {mode === 'writing' && (
         <div className="mb-2 sm:mb-4 space-y-2 sm:space-y-3 shrink-0">
           <div className="flex flex-wrap gap-1 sm:gap-1.5 justify-center">
