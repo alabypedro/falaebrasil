@@ -384,20 +384,21 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
 
 
       {mode === 'writing' && (
-        <div className="mb-4 space-y-3">
-          <div className="flex flex-wrap gap-1.5 justify-center">
+        <div className="mb-2 sm:mb-4 space-y-2 sm:space-y-3 shrink-0">
+          <div className="flex flex-wrap gap-1 sm:gap-1.5 justify-center">
             {(Object.keys(levels) as Array<keyof typeof levels>).map((level) => (
               <Button
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedLevel(level)}
-                className="w-10 h-10 rounded-full font-bold text-xs shrink-0"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full font-bold text-[10px] sm:text-xs shrink-0"
               >
                 {level}
               </Button>
             ))}
           </div>
+
 
           <Card className="bg-accent/5 border-accent/20">
             <div className="p-3 text-center space-y-2">
