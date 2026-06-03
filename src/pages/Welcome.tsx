@@ -21,6 +21,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 export default function Welcome() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { theme, toggleTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
