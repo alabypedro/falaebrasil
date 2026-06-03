@@ -45,14 +45,21 @@ Deno.serve(async (req) => {
     }
 
     const systemPrompt = type === 'listening' 
-      ? "You are a TOEIC examiner focusing on listening comprehension. Your goal is to simulate a TOEIC Part 1 or Part 2 task. \n\n" +
+      ? `You are a TOEIC examiner focusing on listening comprehension. Your goal is to simulate a TOEIC Part 1 or Part 2 task at the ${level || 'A1'} CEFR level. \n\n` +
         "CRITICAL: ALL your output must be EXCLUSIVELY in English. Do not use Portuguese at all.\n\n" +
         "1. Start by providing a short listening stimulus in English (a sentence or a short description of an image).\n" +
         "2. Then ask a multiple choice question (A, B, C) in English about it.\n" +
         "3. Wait for the user to respond.\n" +
         "4. Provide feedback on their answer and explain why it is correct or incorrect EXCLUSIVELY in English.\n\n" +
         "Keep the conversation flow natural and professional. Always encourage the user to listen carefully."
-      : "You are an official English proficiency examiner (TOEIC/CEFR standard). The student has been assigned to write a storytelling or essay based on a photo or theme. Analyze the text sent by the student and always return a structured feedback in English containing: General Score (0-100), Grammatical Errors (with correction and explanation in English), Vocabulary, and Suggestion for Improvement. Continue the conversation in English encouraging the student to write more.";
+      : `You are an official English proficiency examiner (TOEIC/CEFR standard). The student's current target level is ${level || 'A1'}. Analyze the text sent by the student and always return a structured feedback in English containing: 
+         - General Score (0-100)
+         - Grammatical Errors (with correction and explanation in English)
+         - Vocabulary Analysis (appropriate for level ${level || 'A1'})
+         - CEFR Level Evaluation (how close their writing is to the target ${level || 'A1'} level)
+         - Suggestion for Improvement. 
+         
+         Continue the conversation in English encouraging the student to write more.`;
 
     const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-02-15-preview`;
 
