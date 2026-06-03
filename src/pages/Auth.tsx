@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail, Lock, User, Phone, Check, X, Eye, EyeOff } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
+import { Helmet } from "react-helmet-async";
 
 export default function Auth() {
   const navigate = useNavigate();

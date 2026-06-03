@@ -463,6 +463,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                         currentSpeakingId === m.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                       )}
                       title={currentSpeakingId === m.id && isSpeaking ? (isPaused ? "Retomar" : "Pausar") : "Ouvir"}
+                      aria-label={currentSpeakingId === m.id && isSpeaking ? (isPaused ? "Retomar leitura da mensagem" : "Pausar leitura da mensagem") : "Ouvir mensagem em voz alta"}
                     >
                       {currentSpeakingId === m.id && isSpeaking ? (
                         isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />
@@ -524,6 +525,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               size="icon" 
               disabled={!inputText.trim() || isLoading}
               className="shrink-0 shadow-soft-sm"
+              aria-label="Enviar mensagem"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
