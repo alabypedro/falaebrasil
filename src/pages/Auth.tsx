@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail, Lock, User, Phone, Check, X, Eye, EyeOff } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
+import { Helmet } from "react-helmet-async";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -141,6 +142,21 @@ export default function Auth() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-hero p-4 page-transition overflow-hidden">
+      <Helmet>
+        <title>{isSignUp ? "Criar conta — Falaê Brasil" : isForgot ? "Recuperar senha — Falaê Brasil" : "Entrar — Falaê Brasil"}</title>
+        <meta name="description" content={isSignUp
+          ? "Crie sua conta no Falaê Brasil e comece a praticar inglês com IA, quizzes e laboratórios de pronúncia, escrita e escuta."
+          : isForgot
+          ? "Recupere o acesso à sua conta Falaê Brasil para voltar a praticar inglês com nossos laboratórios de IA."
+          : "Entre na sua conta Falaê Brasil e continue praticando inglês com IA, gamificação e trilhas do A1 ao B2."} />
+        <meta property="og:title" content={isSignUp ? "Criar conta — Falaê Brasil" : "Entrar — Falaê Brasil"} />
+        <meta property="og:description" content={isSignUp
+          ? "Cadastre-se gratuitamente e comece a praticar inglês com IA."
+          : "Acesse sua conta e continue aprendendo inglês com IA."} />
+        <meta property="og:url" content="https://app.falaebrasil.com.br/auth" />
+        <link rel="canonical" href="https://app.falaebrasil.com.br/auth" />
+      </Helmet>
+      <h1 className="sr-only">{isSignUp ? "Criar conta no Falaê Brasil" : "Entrar no Falaê Brasil"}</h1>
       {/* Decorative animated blobs */}
       <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-accent/30 blur-3xl animate-blob" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary-glow/30 blur-3xl animate-blob" style={{ animationDelay: "4s" }} />

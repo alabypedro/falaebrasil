@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail, Lock, User, Check, X } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
+import { Helmet } from "react-helmet-async";
 
 /**
  * Welcome / Create Account page.
@@ -120,6 +121,15 @@ export default function Welcome() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-hero p-4 page-transition overflow-hidden">
+      <Helmet>
+        <title>Ativar sua conta — Falaê Brasil</title>
+        <meta name="description" content="Bem-vindo ao Falaê Brasil! Defina seu nome e senha para ativar o seu acesso e começar a aprender inglês com IA." />
+        <meta property="og:title" content="Ativar sua conta — Falaê Brasil" />
+        <meta property="og:description" content="Ative seu acesso ao Falaê Brasil e comece a praticar inglês com nossos laboratórios de IA." />
+        <meta property="og:url" content="https://app.falaebrasil.com.br/welcome" />
+        <link rel="canonical" href="https://app.falaebrasil.com.br/welcome" />
+      </Helmet>
+      <h1 className="sr-only">Ativar sua conta no Falaê Brasil</h1>
       <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-accent/30 blur-3xl animate-blob" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-primary-glow/30 blur-3xl animate-blob" style={{ animationDelay: "4s" }} />
 

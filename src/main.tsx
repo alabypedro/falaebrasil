@@ -2,6 +2,7 @@
 import App from "./App.tsx";
 import "./index.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { HelmetProvider } from "react-helmet-async";
 
  // Fix: ResizeObserver loop completed with undelivered notifications.
  // This error is common in Chrome with some UI libraries and is generally benign.
@@ -27,7 +28,9 @@ import { ThemeProvider } from "./contexts/ThemeContext";
  }
  
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider>
-    <App />
-  </ThemeProvider>
+  <HelmetProvider>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </HelmetProvider>
 );

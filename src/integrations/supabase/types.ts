@@ -1443,6 +1443,7 @@ export type Database = {
       }
     }
     Functions: {
+      _strip_correct_index: { Args: { _content: Json }; Returns: Json }
       calculate_level_from_xp: { Args: { _xp: number }; Returns: string }
       can_access_level: { Args: { _level: string }; Returns: boolean }
       complete_video: { Args: { _video_id: string }; Returns: Json }
@@ -1458,6 +1459,21 @@ export type Database = {
       }
       expire_overdue_subscriptions: { Args: never; Returns: Json }
       get_latest_quiz_attempt: { Args: { _quiz_id: string }; Returns: Json }
+      get_listening_lessons_public: {
+        Args: never
+        Returns: {
+          content: Json
+          created_at: string
+          description: string
+          id: string
+          level: string
+          title: string
+        }[]
+      }
+      grade_listening_lesson: {
+        Args: { _answers: Json; _lesson_id: string }
+        Returns: Json
+      }
       grant_voice_credits: {
         Args: {
           _hubla_event_id: string

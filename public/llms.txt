@@ -1,0 +1,11 @@
+# Falaê Brasil
+
+> Plataforma brasileira de ensino de inglês com laboratórios de IA para pronúncia, escrita e compreensão auditiva, gamificação e trilhas do A1 ao B2.
+
+Falaê Brasil é um aplicativo web para alunos brasileiros que querem aprender inglês com prática diária. O app combina vídeos, quizzes, biblioteca de PDFs e três laboratórios de inteligência artificial: IA Falaê (pronúncia), IA Escreveaê (escrita) e IA Escutaê (compreensão auditiva). Os alunos acompanham progresso, XP, nível CEFR e desempenho mensal.
+
+## Páginas
+
+- [Entrar ou criar conta](/auth): Login e cadastro de alunos.
+- [Ativar conta](/welcome): Página de boas-vindas para novos alunos que compraram um plano.
+- [Instalar app](/install): Tutorial passo a passo para instalar o app no celular ou desktop.

@@ -127,6 +127,7 @@ export default function Dashboard() {
                           size="icon"
                           className="h-6 w-6 rounded-full hover:bg-primary/10 hover:text-primary transition-colors shrink-0"
                           onClick={(e) => e.stopPropagation()}
+                          aria-label="Ver detalhes do desempenho mensal"
                         >
                           <Info className="h-4 w-4" />
                         </Button>
@@ -239,9 +240,9 @@ export default function Dashboard() {
               <span className="h-1.5 w-1.5 rounded-full bg-accent-glow animate-pulse" />
               Pratique agora
             </div>
-            <h3 className="text-xl md:text-2xl font-display font-extrabold leading-tight">
+            <h2 className="text-xl md:text-2xl font-display font-extrabold leading-tight">
               Pratique sua pronúncia agora!
-            </h3>
+            </h2>
             <p className="text-sm md:text-base opacity-90 leading-relaxed">
               Acesse o IA Falaê e melhore sua fluência com feedback em tempo real.
             </p>
