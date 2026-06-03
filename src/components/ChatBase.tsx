@@ -134,8 +134,15 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   }, [selectedLevel]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    
+    // Pequeno delay para garantir que o conteúdo foi renderizado
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeoutId);
+  }, [messages, isLoading]);
+
 
   const handleSend = async (text: string) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
