@@ -433,9 +433,10 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       )}
 
 
-      <Card className="flex-1 min-h-0 overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50 mb-2">
-        <ScrollArea className="flex-1">
-          <div className="p-3 sm:p-4 space-y-4">
+      <Card className="flex-1 min-h-[150px] overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50 mb-2">
+        <ScrollArea className="flex-1 w-full">
+          <div className="p-2 sm:p-4 space-y-4">
+
 
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
