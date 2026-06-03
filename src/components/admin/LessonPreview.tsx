@@ -81,7 +81,7 @@ export function LessonPreview({ lesson, open, onOpenChange }: LessonPreviewProps
 
                     <div className="grid grid-cols-2 gap-3">
                       <Button variant="outline" className="w-full gap-2 justify-start h-12">
-                        <MessageSquare className="h-4 w-4 text-primary" />
+                        <MessageSquareText className="h-4 w-4 text-primary" />
                         <div className="text-left">
                           <div className="text-xs font-semibold">IA Escreveaê</div>
                           <div className="text-[10px] text-muted-foreground">Praticar Escrita</div>
