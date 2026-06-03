@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ScoreCircle from "@/components/ScoreCircle";
+import { cn } from "@/lib/utils";
 
 export interface FeedbackScores {
   pronunciation: number;
