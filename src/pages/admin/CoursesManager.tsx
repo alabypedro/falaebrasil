@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, ImageIcon, Search, LayoutGrid, List, Filter, Eye, EyeOff } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableRow } from "@/components/admin/SortableRow";
+import { BulkActions } from "@/components/admin/BulkActions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 
 interface Course {
   id: string;
@@ -45,6 +51,17 @@ export default function CoursesManager() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  
+  // Search and Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const load = async () => {
     const { data } = await supabase.from("courses").select("*").order("display_order");
@@ -52,6 +69,16 @@ export default function CoursesManager() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const filteredCourses = useMemo(() => {
+    return courses.filter((c) => {
+      const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           (c.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+      const matchesStatus = statusFilter === "all" ? true : 
+                           statusFilter === "published" ? c.published : !c.published;
+      return matchesSearch && matchesStatus;
+    });
+  }, [courses, searchQuery, statusFilter]);
 
   const openNew = () => { setEditing(null); setForm(emptyForm); setOpen(true); };
 
@@ -100,6 +127,48 @@ export default function CoursesManager() {
     else { toast.success("Curso excluído"); load(); }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setCourses((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        
+        // Update display_order in background
+        const updates = newItems.map((item, idx) => ({
+          id: item.id,
+          display_order: idx
+        }));
+        
+        Promise.all(updates.map(u => supabase.from("courses").update({ display_order: u.display_order }).eq("id", u.id)))
+          .then(() => toast.success("Ordem atualizada"));
+          
+        return newItems;
+      });
+    }
+  };
+
+  const bulkPublish = async (status: boolean) => {
+    const { error } = await supabase.from("courses").update({ published: status }).in("id", selectedIds);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Cursos ${status ? "publicados" : "em rascunho"}`);
+      setSelectedIds([]);
+      load();
+    }
+  };
+
+  const bulkDelete = async () => {
+    const { error } = await supabase.from("courses").delete().in("id", selectedIds);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Cursos excluídos");
+      setSelectedIds([]);
+      load();
+    }
+  };
+
   const levelColor: Record<string, string> = {
     A1: "bg-emerald-100 text-emerald-700",
     A2: "bg-sky-100 text-sky-700",
@@ -109,50 +178,188 @@ export default function CoursesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Cursos</h2>
-        <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Novo Curso</Button>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold">Cursos</h2>
+          <p className="text-sm text-muted-foreground">Gerencie o catálogo de cursos da plataforma</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Novo Curso</Button>
+        </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Ordem</TableHead>
-              <TableHead>Título</TableHead>
-              <TableHead>Nível</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {courses.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum curso cadastrado.</TableCell></TableRow>
-            )}
-            {courses.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell className="font-mono text-xs">{c.display_order}</TableCell>
-                <TableCell className="font-medium flex items-center gap-2">
-                  {c.thumbnail_url && <img src={c.thumbnail_url} alt="" className="h-8 w-8 rounded object-cover" />}
-                  {c.title}
-                </TableCell>
-                <TableCell><Badge className={levelColor[c.level] ?? ""}>{c.level}</Badge></TableCell>
-                <TableCell>{c.published ? <Badge variant="default">Publicado</Badge> : <Badge variant="secondary">Rascunho</Badge>}</TableCell>
-                <TableCell className="text-right space-x-1">
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader><AlertDialogTitle>Excluir curso?</AlertDialogTitle><AlertDialogDescription>Isso também excluirá todos os módulos, lições e quizzes vinculados.</AlertDialogDescription></AlertDialogHeader>
-                      <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => remove(c.id)}>Excluir</AlertDialogAction></AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="flex flex-wrap items-center gap-3 bg-muted/30 p-4 rounded-lg border">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar cursos..." 
+            className="pl-9 h-9" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
+        <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+          <SelectTrigger className="w-[150px] h-9">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="published">Publicados</SelectItem>
+            <SelectItem value="draft">Rascunhos</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center border rounded-md p-1 bg-background">
+          <Button 
+            variant={viewMode === "table" ? "secondary" : "ghost"} 
+            size="sm" 
+            className="h-7 w-7 p-0" 
+            onClick={() => setViewMode("table")}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant={viewMode === "grid" ? "secondary" : "ghost"} 
+            size="sm" 
+            className="h-7 w-7 p-0" 
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
+
+      {viewMode === "table" ? (
+        <div className="rounded-md border bg-card">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[30px]"></TableHead>
+                  <TableHead className="w-[40px]">
+                    <Checkbox 
+                      checked={selectedIds.length === filteredCourses.length && filteredCourses.length > 0}
+                      onCheckedChange={(checked) => {
+                        if (checked) setSelectedIds(filteredCourses.map(c => c.id));
+                        else setSelectedIds([]);
+                      }}
+                    />
+                  </TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Nível</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCourses.length === 0 && (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">Nenhum curso encontrado.</TableCell></TableRow>
+                )}
+                <SortableContext items={filteredCourses.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                  {filteredCourses.map((c) => (
+                    <SortableRow key={c.id} id={c.id}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedIds.includes(c.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setSelectedIds([...selectedIds, c.id]);
+                            else setSelectedIds(selectedIds.filter(id => id !== c.id));
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          {c.thumbnail_url ? (
+                            <img src={c.thumbnail_url} alt="" className="h-10 w-10 rounded-md object-cover border" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center border">
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <p>{c.title}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">#{c.display_order}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell><Badge className={levelColor[c.level] ?? ""}>{c.level}</Badge></TableCell>
+                      <TableCell>
+                        {c.published ? (
+                          <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">Publicado</Badge>
+                        ) : (
+                          <Badge variant="secondary">Rascunho</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>Excluir curso?</AlertDialogTitle><AlertDialogDescription>Isso também excluirá todos os módulos, lições e quizzes vinculados.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => remove(c.id)}>Excluir</AlertDialogAction></AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </SortableRow>
+                  ))}
+                </SortableContext>
+              </TableBody>
+            </Table>
+          </DndContext>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredCourses.map((c) => (
+            <Card key={c.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <div className="aspect-video relative bg-muted group">
+                {c.thumbnail_url ? (
+                  <img src={c.thumbnail_url} alt={c.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="absolute top-2 left-2 flex gap-1">
+                  <Badge className={levelColor[c.level] ?? ""}>{c.level}</Badge>
+                  {!c.published && <Badge variant="secondary" className="opacity-90">Rascunho</Badge>}
+                </div>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => openEdit(c)}><Pencil className="h-4 w-4 mr-1" />Editar</Button>
+                </div>
+              </div>
+              <CardHeader className="p-4 pb-0">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-semibold text-sm line-clamp-2 leading-snug">{c.title}</h3>
+                  <Checkbox 
+                    checked={selectedIds.includes(c.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) setSelectedIds([...selectedIds, c.id]);
+                      else setSelectedIds(selectedIds.filter(id => id !== c.id));
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+              </CardHeader>
+              <CardFooter className="p-4 pt-2">
+                <p className="text-xs text-muted-foreground line-clamp-2">{c.description || "Sem descrição"}</p>
+              </CardFooter>
+            </Card>
+          ))}
+          {filteredCourses.length === 0 && (
+            <div className="col-span-full py-12 text-center text-muted-foreground">Nenhum curso encontrado.</div>
+          )}
+        </div>
+      )}
+
+      <BulkActions 
+        selectedCount={selectedIds.length} 
+        onClear={() => setSelectedIds([])}
+        onDelete={bulkDelete}
+        onPublish={bulkPublish}
+        label="cursos"
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
