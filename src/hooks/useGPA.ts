@@ -8,6 +8,8 @@ export interface GPAData {
   quizAvg: number | null;
   bestScripted: number | null;
   bestUnscripted: number | null;
+  bestListening: number | null;
+  bestWriting: number | null;
   componentsCount: number;
   loading: boolean;
 }
@@ -23,6 +25,7 @@ export function useGPA(userId: string | undefined): GPAData {
   const [state, setState] = useState<GPAData>({
     gpa: null, letter: "—", gpaPoints: null,
     quizAvg: null, bestScripted: null, bestUnscripted: null,
+    bestListening: null, bestWriting: null,
     componentsCount: 0, loading: true,
   });
 
@@ -31,7 +34,6 @@ export function useGPA(userId: string | undefined): GPAData {
     
     const load = async () => {
       // Fetch quiz attempts and high scores from profile in parallel
-      // We removed the date filter to make the GPA "eternal" as requested
       const [{ data: quizzes }, { data: profile }] = await Promise.all([
         supabase
           .from("quiz_attempts")
@@ -40,7 +42,7 @@ export function useGPA(userId: string | undefined): GPAData {
           .order('created_at', { ascending: false }),
         supabase
           .from("profiles")
-          .select("best_scripted_score, best_unscripted_score")
+          .select("best_scripted_score, best_unscripted_score, best_listening_score, best_writing_score")
           .eq("user_id", userId)
           .maybeSingle(),
       ]);
@@ -59,9 +61,11 @@ export function useGPA(userId: string | undefined): GPAData {
       // Use the registered high scores from the profile
       const bestScripted = profile?.best_scripted_score || null;
       const bestUnscripted = profile?.best_unscripted_score || null;
+      const bestListening = profile?.best_listening_score || null;
+      const bestWriting = profile?.best_writing_score || null;
 
-      // GPA calculation: (QuizAvg + BestScripted + BestUnscripted) / componentsPresent
-      const components = [quizAvg, bestScripted, bestUnscripted].filter((n): n is number => n !== null);
+      // GPA calculation: (QuizAvg + BestScripted + BestUnscripted + BestListening + BestWriting) / componentsPresent
+      const components = [quizAvg, bestScripted, bestUnscripted, bestListening, bestWriting].filter((n): n is number => n !== null);
       const gpa = components.length ? components.reduce((a, b) => a + b, 0) / components.length : null;
       const { letter, points } = gpa !== null ? letterFor(gpa) : { letter: "—", points: null };
 
@@ -72,6 +76,8 @@ export function useGPA(userId: string | undefined): GPAData {
         quizAvg,
         bestScripted,
         bestUnscripted,
+        bestListening,
+        bestWriting,
         componentsCount: components.length,
         loading: false,
       });
