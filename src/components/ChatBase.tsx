@@ -416,7 +416,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   <span className="text-xs">Generating topic with IA…</span>
                 </div>
               ) : (
-                <p className="text-sm font-medium text-foreground px-2">{currentTopic || "Loading topic..."}</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground px-2">{currentTopic || "Loading topic..."}</p>
               )}
               <Button
                 type="button"
