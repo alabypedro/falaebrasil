@@ -15,6 +15,11 @@ export interface FeedbackScores {
   completeness?: number;
   prosody?: number;
   pronScore?: number;
+  words?: Array<{
+    word: string;
+    accuracyScore: number;
+    errorType: string;
+  }>;
 }
 
 interface FeedbackCardProps {
