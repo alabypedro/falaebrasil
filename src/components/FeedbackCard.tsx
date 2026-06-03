@@ -103,11 +103,50 @@ export default function FeedbackCard({ scores, suggestions, isNewHighScore }: Fe
           )}
         </div>
 
-        {/* Transcription */}
+        {/* Transcription & Word Level Feedback */}
         {scores.transcription && (
-          <div className="rounded-lg bg-secondary/50 p-3">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Texto reconhecido</p>
-            <p className="text-sm text-foreground font-medium">"{scores.transcription}"</p>
+          <div className="rounded-lg bg-secondary/50 p-4 border border-border/30">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">Texto reconhecido & Pronúncia por palavra</p>
+            <div className="flex flex-wrap gap-x-2 gap-y-3">
+              {scores.words && scores.words.length > 0 ? (
+                scores.words.map((w, i) => {
+                  const isError = w.errorType !== "None";
+                  const score = w.accuracyScore;
+                  let colorClass = "text-success";
+                  if (score < 40 || w.errorType === "Mispronunciation") colorClass = "text-destructive";
+                  else if (score < 80) colorClass = "text-orange-400";
+                  
+                  return (
+                    <div key={i} className="flex flex-col items-center">
+                      <span className={cn(
+                        "text-lg font-bold transition-colors duration-300",
+                        colorClass
+                      )}>
+                        {w.word}
+                      </span>
+                      <span className="text-[9px] font-medium text-muted-foreground/70">
+                        {Math.round(score)}%
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-foreground font-medium italic">"{scores.transcription}"</p>
+              )}
+            </div>
+            {scores.words && scores.words.length > 0 && (
+              <div className="mt-4 flex gap-4 text-[10px] text-muted-foreground font-medium border-t border-border/20 pt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-success" /> Excelente
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-orange-400" /> Bom
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-destructive" /> Melhorar
+                </div>
+              </div>
+            )}
           </div>
         )}
 
