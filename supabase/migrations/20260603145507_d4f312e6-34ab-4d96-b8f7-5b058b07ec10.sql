@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.fb_learning_challenges CASCADE;

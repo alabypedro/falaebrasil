@@ -35,7 +35,7 @@ const navItems = [
   { title: "IA Falaê", url: "/voice-lab", icon: Mic },
   { title: "IA Escutaê", url: "/listening-lab", icon: Headphones },
   { title: "IA Escreveaê", url: "/writing-lab", icon: MessageSquareText },
-  { title: "Meus Desafios", url: "/challenges", icon: Zap },
+  
   { title: "Biblioteca BST", url: "/library", icon: Library },
   { title: "Comunidades FB", url: "/communities", icon: Users },
   { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },

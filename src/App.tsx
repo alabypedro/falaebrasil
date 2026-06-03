@@ -40,7 +40,7 @@ import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
 import ContractsManager from "@/pages/admin/ContractsManager";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
-import Challenges from "@/pages/Challenges";
+
 import { useEffect } from "react";
 import { registerPushNotification, updateLastActivity } from "@/services/pushNotifications";
 
@@ -129,7 +129,7 @@ const App = () => {
                         <Route path="/tutoriais" element={<Tutoriais />} />
                         <Route path="/communities" element={<Communities />} />
                         <Route path="/contratos" element={<Contratos />} />
-                        <Route path="/challenges" element={<Challenges />} />
+                        
                         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                         <Route path="/success" element={<Success />} />
                         <Route

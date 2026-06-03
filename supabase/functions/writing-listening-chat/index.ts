@@ -99,37 +99,6 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
-    const botContent = result.choices[0].message.content;
-
-    // Async log challenges if errors found
-    if (type === 'writing' && user_id) {
-      const errorSection = botContent.match(/Grammatical Errors:([\s\S]*?)(Vocabulary Analysis|CEFR Level|$)/i);
-      if (errorSection && errorSection[1].trim()) {
-        const errors = errorSection[1].split(/\d+\./).filter(e => e.trim().length > 10);
-        for (const err of errors) {
-          try {
-            const lines = err.split('\n').map(l => l.trim()).filter(Boolean);
-            const original = lines[0]?.replace(/^["']|["']$/g, '') || '';
-            const correction = lines.find(l => l.toLowerCase().includes('correction:'))?.split(':')[1]?.trim() || '';
-            const explanation = lines.find(l => l.toLowerCase().includes('explanation:'))?.split(':')[1]?.trim() || '';
-            
-            if (original && correction) {
-              await supabase.from('fb_learning_challenges').insert({
-                user_id,
-                mistake_type: 'Grammar',
-                original_text: original,
-                corrected_text: correction,
-                explanation: explanation,
-                source_mode: 'writing'
-              });
-            }
-          } catch (e) {
-            console.error("Error parsing challenge:", e);
-          }
-        }
-      }
-    }
-
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
