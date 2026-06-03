@@ -512,7 +512,7 @@ export default function CourseDetail() {
                           onClick={() => navigate('/writing-lab')}
                           className="w-full md:min-w-[140px]"
                         >
-                          <MessageSquare className="h-4 w-4 mr-2" /> IA Escreveaê
+                          <MessageSquareText className="h-4 w-4 mr-2" /> IA Escreveaê
                         </Button>
                       </div>
                       
