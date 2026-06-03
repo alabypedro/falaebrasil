@@ -90,8 +90,8 @@ export default function Dashboard() {
       gradient: "bg-gradient-to-br from-primary to-primary/70",
       iconColor: "text-primary-foreground",
       tooltip: gpaData.gpa !== null
-        ? `Quizzes: ${gpaData.quizAvg?.toFixed(1) ?? "—"} | Scripted: ${gpaData.bestScripted?.toFixed(1) ?? "—"} | Unscripted: ${gpaData.bestUnscripted?.toFixed(1) ?? "—"}${gpaData.gpaPoints !== null ? ` · GPA ${gpaData.gpaPoints.toFixed(1)}` : ""}`
-        : "Faça quizzes e práticas no IA Falaê para gerar sua nota.",
+        ? `Quizzes: ${gpaData.quizAvg?.toFixed(1) ?? "—"} | Scripted: ${gpaData.bestScripted?.toFixed(1) ?? "—"} | Unscripted: ${gpaData.bestUnscripted?.toFixed(1) ?? "—"} | Escutaê: ${gpaData.bestListening?.toFixed(1) ?? "—"} | Escreveaê: ${gpaData.bestWriting?.toFixed(1) ?? "—"}${gpaData.gpaPoints !== null ? ` · GPA ${gpaData.gpaPoints.toFixed(1)}` : ""}`
+        : "Faça quizzes e práticas no IA Falaê, Escutaê ou Escreveaê para gerar sua nota.",
     },
     { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
   ];
