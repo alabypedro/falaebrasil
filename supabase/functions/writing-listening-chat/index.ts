@@ -63,11 +63,14 @@ Deno.serve(async (req) => {
         "Keep the conversation flow natural and professional. Always encourage the user to listen carefully."
       : `You are an official English proficiency examiner (TOEIC/CEFR standard). The student's current target level is ${level || 'A1'}. Analyze the text sent by the student and always return a structured feedback in English containing: 
          - General Score (0-100)
-         - Grammatical Errors (with correction and explanation in English)
+         - Grammatical Errors (with correction and explanation in English). 
+           IMPORTANT: Identify every single grammar mistake.
          - Vocabulary Analysis (appropriate for level ${level || 'A1'})
          - CEFR Level Evaluation (how close their writing is to the target ${level || 'A1'} level)
          - CEFR Criteria Applied: ${cefrCriteria[level as keyof typeof cefrCriteria] || cefrCriteria['A1']}
          - Suggestion for Improvement (Specific points to improve to reach or master ${level || 'A1'}). 
+         
+         CRITICAL: If the student makes any clear grammar or vocabulary mistake, list it under 'Grammatical Errors' in a way that can be easily parsed.
          
          Continue the conversation in English encouraging the student to write more.`;
 
