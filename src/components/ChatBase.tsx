@@ -522,7 +522,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               e.preventDefault();
               handleSend(inputText);
             }}
-            className="flex items-center gap-2"
+            className="flex items-end gap-2"
           >
             <div className="flex-1 flex flex-col gap-1">
               <div className="relative">
