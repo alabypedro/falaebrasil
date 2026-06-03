@@ -6,16 +6,44 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const FALLBACK_TOPICS = [
-  "Write a short email inviting a colleague to a meeting.",
-  "Describe your main responsibilities at your current job.",
-  "Write a professional thank-you message after a job interview.",
-  "Explain a project delay to a client via email.",
-  "Write a paragraph about your career goals for the next two years.",
-  "Ask for feedback on a presentation you just gave.",
-  "Write a short email introducing yourself to a new business partner.",
-  "Describe a professional challenge you recently overcame.",
-];
+const FALLBACK_TOPICS: Record<string, string[]> = {
+  'A1': [
+    "Write a short text introducing yourself: name, age, and where you are from.",
+    "Describe your favorite object in your room using simple sentences.",
+    "Write three sentences about what you do every morning.",
+    "Describe your best friend using three simple adjectives.",
+  ],
+  'A2': [
+    "Write a short email inviting a colleague to a meeting next Tuesday.",
+    "Describe your last weekend: what did you do and who were you with?",
+    "Write about your favorite food and explain how to make a simple version of it.",
+    "Describe your current job and your main daily tasks.",
+  ],
+  'B1': [
+    "Explain a project delay to a client via email and suggest a new deadline.",
+    "Write a paragraph about your career goals for the next two years.",
+    "Describe a professional challenge you recently overcame and what you learned.",
+    "Write a review of a movie or book you enjoyed recently, explaining why.",
+  ],
+  'B2': [
+    "Write an argumentative text about the advantages and disadvantages of remote work.",
+    "Describe a detailed plan for a new business or community project.",
+    "Write a formal letter of complaint about a product or service you received.",
+    "Explain your viewpoint on a current environmental issue in detail.",
+  ],
+  'C1': [
+    "Write a sophisticated analysis of a complex social or political issue.",
+    "Describe a nuanced personal experience using advanced vocabulary and structures.",
+    "Write a formal proposal for a corporate strategy change.",
+    "Discuss the impact of technology on human relationships using abstract concepts.",
+  ],
+  'C2': [
+    "Write a masterfully structured essay summarizing contrasting viewpoints on a philosophical topic.",
+    "Produce a highly technical report on a specialized subject of your choice.",
+    "Write a creative piece using complex idiomatic expressions and metaphors.",
+    "Critically evaluate a piece of literature or academic research with absolute precision.",
+  ]
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
