@@ -526,12 +526,18 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
           >
             <div className="flex-1 flex flex-col gap-1">
               <div className="relative">
-                <Input
+                <Textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handleSend(inputText);
+                    }
+                  }}
                   placeholder={mode === 'writing' ? `Write your text (max ${levels[selectedLevel]} words)...` : "Write something..."}
                   disabled={isLoading}
-                  className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
+                  className="min-h-[44px] max-h-[200px] pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary resize-none"
                 />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 </div>
