@@ -548,6 +548,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   inputText.trim().split(/\s+/).filter(Boolean).length > levels[selectedLevel] ? "text-destructive font-bold" : "text-muted-foreground"
                 )}>
                   {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} words
+                  <span className="ml-2 hidden sm:inline opacity-50">• Ctrl+Enter to send</span>
                 </div>
               )}
             </div>
