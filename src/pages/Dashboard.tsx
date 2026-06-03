@@ -148,11 +148,15 @@ export default function Dashboard() {
                             <span className="font-bold text-primary">{gpaData.bestScripted?.toFixed(1) ?? "—"}</span>
                           </div>
                           <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
-                            <span className="text-sm font-medium">Maior nota de voz sem script</span>
-                            <span className="font-bold text-primary">{gpaData.bestUnscripted?.toFixed(1) ?? "—"}</span>
+                            <span className="text-sm font-medium">Maior nota da IA Escutaê</span>
+                            <span className="font-bold text-primary">{gpaData.bestListening?.toFixed(1) ?? "—"}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
+                            <span className="text-sm font-medium">Maior nota da IA Escreveaê</span>
+                            <span className="font-bold text-primary">{gpaData.bestWriting?.toFixed(1) ?? "—"}</span>
                           </div>
                           <p className="text-[10px] text-muted-foreground text-center">
-                            A média é calculada a partir destes três pilares.
+                            A média é calculada a partir destes cinco pilares.
                           </p>
                         </div>
                       </DialogContent>
