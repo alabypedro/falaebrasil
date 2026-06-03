@@ -403,8 +403,6 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               </Button>
             ))}
           </div>
-
-
           <Card className="bg-accent/5 border-accent/20">
             <div className="p-3 text-center space-y-2">
               <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Suggested Topic</p>
