@@ -134,8 +134,15 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   }, [selectedLevel]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+    
+    // Pequeno delay para garantir que o conteúdo foi renderizado
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timeoutId);
+  }, [messages, isLoading]);
+
 
   const handleSend = async (text: string) => {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
@@ -376,58 +383,59 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] max-w-4xl mx-auto px-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
+    <div className="flex flex-col h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-10rem)] max-w-4xl mx-auto px-2 sm:px-4 pb-2 sm:pb-4 overflow-hidden relative">
+      <div className="mb-2 sm:mb-4 shrink-0">
+        <h1 className="text-lg sm:text-xl font-bold tracking-tight">{title}</h1>
+        <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">{description}</p>
       </div>
-
       {mode === 'writing' && (
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-wrap gap-2 justify-center">
+        <div className="mb-2 sm:mb-4 space-y-2 sm:space-y-3 shrink-0">
+          <div className="flex flex-wrap gap-1 sm:gap-1.5 justify-center">
             {(Object.keys(levels) as Array<keyof typeof levels>).map((level) => (
               <Button
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedLevel(level)}
-                className="w-12 h-12 rounded-full font-bold"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full font-bold text-[10px] sm:text-xs shrink-0"
               >
                 {level}
               </Button>
             ))}
           </div>
-
           <Card className="bg-accent/5 border-accent/20">
-          <div className="p-6 text-center space-y-3">
-            <p className="text-xs text-accent font-semibold uppercase tracking-wide">Suggested Topic</p>
-            {topicLoading ? (
-              <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Generating topic with IA…</span>
-              </div>
-            ) : (
-              <p className="text-lg font-medium text-foreground">{currentTopic || "Loading topic..."}</p>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void fetchWritingTopic()}
-              disabled={topicLoading}
-              className="gap-1.5"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              New topic
-            </Button>
-          </div>
-        </Card>
+            <div className="p-3 text-center space-y-2">
+              <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Suggested Topic</p>
+              {topicLoading ? (
+                <div className="flex items-center justify-center gap-2 py-1 text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span className="text-xs">Generating topic with IA…</span>
+                </div>
+              ) : (
+                <p className="text-xs sm:text-sm font-medium text-foreground px-2">{currentTopic || "Loading topic..."}</p>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void fetchWritingTopic()}
+                disabled={topicLoading}
+                className="h-8 gap-1.5 text-xs"
+              >
+                <Sparkles className="h-3 w-3" />
+                New topic
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
 
-      <Card className="flex-1 overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50">
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
+
+      <Card className="flex-1 min-h-[150px] overflow-hidden flex flex-col bg-sidebar/50 backdrop-blur-sm border-sidebar-border/50 mb-2">
+        <ScrollArea className="flex-1 w-full">
+          <div className="p-2 sm:p-4 space-y-4">
+
+
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
                 <Bot className="h-12 w-12 opacity-20" />
@@ -449,12 +457,13 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   {m.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                 </div>
                 <div className={cn(
-                  "rounded-2xl px-4 py-2 text-sm relative group",
+                  "rounded-2xl px-3 py-2 sm:px-4 sm:py-2 text-sm relative group",
                   m.role === 'user' 
-                    ? "bg-primary text-primary-foreground rounded-tr-none" 
-                    : "bg-sidebar-accent/80 text-sidebar-foreground rounded-tl-none border border-sidebar-border/30"
+                    ? "bg-primary text-primary-foreground rounded-tr-none shadow-md" 
+                    : "bg-sidebar-accent text-sidebar-foreground rounded-tl-none border border-sidebar-border shadow-sm"
                 )}>
                   <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+
                   {m.role === 'assistant' && (
                     <button 
                       onClick={() => speakMessage(m.content, m.id)}
@@ -491,7 +500,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
           </div>
         </ScrollArea>
 
-        <div className="p-4 border-t border-sidebar-border/30 bg-sidebar/30">
+        <div className="p-2 sm:p-4 border-t border-sidebar-border/30 bg-sidebar/30">
           <form
             onSubmit={(e) => {
               e.preventDefault();
