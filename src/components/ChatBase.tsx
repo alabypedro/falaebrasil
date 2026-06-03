@@ -182,7 +182,8 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         body: { 
           messages: messages.concat(userMessage).map(m => ({ role: m.role, content: m.content })),
           type: mode,
-          level: selectedLevel
+          level: selectedLevel,
+          user_id: user.id
         }
       });
 
