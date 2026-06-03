@@ -90,8 +90,8 @@ export default function Dashboard() {
       gradient: "bg-gradient-to-br from-primary to-primary/70",
       iconColor: "text-primary-foreground",
       tooltip: gpaData.gpa !== null
-        ? `Quizzes: ${gpaData.quizAvg?.toFixed(1) ?? "—"} | Scripted: ${gpaData.bestScripted?.toFixed(1) ?? "—"} | Unscripted: ${gpaData.bestUnscripted?.toFixed(1) ?? "—"}${gpaData.gpaPoints !== null ? ` · GPA ${gpaData.gpaPoints.toFixed(1)}` : ""}`
-        : "Faça quizzes e práticas no IA Falaê para gerar sua nota.",
+        ? `Quizzes: ${gpaData.quizAvg?.toFixed(1) ?? "—"} | Scripted: ${gpaData.bestScripted?.toFixed(1) ?? "—"} | Unscripted: ${gpaData.bestUnscripted?.toFixed(1) ?? "—"} | Escutaê: ${gpaData.bestListening?.toFixed(1) ?? "—"} | Escreveaê: ${gpaData.bestWriting?.toFixed(1) ?? "—"}${gpaData.gpaPoints !== null ? ` · GPA ${gpaData.gpaPoints.toFixed(1)}` : ""}`
+        : "Faça quizzes e práticas no IA Falaê, Escutaê ou Escreveaê para gerar sua nota.",
     },
     { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
   ];
@@ -151,8 +151,16 @@ export default function Dashboard() {
                             <span className="text-sm font-medium">Maior nota de voz sem script</span>
                             <span className="font-bold text-primary">{gpaData.bestUnscripted?.toFixed(1) ?? "—"}</span>
                           </div>
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
+                            <span className="text-sm font-medium">Maior nota da IA Escutaê</span>
+                            <span className="font-bold text-primary">{gpaData.bestListening?.toFixed(1) ?? "—"}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 rounded-lg bg-accent/5 border border-border/50">
+                            <span className="text-sm font-medium">Maior nota da IA Escreveaê</span>
+                            <span className="font-bold text-primary">{gpaData.bestWriting?.toFixed(1) ?? "—"}</span>
+                          </div>
                           <p className="text-[10px] text-muted-foreground text-center">
-                            A média é calculada a partir destes três pilares.
+                            A média é calculada a partir destes cinco pilares.
                           </p>
                         </div>
                       </DialogContent>

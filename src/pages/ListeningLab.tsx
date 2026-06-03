@@ -15,7 +15,10 @@ interface ListeningLesson {
   content: any;
 }
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export default function ListeningLab() {
+  const { user } = useAuth();
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,30 +182,51 @@ export default function ListeningLab() {
     }
   };
 
-  const calculateResult = () => {
-    let totalScore = 0;
+  const calculateResult = async () => {
+    let totalCorrect = 0;
     const content = selectedLesson!.content;
 
     // Part 1
-    if (answers['1-0'] === content.part1.correct_index) totalScore++;
+    if (answers['1-0'] === content.part1.correct_index) totalCorrect++;
 
     // Part 2
     for (let i = 0; i < 3; i++) {
-      if (answers[`2-${i}`] === content.part2[i].correct_index) totalScore++;
+      if (answers[`2-${i}`] === content.part2[i].correct_index) totalCorrect++;
     }
 
     // Part 3
     for (let i = 0; i < 3; i++) {
-      if (answers[`3-${i}`] === content.part3.questions[i].correct_index) totalScore++;
+      if (answers[`3-${i}`] === content.part3.questions[i].correct_index) totalCorrect++;
     }
 
     // Part 4
     for (let i = 0; i < 3; i++) {
-      if (answers[`4-${i}`] === content.part4.questions[i].correct_index) totalScore++;
+      if (answers[`4-${i}`] === content.part4.questions[i].correct_index) totalCorrect++;
     }
 
-    setScore(totalScore);
+    const calculatedScore = totalCorrect * 10;
+    setScore(calculatedScore);
     setFinished(true);
+
+    if (user) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("best_listening_score")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const currentBest = profile?.best_listening_score || 0;
+        if (calculatedScore > currentBest) {
+          await supabase
+            .from("profiles")
+            .update({ best_listening_score: calculatedScore })
+            .eq("user_id", user.id);
+        }
+      } catch (err) {
+        console.error("Error updating best listening score:", err);
+      }
+    }
   };
 
   if (loading) {
@@ -343,7 +367,7 @@ export default function ListeningLab() {
           <div className="bg-muted/30 p-8 rounded-2xl mb-8 border border-white/5 inline-block min-w-[300px]">
             <p className="text-xs uppercase text-muted-foreground font-black tracking-widest mb-2">SUA PONTUAÇÃO</p>
             <p className="text-7xl font-black text-primary flex items-baseline justify-center gap-2">
-              {score} <span className="text-3xl text-muted-foreground/50 font-medium">/ 10</span>
+              {score} <span className="text-3xl text-muted-foreground/50 font-medium">/ 100</span>
             </p>
           </div>
 

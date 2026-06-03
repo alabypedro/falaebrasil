@@ -194,6 +194,27 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         content: botContent
       });
       
+      if (mode === 'writing') {
+        const scoreMatch = botContent.match(/General Score:\s*(\d+)/i) || botContent.match(/Score:\s*(\d+)/i);
+        if (scoreMatch && user) {
+          const score = parseInt(scoreMatch[1]);
+          if (!isNaN(score)) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('best_writing_score')
+              .eq('user_id', user.id)
+              .maybeSingle();
+            
+            if (profile && score > (profile.best_writing_score || 0)) {
+              await supabase
+                .from('profiles')
+                .update({ best_writing_score: score })
+                .eq('user_id', user.id);
+            }
+          }
+        }
+      }
+      
       if (mode === 'listening') {
         speakMessage(botContent, botMessage.id);
       }
