@@ -205,9 +205,22 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       
       if (mode === 'writing') {
         const scoreMatch = botContent.match(/General Score:\s*(\d+)/i) || botContent.match(/Score:\s*(\d+)/i);
+        const responseTime = Date.now() - startTime;
+        
         if (scoreMatch && user) {
           const score = parseInt(scoreMatch[1]);
           if (!isNaN(score)) {
+            // Log CEFR Metrics
+            await supabase.from('fb_cefr_metrics').insert({
+              user_id: user.id,
+              session_id: sessionId,
+              level: selectedLevel,
+              mode: mode,
+              score: score,
+              response_time_ms: responseTime,
+              word_count: wordCount
+            });
+
             const { data: profile } = await supabase
               .from('profiles')
               .select('best_writing_score')
