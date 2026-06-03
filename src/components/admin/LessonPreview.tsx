@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Video, FileText, Mic, Eye, MessageSquare, Headphones } from "lucide-react";
+import { Video, FileText, Mic, Eye, MessageSquareText, Headphones } from "lucide-react";
 import { PdfReader } from "@/components/library/PdfReader";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
