@@ -3,6 +3,7 @@ import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, V
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -521,16 +522,22 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               e.preventDefault();
               handleSend(inputText);
             }}
-            className="flex items-center gap-2"
+            className="flex items-end gap-2"
           >
             <div className="flex-1 flex flex-col gap-1">
               <div className="relative">
-                <Input
+                <Textarea
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      handleSend(inputText);
+                    }
+                  }}
                   placeholder={mode === 'writing' ? `Write your text (max ${levels[selectedLevel]} words)...` : "Write something..."}
                   disabled={isLoading}
-                  className="pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary"
+                  className="min-h-[44px] max-h-[200px] pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary resize-none"
                 />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 </div>
@@ -541,6 +548,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   inputText.trim().split(/\s+/).filter(Boolean).length > levels[selectedLevel] ? "text-destructive font-bold" : "text-muted-foreground"
                 )}>
                   {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} words
+                  <span className="ml-2 hidden sm:inline opacity-50">• Ctrl+Enter to send</span>
                 </div>
               )}
             </div>
