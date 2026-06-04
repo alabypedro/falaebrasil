@@ -35,20 +35,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <header className="sticky top-0 z-40 h-16 flex items-center justify-between border-b border-border/50 bg-background/70 backdrop-blur-xl backdrop-saturate-150 px-4 md:px-6 animate-fade-in">
             <SidebarTrigger className="ml-0 press-effect rounded-lg hover:bg-accent/10" />
             <div className="flex items-center gap-2 sm:gap-3">
-              <UpgradeButton />
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={toggleTheme}
-                title={theme === "light" ? "Modo escuro" : "Modo claro"}
-                className="press-effect rounded-lg hover:bg-accent/10 hover:text-accent transition-all duration-300"
-              >
-                {theme === "light" ? (
-                  <Moon className="h-4 w-4" />
-                ) : (
-                  <Sun className="h-4 w-4" />
-                )}
-              </Button>
               <XPBadge xp={profile?.xp ?? 0} level={profile?.level ?? "A1"} compact />
               <button
                 onClick={() => navigate("/profile")}
@@ -64,6 +50,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   {displayName}
                 </span>
               </button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleTheme}
+                title={theme === "light" ? "Modo escuro" : "Modo claro"}
+                className="press-effect rounded-lg hover:bg-accent/10 hover:text-accent transition-all duration-300"
+              >
+                {theme === "light" ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
+              </Button>
+              <UpgradeButton />
               <Button
                 size="icon"
                 variant="ghost"
