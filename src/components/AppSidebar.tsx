@@ -59,7 +59,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border/50">
-      <SidebarContent className="bg-sidebar relative overflow-hidden">
+      <SidebarContent className="bg-sidebar relative overflow-y-auto">
         {/* Decorative gradient blobs (clipped by overflow-hidden) */}
         <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-sidebar-primary/10 blur-3xl animate-blob" />
         <div className="pointer-events-none absolute bottom-20 -right-20 h-48 w-48 rounded-full bg-accent/10 blur-3xl animate-blob" style={{ animationDelay: "4s" }} />
