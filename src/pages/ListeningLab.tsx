@@ -211,9 +211,10 @@ export default function ListeningLab() {
 
   if (!selectedLesson) {
     const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
-    const filteredLessons = filterLevel === "all" 
+    const filteredLessons = (filterLevel === "all" 
       ? lessons 
-      : lessons.filter(l => l.level === filterLevel);
+      : lessons.filter(l => l.level === filterLevel))
+      .sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
 
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
