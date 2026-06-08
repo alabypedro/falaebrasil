@@ -102,12 +102,13 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     initSession();
   }, [user, mode]);
 
-  const fetchWritingTopic = useCallback(async () => {
+  const fetchWritingTopic = useCallback(async (levelOverride?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') => {
     if (mode !== 'writing') return;
     setTopicLoading(true);
+    const levelToUse = levelOverride || selectedLevel;
     try {
       const { data, error } = await supabase.functions.invoke("generate-writing-topic", {
-        body: { recent: recentTopics.slice(0, 6), level: selectedLevel },
+        body: { recent: recentTopics.slice(0, 6), level: levelToUse },
       });
       if (error) throw error;
       const topic = data?.topic;
@@ -120,17 +121,17 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     } finally {
       setTopicLoading(false);
     }
-  }, [mode, recentTopics]);
+  }, [mode, recentTopics, selectedLevel]);
 
   useEffect(() => {
     if (mode === 'writing' && !currentTopic && !topicLoading) {
-      fetchWritingTopic();
+      fetchWritingTopic(selectedLevel);
     }
-  }, [mode, currentTopic, topicLoading, fetchWritingTopic]);
+  }, [mode, currentTopic, topicLoading, fetchWritingTopic, selectedLevel]);
 
   useEffect(() => {
-    if (mode === 'writing' && currentTopic && !topicLoading) {
-      fetchWritingTopic();
+    if (mode === 'writing') {
+      fetchWritingTopic(selectedLevel);
     }
   }, [selectedLevel]);
 
