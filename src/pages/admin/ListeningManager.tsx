@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Mic, Image as ImageIcon, MessageSquare, FileText, X, Upload, Loader2 as Spinner } from "lucide-react";
+import { Plus, Pencil, Trash2, Mic, Image as ImageIcon, MessageSquare, FileText, X, Upload, Loader2 as Spinner, Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -73,6 +73,7 @@ export default function ListeningManager() {
   const [form, setForm] = useState(emptyLesson);
   const [loading, setLoading] = useState(false);
   const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -220,9 +221,11 @@ export default function ListeningManager() {
     return acc;
   }, {} as Record<string, number>);
 
-  const filteredLessons = filterLevel === "all" 
-    ? lessons 
-    : lessons.filter(l => l.level === filterLevel);
+  const filteredLessons = lessons.filter(l => {
+    const matchesLevel = filterLevel === "all" || l.level === filterLevel;
+    const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesLevel && matchesSearch;
+  });
 
   return (
     <div className="space-y-6">
@@ -257,7 +260,17 @@ export default function ListeningManager() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar por título..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         <div className="flex items-center gap-2">
           <Label className="text-sm font-medium">Filtrar por Nível:</Label>
           <Select value={filterLevel} onValueChange={setFilterLevel}>
@@ -271,6 +284,7 @@ export default function ListeningManager() {
               ))}
             </SelectContent>
           </Select>
+          </div>
         </div>
         <div className="text-sm text-muted-foreground">
           Mostrando <strong>{filteredLessons.length}</strong> de <strong>{lessons.length}</strong> lições
