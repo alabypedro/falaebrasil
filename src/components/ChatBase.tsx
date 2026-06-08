@@ -102,7 +102,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     initSession();
   }, [user, mode]);
 
-  const fetchWritingTopic = useCallback(async (levelOverride?: typeof selectedLevel) => {
+  const fetchWritingTopic = useCallback(async (levelOverride?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') => {
     if (mode !== 'writing') return;
     setTopicLoading(true);
     const levelToUse = levelOverride || selectedLevel;
