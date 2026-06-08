@@ -131,7 +131,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
 
   useEffect(() => {
     if (mode === 'writing') {
-      fetchWritingTopic();
+      fetchWritingTopic(selectedLevel);
     }
   }, [selectedLevel]);
 
