@@ -97,6 +97,7 @@ export default function ListeningManager() {
       ...base,
       ...(lesson.content || {}),
       part1: { ...base.part1, ...((lesson.content && lesson.content.part1) || {}) },
+      part2: Array.isArray(lesson.content?.part2) ? lesson.content.part2 : base.part2,
       part3: { ...base.part3, ...((lesson.content && lesson.content.part3) || {}) },
       part4: { ...base.part4, ...((lesson.content && lesson.content.part4) || {}) },
     };
