@@ -221,11 +221,13 @@ export default function ListeningManager() {
     return acc;
   }, {} as Record<string, number>);
 
-  const filteredLessons = lessons.filter(l => {
-    const matchesLevel = filterLevel === "all" || l.level === filterLevel;
-    const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesLevel && matchesSearch;
-  });
+  const filteredLessons = lessons
+    .filter(l => {
+      const matchesLevel = filterLevel === "all" || l.level === filterLevel;
+      const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesLevel && matchesSearch;
+    })
+    .sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
 
   return (
     <div className="space-y-6">
