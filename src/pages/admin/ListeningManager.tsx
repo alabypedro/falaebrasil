@@ -471,25 +471,53 @@ export default function ListeningManager() {
                   <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Mini Diálogo (3 Questões)</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
-                      <Label>Scripts do Diálogo (Narrado com vozes alternadas)</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Scripts do Diálogo (Narrado com vozes alternadas)</Label>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            const newLines = [...form.content.part3.dialogue, { speaker: "female", text: "" }];
+                            updatePart3("dialogue", newLines);
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Adicionar Fala
+                        </Button>
+                      </div>
                       {form.content.part3.dialogue.map((line: any, i: number) => (
                         <div key={i} className="flex gap-2 items-start">
-                          <Select value={line.speaker} onValueChange={(v) => {
-                            const newLines = [...form.content.part3.dialogue];
-                            newLines[i].speaker = v;
-                            updatePart3("dialogue", newLines);
-                          }}>
-                            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="female">Feminino</SelectItem>
-                              <SelectItem value="male">Masculino</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-1">
+                            <Select value={line.speaker} onValueChange={(v) => {
+                              const newLines = [...form.content.part3.dialogue];
+                              newLines[i].speaker = v;
+                              updatePart3("dialogue", newLines);
+                            }}>
+                              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="female">Feminino</SelectItem>
+                                <SelectItem value="male">Masculino</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {form.content.part3.dialogue.length > 1 && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  const newLines = form.content.part3.dialogue.filter((_: any, idx: number) => idx !== i);
+                                  updatePart3("dialogue", newLines);
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" /> Remover
+                              </Button>
+                            )}
+                          </div>
                           <Textarea value={line.text} onChange={(e) => {
                             const newLines = [...form.content.part3.dialogue];
                             newLines[i].text = e.target.value;
                             updatePart3("dialogue", newLines);
-                          }} className="flex-1" />
+                          }} className="flex-1 min-h-[80px]" />
                         </div>
                       ))}
                     </div>
