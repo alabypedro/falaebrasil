@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -24,6 +25,8 @@ export default function ListeningLab() {
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [searchParams] = useSearchParams();
+  const [autoStarted, setAutoStarted] = useState(false);
   
   // Game state
   const [currentPart, setCurrentPart] = useState<1 | 2 | 3 | 4>(1);
@@ -58,6 +61,32 @@ export default function ListeningLab() {
     };
     fetchLessons();
   }, []);
+
+  // Apply level filter from URL
+  useEffect(() => {
+    const lvl = searchParams.get('level');
+    if (lvl && ['A1','A2','B1','B2','C1','C2'].includes(lvl)) {
+      setFilterLevel(lvl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-select a lesson matching ?unit=N&level=XX
+  useEffect(() => {
+    if (autoStarted || loading || lessons.length === 0) return;
+    const unit = searchParams.get('unit');
+    const lvl = searchParams.get('level');
+    if (!unit) return;
+    const unitNum = parseInt(unit, 10);
+    if (!unitNum) return;
+    const pool = lvl ? lessons.filter(l => l.level === lvl) : lessons;
+    const re = new RegExp(`\\bunit\\s*0*${unitNum}\\b`, 'i');
+    const match = pool.find(l => re.test(l.title));
+    if (match) {
+      setAutoStarted(true);
+      startLesson(match);
+    }
+  }, [lessons, loading, searchParams, autoStarted]);
 
   const startLesson = (lesson: ListeningLesson) => {
     setSelectedLesson(lesson);
