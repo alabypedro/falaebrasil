@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2, Pause, Play, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -94,6 +95,15 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [topicLoading, setTopicLoading] = useState(false);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>('A1');
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const lvl = searchParams.get('level');
+    if (lvl && ['A1','A2','B1','B2','C1','C2'].includes(lvl)) {
+      setSelectedLevel(lvl as any);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const levels = {
     'A1': 100,
