@@ -11,6 +11,66 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+function FormattedWritingFeedback({ content }: { content: string }) {
+  // Strip markdown bold/italic markers
+  const clean = content.replace(/\*\*/g, "").replace(/__/g, "");
+  const lines = clean.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+
+  const isHeading = (line: string) =>
+    /^(pontuação geral|erros gramaticais|análise de vocabulário|avaliação do nível cefr|critérios cefr aplicados|sugestões de melhoria|dicas de melhoria|dicas|melhorias|relatório|avaliação)/i.test(line);
+  const isBullet = (line: string) => /^([-•*]|\d+[.)])\s+/.test(line);
+
+  const blocks: Array<{ type: "h" | "p" | "ul"; items?: string[]; text?: string }> = [];
+  let currentList: string[] | null = null;
+
+  const flushList = () => {
+    if (currentList && currentList.length) {
+      blocks.push({ type: "ul", items: currentList });
+    }
+    currentList = null;
+  };
+
+  for (const line of lines) {
+    if (isBullet(line)) {
+      if (!currentList) currentList = [];
+      currentList.push(line.replace(/^([-•*]|\d+[.)])\s+/, ""));
+    } else if (isHeading(line)) {
+      flushList();
+      blocks.push({ type: "h", text: line.replace(/:$/, "") });
+    } else {
+      flushList();
+      blocks.push({ type: "p", text: line });
+    }
+  }
+  flushList();
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((b, i) => {
+        if (b.type === "h") {
+          return (
+            <h4 key={i} className="text-sm font-bold text-primary mt-2 first:mt-0">
+              {b.text}
+            </h4>
+          );
+        }
+        if (b.type === "ul") {
+          return (
+            <ul key={i} className="list-disc pl-5 space-y-1">
+              {b.items!.map((it, j) => (
+                <li key={j} className="text-sm leading-relaxed">{it}</li>
+              ))}
+            </ul>
+          );
+        }
+        return (
+          <p key={i} className="text-sm leading-relaxed">{b.text}</p>
+        );
+      })}
+    </div>
+  );
+}
+
 type Message = {
   id: string;
   role: 'user' | 'assistant';
