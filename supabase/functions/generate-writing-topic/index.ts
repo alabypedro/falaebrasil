@@ -8,40 +8,40 @@ const corsHeaders = {
 
 const FALLBACK_TOPICS: Record<string, string[]> = {
   'A1': [
-    "Write a short text introducing yourself: name, age, and where you are from.",
-    "Describe your favorite object in your room using simple sentences.",
-    "Write three sentences about what you do every morning.",
-    "Describe your best friend using three simple adjectives.",
+    "Escreva um texto curto se apresentando: nome, idade e de onde você é, em inglês.",
+    "Descreva seu objeto favorito do seu quarto usando frases simples, em inglês.",
+    "Escreva três frases sobre o que você faz toda manhã, em inglês.",
+    "Descreva seu melhor amigo usando três adjetivos simples, em inglês.",
   ],
   'A2': [
-    "Write a short email inviting a colleague to a meeting next Tuesday.",
-    "Describe your last weekend: what did you do and who were you with?",
-    "Write about your favorite food and explain how to make a simple version of it.",
-    "Describe your current job and your main daily tasks.",
+    "Escreva um e-mail curto convidando um colega para uma reunião na próxima terça-feira, em inglês.",
+    "Descreva seu último fim de semana: o que você fez e com quem estava, em inglês.",
+    "Escreva sobre sua comida favorita e explique como fazer uma versão simples dela, em inglês.",
+    "Descreva seu trabalho atual e suas principais tarefas diárias, em inglês.",
   ],
   'B1': [
-    "Explain a project delay to a client via email and suggest a new deadline.",
-    "Write a paragraph about your career goals for the next two years.",
-    "Describe a professional challenge you recently overcame and what you learned.",
-    "Write a review of a movie or book you enjoyed recently, explaining why.",
+    "Explique um atraso de projeto para um cliente por e-mail e sugira um novo prazo, em inglês.",
+    "Escreva um parágrafo sobre seus objetivos de carreira para os próximos dois anos, em inglês.",
+    "Descreva um desafio profissional que você superou recentemente e o que aprendeu, em inglês.",
+    "Escreva uma resenha de um filme ou livro que você gostou recentemente, explicando o motivo, em inglês.",
   ],
   'B2': [
-    "Write an argumentative text about the advantages and disadvantages of remote work.",
-    "Describe a detailed plan for a new business or community project.",
-    "Write a formal letter of complaint about a product or service you received.",
-    "Explain your viewpoint on a current environmental issue in detail.",
+    "Escreva um texto argumentativo sobre as vantagens e desvantagens do trabalho remoto, em inglês.",
+    "Descreva um plano detalhado para um novo negócio ou projeto comunitário, em inglês.",
+    "Escreva uma carta formal de reclamação sobre um produto ou serviço que você recebeu, em inglês.",
+    "Explique seu ponto de vista sobre uma questão ambiental atual em detalhes, em inglês.",
   ],
   'C1': [
-    "Write a sophisticated analysis of a complex social or political issue.",
-    "Describe a nuanced personal experience using advanced vocabulary and structures.",
-    "Write a formal proposal for a corporate strategy change.",
-    "Discuss the impact of technology on human relationships using abstract concepts.",
+    "Escreva uma análise sofisticada de uma questão social ou política complexa, em inglês.",
+    "Descreva uma experiência pessoal com nuances usando vocabulário e estruturas avançadas, em inglês.",
+    "Escreva uma proposta formal para uma mudança de estratégia corporativa, em inglês.",
+    "Discuta o impacto da tecnologia nas relações humanas usando conceitos abstratos, em inglês.",
   ],
   'C2': [
-    "Write a masterfully structured essay summarizing contrasting viewpoints on a philosophical topic.",
-    "Produce a highly technical report on a specialized subject of your choice.",
-    "Write a creative piece using complex idiomatic expressions and metaphors.",
-    "Critically evaluate a piece of literature or academic research with absolute precision.",
+    "Escreva um ensaio magistralmente estruturado resumindo pontos de vista contrastantes sobre um tópico filosófico, em inglês.",
+    "Produza um relatório altamente técnico sobre um assunto especializado de sua escolha, em inglês.",
+    "Escreva uma peça criativa usando expressões idiomáticas complexas e metáforas, em inglês.",
+    "Avalie criticamente uma obra literária ou pesquisa acadêmica com absoluta precisão, em inglês.",
   ]
 };
 
@@ -93,28 +93,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You generate ONE English writing practice topic for students.
-Current student level: ${userLevel}.
+    const systemPrompt = `Você gera UM tema de prática de escrita para alunos brasileiros aprendendo inglês.
+Nível atual do aluno: ${userLevel}.
 
-LEVEL-SPECIFIC EXAMPLES:
-- A1: "Introduce yourself to a new neighbor."
-- A2: "Invite a friend to lunch via email."
-- B1: "Explain a work problem to your boss."
-- B2: "Debate the pros/cons of artificial intelligence."
-- C1/C2: "Analyze the cultural impact of globalization."
-
-RULES:
-- Respond ALWAYS in ENGLISH (the topic enunciation).
-- Alternate between DAILY LIFE and PROFESSIONAL situations.
-- Frequently ask the student to write a short and objective email (e.g., professional email, invitation, feedback, etc.).
-- The topic must be appropriate for the student's level (${userLevel}).
-- Short sentence (max 20 words), starting with an imperative verb (Write, Describe, Tell, Explain).
-- Ends with "in English."
-- DO NOT use quotes, emojis, lists, markdown, or explanations. Just the enunciation.
-- Avoid repeating recent topics.`;
+REGRAS:
+- Responda SEMPRE em PORTUGUÊS DO BRASIL (a enunciação do tema).
+- Alterne entre situações do COTIDIANO e PROFISSIONAIS.
+- Frequentemente peça para o aluno escrever um e-mail curto e objetivo (profissional, convite, feedback, etc.).
+- O tema deve ser adequado ao nível do aluno (${userLevel}).
+- Frase curta (máx. 20 palavras), começando com verbo no imperativo (Escreva, Descreva, Conte, Explique).
+- Termine com "em inglês.".
+- NÃO use aspas, emojis, listas, markdown ou explicações. Apenas a enunciação.
+- Evite repetir temas recentes.`;
 
     const userPrompt = recent.length
-      ? `Gere um novo tema de escrita diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
+      ? `Gere um novo tema de escrita em português diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
       : `Gere um tema de prática de escrita adequado ao nível ${userLevel}.`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -143,7 +136,7 @@ RULES:
     let topic: string = aiData?.choices?.[0]?.message?.content ?? "";
     topic = topic.trim().replace(/^["']|["']$/g, "").replace(/\n+/g, " ").trim();
     
-    if (!topic || topic.length > 250) {
+    if (!topic || topic.length > 280) {
       topic = levelFallbacks[Math.floor(Math.random() * levelFallbacks.length)];
     }
 
