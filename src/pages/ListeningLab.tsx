@@ -24,7 +24,7 @@ export default function ListeningLab() {
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filterLevel, setFilterLevel] = useState<string>("all");
+  const [filterLevel, setFilterLevel] = useState<string>("A1");
   const [searchParams] = useSearchParams();
   const [autoStarted, setAutoStarted] = useState(false);
   
@@ -258,14 +258,6 @@ export default function ListeningLab() {
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <Button 
-              variant={filterLevel === "all" ? "default" : "outline"} 
-              size="sm"
-              onClick={() => setFilterLevel("all")}
-              className="rounded-full px-4"
-            >
-              Todos
-            </Button>
             {levels.map(lvl => (
               <Button 
                 key={lvl}
