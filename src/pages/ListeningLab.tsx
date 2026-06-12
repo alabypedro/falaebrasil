@@ -6,6 +6,7 @@ import { Headphones, Play, Pause, RotateCcw, CheckCircle2, ChevronRight, Chevron
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import BackToLessonButton from "@/components/BackToLessonButton";
 
 interface ListeningLesson {
   id: string;
@@ -220,7 +221,10 @@ export default function ListeningLab() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="flex-1">
-            <h1 className="text-4xl font-black tracking-tight mb-2">IA Escutaê</h1>
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h1 className="text-4xl font-black tracking-tight">IA Escutaê</h1>
+              <BackToLessonButton className="shrink-0" />
+            </div>
             <p className="text-muted-foreground">Escolha uma lição para praticar sua compreensão auditiva.</p>
           </div>
           
