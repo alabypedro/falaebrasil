@@ -11,6 +11,66 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+function FormattedWritingFeedback({ content }: { content: string }) {
+  // Strip markdown bold/italic markers
+  const clean = content.replace(/\*\*/g, "").replace(/__/g, "");
+  const lines = clean.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+
+  const isHeading = (line: string) =>
+    /^(pontuação geral|erros gramaticais|análise de vocabulário|avaliação do nível cefr|critérios cefr aplicados|sugestões de melhoria|dicas de melhoria|dicas|melhorias|relatório|avaliação)/i.test(line);
+  const isBullet = (line: string) => /^([-•*]|\d+[.)])\s+/.test(line);
+
+  const blocks: Array<{ type: "h" | "p" | "ul"; items?: string[]; text?: string }> = [];
+  let currentList: string[] | null = null;
+
+  const flushList = () => {
+    if (currentList && currentList.length) {
+      blocks.push({ type: "ul", items: currentList });
+    }
+    currentList = null;
+  };
+
+  for (const line of lines) {
+    if (isBullet(line)) {
+      if (!currentList) currentList = [];
+      currentList.push(line.replace(/^([-•*]|\d+[.)])\s+/, ""));
+    } else if (isHeading(line)) {
+      flushList();
+      blocks.push({ type: "h", text: line.replace(/:$/, "") });
+    } else {
+      flushList();
+      blocks.push({ type: "p", text: line });
+    }
+  }
+  flushList();
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((b, i) => {
+        if (b.type === "h") {
+          return (
+            <h4 key={i} className="text-sm font-bold text-primary mt-2 first:mt-0">
+              {b.text}
+            </h4>
+          );
+        }
+        if (b.type === "ul") {
+          return (
+            <ul key={i} className="list-disc pl-5 space-y-1">
+              {b.items!.map((it, j) => (
+                <li key={j} className="text-sm leading-relaxed">{it}</li>
+              ))}
+            </ul>
+          );
+        }
+        return (
+          <p key={i} className="text-sm leading-relaxed">{b.text}</p>
+        );
+      })}
+    </div>
+  );
+}
+
 type Message = {
   id: string;
   role: 'user' | 'assistant';
@@ -154,8 +214,8 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     const currentMaxWords = levels[selectedLevel];
     if (mode === 'writing' && wordCount > currentMaxWords) {
       toast({
-        title: "Word limit exceeded",
-        description: `Your text for level ${selectedLevel} must have a maximum of ${currentMaxWords} words.`,
+          title: "Limite de palavras excedido",
+          description: `Seu texto para o nível ${selectedLevel} deve ter no máximo ${currentMaxWords} palavras.`,
         variant: "destructive"
       });
       return;
@@ -423,14 +483,14 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
           </div>
           <Card className="bg-accent/5 border-accent/20">
             <div className="p-3 text-center space-y-2">
-              <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Suggested Topic</p>
+              <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
               {topicLoading ? (
                 <div className="flex items-center justify-center gap-2 py-1 text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  <span className="text-xs">Generating topic with IA…</span>
+                  <span className="text-xs">Gerando tema com IA…</span>
                 </div>
               ) : (
-                <p className="text-xs sm:text-sm font-medium text-foreground px-2">{currentTopic || "Loading topic..."}</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground px-2">{currentTopic || "Carregando tema..."}</p>
               )}
               <Button
                 type="button"
@@ -441,7 +501,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                 className="h-8 gap-1.5 text-xs"
               >
                 <Sparkles className="h-3 w-3" />
-                New topic
+                Novo tema
               </Button>
             </div>
           </Card>
@@ -457,7 +517,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
                 <Bot className="h-12 w-12 opacity-20" />
-                <p>Start a conversation to begin practicing!</p>
+                <p>{mode === 'writing' ? 'Inicie uma conversa para começar a praticar!' : 'Start a conversation to begin practicing!'}</p>
               </div>
             )}
             {messages.map((m) => (
@@ -480,9 +540,11 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                     ? "bg-primary text-primary-foreground rounded-tr-none shadow-md" 
                     : "bg-sidebar-accent text-sidebar-foreground rounded-tl-none border border-sidebar-border shadow-sm"
                 )}>
-                  <p className="whitespace-pre-wrap leading-relaxed">
+                  <div className="whitespace-pre-wrap leading-relaxed">
                     {m.role === 'assistant' ? (
-                      m.content.split(/\s+/).map((word, i) => {
+                      mode === 'writing' ? (
+                        <FormattedWritingFeedback content={m.content} />
+                      ) : m.content.split(/\s+/).map((word, i) => {
                         const cleanWord = word.replace(/[.,!?;:()]/g, '');
                         return (
                           <span 
@@ -497,7 +559,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                     ) : (
                       m.content
                     )}
-                  </p>
+                  </div>
 
                   {m.role === 'assistant' && (
                     <button 
@@ -549,12 +611,12 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       handleSend(inputText);
                     }
                   }}
-                  placeholder={mode === 'writing' ? `Write your text (max ${levels[selectedLevel]} words)...` : "Write something..."}
+                  placeholder={mode === 'writing' ? `Escreva seu texto (máx. ${levels[selectedLevel]} palavras)...` : "Write something..."}
                   disabled={isLoading}
                   className="min-h-[44px] max-h-[200px] pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary resize-none"
                 />
@@ -566,8 +628,8 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   "text-[10px] self-end px-1",
                   inputText.trim().split(/\s+/).filter(Boolean).length > levels[selectedLevel] ? "text-destructive font-bold" : "text-muted-foreground"
                 )}>
-                  {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} words
-                  <span className="ml-2 hidden sm:inline opacity-50">• Ctrl+Enter to send</span>
+                  {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} palavras
+                  <span className="ml-2 hidden sm:inline opacity-50">• Enter envia • Shift+Enter quebra linha</span>
                 </div>
               )}
             </div>

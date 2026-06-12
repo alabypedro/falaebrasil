@@ -74,12 +74,12 @@ Deno.serve(async (req) => {
     }
 
     const cefrCriteria = {
-      'A1': 'Focus on basic vocabulary, correct use of "to be", present simple, and ability to introduce yourself or describe simple objects.',
-      'A2': 'Focus on past simple, future with "going to", comparative adjectives, and describing everyday tasks or personal background.',
-      'B1': 'Focus on present perfect, conditional sentences (type 1), relative clauses, and expressing opinions or ambitions.',
-      'B2': 'Focus on passive voice, all conditionals, modal verbs in the past, and ability to argue a point or explain detailed viewpoints.',
-      'C1': 'Focus on inversion, mixed conditionals, advanced phrasal verbs, and subtle nuances in formal and informal contexts.',
-      'C2': 'Focus on mastery of complex structures, idiomatic expressions, and ability to summarize information from different sources coherently.'
+      'A1': 'Foque em vocabulário básico, uso correto do verbo "to be", present simple e capacidade de se apresentar ou descrever objetos simples.',
+      'A2': 'Foque em past simple, futuro com "going to", adjetivos comparativos e descrição de tarefas cotidianas ou histórico pessoal.',
+      'B1': 'Foque em present perfect, condicionais (tipo 1), orações relativas e expressão de opiniões e ambições.',
+      'B2': 'Foque em voz passiva, todos os condicionais, modais no passado e argumentação ou explicação de pontos de vista detalhados.',
+      'C1': 'Foque em inversão, condicionais mistos, phrasal verbs avançados e nuances sutis em contextos formais e informais.',
+      'C2': 'Foque no domínio de estruturas complexas, expressões idiomáticas e capacidade de resumir informações de diferentes fontes de forma coerente.'
     };
 
     const systemPrompt = type === 'listening' 
@@ -90,18 +90,39 @@ Deno.serve(async (req) => {
         "3. Wait for the user to respond.\n" +
         "4. Provide feedback on their answer and explain why it is correct or incorrect EXCLUSIVELY in English.\n\n" +
         "Keep the conversation flow natural and professional. Always encourage the user to listen carefully."
-      : `You are an official English proficiency examiner (TOEIC/CEFR standard). The student's current target level is ${level || 'A1'}. Analyze the text sent by the student and always return a structured feedback in English containing: 
-         - General Score (0-100)
-         - Grammatical Errors (with correction and explanation in English). 
-           IMPORTANT: Identify every single grammar mistake.
-         - Vocabulary Analysis (appropriate for level ${level || 'A1'})
-         - CEFR Level Evaluation (how close their writing is to the target ${level || 'A1'} level)
-         - CEFR Criteria Applied: ${cefrCriteria[level as keyof typeof cefrCriteria] || cefrCriteria['A1']}
-         - Suggestion for Improvement (Specific points to improve to reach or master ${level || 'A1'}). 
-         
-         CRITICAL: If the student makes any clear grammar or vocabulary mistake, list it under 'Grammatical Errors' in a way that can be easily parsed.
-         
-         Continue the conversation in English encouraging the student to write more.`;
+      : `Você é um examinador oficial de proficiência em inglês (padrão TOEIC/CEFR) avaliando um aluno brasileiro. O nível-alvo atual é ${level || 'A1'}.
+
+CRÍTICO: Responda SEMPRE em PORTUGUÊS DO BRASIL (todo o feedback, títulos, explicações e dicas). Apenas exemplos e correções de frases em inglês devem aparecer em inglês, entre aspas.
+
+NUNCA use markdown, asteriscos (**), sublinhados (__), nem caracteres de formatação. Escreva apenas texto puro.
+
+Estruture a resposta EXATAMENTE neste formato, com cada seção iniciando em uma nova linha e o título terminando com dois pontos:
+
+Pontuação Geral: <número de 0 a 100>/100
+
+Erros Gramaticais:
+- <erro 1 — mostre o trecho original em inglês entre aspas, a correção em inglês entre aspas e uma breve explicação em português>
+- <erro 2 ...>
+(Se não houver erros, escreva: - Nenhum erro relevante identificado.)
+
+Análise de Vocabulário:
+- <observação 1 sobre o vocabulário usado, adequado ao nível ${level || 'A1'}>
+- <observação 2 ...>
+
+Avaliação do Nível CEFR:
+- <quão próximo o texto está do nível ${level || 'A1'}, em uma ou duas linhas>
+
+Critérios CEFR Aplicados:
+- ${cefrCriteria[level as keyof typeof cefrCriteria] || cefrCriteria['A1']}
+
+Dicas de Melhoria:
+- <dica prática 1 em português>
+- <dica prática 2 em português>
+- <dica prática 3 em português>
+
+Finalize com uma frase curta de incentivo em português, convidando o aluno a continuar escrevendo. Não use emojis em excesso (no máximo 1).
+
+Identifique TODOS os erros gramaticais ou de vocabulário relevantes.`;
 
     const url = `${AZURE_OPENAI_ENDPOINT}/openai/deployments/${AZURE_OPENAI_DEPLOYMENT}/chat/completions?api-version=2024-02-15-preview`;
 
