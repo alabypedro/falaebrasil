@@ -501,7 +501,12 @@ export default function CourseDetail() {
                            size="sm"
                            onClick={() => {
                              sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
-                             navigate('/listening-lab');
+                             const unitMatch = activeLesson.title.match(/unit\s*0*(\d+)/i);
+                             const params = new URLSearchParams();
+                             if (course?.level) params.set('level', course.level);
+                             if (unitMatch) params.set('unit', unitMatch[1]);
+                             const qs = params.toString();
+                             navigate(`/listening-lab${qs ? `?${qs}` : ''}`);
                            }}
                            className="w-full md:min-w-[140px]"
                          >
@@ -512,7 +517,7 @@ export default function CourseDetail() {
                            size="sm"
                            onClick={() => {
                              sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
-                             navigate('/writing-lab');
+                             navigate(`/writing-lab${course?.level ? `?level=${course.level}` : ''}`);
                            }}
                            className="w-full md:min-w-[140px]"
                          >
