@@ -494,49 +494,58 @@ export default function CourseDetail() {
                         <p className="text-sm text-muted-foreground mt-1 break-words">{activeLesson.description}</p>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-3 md:flex-shrink-0 md:justify-end">
-                      <div className="flex flex-col gap-2 w-full md:w-auto">
-                        {activeLesson.pdf_url && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setReadingPdf({ url: activeLesson.pdf_url!, title: activeLesson.title })}
-                            className="w-full md:min-w-[140px]"
-                          >
-                            <FileText className="h-4 w-4 mr-2" /> PDF
-                          </Button>
-                        )}
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => navigate('/writing-lab')}
-                          className="w-full md:min-w-[140px]"
-                        >
-                          <MessageSquareText className="h-4 w-4 mr-2" /> IA Escreveaê
-                        </Button>
-                      </div>
-                      
-                      <div className="flex flex-col gap-2 w-full md:w-auto">
-                        {activeLesson.practice_text && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/voice-lab?lesson=${activeLesson.id}`)}
-                            className="w-full md:min-w-[140px]"
-                          >
-                            <Mic className="h-4 w-4 mr-2" /> IA Falaê
-                          </Button>
-                        )}
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => navigate('/listening-lab')}
-                          className="w-full md:min-w-[140px]"
-                        >
-                          <Headphones className="h-4 w-4 mr-2" /> IA Escutaê
-                        </Button>
-                      </div>
-                    </div>
+                     <div className="flex flex-wrap gap-3 md:flex-shrink-0 md:justify-end">
+                       <div className="flex flex-col gap-2 w-full md:w-auto">
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
+                             navigate('/listening-lab');
+                           }}
+                           className="w-full md:min-w-[140px]"
+                         >
+                           <Headphones className="h-4 w-4 mr-2" /> IA Escutaê
+                         </Button>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
+                             navigate('/writing-lab');
+                           }}
+                           className="w-full md:min-w-[140px]"
+                         >
+                           <MessageSquareText className="h-4 w-4 mr-2" /> IA Escreveaê
+                         </Button>
+                       </div>
+
+                       <div className="flex flex-col gap-2 w-full md:w-auto">
+                         {activeLesson.practice_text && (
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => {
+                               sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
+                               navigate(`/voice-lab?lesson=${activeLesson.id}`);
+                             }}
+                             className="w-full md:min-w-[140px]"
+                           >
+                             <Mic className="h-4 w-4 mr-2" /> IA Falaê
+                           </Button>
+                         )}
+                         {activeLesson.pdf_url && (
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => window.open(`${activeLesson.pdf_url}#toolbar=0&navpanes=0`, '_blank', 'noopener,noreferrer')}
+                             className="w-full md:min-w-[140px]"
+                           >
+                             <FileText className="h-4 w-4 mr-2" /> PDF
+                           </Button>
+                         )}
+                       </div>
+                     </div>
                   </div>
                 </CardContent>
               </Card>
