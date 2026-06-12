@@ -457,7 +457,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
                 <Bot className="h-12 w-12 opacity-20" />
-                <p>Start a conversation to begin practicing!</p>
+                <p>{mode === 'writing' ? 'Inicie uma conversa para começar a praticar!' : 'Start a conversation to begin practicing!'}</p>
               </div>
             )}
             {messages.map((m) => (
@@ -480,9 +480,11 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                     ? "bg-primary text-primary-foreground rounded-tr-none shadow-md" 
                     : "bg-sidebar-accent text-sidebar-foreground rounded-tl-none border border-sidebar-border shadow-sm"
                 )}>
-                  <p className="whitespace-pre-wrap leading-relaxed">
+                  <div className="whitespace-pre-wrap leading-relaxed">
                     {m.role === 'assistant' ? (
-                      m.content.split(/\s+/).map((word, i) => {
+                      mode === 'writing' ? (
+                        <FormattedWritingFeedback content={m.content} />
+                      ) : m.content.split(/\s+/).map((word, i) => {
                         const cleanWord = word.replace(/[.,!?;:()]/g, '');
                         return (
                           <span 
@@ -497,7 +499,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                     ) : (
                       m.content
                     )}
-                  </p>
+                  </div>
 
                   {m.role === 'assistant' && (
                     <button 
