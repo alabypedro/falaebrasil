@@ -488,11 +488,14 @@ export default function VoiceLab() {
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">IA Falaê</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Pratique sua pronúncia e receba feedback detalhado com IA.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">IA Falaê</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Pratique sua pronúncia e receba feedback detalhado com IA.
+          </p>
+        </div>
+        <BackToLessonButton className="shrink-0" />
       </div>
 
       {/* AI Consumption panel */}
