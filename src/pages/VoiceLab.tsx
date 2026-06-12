@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle } from "lucide-react";
+import BackToLessonButton from "@/components/BackToLessonButton";
 
 type NormalizedAzureResponse = {
   status?: string;
