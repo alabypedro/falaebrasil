@@ -7,6 +7,7 @@ import { MessageCircle, Lock, ExternalLink, GraduationCap, Crown, Folder, Folder
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Tier = "open" | "pro" | "vip" | "kids" | "teens";
 
@@ -95,6 +96,7 @@ export default function Communities() {
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
+  const { t } = useLanguage();
 
   const userTier: Tier = isAdmin ? "vip" : ((profile?.plan_tier as Tier) ?? "open");
 
@@ -171,10 +173,8 @@ export default function Communities() {
   return (
     <div className="space-y-6 max-w-6xl page-transition">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Comunidades FB</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Acesse os grupos de WhatsApp dos alunos Falaê Brasil!
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">{t("communities.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("communities.subtitle")}</p>
       </div>
 
       {/* === Card VIP: Aula particular com o professor === */}
@@ -185,17 +185,15 @@ export default function Communities() {
           </div>
           <div className="flex-1 min-w-[200px]">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground">Aula particular com o professor</h3>
+              <h3 className="font-semibold text-foreground">{t("communities.teacher.title")}</h3>
               <Badge variant="default" className="text-[10px] gap-1"><Crown className="h-3 w-3" /> VIP</Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Chat direto 1:1 com o professor. Disponível apenas para alunos VIP.
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("communities.teacher.desc")}</p>
           </div>
           {userTier === "vip" && teacherUrl ? (
             <Button asChild>
               <a href={teacherUrl} target="_blank" rel="noopener noreferrer">
-                 Conversar{"\n"} <ExternalLink className="ml-1.5 h-4 w-4" />
+                 {t("communities.chat")}{"\n"} <ExternalLink className="ml-1.5 h-4 w-4" />
               </a>
             </Button>
           ) : userTier === "vip" ? (
@@ -213,7 +211,7 @@ export default function Communities() {
         <CardContent className="p-4 sm:p-6">
           <div className="flex items-center gap-2 pb-3 mb-2 border-b">
             <FolderOpen className="h-5 w-5 text-primary" />
-            <h2 className="font-semibold text-foreground">Comunidades FB</h2>
+            <h2 className="font-semibold text-foreground">{t("communities.folder")}</h2>
           </div>
 
           {/* General (all_tiers) groups at the root */}
