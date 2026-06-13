@@ -57,7 +57,7 @@ export default function FeedbackCard({ scores, suggestions, isNewHighScore }: Fe
             <span className="text-2xl">🎯</span>
           </div>
           <p className="text-sm font-medium text-muted-foreground">
-            Grave um áudio para receber seu feedback de pronúncia
+            {(() => { try { const lang = localStorage.getItem("language"); return lang === "en" ? "Record audio to receive your pronunciation feedback" : "Grave um áudio para receber seu feedback de pronúncia"; } catch { return "Grave um áudio para receber seu feedback de pronúncia"; } })()}
           </p>
         </CardContent>
       </Card>

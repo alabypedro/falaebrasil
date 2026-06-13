@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { PdfReader } from "@/components/library/PdfReader";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LibraryItem {
   id: string;
@@ -140,6 +141,7 @@ export default function Library() {
   const [readingItem, setReadingItem] = useState<LibraryItem | null>(null);
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const load = async () => {
@@ -188,10 +190,8 @@ export default function Library() {
   return (
     <div className="space-y-6 max-w-6xl page-transition">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Biblioteca BST</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Brasil Sem Trava: E-books e Audiobooks para complementar seu aprendizado.
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("library.subtitle")}</p>
       </div>
 
       <Tabs defaultValue="all">

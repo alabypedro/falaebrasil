@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, FileX } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Contract {
   id: string;
@@ -17,6 +18,7 @@ const ORDER = ["open", "pro", "vip", "teens", "kids"];
 export default function Contratos() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -40,14 +42,12 @@ export default function Contratos() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Contratos</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Visualize e baixe os contratos modelo de cada hierarquia de plano.
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">{t("contracts.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("contracts.subtitle")}</p>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
+        <p className="text-sm text-muted-foreground">{t("contracts.loading")}</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {contracts.map((c) => (
@@ -57,19 +57,19 @@ export default function Contratos() {
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                     <FileText className="h-5 w-5 text-primary" />
                   </div>
-                  <CardTitle className="text-base">{c.title}</CardTitle>
+                  <CardTitle className="text-base">{`${t("contracts.modelPrefix")} ${(c.tier || "").toUpperCase()}`}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 {c.file_path ? (
                   <Button className="w-full" onClick={() => openContract(c.file_path!)}>
                     <Download className="h-4 w-4 mr-1.5" />
-                    Abrir contrato
+                    {t("contracts.open")}
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                     <FileX className="h-4 w-4" />
-                    Contrato ainda não disponível.
+                    {t("contracts.notAvailable")}
                   </div>
                 )}
               </CardContent>
