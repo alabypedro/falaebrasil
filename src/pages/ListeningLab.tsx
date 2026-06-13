@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import BackToLessonButton from "@/components/BackToLessonButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ListeningLesson {
   id: string;
@@ -22,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function ListeningLab() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -235,7 +237,7 @@ export default function ListeningLab() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Carregando lições...</p>
+        <p className="mt-4 text-muted-foreground">{t("listening.loading")}</p>
       </div>
     );
   }
@@ -255,7 +257,7 @@ export default function ListeningLab() {
               <h1 className="text-4xl font-black tracking-tight">IA Escutaê</h1>
               <BackToLessonButton className="shrink-0" />
             </div>
-            <p className="text-muted-foreground">Escolha uma lição para praticar sua compreensão auditiva.</p>
+            <p className="text-muted-foreground">{t("listening.subtitle")}</p>
           </div>
           
           <div className="flex flex-wrap gap-2">
@@ -276,7 +278,7 @@ export default function ListeningLab() {
         {filteredLessons.length === 0 ? (
           <Card className="p-16 text-center border-dashed bg-muted/30">
             <Headphones className="h-16 w-16 mx-auto text-muted-foreground opacity-20 mb-4" />
-            <p className="text-xl font-medium text-muted-foreground">Nenhuma lição encontrada para o nível {filterLevel}.</p>
+            <p className="text-xl font-medium text-muted-foreground">{t("listening.empty")} {filterLevel}.</p>
             {filterLevel !== "all" && (
               <Button variant="link" onClick={() => setFilterLevel("all")} className="mt-2 text-primary">
                 Ver todas as lições
@@ -309,7 +311,7 @@ export default function ListeningLab() {
                 </CardHeader>
                 <CardFooter className="mt-auto pt-4 border-t border-white/5">
                   <Button variant="ghost" className="w-full justify-between hover:bg-primary hover:text-white transition-all group/btn">
-                    Começar Prática 
+                    {t("listening.startPractice")} 
                     <ChevronRight className="h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                   </Button>
                 </CardFooter>

@@ -12,6 +12,7 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import BackToLessonButton from "@/components/BackToLessonButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 function CopyAssistantButton({ text, className }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false);
@@ -107,6 +108,7 @@ type Message = {
 
 export default function ChatBase({ mode, title, description }: { mode: 'writing' | 'listening', title: string, description: string }) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const { t } = useLanguage();
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -502,7 +504,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h1 className="text-lg sm:text-xl font-bold tracking-tight">{title}</h1>
-            <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">{description}</p>
+            <p className="text-[10px] sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">{mode === 'writing' ? t("writing.subtitle", description) : description}</p>
           </div>
           <BackToLessonButton className="shrink-0" />
         </div>
@@ -524,14 +526,14 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
           </div>
           <Card className="bg-accent/5 border-accent/20">
             <div className="p-3 text-center space-y-2">
-              <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
+              <p className="text-[10px] text-accent font-semibold uppercase tracking-wide">{t("chat.suggestedTopic")}</p>
               {topicLoading ? (
                 <div className="flex items-center justify-center gap-2 py-1 text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  <span className="text-xs">Gerando tema com IA…</span>
+                  <span className="text-xs">{t("chat.generatingTopic")}</span>
                 </div>
               ) : (
-                <p className="text-xs sm:text-sm font-medium text-foreground px-2">{currentTopic || "Carregando tema..."}</p>
+                <p className="text-xs sm:text-sm font-medium text-foreground px-2">{currentTopic || t("chat.loadingTopic")}</p>
               )}
               <Button
                 type="button"
@@ -542,7 +544,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                 className="h-8 gap-1.5 text-xs"
               >
                 <Sparkles className="h-3 w-3" />
-                Novo tema
+                {t("chat.newTopic")}
               </Button>
             </div>
           </Card>
@@ -558,7 +560,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground space-y-2">
                 <Bot className="h-12 w-12 opacity-20" />
-                <p>{mode === 'writing' ? 'Inicie uma conversa para começar a praticar!' : 'Start a conversation to begin practicing!'}</p>
+                <p>{mode === 'writing' ? t("chat.startWriting") : t("chat.startListening")}</p>
               </div>
             )}
             {messages.map((m) => (
@@ -663,7 +665,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                       handleSend(inputText);
                     }
                   }}
-                  placeholder={mode === 'writing' ? `Escreva seu texto (máx. ${levels[selectedLevel]} palavras)...` : "Write something..."}
+                  placeholder={mode === 'writing' ? t("chat.placeholder.writing").replace("{n}", String(levels[selectedLevel])) : t("chat.placeholder.listening")}
                   disabled={isLoading}
                   className="min-h-[44px] max-h-[200px] pr-10 bg-background/50 border-sidebar-border/50 focus-visible:ring-sidebar-primary resize-none"
                 />
@@ -675,8 +677,8 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   "text-[10px] self-end px-1",
                   inputText.trim().split(/\s+/).filter(Boolean).length > levels[selectedLevel] ? "text-destructive font-bold" : "text-muted-foreground"
                 )}>
-                  {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} palavras
-                  <span className="ml-2 hidden sm:inline opacity-50">• Enter envia • Shift+Enter quebra linha</span>
+                  {inputText.trim().split(/\s+/).filter(Boolean).length}/{levels[selectedLevel]} {t("chat.words")}
+                  <span className="ml-2 hidden sm:inline opacity-50">• {t("chat.hint")}</span>
                 </div>
               )}
             </div>
