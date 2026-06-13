@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle } from "lucide-react";
 import BackToLessonButton from "@/components/BackToLessonButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type NormalizedAzureResponse = {
   status?: string;
@@ -86,6 +87,7 @@ export default function VoiceLab() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const lessonIdParam = searchParams.get("lesson");
+  const { t: tr } = useLanguage();
 
   const [mode, setMode] = useState<"scripted" | "unscripted">("scripted");
   const [practiceText, setPracticeText] = useState<string>("");
@@ -492,9 +494,7 @@ export default function VoiceLab() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">IA Falaê</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Pratique sua pronúncia e receba feedback detalhado com IA.
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">{tr("voice.subtitle")}</p>
         </div>
         <BackToLessonButton className="shrink-0" />
       </div>
@@ -502,15 +502,15 @@ export default function VoiceLab() {
       {/* AI Consumption panel */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Consumo de IA</CardTitle>
+          <CardTitle className="text-sm text-muted-foreground">{tr("voice.consumption")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <BalanceMeter
-            label="Scripted (leitura/repetição)"
+            label={tr("voice.scripted.label")}
             seconds={scriptedBalance}
           />
           <BalanceMeter
-            label="Unscripted (conversação livre)"
+            label={tr("voice.unscripted.label")}
             seconds={unscriptedBalance}
           />
         </CardContent>
@@ -527,9 +527,7 @@ export default function VoiceLab() {
             <Card className="border-destructive/40 bg-destructive/5">
               <CardContent className="p-4 flex items-start gap-2 text-sm">
                 <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-                <span className="text-destructive font-medium">
-                  Saldo de Scripted esgotado. Adquira novos módulos para continuar praticando.
-                </span>
+                <span className="text-destructive font-medium">{tr("voice.scriptedExhausted")}</span>
               </CardContent>
             </Card>
           )}
@@ -537,12 +535,12 @@ export default function VoiceLab() {
           {/* Course selector */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Curso ativo</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">{tr("voice.activeCourse")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">
               <Select value={activeCourseId} onValueChange={handleCourseChange}>
                 <SelectTrigger className="w-full sm:w-96">
-                  <SelectValue placeholder="Selecione um curso" />
+                  <SelectValue placeholder={tr("voice.selectCoursePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {courses.length === 0 && <SelectItem value="none" disabled>Nenhum curso disponível</SelectItem>}
@@ -551,9 +549,7 @@ export default function VoiceLab() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[11px] text-muted-foreground">
-                As frases abaixo são apenas do curso selecionado.
-              </p>
+              <p className="text-[11px] text-muted-foreground">{tr("voice.activeCourse.hint")}</p>
             </CardContent>
           </Card>
 
@@ -567,7 +563,7 @@ export default function VoiceLab() {
                   <CardContent className="p-3 flex items-center justify-between gap-3 flex-wrap">
                     <div className="flex items-center gap-2 text-sm">
                       <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="text-muted-foreground">Praticando a lição:</span>
+                      <span className="text-muted-foreground">{tr("voice.practicingLesson")}</span>
                       <span className="font-medium text-foreground">{lessonContext.title}</span>
                       {lessonContext.courseTitle && (
                         <Badge variant="outline" className="text-[10px]">{lessonContext.courseTitle}</Badge>
@@ -575,7 +571,7 @@ export default function VoiceLab() {
                     </div>
                     {lessonContext.courseId && (
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/courses/${lessonContext.courseId}`)} className="text-xs">
-                        Voltar à lição
+                        {tr("voice.backToLesson")}
                       </Button>
                     )}
                   </CardContent>
@@ -586,9 +582,9 @@ export default function VoiceLab() {
                 <Card>
                   <CardContent className="p-6 text-center text-sm text-muted-foreground">
                     {activeCourseTitle ? (
-                      <>O curso <strong>{activeCourseTitle}</strong> ainda não tem frases para o IA Falaê.</>
+                      <><strong>{activeCourseTitle}</strong> {tr("voice.noPhrases")}</>
                     ) : (
-                      <>Selecione um curso acima para ver as frases disponíveis.</>
+                      <>{tr("voice.selectCoursePrompt")}</>
                     )}
                   </CardContent>
                 </Card>
@@ -598,7 +594,7 @@ export default function VoiceLab() {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm text-muted-foreground">
-                        Escolha uma frase {activeCourseTitle && <span className="text-foreground font-medium">— {activeCourseTitle}</span>}
+                        {tr("voice.choosePhrase")} {activeCourseTitle && <span className="text-foreground font-medium">— {activeCourseTitle}</span>}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
@@ -631,7 +627,7 @@ export default function VoiceLab() {
                   {/* Selected phrase to read aloud */}
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm text-muted-foreground">Leia em voz alta:</CardTitle>
+                      <CardTitle className="text-sm text-muted-foreground">{tr("voice.readAloud")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-lg leading-relaxed text-foreground font-medium whitespace-pre-wrap">
@@ -640,7 +636,7 @@ export default function VoiceLab() {
                     </CardContent>
                   </Card>
 
-                  <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} audioLevel={audioLevel} disabled={scriptedExhausted} />
+          <RecordButton t={tr} isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} audioLevel={audioLevel} disabled={scriptedExhausted} />
 
                   {recordings.length > 0 && (
                     <div className="rounded-lg border p-3">
@@ -658,20 +654,18 @@ export default function VoiceLab() {
             <Card className="border-destructive/40 bg-destructive/5">
               <CardContent className="p-4 flex items-start gap-2 text-sm">
                 <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-                <span className="text-destructive font-medium">
-                  Saldo de Unscripted esgotado. Adquira novos módulos para continuar praticando.
-                </span>
+                <span className="text-destructive font-medium">{tr("voice.unscriptedExhausted")}</span>
               </CardContent>
             </Card>
           )}
 
           <Card className="bg-accent/5 border-accent/20">
             <CardContent className="p-6 text-center space-y-3">
-              <p className="text-xs text-accent font-semibold uppercase tracking-wide">Tema Sugerido</p>
+              <p className="text-xs text-accent font-semibold uppercase tracking-wide">{tr("voice.suggestedTopic")}</p>
               {topicLoading ? (
                 <div className="flex items-center justify-center gap-2 py-2 text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Gerando tema com IA…</span>
+                  <span className="text-sm">{tr("voice.generatingTopic")}</span>
                 </div>
               ) : (
                 <p className="text-lg font-medium text-foreground">{currentTopic}</p>
@@ -685,12 +679,12 @@ export default function VoiceLab() {
                 className="gap-1.5"
               >
                 <Sparkles className="h-3.5 w-3.5" />
-                Novo tema
+                {tr("voice.newTopic")}
               </Button>
             </CardContent>
           </Card>
 
-          <RecordButton isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} freeLabel audioLevel={audioLevel} disabled={unscriptedExhausted} />
+          <RecordButton t={tr} isRecording={isRecording} isAnalyzing={isAnalyzing} elapsed={elapsed} onStart={startRecording} onStop={handleStop} freeLabel audioLevel={audioLevel} disabled={unscriptedExhausted} />
 
           {recordings.length > 0 && (
             <div className="rounded-lg border p-3">
@@ -706,14 +700,14 @@ export default function VoiceLab() {
       {isAnalyzing && (
         <div className="flex flex-col items-center gap-2 py-4">
           <Loader2 className="h-8 w-8 animate-spin text-accent" />
-          <p className="text-sm text-muted-foreground">Analisando pronúncia…</p>
+          <p className="text-sm text-muted-foreground">{tr("voice.analyzingPronunciation")}</p>
         </div>
       )}
 
       {feedback && (
         <div className="flex justify-center">
           <Button variant="outline" onClick={handleReset}>
-            <RotateCcw className="mr-2 h-4 w-4" /> Nova Prática
+            <RotateCcw className="mr-2 h-4 w-4" /> {tr("voice.newPractice")}
           </Button>
         </div>
       )}
@@ -721,11 +715,12 @@ export default function VoiceLab() {
   );
 }
 
-function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, freeLabel, audioLevel, disabled }: {
+function RecordButton({ t, isRecording, isAnalyzing, elapsed, onStart, onStop, freeLabel, audioLevel, disabled }: {
+  t: (k: string, f?: string) => string;
   isRecording: boolean; isAnalyzing: boolean; elapsed: number; onStart: () => void; onStop: () => void; freeLabel?: boolean; audioLevel: number; disabled?: boolean;
 }) {
   const levelColor = audioLevel < 20 ? "bg-destructive" : audioLevel > 85 ? "bg-xp" : "bg-success";
-  const levelLabel = audioLevel < 20 ? "Muito baixo" : audioLevel > 85 ? "Muito alto" : "Ideal";
+  const levelLabel = audioLevel < 20 ? t("voice.level.low") : audioLevel > 85 ? t("voice.level.high") : t("voice.level.ideal");
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -740,21 +735,21 @@ function RecordButton({ isRecording, isAnalyzing, elapsed, onStart, onStop, free
           <span className="text-sm font-mono text-destructive font-semibold">{formatTime(elapsed)}</span>
           <div className="w-48 space-y-1">
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-              <span>Volume do Microfone</span>
+              <span>{t("voice.micVolume")}</span>
               <span className={audioLevel < 20 ? "text-destructive" : "text-success"}>{levelLabel}</span>
             </div>
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
               <div className={`h-full rounded-full transition-all duration-100 ${levelColor}`} style={{ width: `${audioLevel}%` }} />
             </div>
           </div>
-          <span className="text-xs text-muted-foreground">{freeLabel ? "Fale livremente… clique para parar" : "Gravando… clique para parar"}</span>
+          <span className="text-xs text-muted-foreground">{freeLabel ? t("voice.recording.free") : t("voice.recording.normal")}</span>
         </>
       ) : (
         <>
           <Button size="lg" className="h-20 w-20 rounded-full" onClick={onStart} disabled={isAnalyzing || disabled}>
             {isAnalyzing ? <Loader2 className="h-7 w-7 animate-spin" /> : <Mic className="h-7 w-7" />}
           </Button>
-          <span className="text-xs text-muted-foreground">{disabled ? "Saldo esgotado" : isAnalyzing ? "Analisando…" : "Clique para gravar"}</span>
+          <span className="text-xs text-muted-foreground">{disabled ? t("voice.balanceEmpty") : isAnalyzing ? t("voice.analyzing") : t("voice.clickToRecord")}</span>
         </>
       )}
     </div>

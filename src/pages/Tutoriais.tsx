@@ -5,11 +5,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { PlayCircle } from "lucide-react";
 import { TUTORIAL_TOPICS, parseYoutube } from "@/lib/tutorialTopics";
 import { useOSDetection } from "@/hooks/useOSDetection";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const TOPIC_KEYS: Record<string, { title: string; desc: string }> = {
+  "instalar-app": { title: "tutorials.t.install.title", desc: "tutorials.t.install.desc" },
+  "creditos-ia": { title: "tutorials.t.credits.title", desc: "tutorials.t.credits.desc" },
+  "navegando-cursos": { title: "tutorials.t.nav.title", desc: "tutorials.t.nav.desc" },
+  "xp-nivel": { title: "tutorials.t.xp.title", desc: "tutorials.t.xp.desc" },
+  "biblioteca-bst": { title: "tutorials.t.library.title", desc: "tutorials.t.library.desc" },
+  "comunidade": { title: "tutorials.t.community.title", desc: "tutorials.t.community.desc" },
+};
 
 export default function Tutoriais() {
   const [videoBySlug, setVideoBySlug] = useState<Record<string, string | null>>({});
   const [active, setActive] = useState<{ title: string; embedUrl: string } | null>(null);
   const platform = useOSDetection();
+  const { t: tr } = useLanguage();
 
   useEffect(() => {
     const load = async () => {
@@ -39,46 +50,47 @@ export default function Tutoriais() {
     <div className="space-y-8 max-w-6xl page-transition">
       <div className="animate-fade-up">
         <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground tracking-tight">
-          Tutoriais
+          {tr("tutorials.title")}
         </h1>
-        <p className="text-sm md:text-base text-muted-foreground mt-2">
-          Aprenda a aproveitar ao máximo o Falaê Brasil! com nossos vídeos guiados.
-        </p>
+        <p className="text-sm md:text-base text-muted-foreground mt-2">{tr("tutorials.subtitle")}</p>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {TUTORIAL_TOPICS.map((t, i) => {
-          const v = parseYoutube(videoBySlug[t.slug]);
+        {TUTORIAL_TOPICS.map((topic, i) => {
+          const v = parseYoutube(videoBySlug[topic.slug]);
           const clickable = !!v;
+          const keys = TOPIC_KEYS[topic.slug];
+          const titleText = keys ? tr(keys.title, topic.title) : topic.title;
+          const descText = keys ? tr(keys.desc, topic.description) : topic.description;
           return (
             <Card
-              key={t.slug}
-              onClick={() => v && setActive({ title: t.title, embedUrl: v.embedUrl })}
+              key={topic.slug}
+              onClick={() => v && setActive({ title: titleText, embedUrl: v.embedUrl })}
               className={`animate-fade-up hover-lift card-shine border-border/50 overflow-hidden group ${clickable ? "cursor-pointer" : ""}`}
               style={{ "--delay": `${80 * (i + 1)}ms` } as React.CSSProperties}
             >
-              <div className={`relative aspect-video ${t.gradient} flex items-center justify-center`}>
+              <div className={`relative aspect-video ${topic.gradient} flex items-center justify-center`}>
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                 <div className="relative flex flex-col items-center gap-2 text-white">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm group-hover:scale-110 transition-transform">
                     <PlayCircle className="h-7 w-7" />
                   </div>
                   <span className="text-xs font-semibold uppercase tracking-wider opacity-90">
-                    {clickable ? "Assistir" : "Vídeo em breve"}
+                    {clickable ? tr("tutorials.watch") : tr("tutorials.soon")}
                   </span>
                 </div>
               </div>
               <CardContent className="p-5 space-y-2">
                 <div className="flex items-start gap-2.5">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <t.icon className="h-4 w-4 text-primary" />
+                    <topic.icon className="h-4 w-4 text-primary" />
                   </div>
                   <div className="space-y-1 min-w-0">
                     <h3 className="text-sm font-display font-bold text-foreground leading-tight">
-                      {t.title}
+                      {titleText}
                     </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      {t.description}
+                      {descText}
                     </p>
                   </div>
                 </div>
