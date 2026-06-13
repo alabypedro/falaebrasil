@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Headphones, Play, Pause, RotateCcw, CheckCircle2, ChevronRight, ChevronLeft, Mic, Image as ImageIcon, MessageSquare, FileText, Loader2, Volume2 } from "lucide-react";
+import { Headphones, Play, Pause, RotateCcw, CheckCircle2, ChevronRight, ChevronLeft, Mic, Image as ImageIcon, MessageSquare, FileText, Loader2, Volume2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function ListeningLab() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
