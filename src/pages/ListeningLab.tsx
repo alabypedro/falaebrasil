@@ -361,11 +361,11 @@ export default function ListeningLab() {
               <CheckCircle2 className="h-12 w-12" />
             </div>
           </div>
-          <h2 className="text-4xl font-black mb-2 tracking-tight">Prática Finalizada!</h2>
-          <p className="text-muted-foreground mb-8 text-lg">Você completou as 10 questões da lição.</p>
+          <h2 className="text-4xl font-black mb-2 tracking-tight">{t("listening.finished")}</h2>
+          <p className="text-muted-foreground mb-8 text-lg">{t("listening.completedAll")}</p>
           
           <div className="bg-muted/30 p-8 rounded-2xl mb-8 border border-white/5 inline-block min-w-[300px]">
-            <p className="text-xs uppercase text-muted-foreground font-black tracking-widest mb-2">SUA PONTUAÇÃO</p>
+            <p className="text-xs uppercase text-muted-foreground font-black tracking-widest mb-2">{t("listening.yourScore")}</p>
             <p className="text-7xl font-black text-primary flex items-baseline justify-center gap-2">
               {score} <span className="text-3xl text-muted-foreground/50 font-medium">/ 100</span>
             </p>
@@ -373,16 +373,16 @@ export default function ListeningLab() {
 
           <div className="flex gap-4 justify-center">
             <Button variant="outline" size="lg" className="rounded-full px-8" onClick={() => setSelectedLesson(null)}>
-              Voltar para Lições
+              {t("listening.backToLessons")}
             </Button>
             <Button size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20" onClick={() => startLesson(selectedLesson)}>
-              Tentar Novamente
+              {t("listening.tryAgain")}
             </Button>
           </div>
         </Card>
 
         <div className="space-y-4">
-          <h3 className="text-xl font-bold px-2">Revisão da Prática</h3>
+          <h3 className="text-xl font-bold px-2">{t("listening.review")}</h3>
           <div className="grid gap-4">
             {questionsList.map((q, idx) => {
               const isCorrect = q.userAnswer === q.correctAnswer;
@@ -410,10 +410,10 @@ export default function ListeningLab() {
                           "flex items-center gap-2",
                           isCorrect ? "text-green-500/90" : "text-red-500/90"
                         )}>
-                          <span className="font-semibold">Sua:</span> {q.options[q.userAnswer] || "Não respondida"}
+                          <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
                         </p>
                         <p className="text-muted-foreground flex items-center gap-2">
-                          <span className="font-semibold">Correta:</span> {isCorrect ? q.options[q.correctAnswer] : "—"}
+                          <span className="font-semibold">{t("listening.correctLabel")}</span> {isCorrect ? q.options[q.correctAnswer] : "—"}
                         </p>
                       </div>
                     </div>
@@ -430,7 +430,7 @@ export default function ListeningLab() {
             className="gap-2 text-muted-foreground hover:text-primary transition-colors"
             onClick={() => setSelectedLesson(null)}
           >
-            <RotateCcw className="h-4 w-4" /> Tentar Outra Lição
+            <RotateCcw className="h-4 w-4" /> {t("listening.tryAnother")}
           </Button>
         </div>
       </div>
