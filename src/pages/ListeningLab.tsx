@@ -327,16 +327,16 @@ export default function ListeningLab() {
     const content = selectedLesson.content;
     const questionsList = [
       {
-        question: "Descrição de Foto",
+        question: t("listening.title.photo"),
         userAnswer: answers['1-0'],
         correctAnswer: correctMap['1-0'],
-        options: content.part1.options.map((o: any) => `Alternativa ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
+        options: content.part1.options.map((o: any) => `${t("listening.alternative")} ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
       },
       ...content.part2.map((q: any, i: number) => ({
-        question: `Pergunta & Resposta ${i + 1}`,
+        question: `${t("listening.title.qa")} ${i + 1}`,
         userAnswer: answers[`2-${i}`],
         correctAnswer: correctMap[`2-${i}`],
-        options: q.options.map((o: any, idx: number) => `Resposta ${String.fromCharCode(65 + idx)}`)
+        options: q.options.map((o: any, idx: number) => `${t("listening.answer")} ${String.fromCharCode(65 + idx)}`)
       })),
       ...content.part3.questions.map((q: any, i: number) => ({
         question: q.enunciado,
