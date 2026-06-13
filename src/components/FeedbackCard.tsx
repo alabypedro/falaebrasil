@@ -2,6 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ScoreCircle from "@/components/ScoreCircle";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export interface FeedbackScores {
   pronunciation: number;
@@ -43,6 +47,8 @@ function getSnrLabel(snr: number) {
 }
 
 export default function FeedbackCard({ scores, suggestions, isNewHighScore }: FeedbackCardProps) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
   if (!scores) {
     return (
       <Card className="border-dashed animate-fade-in">
@@ -61,6 +67,37 @@ export default function FeedbackCard({ scores, suggestions, isNewHighScore }: Fe
   const overall = scores.pronScore ?? Math.round(
     (scores.pronunciation + scores.fluency + scores.grammar + scores.vocabulary) / 4
   );
+
+  const buildReportText = () => {
+    const lines: string[] = [];
+    lines.push(`Feedback de Pronúncia — ${overall}/100`);
+    if (scores.status) lines.push(`Status: ${scores.status}`);
+    if (scores.confidence != null) lines.push(`Confiança: ${scores.confidence}%`);
+    if (scores.snr != null) lines.push(`SNR: ${scores.snr} dB`);
+    if (scores.transcription) lines.push(`\nTexto reconhecido: "${scores.transcription}"`);
+    lines.push("");
+    lines.push(`Pronúncia: ${scores.pronunciation}`);
+    lines.push(`Fluência: ${scores.fluency}`);
+    lines.push(`Completude: ${scores.completeness ?? scores.grammar}`);
+    lines.push(`Prosódia: ${scores.prosody ?? scores.vocabulary}`);
+    lines.push(`PronScore: ${scores.pronScore ?? overall}`);
+    if (suggestions && suggestions.length) {
+      lines.push("\nSugestões de Melhoria:");
+      suggestions.forEach((s) => lines.push(`• ${s}`));
+    }
+    return lines.join("\n");
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(buildReportText());
+      setCopied(true);
+      toast({ title: "Avaliação copiada!" });
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast({ title: "Não foi possível copiar", variant: "destructive" });
+    }
+  };
 
   return (
     <Card className="animate-scale-in">
@@ -81,7 +118,19 @@ export default function FeedbackCard({ scores, suggestions, isNewHighScore }: Fe
               </p>
             )}
           </div>
-          <span className={`text-2xl font-bold animate-xp-pop ${getScoreColor(overall)}`}>{overall}/100</span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Copiar avaliação"
+            >
+              {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+              Copiar
+            </Button>
+            <span className={`text-2xl font-bold animate-xp-pop ${getScoreColor(overall)}`}>{overall}/100</span>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
