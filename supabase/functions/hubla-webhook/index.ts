@@ -256,9 +256,8 @@ Deno.serve(async (req) => {
     const eventType: string =
       body?.type || body?.event?.type || body?.event_type || "unknown";
 
-    // TEMP DEBUG: capture full payload to diagnose order bump structure
-    console.log("HUBLA_RAW_PAYLOAD", JSON.stringify(body));
-    console.log("HUBLA_EVENT_TYPE", eventType);
+    // Log only non-sensitive metadata (no PII / no full payload)
+    console.log("HUBLA_EVENT", JSON.stringify({ eventType, hasBody: !!body }));
 
     // Classify event:
     //  - paid:    successful purchase / subscription invoice paid → grant access
