@@ -327,16 +327,16 @@ export default function ListeningLab() {
     const content = selectedLesson.content;
     const questionsList = [
       {
-        question: "Descrição de Foto",
+        question: t("listening.title.photo"),
         userAnswer: answers['1-0'],
         correctAnswer: correctMap['1-0'],
-        options: content.part1.options.map((o: any) => `Alternativa ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
+        options: content.part1.options.map((o: any) => `${t("listening.alternative")} ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
       },
       ...content.part2.map((q: any, i: number) => ({
-        question: `Pergunta & Resposta ${i + 1}`,
+        question: `${t("listening.title.qa")} ${i + 1}`,
         userAnswer: answers[`2-${i}`],
         correctAnswer: correctMap[`2-${i}`],
-        options: q.options.map((o: any, idx: number) => `Resposta ${String.fromCharCode(65 + idx)}`)
+        options: q.options.map((o: any, idx: number) => `${t("listening.answer")} ${String.fromCharCode(65 + idx)}`)
       })),
       ...content.part3.questions.map((q: any, i: number) => ({
         question: q.enunciado,
@@ -361,11 +361,11 @@ export default function ListeningLab() {
               <CheckCircle2 className="h-12 w-12" />
             </div>
           </div>
-          <h2 className="text-4xl font-black mb-2 tracking-tight">Prática Finalizada!</h2>
-          <p className="text-muted-foreground mb-8 text-lg">Você completou as 10 questões da lição.</p>
+          <h2 className="text-4xl font-black mb-2 tracking-tight">{t("listening.finished")}</h2>
+          <p className="text-muted-foreground mb-8 text-lg">{t("listening.completedAll")}</p>
           
           <div className="bg-muted/30 p-8 rounded-2xl mb-8 border border-white/5 inline-block min-w-[300px]">
-            <p className="text-xs uppercase text-muted-foreground font-black tracking-widest mb-2">SUA PONTUAÇÃO</p>
+            <p className="text-xs uppercase text-muted-foreground font-black tracking-widest mb-2">{t("listening.yourScore")}</p>
             <p className="text-7xl font-black text-primary flex items-baseline justify-center gap-2">
               {score} <span className="text-3xl text-muted-foreground/50 font-medium">/ 100</span>
             </p>
@@ -373,16 +373,16 @@ export default function ListeningLab() {
 
           <div className="flex gap-4 justify-center">
             <Button variant="outline" size="lg" className="rounded-full px-8" onClick={() => setSelectedLesson(null)}>
-              Voltar para Lições
+              {t("listening.backToLessons")}
             </Button>
             <Button size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20" onClick={() => startLesson(selectedLesson)}>
-              Tentar Novamente
+              {t("listening.tryAgain")}
             </Button>
           </div>
         </Card>
 
         <div className="space-y-4">
-          <h3 className="text-xl font-bold px-2">Revisão da Prática</h3>
+          <h3 className="text-xl font-bold px-2">{t("listening.review")}</h3>
           <div className="grid gap-4">
             {questionsList.map((q, idx) => {
               const isCorrect = q.userAnswer === q.correctAnswer;
@@ -410,10 +410,10 @@ export default function ListeningLab() {
                           "flex items-center gap-2",
                           isCorrect ? "text-green-500/90" : "text-red-500/90"
                         )}>
-                          <span className="font-semibold">Sua:</span> {q.options[q.userAnswer] || "Não respondida"}
+                          <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
                         </p>
                         <p className="text-muted-foreground flex items-center gap-2">
-                          <span className="font-semibold">Correta:</span> {isCorrect ? q.options[q.correctAnswer] : "—"}
+                          <span className="font-semibold">{t("listening.correctLabel")}</span> {isCorrect ? q.options[q.correctAnswer] : "—"}
                         </p>
                       </div>
                     </div>
@@ -430,7 +430,7 @@ export default function ListeningLab() {
             className="gap-2 text-muted-foreground hover:text-primary transition-colors"
             onClick={() => setSelectedLesson(null)}
           >
-            <RotateCcw className="h-4 w-4" /> Tentar Outra Lição
+            <RotateCcw className="h-4 w-4" /> {t("listening.tryAnother")}
           </Button>
         </div>
       </div>
@@ -445,7 +445,7 @@ export default function ListeningLab() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">{selectedLesson.title}</h2>
-          <p className="text-sm text-muted-foreground">Parte {currentPart} de 4</p>
+          <p className="text-sm text-muted-foreground">{t("listening.partOf").replace("{n}", String(currentPart))}</p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => {
           synth.cancel();
@@ -457,13 +457,13 @@ export default function ListeningLab() {
             setSelectedLesson(null);
           }
         }}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar à lição
+          <ArrowLeft className="h-4 w-4 mr-1" /> {t("listening.backToLesson")}
         </Button>
       </div>
 
       <div className="space-y-2">
         <div className="flex justify-between text-xs font-medium text-muted-foreground">
-          <span>Questão {Math.min(Object.keys(answers).length + 1, 10)} de 10</span>
+          <span>{t("listening.questionOf").replace("{n}", String(Math.min(Object.keys(answers).length + 1, 10)))}</span>
           <span>{Math.round((Object.keys(answers).length / 10) * 100)}%</span>
         </div>
         <Progress value={(Object.keys(answers).length / 10) * 100} className="h-2" />
@@ -472,16 +472,16 @@ export default function ListeningLab() {
       <Card className="min-h-[400px] flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {currentPart === 1 && <><ImageIcon className="h-5 w-5" /> Descrição de Foto</>}
-            {currentPart === 2 && <><Mic className="h-5 w-5" /> Pergunta & Resposta</>}
-            {currentPart === 3 && <><MessageSquare className="h-5 w-5" /> Mini Diálogo</>}
-            {currentPart === 4 && <><FileText className="h-5 w-5" /> Mini Dissertação</>}
+            {currentPart === 1 && <><ImageIcon className="h-5 w-5" /> {t("listening.title.photo")}</>}
+            {currentPart === 2 && <><Mic className="h-5 w-5" /> {t("listening.title.qa")}</>}
+            {currentPart === 3 && <><MessageSquare className="h-5 w-5" /> {t("listening.title.dialogue")}</>}
+            {currentPart === 4 && <><FileText className="h-5 w-5" /> {t("listening.title.essay")}</>}
           </CardTitle>
           <CardDescription>
-            {currentPart === 1 && "Analise a imagem e ouça as alternativas. Escolha a que melhor descreve a foto."}
-            {currentPart === 2 && "Ouça a pergunta e as alternativas. Escolha a resposta mais adequada."}
-            {currentPart === 3 && "Ouça o diálogo e responda às questões de interpretação."}
-            {currentPart === 4 && "Ouça a dissertação e responda às questões de interpretação."}
+            {currentPart === 1 && t("listening.desc.photo")}
+            {currentPart === 2 && t("listening.desc.qa")}
+            {currentPart === 3 && t("listening.desc.dialogue")}
+            {currentPart === 4 && t("listening.desc.essay")}
           </CardDescription>
         </CardHeader>
         
@@ -503,7 +503,7 @@ export default function ListeningLab() {
                       className="h-24 flex-col gap-2 relative"
                       onClick={() => handleAnswer(i)}
                     >
-                      <span className="text-lg font-bold">Alternativa {String.fromCharCode(65 + i)}</span>
+                      <span className="text-lg font-bold">{t("listening.alternative")} {String.fromCharCode(65 + i)}</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -515,7 +515,7 @@ export default function ListeningLab() {
                       onClick={() => speak(opt.script, 'female', `p1-o-${i}`)}
                     >
                       <Volume2 className="h-4 w-4" />
-                      Ouvir Áudio
+                      {t("listening.listenAudio")}
                     </Button>
                   </div>
                 ))}
@@ -537,7 +537,7 @@ export default function ListeningLab() {
                 )}>
                   <Volume2 className="h-8 w-8" />
                 </div>
-                <span className="text-xs font-bold uppercase">Ouça a Pergunta</span>
+                <span className="text-xs font-bold uppercase">{t("listening.listenQuestion")}</span>
               </Button>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
@@ -548,7 +548,7 @@ export default function ListeningLab() {
                       className="h-24 flex-col gap-2 relative"
                       onClick={() => handleAnswer(i)}
                     >
-                      <span className="text-lg font-bold">Resposta {String.fromCharCode(65 + i)}</span>
+                      <span className="text-lg font-bold">{t("listening.answer")} {String.fromCharCode(65 + i)}</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -560,7 +560,7 @@ export default function ListeningLab() {
                       onClick={() => speak(opt.script, 'female', `p2-q-${currentQuestionInPart}-o-${i}`)}
                     >
                       <Volume2 className="h-4 w-4" />
-                      Ouvir Áudio
+                      {t("listening.listenAudio")}
                     </Button>
                   </div>
                 ))}
@@ -579,13 +579,13 @@ export default function ListeningLab() {
                   onClick={() => playDialogue(currentContent.part3.dialogue)}
                 >
                   {isSpeaking ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
-                  {isSpeaking ? "Ouvindo Diálogo..." : "Ouvir Diálogo"}
+                  {isSpeaking ? t("listening.listenDialogueLoading") : t("listening.listenDialogue")}
                 </Button>
               </div>
 
               <div className="space-y-6">
                 <div className="p-4 bg-muted/50 rounded-lg border border-dashed border-muted-foreground/30">
-                  <h4 className="font-bold text-sm mb-3">QUESTÃO DE INTERPRETAÇÃO</h4>
+                  <h4 className="font-bold text-sm mb-3">{t("listening.interpretation")}</h4>
                   <p className="text-lg font-medium mb-4">{currentContent.part3.questions[currentQuestionInPart].enunciado}</p>
                   <div className="space-y-2">
                     {currentContent.part3.questions[currentQuestionInPart].options.map((opt: string, i: number) => (
@@ -615,13 +615,13 @@ export default function ListeningLab() {
                   onClick={() => speak(currentContent.part4.script, 'female', 'p4-script')}
                 >
                   {isSpeaking ? <Loader2 className="h-5 w-5 animate-spin" /> : <Volume2 className="h-5 w-5" />}
-                  {isSpeaking ? "Ouvindo Dissertação..." : "Ouvir Dissertação"}
+                  {isSpeaking ? t("listening.listenEssayLoading") : t("listening.listenEssay")}
                 </Button>
               </div>
 
               <div className="space-y-6">
                 <div className="p-4 bg-muted/50 rounded-lg border border-dashed border-muted-foreground/30">
-                  <h4 className="font-bold text-sm mb-3">QUESTÃO DE INTERPRETAÇÃO</h4>
+                  <h4 className="font-bold text-sm mb-3">{t("listening.interpretation")}</h4>
                   <p className="text-lg font-medium mb-4">{currentContent.part4.questions[currentQuestionInPart].enunciado}</p>
                   <div className="space-y-2">
                     {currentContent.part4.questions[currentQuestionInPart].options.map((opt: string, i: number) => (
@@ -647,7 +647,7 @@ export default function ListeningLab() {
             disabled={currentAnswer === undefined}
             onClick={nextQuestion}
           >
-            {currentPart === 4 && currentQuestionInPart === 2 ? "Finalizar Prática" : "Próxima Questão"}
+            {currentPart === 4 && currentQuestionInPart === 2 ? t("listening.finishPractice") : t("listening.nextQuestion")}
           </Button>
         </CardFooter>
       </Card>
