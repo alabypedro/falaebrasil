@@ -72,7 +72,11 @@ Deno.serve(async (req) => {
       if (Array.isArray(body?.recent)) {
         recent = body.recent.filter((s: unknown): s is string => typeof s === "string").slice(0, 8);
       }
-      requestedLevel = body?.level;
+      // Whitelist validation to prevent prompt injection via the `level` field
+      const ALLOWED_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+      if (typeof body?.level === "string" && ALLOWED_LEVELS.includes(body.level)) {
+        requestedLevel = body.level;
+      }
     } catch (_) {
       // no body is fine
     }

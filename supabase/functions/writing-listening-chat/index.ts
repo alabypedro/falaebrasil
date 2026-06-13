@@ -34,7 +34,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { messages, type, level, user_id } = await req.json();
+    const { messages, type: rawType, level: rawLevel, user_id } = await req.json();
+
+    // Whitelist validation to prevent prompt injection via user-controlled fields
+    const ALLOWED_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+    const ALLOWED_TYPES = ["writing", "listening"] as const;
+    const level = ALLOWED_LEVELS.includes(rawLevel) ? rawLevel : "A1";
+    const type = ALLOWED_TYPES.includes(rawType) ? rawType : "writing";
 
     // Validate messages: only user/assistant roles, capped count and size.
     if (!Array.isArray(messages)) {
@@ -83,14 +89,14 @@ Deno.serve(async (req) => {
     };
 
     const systemPrompt = type === 'listening' 
-      ? `You are a TOEIC examiner focusing on listening comprehension. Your goal is to simulate a TOEIC Part 1 or Part 2 task at the ${level || 'A1'} CEFR level. \n\n` +
+      ? `You are a TOEIC examiner focusing on listening comprehension. Your goal is to simulate a TOEIC Part 1 or Part 2 task at the ${level} CEFR level. \n\n` +
         "CRITICAL: ALL your output must be EXCLUSIVELY in English. Do not use Portuguese at all.\n\n" +
         "1. Start by providing a short listening stimulus in English (a sentence or a short description of an image).\n" +
         "2. Then ask a multiple choice question (A, B, C) in English about it.\n" +
         "3. Wait for the user to respond.\n" +
         "4. Provide feedback on their answer and explain why it is correct or incorrect EXCLUSIVELY in English.\n\n" +
         "Keep the conversation flow natural and professional. Always encourage the user to listen carefully."
-      : `Você é um examinador oficial de proficiência em inglês (padrão TOEIC/CEFR) avaliando um aluno brasileiro. O nível-alvo atual é ${level || 'A1'}.
+      : `Você é um examinador oficial de proficiência em inglês (padrão TOEIC/CEFR) avaliando um aluno brasileiro. O nível-alvo atual é ${level}.
 
 CRÍTICO: Responda SEMPRE em PORTUGUÊS DO BRASIL (todo o feedback, títulos, explicações e dicas). Apenas exemplos e correções de frases em inglês devem aparecer em inglês, entre aspas.
 
@@ -106,14 +112,14 @@ Erros Gramaticais:
 (Se não houver erros, escreva: - Nenhum erro relevante identificado.)
 
 Análise de Vocabulário:
-- <observação 1 sobre o vocabulário usado, adequado ao nível ${level || 'A1'}>
+- <observação 1 sobre o vocabulário usado, adequado ao nível ${level}>
 - <observação 2 ...>
 
 Avaliação do Nível CEFR:
-- <quão próximo o texto está do nível ${level || 'A1'}, em uma ou duas linhas>
+- <quão próximo o texto está do nível ${level}, em uma ou duas linhas>
 
 Critérios CEFR Aplicados:
-- ${cefrCriteria[level as keyof typeof cefrCriteria] || cefrCriteria['A1']}
+- ${cefrCriteria[level]}
 
 Dicas de Melhoria:
 - <dica prática 1 em português>
