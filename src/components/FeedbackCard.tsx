@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface FeedbackScores {
   pronunciation: number;
@@ -49,6 +50,7 @@ function getSnrLabel(snr: number) {
 export default function FeedbackCard({ scores, suggestions, isNewHighScore }: FeedbackCardProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   if (!scores) {
     return (
       <Card className="border-dashed animate-fade-in">
@@ -57,7 +59,7 @@ export default function FeedbackCard({ scores, suggestions, isNewHighScore }: Fe
             <span className="text-2xl">🎯</span>
           </div>
           <p className="text-sm font-medium text-muted-foreground">
-            {(() => { try { const lang = localStorage.getItem("language"); return lang === "en" ? "Record audio to receive your pronunciation feedback" : "Grave um áudio para receber seu feedback de pronúncia"; } catch { return "Grave um áudio para receber seu feedback de pronúncia"; } })()}
+            {t("feedback.recordPrompt")}
           </p>
         </CardContent>
       </Card>
