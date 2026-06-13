@@ -15,6 +15,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 import {
@@ -30,17 +31,16 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Cursos Falaê Brasil! (FB)", url: "/courses", icon: BookOpen },
-  { title: "IA Falaê", url: "/voice-lab", icon: Mic },
-  { title: "IA Escutaê", url: "/listening-lab", icon: Headphones },
-  { title: "IA Escreveaê", url: "/writing-lab", icon: MessageSquareText },
-  
-  { title: "Biblioteca BST", url: "/library", icon: Library },
-  { title: "Comunidades FB", url: "/communities", icon: Users },
-  { title: "Tutoriais", url: "/tutoriais", icon: HelpCircle },
-  { title: "Contratos", url: "/contratos", icon: FileText },
-  { title: "Instalar App", url: "/install", icon: Download },
+  { key: "nav.dashboard", url: "/", icon: LayoutDashboard },
+  { key: "nav.courses", url: "/courses", icon: BookOpen },
+  { key: "nav.voice", url: "/voice-lab", icon: Mic },
+  { key: "nav.listening", url: "/listening-lab", icon: Headphones },
+  { key: "nav.writing", url: "/writing-lab", icon: MessageSquareText },
+  { key: "nav.library", url: "/library", icon: Library },
+  { key: "nav.communities", url: "/communities", icon: Users },
+  { key: "nav.tutorials", url: "/tutoriais", icon: HelpCircle },
+  { key: "nav.contracts", url: "/contratos", icon: FileText },
+  { key: "nav.install", url: "/install", icon: Download },
 ];
 
 export default function AppSidebar() {
@@ -48,6 +48,7 @@ export default function AppSidebar() {
   const collapsed = state === "collapsed";
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
+  const { t } = useLanguage();
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -77,7 +78,7 @@ export default function AppSidebar() {
                 Falaê Brasil!
               </span>
               <span className="text-[10px] text-sidebar-foreground/60 leading-tight font-medium truncate">
-                Inglês Transversal
+                {t("sidebar.subtitle")}
               </span>
             </div>
           )}
@@ -88,11 +89,11 @@ export default function AppSidebar() {
             <SidebarMenu className={`gap-1 py-2 ${collapsed ? "px-1" : "px-2"}`}>
               {navItems.map((item, i) => (
                 <SidebarMenuItem
-                  key={item.title}
+                  key={item.key}
                   className="animate-slide-in-left"
                   style={{ "--delay": `${i * 50}ms` } as React.CSSProperties}
                 >
-                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? item.title : undefined}>
+                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t(item.key) : undefined}>
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
@@ -101,7 +102,7 @@ export default function AppSidebar() {
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
                     >
                       <item.icon className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
-                      {!collapsed && <span className="text-sm truncate">{item.title}</span>}
+                      {!collapsed && <span className="text-sm truncate">{t(item.key)}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -112,7 +113,7 @@ export default function AppSidebar() {
                   className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
                   style={{ "--delay": `${navItems.length * 50}ms` } as React.CSSProperties}
                 >
-                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Admin" : undefined}>
+                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t("nav.admin") : undefined}>
                     <NavLink
                       to="/admin"
                       onClick={handleNavClick}
@@ -120,7 +121,7 @@ export default function AppSidebar() {
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
                     >
                       <Shield className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
-                      {!collapsed && <span className="text-sm truncate">Admin</span>}
+                      {!collapsed && <span className="text-sm truncate">{t("nav.admin")}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
