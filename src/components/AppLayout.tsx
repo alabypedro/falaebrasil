@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import XPBadge from "@/components/XPBadge";
 import SubscriptionStatusBanner from "@/components/SubscriptionStatusBanner";
 import UpgradeButton from "@/components/UpgradeButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const { profile, signOut, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate();
 
   const displayName = profile?.display_name || user?.email || "Aluno";
@@ -39,7 +41,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 size="icon"
                 variant="ghost"
                 onClick={toggleTheme}
-                title={theme === "light" ? "Modo escuro" : "Modo claro"}
+                title={theme === "light" ? t("header.theme.dark") : t("header.theme.light")}
                 className="press-effect rounded-lg hover:bg-accent/10 hover:text-accent transition-all duration-300"
               >
                 {theme === "light" ? (
@@ -47,6 +49,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 ) : (
                   <Sun className="h-4 w-4" />
                 )}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleLanguage}
+                title={t("header.language")}
+                aria-label={t("header.language")}
+                className="press-effect rounded-lg hover:bg-accent/10 hover:text-accent transition-all duration-300 text-xs font-bold tabular-nums"
+              >
+                {language === "pt" ? "EN" : "PT"}
               </Button>
               <UpgradeButton />
               <XPBadge xp={profile?.xp ?? 0} level={profile?.level ?? "A1"} compact />
@@ -68,7 +80,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 size="icon"
                 variant="ghost"
                 onClick={signOut}
-                title="Sair"
+                title={t("header.signout")}
                 className="press-effect rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
               >
                 <LogOut className="h-4 w-4" />

@@ -11,6 +11,7 @@ import OnboardingTutorialModal from "@/components/OnboardingTutorialModal";
 import { useGPA } from "@/hooks/useGPA";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CourseProgress {
   name: string;
@@ -28,6 +29,7 @@ function extractCode(title: string): string | null {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
+  const { t } = useLanguage();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
   const gpaData = useGPA(user?.id);
@@ -81,10 +83,10 @@ export default function Dashboard() {
   }, [user, profile?.plan_tier]);
 
   const stats = [
-    { label: "XP Total", value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
-    { label: "Nível de Fluência", value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
+    { label: t("dashboard.xp"), value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
+    { label: t("dashboard.level"), value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
     {
-      label: "Sua Nota Média",
+      label: t("dashboard.gpa"),
       value: gpaData.gpa !== null ? `${gpaData.letter} · ${gpaData.gpa.toFixed(1)}` : "—",
       icon: GraduationCap,
       gradient: "bg-gradient-to-br from-primary to-primary/70",
@@ -93,7 +95,7 @@ export default function Dashboard() {
         ? `Quizzes: ${gpaData.quizAvg?.toFixed(1) ?? "—"} | Scripted: ${gpaData.bestScripted?.toFixed(1) ?? "—"} | Unscripted: ${gpaData.bestUnscripted?.toFixed(1) ?? "—"} | Escutaê: ${gpaData.bestListening?.toFixed(1) ?? "—"} | Escreveaê: ${gpaData.bestWriting?.toFixed(1) ?? "—"}${gpaData.gpaPoints !== null ? ` · GPA ${gpaData.gpaPoints.toFixed(1)}` : ""}`
         : "Faça quizzes e práticas no IA Falaê, Escutaê ou Escreveaê para gerar sua nota.",
     },
-    { label: "Aulas Concluídas", value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
+    { label: t("dashboard.completed"), value: String(completedCount), icon: BookOpen, gradient: "bg-gradient-to-br from-success to-success/70", iconColor: "text-success-foreground" },
   ];
 
   return (
@@ -101,10 +103,10 @@ export default function Dashboard() {
       <OnboardingTutorialModal />
       <div className="animate-fade-up">
         <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground tracking-tight">
-          Dashboard
+          {t("dashboard.title")}
         </h1>
         <p className="text-sm md:text-base text-muted-foreground mt-2">
-          Bem-vindo de volta! Continue sua jornada de aprendizado.
+          {t("dashboard.welcome")}
         </p>
       </div>
 
@@ -205,7 +207,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-base font-display flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-gradient-accent animate-pulse" />
-              Progresso por Curso
+              {t("dashboard.progress")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -238,13 +240,13 @@ export default function Dashboard() {
           <div className="flex-1 space-y-2">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1 text-xs font-semibold border border-white/20">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-glow animate-pulse" />
-              Pratique agora
+              {t("dashboard.cta.badge")}
             </div>
             <h2 className="text-xl md:text-2xl font-display font-extrabold leading-tight">
-              Pratique sua pronúncia agora!
+              {t("dashboard.cta.title")}
             </h2>
             <p className="text-sm md:text-base opacity-90 leading-relaxed">
-              Acesse o IA Falaê e melhore sua fluência com feedback em tempo real.
+              {t("dashboard.cta.desc")}
             </p>
           </div>
           <Button
@@ -252,7 +254,7 @@ export default function Dashboard() {
             onClick={() => navigate("/voice-lab")}
             className="bg-white text-primary hover:bg-white/95 shadow-soft-lg press-effect font-bold"
           >
-            Ir ao IA Falaê
+            {t("dashboard.cta.btn")}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardContent>
