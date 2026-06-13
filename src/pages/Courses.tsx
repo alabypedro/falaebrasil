@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CourseWithProgress {
   id: string;
@@ -134,6 +135,7 @@ export default function Courses() {
   const [grantedCourseIds, setGrantedCourseIds] = useState<Set<string>>(new Set());
   const { user, profile } = useAuth();
   const { isAdmin } = useAdmin();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!user) return;
@@ -317,9 +319,9 @@ export default function Courses() {
   );
 
    const groups: { key: string; title: string; tiers: string[] }[] = [
-     { key: "adults", title: "Adultos (18+)", tiers: ["open", "pro", "vip"] },
-     { key: "teens", title: "TEENS (13 - 17 ANOS)", tiers: ["teens"] },
-     { key: "kids", title: "KIDS (8 - 12 ANOS)", tiers: ["kids"] },
+     { key: "adults", title: t("courses.group.adults"), tiers: ["open", "pro", "vip"] },
+     { key: "teens", title: t("courses.group.teens"), tiers: ["teens"] },
+     { key: "kids", title: t("courses.group.kids"), tiers: ["kids"] },
    ];
 
   const visibleGroups = groups
@@ -334,10 +336,8 @@ export default function Courses() {
   return (
     <div className="space-y-6 max-w-6xl page-transition">
       <div className="animate-fade-up">
-        <h1 className="text-2xl font-bold text-foreground">Cursos Falaê Brasil! (FB)</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Trilhas de aprendizado — seu progresso em tempo real.
-        </p>
+        <h1 className="text-2xl font-bold text-foreground">{t("courses.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("courses.subtitle")}</p>
       </div>
 
       <div
@@ -363,9 +363,7 @@ export default function Courses() {
           </section>
         ))}
         {visibleGroups.length === 0 && (
-          <p className="text-center text-muted-foreground py-8 animate-fade-in">
-            Nenhum curso publicado.
-          </p>
+          <p className="text-center text-muted-foreground py-8 animate-fade-in">{t("courses.empty")}</p>
         )}
       </div>
 
