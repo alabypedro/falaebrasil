@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2, Pause, Play, Sparkles } from "lucide-react";
+import { Send, Mic, Square, Loader2, Bot, User, MessageSquareText, Headphones, Volume2, Pause, Play, Sparkles, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,31 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import BackToLessonButton from "@/components/BackToLessonButton";
+
+function CopyAssistantButton({ text, className }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          toast({ title: "Avaliação copiada!" });
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          toast({ title: "Não foi possível copiar", variant: "destructive" });
+        }
+      }}
+      className={cn("p-1 hover:text-primary transition-colors", className)}
+      title="Copiar avaliação"
+      aria-label="Copiar avaliação"
+    >
+      {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+    </button>
+  );
+}
 
 function FormattedWritingFeedback({ content }: { content: string }) {
   // Strip markdown bold/italic markers
@@ -578,21 +603,27 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                   </div>
 
                   {m.role === 'assistant' && (
-                    <button 
-                      onClick={() => speakMessage(m.content, m.id)}
-                      className={cn(
-                        "absolute -right-8 top-1 transition-opacity p-1 hover:text-primary",
-                        currentSpeakingId === m.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                      )}
-                      title={currentSpeakingId === m.id && isSpeaking ? (isPaused ? "Retomar" : "Pausar") : "Ouvir"}
-                      aria-label={currentSpeakingId === m.id && isSpeaking ? (isPaused ? "Retomar leitura da mensagem" : "Pausar leitura da mensagem") : "Ouvir mensagem em voz alta"}
-                    >
-                      {currentSpeakingId === m.id && isSpeaking ? (
-                        isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />
-                      ) : (
-                        <Volume2 className="h-4 w-4" />
-                      )}
-                    </button>
+                    <div className="absolute -right-8 top-1 flex flex-col items-center gap-1">
+                      <button
+                        onClick={() => speakMessage(m.content, m.id)}
+                        className={cn(
+                          "transition-opacity p-1 hover:text-primary",
+                          currentSpeakingId === m.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}
+                        title={currentSpeakingId === m.id && isSpeaking ? (isPaused ? "Retomar" : "Pausar") : "Ouvir"}
+                        aria-label={currentSpeakingId === m.id && isSpeaking ? (isPaused ? "Retomar leitura da mensagem" : "Pausar leitura da mensagem") : "Ouvir mensagem em voz alta"}
+                      >
+                        {currentSpeakingId === m.id && isSpeaking ? (
+                          isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
+                      </button>
+                      <CopyAssistantButton
+                        text={m.content.replace(/\*\*/g, "").replace(/__/g, "")}
+                        className="opacity-0 group-hover:opacity-100"
+                      />
+                    </div>
                   )}
                 </div>
               </div>
