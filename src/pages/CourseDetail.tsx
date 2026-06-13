@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -80,6 +80,7 @@ function getEmbedUrl(url: string): string | null {
 export default function CourseDetail() {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { profile, refreshProfile } = useAuth();
   const { isAdmin } = useAdmin();
@@ -158,7 +159,15 @@ export default function CourseDetail() {
           } else {
             setCompletedCourseVideos(new Set());
           }
-          if (!activeLesson && ordered.length > 0) {
+          const requestedLessonId = searchParams.get("lesson");
+          const requested = requestedLessonId ? ordered.find(l => l.id === requestedLessonId) : null;
+          if (requested) {
+            setActiveLesson(requested);
+            // clean the query string so it doesn't stick on subsequent navigations
+            const next = new URLSearchParams(searchParams);
+            next.delete("lesson");
+            setSearchParams(next, { replace: true });
+          } else if (!activeLesson && ordered.length > 0) {
             // Resume: find first lesson (Unit) where not all videos watched OR quiz not passed.
             const completedVidSet = new Set((allVids.length > 0
               ? (await supabase
@@ -500,7 +509,7 @@ export default function CourseDetail() {
                            variant="outline"
                            size="sm"
                            onClick={() => {
-                             sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
+                              sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
                              const unitMatch = activeLesson.title.match(/unit\s*0*(\d+)/i);
                              const params = new URLSearchParams();
                              if (course?.level) params.set('level', course.level);
@@ -516,7 +525,7 @@ export default function CourseDetail() {
                            variant="outline"
                            size="sm"
                            onClick={() => {
-                             sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
+                              sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
                              navigate(`/writing-lab${course?.level ? `?level=${course.level}` : ''}`);
                            }}
                            className="w-full md:min-w-[140px]"
@@ -531,7 +540,7 @@ export default function CourseDetail() {
                              variant="outline"
                              size="sm"
                              onClick={() => {
-                               sessionStorage.setItem("ai-return-url", `/courses/${courseId}`);
+                                sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
                                navigate(`/voice-lab?lesson=${activeLesson.id}`);
                              }}
                              className="w-full md:min-w-[140px]"
