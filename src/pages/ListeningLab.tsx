@@ -444,7 +444,18 @@ export default function ListeningLab() {
           <h2 className="text-xl font-bold">{selectedLesson.title}</h2>
           <p className="text-sm text-muted-foreground">Parte {currentPart} de 4</p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => { synth.cancel(); setSelectedLesson(null); }}>Sair</Button>
+        <Button variant="ghost" size="sm" onClick={() => {
+          synth.cancel();
+          const url = sessionStorage.getItem("ai-return-url");
+          if (url) {
+            sessionStorage.removeItem("ai-return-url");
+            navigate(url);
+          } else {
+            setSelectedLesson(null);
+          }
+        }}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar à lição
+        </Button>
       </div>
 
       <div className="space-y-2">
