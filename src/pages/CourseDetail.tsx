@@ -159,7 +159,15 @@ export default function CourseDetail() {
           } else {
             setCompletedCourseVideos(new Set());
           }
-          if (!activeLesson && ordered.length > 0) {
+          const requestedLessonId = searchParams.get("lesson");
+          const requested = requestedLessonId ? ordered.find(l => l.id === requestedLessonId) : null;
+          if (requested) {
+            setActiveLesson(requested);
+            // clean the query string so it doesn't stick on subsequent navigations
+            const next = new URLSearchParams(searchParams);
+            next.delete("lesson");
+            setSearchParams(next, { replace: true });
+          } else if (!activeLesson && ordered.length > 0) {
             // Resume: find first lesson (Unit) where not all videos watched OR quiz not passed.
             const completedVidSet = new Set((allVids.length > 0
               ? (await supabase
