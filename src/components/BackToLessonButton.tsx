@@ -2,9 +2,11 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function BackToLessonButton({ className }: { className?: string }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [returnUrl, setReturnUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export default function BackToLessonButton({ className }: { className?: string }
         navigate(returnUrl);
       }}
     >
-      <ArrowLeft className="h-4 w-4 mr-2" /> Voltar à lição
+      <ArrowLeft className="h-4 w-4 mr-2" /> {t("voice.backToLesson")}
     </Button>
   );
 }
