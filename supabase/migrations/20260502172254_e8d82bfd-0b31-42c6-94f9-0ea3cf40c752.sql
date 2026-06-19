@@ -36,4 +36,5 @@ FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 INSERT INTO public.install_tutorial_videos (platform, title, description) VALUES
   ('ios', 'Como instalar o aplicativo no iPhone/iPad', 'Tutorial de instalação para iOS'),
   ('android', 'Como instalar o aplicativo no Android', 'Tutorial de instalação para Android'),
-  ('desktop', 'Como instalar o aplicativo no PC', 'Tutorial de instalação para computador');
+  ('desktop', 'Como instalar o aplicativo no PC', 'Tutorial de instalação para computador')
+ON CONFLICT (platform) DO NOTHING;
