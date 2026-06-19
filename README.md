@@ -191,18 +191,6 @@ Verificação automatizada realizada via Playwright (Chromium headless) em `http
 
 ---
 
-## Como publicar alterações
-
-Alterações feitas localmente precisam de commit e push para ir ao ar:
-
-```bash
-git add .
-git commit -m "descrição da mudança"
-git push
-```
-
-A Vercel detecta o push e faz o deploy automaticamente em ~1 minuto.
-
 > ⚠️ O editor do Lovable ainda está conectado ao mesmo repositório GitHub. Edições pelo editor chegam via GitHub na Vercel, mas o Lovable pode regenerar o `.env` com credenciais antigas. Prefira editar localmente. Foi aberto ticket no suporte do Lovable para desconectar o Cloud.
 
 ---
@@ -212,7 +200,6 @@ A Vercel detecta o push e faz o deploy automaticamente em ~1 minuto.
 | Item | Status |
 |---|---|
 | Desconexão do Lovable Cloud | ⏳ Aguardando resposta do suporte |
-| Botão "Entrar com Google" visível no login | ⚠️ Pode ser escondido (OAuth não configurado) |
 
 ---
 
