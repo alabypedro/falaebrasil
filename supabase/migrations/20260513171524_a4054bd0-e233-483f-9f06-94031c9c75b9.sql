@@ -38,7 +38,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF auth.role() = 'service_role' THEN RETURN NEW; END IF;
+  IF auth.role() = 'service_role' OR auth.role() IS NULL THEN RETURN NEW; END IF;
   IF current_setting('app.bypass_profile_protection', true) = 'on' THEN RETURN NEW; END IF;
   IF NEW.has_course_access IS DISTINCT FROM OLD.has_course_access
      OR NEW.has_a2_access IS DISTINCT FROM OLD.has_a2_access
