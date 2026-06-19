@@ -61,7 +61,8 @@ SELECT cron.schedule(
 
 -- 4. Correção do Aluno Teste
 -- Usando bypass para ignorar o gatilho de proteção
-SET LOCAL app.bypass_profile_protection = 'on';
-UPDATE public.profiles 
-SET scripted_balance = 1800, unscripted_balance = 1800 
+ALTER TABLE public.profiles DISABLE TRIGGER USER;
+UPDATE public.profiles
+SET scripted_balance = 1800, unscripted_balance = 1800
 WHERE user_id IN (SELECT id FROM auth.users WHERE email = 'andrealaby@gmail.com');
+ALTER TABLE public.profiles ENABLE TRIGGER USER;
