@@ -1,7 +1,11 @@
 -- Fix typo in product ID (was '7YNOATVITU1bdajeEUGU' lowercase 'e', Hubla sends 'E')
 UPDATE public.voice_credit_products
 SET hubla_product_id = '7YNOATVITU1bdajEeUGU'
-WHERE hubla_product_id = '7YNOATVITU1bdajeEUGU';
+WHERE hubla_product_id = '7YNOATVITU1bdajeEUGU'
+  AND NOT EXISTS (
+    SELECT 1 FROM public.voice_credit_products
+    WHERE hubla_product_id = '7YNOATVITU1bdajEeUGU'
+  );
 
 -- Make grant_voice_credits case-insensitive on the product id lookup
 CREATE OR REPLACE FUNCTION public.grant_voice_credits(
