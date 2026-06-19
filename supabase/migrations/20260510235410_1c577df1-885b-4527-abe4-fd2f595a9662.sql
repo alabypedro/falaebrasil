@@ -19,7 +19,7 @@ CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
  SET search_path TO 'public'
 AS $function$
 BEGIN
-  IF auth.role() = 'service_role' OR auth.role() IS NULL THEN
+  IF auth.role() = 'service_role' OR current_user IN ('postgres', 'supabase_admin') THEN
     RETURN NEW;
   END IF;
 

@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
 AS $function$
 BEGIN
   -- Allow service_role (webhook / admin functions) to change anything
-  IF auth.role() = 'service_role' OR auth.role() IS NULL THEN
+  IF auth.role() = 'service_role' OR current_user IN ('postgres', 'supabase_admin') THEN
     RETURN NEW;
   END IF;
 

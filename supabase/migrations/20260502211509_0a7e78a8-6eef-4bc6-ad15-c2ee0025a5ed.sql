@@ -9,7 +9,7 @@ SET search_path = public
 AS $$
 BEGIN
   -- Allow service_role (webhook / admin functions) to change anything
-  IF auth.role() = 'service_role' OR auth.role() IS NULL THEN
+  IF auth.role() = 'service_role' OR current_user IN ('postgres', 'supabase_admin') THEN
     RETURN NEW;
   END IF;
 
