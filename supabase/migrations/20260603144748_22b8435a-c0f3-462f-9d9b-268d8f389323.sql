@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS public.fb_learning_challenges (
+CREATE TABLE IF NOT EXISTS public.fb_learning_challenges (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id),
   mistake_type TEXT NOT NULL,

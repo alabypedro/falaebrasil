@@ -1,4 +1,4 @@
-﻿
+
 CREATE TABLE IF NOT EXISTS public.pronunciation_prompts (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   text TEXT NOT NULL,

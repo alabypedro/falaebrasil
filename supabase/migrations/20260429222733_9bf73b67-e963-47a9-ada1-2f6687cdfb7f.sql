@@ -1,4 +1,4 @@
-﻿-- 1. Add access flags to profiles
+-- 1. Add access flags to profiles
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS has_course_access boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS has_ebook1_access boolean NOT NULL DEFAULT false,

@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS public.install_tutorial_videos (
+CREATE TABLE IF NOT EXISTS public.install_tutorial_videos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   platform text NOT NULL UNIQUE CHECK (platform IN ('ios','android','desktop')),
   video_url text,

@@ -1,4 +1,4 @@
-﻿-- 1. Function to recalculate level from XP
+-- 1. Function to recalculate level from XP
 CREATE OR REPLACE FUNCTION public.calculate_level_from_xp(_xp integer)
 RETURNS text
 LANGUAGE sql

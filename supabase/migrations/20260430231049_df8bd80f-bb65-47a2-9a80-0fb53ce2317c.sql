@@ -1,4 +1,4 @@
-﻿
+
 -- 1) Add balance columns to profiles
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS scripted_balance integer NOT NULL DEFAULT 0,

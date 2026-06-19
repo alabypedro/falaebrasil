@@ -1,4 +1,4 @@
-﻿-- 1) Join entre produto Hubla e cursos liberados
+-- 1) Join entre produto Hubla e cursos liberados
 CREATE TABLE IF NOT EXISTS public.hubla_product_courses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   product_mapping_id uuid NOT NULL REFERENCES public.hubla_product_mapping(id) ON DELETE CASCADE,

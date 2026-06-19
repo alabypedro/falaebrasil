@@ -1,4 +1,4 @@
-﻿-- Create table for structured listening lessons
+-- Create table for structured listening lessons
 CREATE TABLE IF NOT EXISTS public.listening_lessons (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     title TEXT NOT NULL,

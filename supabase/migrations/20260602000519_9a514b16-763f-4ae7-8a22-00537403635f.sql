@@ -1,4 +1,4 @@
-﻿-- Tabela para armazenar as inscrições de push
+-- Tabela para armazenar as inscrições de push
 CREATE TABLE IF NOT EXISTS public.push_subscriptions (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL,

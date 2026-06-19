@@ -1,4 +1,4 @@
-﻿
+
 -- Create contracts table
 CREATE TABLE IF NOT EXISTS public.contracts (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,

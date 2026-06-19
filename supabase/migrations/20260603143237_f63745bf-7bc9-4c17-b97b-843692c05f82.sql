@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS public.fb_cefr_metrics (
+CREATE TABLE IF NOT EXISTS public.fb_cefr_metrics (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id),
   session_id UUID NOT NULL REFERENCES public.chat_sessions(id) ON DELETE CASCADE,

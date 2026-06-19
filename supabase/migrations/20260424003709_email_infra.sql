@@ -1,4 +1,4 @@
-﻿-- Email infrastructure
+-- Email infrastructure
 -- Creates the queue system, send log, send state, suppression, and unsubscribe
 -- tables used by both auth and transactional emails.
 

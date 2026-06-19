@@ -1,4 +1,4 @@
-﻿-- Fix fb_communities SELECT policy: when all_tiers=true, only OPEN/PRO/VIP plans should see it
+-- Fix fb_communities SELECT policy: when all_tiers=true, only OPEN/PRO/VIP plans should see it
 -- (not anonymous-like access, not KIDS/TEENS audiences), and respect access_key gating
 DROP POLICY IF EXISTS "Users view communities they have access to" ON public.fb_communities;
 

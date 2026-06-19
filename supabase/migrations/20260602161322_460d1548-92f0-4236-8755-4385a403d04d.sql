@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS public.chat_sessions (
+CREATE TABLE IF NOT EXISTS public.chat_sessions (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     type TEXT NOT NULL CHECK (type IN ('writing', 'listening')),

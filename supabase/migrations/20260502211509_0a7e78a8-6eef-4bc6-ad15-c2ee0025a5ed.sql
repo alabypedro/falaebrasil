@@ -1,4 +1,4 @@
-﻿-- ============================================
+-- ============================================
 -- 1) Profiles: prevent privilege escalation
 -- ============================================
 CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()

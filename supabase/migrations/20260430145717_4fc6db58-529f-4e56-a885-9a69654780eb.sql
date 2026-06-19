@@ -1,4 +1,4 @@
-﻿-- Tabela de múltiplas videoaulas por lição
+-- Tabela de múltiplas videoaulas por lição
 CREATE TABLE IF NOT EXISTS public.lesson_videos (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   lesson_id uuid NOT NULL REFERENCES public.lessons(id) ON DELETE CASCADE,

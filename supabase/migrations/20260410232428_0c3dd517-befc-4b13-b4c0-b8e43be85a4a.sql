@@ -1,4 +1,4 @@
-﻿-- Recordings table
+-- Recordings table
 CREATE TABLE IF NOT EXISTS public.recordings (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,

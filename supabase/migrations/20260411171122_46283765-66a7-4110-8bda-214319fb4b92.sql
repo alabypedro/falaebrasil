@@ -1,4 +1,4 @@
-﻿
+
 -- 1. Role enum and user_roles table
 CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
 

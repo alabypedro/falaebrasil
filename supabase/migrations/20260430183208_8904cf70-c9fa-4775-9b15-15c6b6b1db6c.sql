@@ -1,4 +1,4 @@
-﻿
+
 -- Track per-video completion
 CREATE TABLE IF NOT EXISTS public.user_video_progress (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
