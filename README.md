@@ -63,8 +63,6 @@ O Lovable Cloud não permite exportar hashes de senha nem acesso direto ao schem
 - Todos os emails foram **confirmados automaticamente** via `email_confirm: true`.
 - Um email de **redefinição de senha** foi enviado para os 87 usuários válidos via Resend, com link direto para `https://app.falaebrasil.com.br`.
 
-Os 2 emails inválidos no banco (`bruna.gollin@e-unicred` e `teste.teste@234`) foram ignorados.
-
 ---
 
 ### 3. Edge Functions — 17 funções
