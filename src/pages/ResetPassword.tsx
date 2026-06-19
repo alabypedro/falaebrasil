@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,26 +8,15 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
+import { useAuth } from "@/contexts/AuthContext";
 
-/**
- * Reset Password page.
- * Used when an existing user clicks the "Esqueceu a senha?" recovery link.
- * Supabase auto-signs them in via the recovery token, and they only need to
- * set a NEW password. No name / email fields here — those are not part of
- * a password reset flow.
- */
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const hasSession = !!user;
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hasSession, setHasSession] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setHasSession(!!data?.user);
-    });
-  }, []);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
