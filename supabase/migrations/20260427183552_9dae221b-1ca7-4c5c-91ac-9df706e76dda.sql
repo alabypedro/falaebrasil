@@ -1,4 +1,4 @@
--- 1. Function to recalculate level from XP
+﻿-- 1. Function to recalculate level from XP
 CREATE OR REPLACE FUNCTION public.calculate_level_from_xp(_xp integer)
 RETURNS text
 LANGUAGE sql
@@ -45,11 +45,11 @@ $$;
 DROP TRIGGER IF EXISTS trg_sync_xp_on_lesson_progress_ins ON public.user_progress;
 DROP TRIGGER IF EXISTS trg_sync_xp_on_lesson_progress_del ON public.user_progress;
 
-CREATE TRIGGER trg_sync_xp_on_lesson_progress_ins
+CREATE OR REPLACE TRIGGER trg_sync_xp_on_lesson_progress_ins
 AFTER INSERT ON public.user_progress
 FOR EACH ROW EXECUTE FUNCTION public.sync_xp_on_lesson_progress();
 
-CREATE TRIGGER trg_sync_xp_on_lesson_progress_del
+CREATE OR REPLACE TRIGGER trg_sync_xp_on_lesson_progress_del
 AFTER DELETE ON public.user_progress
 FOR EACH ROW EXECUTE FUNCTION public.sync_xp_on_lesson_progress();
 

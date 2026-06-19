@@ -1,4 +1,4 @@
--- ============================================
+﻿-- ============================================
 -- 1) Profiles: prevent privilege escalation
 -- ============================================
 CREATE OR REPLACE FUNCTION public.prevent_profile_privilege_escalation()
@@ -33,7 +33,7 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS profiles_prevent_escalation ON public.profiles;
-CREATE TRIGGER profiles_prevent_escalation
+CREATE OR REPLACE TRIGGER profiles_prevent_escalation
 BEFORE UPDATE ON public.profiles
 FOR EACH ROW
 EXECUTE FUNCTION public.prevent_profile_privilege_escalation();

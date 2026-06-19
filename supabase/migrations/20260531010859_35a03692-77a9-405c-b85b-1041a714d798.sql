@@ -1,5 +1,5 @@
--- 1) Join entre produto Hubla e cursos liberados
-CREATE TABLE public.hubla_product_courses (
+﻿-- 1) Join entre produto Hubla e cursos liberados
+CREATE TABLE IF NOT EXISTS public.hubla_product_courses (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   product_mapping_id uuid NOT NULL REFERENCES public.hubla_product_mapping(id) ON DELETE CASCADE,
   course_id uuid NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
@@ -12,16 +12,18 @@ GRANT ALL ON public.hubla_product_courses TO service_role;
 
 ALTER TABLE public.hubla_product_courses ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated can view product courses"
+DROP POLICY IF EXISTS "Authenticated can view product courses" ON public.hubla_product_courses;
+  CREATE POLICY "Authenticated can view product courses"
   ON public.hubla_product_courses FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Admins manage product courses"
+DROP POLICY IF EXISTS "Admins manage product courses" ON public.hubla_product_courses;
+  CREATE POLICY "Admins manage product courses"
   ON public.hubla_product_courses FOR ALL TO authenticated
   USING (has_role(auth.uid(), 'admin'::app_role))
   WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 
 -- 2) Cursos concedidos por usuário (via compra Hubla ou admin)
-CREATE TABLE public.user_course_access (
+CREATE TABLE IF NOT EXISTS public.user_course_access (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
   course_id uuid NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
@@ -30,18 +32,20 @@ CREATE TABLE public.user_course_access (
   UNIQUE (user_id, course_id)
 );
 
-CREATE INDEX idx_user_course_access_user ON public.user_course_access(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_course_access_user ON public.user_course_access(user_id);
 
 GRANT SELECT ON public.user_course_access TO authenticated;
 GRANT ALL ON public.user_course_access TO service_role;
 
 ALTER TABLE public.user_course_access ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users view own course access"
+DROP POLICY IF EXISTS "Users view own course access" ON public.user_course_access;
+  CREATE POLICY "Users view own course access"
   ON public.user_course_access FOR SELECT TO authenticated
   USING (auth.uid() = user_id OR has_role(auth.uid(), 'admin'::app_role));
 
-CREATE POLICY "Admins manage course access"
+DROP POLICY IF EXISTS "Admins manage course access" ON public.user_course_access;
+  CREATE POLICY "Admins manage course access"
   ON public.user_course_access FOR ALL TO authenticated
   USING (has_role(auth.uid(), 'admin'::app_role))
   WITH CHECK (has_role(auth.uid(), 'admin'::app_role));

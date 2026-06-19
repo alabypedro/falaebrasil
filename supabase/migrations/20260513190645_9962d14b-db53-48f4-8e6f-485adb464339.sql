@@ -1,6 +1,6 @@
-
+﻿
 -- Create contracts table
-CREATE TABLE public.contracts (
+CREATE TABLE IF NOT EXISTS public.contracts (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   tier TEXT NOT NULL UNIQUE CHECK (tier IN ('open','pro','vip','kids','teens')),
   title TEXT NOT NULL,
@@ -13,27 +13,31 @@ CREATE TABLE public.contracts (
 
 ALTER TABLE public.contracts ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone authenticated can view contracts" ON public.contracts;
 CREATE POLICY "Anyone authenticated can view contracts"
 ON public.contracts FOR SELECT
 TO authenticated
 USING (true);
 
+DROP POLICY IF EXISTS "Admins can insert contracts" ON public.contracts;
 CREATE POLICY "Admins can insert contracts"
 ON public.contracts FOR INSERT
 TO authenticated
 WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can update contracts" ON public.contracts;
 CREATE POLICY "Admins can update contracts"
 ON public.contracts FOR UPDATE
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can delete contracts" ON public.contracts;
 CREATE POLICY "Admins can delete contracts"
 ON public.contracts FOR DELETE
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'::app_role));
 
-CREATE TRIGGER update_contracts_updated_at
+CREATE OR REPLACE TRIGGER update_contracts_updated_at
 BEFORE UPDATE ON public.contracts
 FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column();

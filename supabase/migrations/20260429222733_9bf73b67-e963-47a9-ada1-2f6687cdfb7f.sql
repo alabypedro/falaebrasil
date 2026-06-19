@@ -1,4 +1,4 @@
--- 1. Add access flags to profiles
+﻿-- 1. Add access flags to profiles
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS has_course_access boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS has_ebook1_access boolean NOT NULL DEFAULT false,
@@ -30,20 +30,22 @@ CREATE TABLE IF NOT EXISTS public.hubla_product_mapping (
 
 ALTER TABLE public.hubla_product_mapping ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Admins can manage product mapping"
+DROP POLICY IF EXISTS "Admins can manage product mapping" ON public.hubla_product_mapping;
+  CREATE POLICY "Admins can manage product mapping"
   ON public.hubla_product_mapping
   FOR ALL
   TO authenticated
   USING (public.has_role(auth.uid(), 'admin'::app_role))
   WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
 
-CREATE POLICY "Authenticated can view product mapping"
+DROP POLICY IF EXISTS "Authenticated can view product mapping" ON public.hubla_product_mapping;
+  CREATE POLICY "Authenticated can view product mapping"
   ON public.hubla_product_mapping
   FOR SELECT
   TO authenticated
   USING (true);
 
-CREATE TRIGGER update_hubla_product_mapping_updated_at
+CREATE OR REPLACE TRIGGER update_hubla_product_mapping_updated_at
   BEFORE UPDATE ON public.hubla_product_mapping
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 

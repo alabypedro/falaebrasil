@@ -1,4 +1,4 @@
--- Fix fb_communities SELECT policy: when all_tiers=true, only OPEN/PRO/VIP plans should see it
+﻿-- Fix fb_communities SELECT policy: when all_tiers=true, only OPEN/PRO/VIP plans should see it
 -- (not anonymous-like access, not KIDS/TEENS audiences), and respect access_key gating
 DROP POLICY IF EXISTS "Users view communities they have access to" ON public.fb_communities;
 
@@ -30,6 +30,7 @@ USING (
 );
 
 -- quiz_attempts: explicit restrictive deny for UPDATE/DELETE to document intent
+DROP POLICY IF EXISTS "Block quiz attempt updates" ON public.quiz_attempts;
 CREATE POLICY "Block quiz attempt updates"
 ON public.quiz_attempts
 AS RESTRICTIVE
@@ -37,6 +38,7 @@ FOR UPDATE
 USING (false)
 WITH CHECK (false);
 
+DROP POLICY IF EXISTS "Block quiz attempt deletes" ON public.quiz_attempts;
 CREATE POLICY "Block quiz attempt deletes"
 ON public.quiz_attempts
 AS RESTRICTIVE

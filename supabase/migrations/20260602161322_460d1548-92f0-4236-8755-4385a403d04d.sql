@@ -1,4 +1,4 @@
-CREATE TABLE public.chat_sessions (
+﻿CREATE TABLE IF NOT EXISTS public.chat_sessions (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     type TEXT NOT NULL CHECK (type IN ('writing', 'listening')),
@@ -7,7 +7,7 @@ CREATE TABLE public.chat_sessions (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.chat_messages (
+CREATE TABLE IF NOT EXISTS public.chat_messages (
     id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     session_id UUID NOT NULL REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
     role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
@@ -27,10 +27,10 @@ GRANT ALL ON public.chat_messages TO service_role;
 ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can manage their own sessions" ON public.chat_sessions
+DROP POLICY IF EXISTS "Users can manage their own sessions" ON public.chat_sessions; CREATE POLICY "Users can manage their own sessions" ON public.chat_sessions
     FOR ALL USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can manage messages of their sessions" ON public.chat_messages
+DROP POLICY IF EXISTS "Users can manage messages of their sessions" ON public.chat_messages; CREATE POLICY "Users can manage messages of their sessions" ON public.chat_messages
     FOR ALL USING (
         EXISTS (
             SELECT 1 FROM public.chat_sessions 
@@ -40,6 +40,6 @@ CREATE POLICY "Users can manage messages of their sessions" ON public.chat_messa
     );
 
 -- Trigger para updated_at
-CREATE TRIGGER update_chat_sessions_updated_at
+CREATE OR REPLACE TRIGGER update_chat_sessions_updated_at
 BEFORE UPDATE ON public.chat_sessions
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();

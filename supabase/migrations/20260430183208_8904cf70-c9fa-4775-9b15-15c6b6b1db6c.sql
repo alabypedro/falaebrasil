@@ -1,4 +1,4 @@
-
+﻿
 -- Track per-video completion
 CREATE TABLE IF NOT EXISTS public.user_video_progress (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -10,17 +10,20 @@ CREATE TABLE IF NOT EXISTS public.user_video_progress (
 
 ALTER TABLE public.user_video_progress ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users view own video progress"
+DROP POLICY IF EXISTS "Users view own video progress" ON public.user_video_progress;
+  CREATE POLICY "Users view own video progress"
   ON public.user_video_progress FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users insert own video progress"
+DROP POLICY IF EXISTS "Users insert own video progress" ON public.user_video_progress;
+  CREATE POLICY "Users insert own video progress"
   ON public.user_video_progress FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users delete own video progress"
+DROP POLICY IF EXISTS "Users delete own video progress" ON public.user_video_progress;
+  CREATE POLICY "Users delete own video progress"
   ON public.user_video_progress FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);

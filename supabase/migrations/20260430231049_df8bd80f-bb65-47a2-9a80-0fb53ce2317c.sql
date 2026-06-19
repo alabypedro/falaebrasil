@@ -1,4 +1,4 @@
-
+﻿
 -- 1) Add balance columns to profiles
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS scripted_balance integer NOT NULL DEFAULT 0,
@@ -17,16 +17,18 @@ CREATE TABLE IF NOT EXISTS public.voice_credit_products (
 
 ALTER TABLE public.voice_credit_products ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated can view voice credit products"
+DROP POLICY IF EXISTS "Authenticated can view voice credit products" ON public.voice_credit_products;
+  CREATE POLICY "Authenticated can view voice credit products"
   ON public.voice_credit_products FOR SELECT TO authenticated
   USING (true);
 
-CREATE POLICY "Admins can manage voice credit products"
+DROP POLICY IF EXISTS "Admins can manage voice credit products" ON public.voice_credit_products;
+  CREATE POLICY "Admins can manage voice credit products"
   ON public.voice_credit_products FOR ALL TO authenticated
   USING (public.has_role(auth.uid(), 'admin'::app_role))
   WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
 
-CREATE TRIGGER trg_voice_credit_products_updated_at
+CREATE OR REPLACE TRIGGER trg_voice_credit_products_updated_at
   BEFORE UPDATE ON public.voice_credit_products
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
@@ -55,11 +57,13 @@ CREATE TABLE IF NOT EXISTS public.voice_credit_grants (
 ALTER TABLE public.voice_credit_grants ENABLE ROW LEVEL SECURITY;
 
 -- Only service role writes; users can read their own grants (history)
-CREATE POLICY "Users can view own voice credit grants"
+DROP POLICY IF EXISTS "Users can view own voice credit grants" ON public.voice_credit_grants;
+  CREATE POLICY "Users can view own voice credit grants"
   ON public.voice_credit_grants FOR SELECT TO authenticated
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Service role manages voice credit grants"
+DROP POLICY IF EXISTS "Service role manages voice credit grants" ON public.voice_credit_grants;
+  CREATE POLICY "Service role manages voice credit grants"
   ON public.voice_credit_grants FOR ALL TO public
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');

@@ -1,4 +1,4 @@
-CREATE TABLE public.fb_cefr_metrics (
+﻿CREATE TABLE IF NOT EXISTS public.fb_cefr_metrics (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id),
   session_id UUID NOT NULL REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
@@ -19,17 +19,19 @@ GRANT ALL ON public.fb_cefr_metrics TO service_role;
 ALTER TABLE public.fb_cefr_metrics ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Users can view their own metrics" ON public.fb_cefr_metrics;
 CREATE POLICY "Users can view their own metrics"
 ON public.fb_cefr_metrics
 FOR SELECT
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own metrics" ON public.fb_cefr_metrics;
 CREATE POLICY "Users can insert their own metrics"
 ON public.fb_cefr_metrics
 FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Index for analytics
-CREATE INDEX idx_cefr_metrics_user_id ON public.fb_cefr_metrics(user_id);
-CREATE INDEX idx_cefr_metrics_level ON public.fb_cefr_metrics(level);
-CREATE INDEX idx_cefr_metrics_mode ON public.fb_cefr_metrics(mode);
+CREATE INDEX IF NOT EXISTS idx_cefr_metrics_user_id ON public.fb_cefr_metrics(user_id);
+CREATE INDEX IF NOT EXISTS idx_cefr_metrics_level ON public.fb_cefr_metrics(level);
+CREATE INDEX IF NOT EXISTS idx_cefr_metrics_mode ON public.fb_cefr_metrics(mode);

@@ -1,4 +1,4 @@
-
+﻿
 -- =========================================================================
 -- 1. PROFILES: restrict reads + hide hubla_customer_id
 -- =========================================================================
@@ -25,12 +25,14 @@ GRANT SELECT ON public.profiles_public TO authenticated;
 
 -- Authenticated users may read profile rows (the view hides sensitive cols);
 -- additionally allow the owner to read their own full row from the base table.
-CREATE POLICY "Authenticated can view profiles base row"
+DROP POLICY IF EXISTS "Authenticated can view profiles base row" ON public.profiles;
+  CREATE POLICY "Authenticated can view profiles base row"
   ON public.profiles FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Authenticated can view public profile fields"
+DROP POLICY IF EXISTS "Authenticated can view public profile fields" ON public.profiles;
+  CREATE POLICY "Authenticated can view public profile fields"
   ON public.profiles FOR SELECT
   TO authenticated
   USING (true);
@@ -52,7 +54,8 @@ DROP POLICY "Authenticated can view public profile fields" ON public.profiles;
 -- The existing permissive "Admins can manage roles" (FOR ALL) lets admins
 -- write. Add a RESTRICTIVE policy so non-admins are blocked from writing
 -- even if another permissive policy is added later by mistake.
-CREATE POLICY "Only admins may write user_roles"
+DROP POLICY IF EXISTS "Only admins may write user_roles" ON public.user_roles;
+  CREATE POLICY "Only admins may write user_roles"
   ON public.user_roles
   AS RESTRICTIVE
   FOR ALL

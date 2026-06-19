@@ -1,5 +1,5 @@
-
-CREATE TABLE public.fb_communities (
+﻿
+CREATE TABLE IF NOT EXISTS public.fb_communities (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
   description text,
@@ -12,27 +12,31 @@ CREATE TABLE public.fb_communities (
 
 ALTER TABLE public.fb_communities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Authenticated users can view communities" ON public.fb_communities;
 CREATE POLICY "Authenticated users can view communities"
 ON public.fb_communities FOR SELECT
 TO authenticated
 USING (true);
 
+DROP POLICY IF EXISTS "Admins can insert communities" ON public.fb_communities;
 CREATE POLICY "Admins can insert communities"
 ON public.fb_communities FOR INSERT
 TO authenticated
 WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update communities" ON public.fb_communities;
 CREATE POLICY "Admins can update communities"
 ON public.fb_communities FOR UPDATE
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can delete communities" ON public.fb_communities;
 CREATE POLICY "Admins can delete communities"
 ON public.fb_communities FOR DELETE
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
-CREATE TRIGGER fb_communities_updated_at
+CREATE OR REPLACE TRIGGER fb_communities_updated_at
 BEFORE UPDATE ON public.fb_communities
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 

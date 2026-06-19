@@ -1,7 +1,7 @@
--- =========================================
+﻿-- =========================================
 -- Community Channels
 -- =========================================
-CREATE TABLE public.community_channels (
+CREATE TABLE IF NOT EXISTS public.community_channels (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   slug text NOT NULL UNIQUE,
@@ -13,34 +13,38 @@ CREATE TABLE public.community_channels (
 
 ALTER TABLE public.community_channels ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone authenticated can view channels" ON public.community_channels;
 CREATE POLICY "Anyone authenticated can view channels"
 ON public.community_channels FOR SELECT
 TO authenticated
 USING (true);
 
+DROP POLICY IF EXISTS "Admins can insert channels" ON public.community_channels;
 CREATE POLICY "Admins can insert channels"
 ON public.community_channels FOR INSERT
 TO authenticated
 WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can update channels" ON public.community_channels;
 CREATE POLICY "Admins can update channels"
 ON public.community_channels FOR UPDATE
 TO authenticated
 USING (has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can delete channels" ON public.community_channels;
 CREATE POLICY "Admins can delete channels"
 ON public.community_channels FOR DELETE
 TO authenticated
 USING (has_role(auth.uid(), 'admin'::app_role));
 
-CREATE TRIGGER update_community_channels_updated_at
+CREATE OR REPLACE TRIGGER update_community_channels_updated_at
 BEFORE UPDATE ON public.community_channels
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =========================================
 -- Community Messages
 -- =========================================
-CREATE TABLE public.community_messages (
+CREATE TABLE IF NOT EXISTS public.community_messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   channel_id uuid NOT NULL REFERENCES public.community_channels(id) ON DELETE CASCADE,
   user_id uuid NOT NULL,
@@ -51,26 +55,30 @@ CREATE TABLE public.community_messages (
   created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_community_messages_channel_created
+CREATE INDEX IF NOT EXISTS idx_community_messages_channel_created
   ON public.community_messages(channel_id, created_at DESC);
 
 ALTER TABLE public.community_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Authenticated can view messages" ON public.community_messages;
 CREATE POLICY "Authenticated can view messages"
 ON public.community_messages FOR SELECT
 TO authenticated
 USING (true);
 
+DROP POLICY IF EXISTS "Users can send their own messages" ON public.community_messages;
 CREATE POLICY "Users can send their own messages"
 ON public.community_messages FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own messages" ON public.community_messages;
 CREATE POLICY "Users can delete their own messages"
 ON public.community_messages FOR DELETE
 TO authenticated
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can delete any message" ON public.community_messages;
 CREATE POLICY "Admins can delete any message"
 ON public.community_messages FOR DELETE
 TO authenticated

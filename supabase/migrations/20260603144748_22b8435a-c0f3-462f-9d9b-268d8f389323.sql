@@ -1,4 +1,4 @@
-CREATE TABLE public.fb_learning_challenges (
+﻿CREATE TABLE IF NOT EXISTS public.fb_learning_challenges (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id),
   mistake_type TEXT NOT NULL,
@@ -19,16 +19,18 @@ GRANT ALL ON public.fb_learning_challenges TO service_role;
 ALTER TABLE public.fb_learning_challenges ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Users can view their own challenges" ON public.fb_learning_challenges;
 CREATE POLICY "Users can view their own challenges"
 ON public.fb_learning_challenges
 FOR SELECT
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can manage their own challenges" ON public.fb_learning_challenges;
 CREATE POLICY "Users can manage their own challenges"
 ON public.fb_learning_challenges
 FOR ALL
 USING (auth.uid() = user_id);
 
 -- Index for performance
-CREATE INDEX idx_learning_challenges_user_id ON public.fb_learning_challenges(user_id);
-CREATE INDEX idx_learning_challenges_type ON public.fb_learning_challenges(mistake_type);
+CREATE INDEX IF NOT EXISTS idx_learning_challenges_user_id ON public.fb_learning_challenges(user_id);
+CREATE INDEX IF NOT EXISTS idx_learning_challenges_type ON public.fb_learning_challenges(mistake_type);

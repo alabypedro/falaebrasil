@@ -1,4 +1,4 @@
-
+﻿
 -- 1. Restrict profiles INSERT/UPDATE policies to authenticated role only
 DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
@@ -9,6 +9,7 @@ FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile"
 ON public.profiles
 FOR UPDATE
