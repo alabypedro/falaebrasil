@@ -59,6 +59,7 @@ INSERT INTO public.community_channels (name, slug, description, level, display_o
 
 -- 6. Replace channel SELECT policy: user sees only channels at or below their level
 DROP POLICY IF EXISTS "Anyone authenticated can view channels" ON public.community_channels;
+DROP POLICY IF EXISTS "Users view channels at their level" ON public.community_channels;
 CREATE POLICY "Users view channels at their level"
 ON public.community_channels
 FOR SELECT
@@ -67,6 +68,7 @@ USING (public.can_access_level(level));
 
 -- 7. Tighten messages policies: only members of accessible channels can read/write
 DROP POLICY IF EXISTS "Authenticated can view messages" ON public.community_messages;
+DROP POLICY IF EXISTS "Users view messages of accessible channels" ON public.community_messages;
 CREATE POLICY "Users view messages of accessible channels"
 ON public.community_messages
 FOR SELECT
@@ -80,6 +82,7 @@ USING (
 );
 
 DROP POLICY IF EXISTS "Users can send their own messages" ON public.community_messages;
+DROP POLICY IF EXISTS "Users send messages to accessible channels" ON public.community_messages;
 CREATE POLICY "Users send messages to accessible channels"
 ON public.community_messages
 FOR INSERT

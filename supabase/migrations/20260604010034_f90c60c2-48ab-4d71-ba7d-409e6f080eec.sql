@@ -24,6 +24,7 @@ USING (
 -- the function owner (postgres), which bypasses RLS, so legitimate grading still works.
 DROP POLICY IF EXISTS "Users can insert own attempts" ON public.quiz_attempts;
 
+DROP POLICY IF EXISTS "Block direct quiz attempt inserts" ON public.quiz_attempts;
 CREATE POLICY "Block direct quiz attempt inserts"
 ON public.quiz_attempts
 AS RESTRICTIVE

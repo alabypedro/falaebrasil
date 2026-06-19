@@ -24,6 +24,7 @@ GRANT SELECT ON public.library_bst_safe TO authenticated;
 -- 2) Restringir acesso direto à tabela base: apenas admins podem fazer SELECT direto.
 DROP POLICY IF EXISTS "Authenticated can view library list" ON public.library_bst;
 
+DROP POLICY IF EXISTS "Admins can view library_bst raw" ON public.library_bst;
 CREATE POLICY "Admins can view library_bst raw"
   ON public.library_bst
   FOR SELECT

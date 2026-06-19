@@ -84,6 +84,7 @@ GRANT SELECT ON public.quiz_questions_public TO authenticated;
 -- Restrict base table SELECT to admins only (clients must use the view)
 DROP POLICY IF EXISTS "Anyone authenticated can view questions" ON public.quiz_questions;
 
+DROP POLICY IF EXISTS "Admins can view full quiz questions" ON public.quiz_questions;
 CREATE POLICY "Admins can view full quiz questions"
   ON public.quiz_questions FOR SELECT
   TO authenticated

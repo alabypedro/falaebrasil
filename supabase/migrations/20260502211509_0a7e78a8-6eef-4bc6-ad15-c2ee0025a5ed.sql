@@ -43,6 +43,7 @@ EXECUTE FUNCTION public.prevent_profile_privilege_escalation();
 -- ============================================
 DROP POLICY IF EXISTS "Anyone authenticated can view lessons" ON public.lessons;
 
+DROP POLICY IF EXISTS "Course-access users or admins can view lessons" ON public.lessons;
 CREATE POLICY "Course-access users or admins can view lessons"
 ON public.lessons
 FOR SELECT
@@ -58,6 +59,7 @@ USING (
 
 -- Same gate for lesson_videos (they reference paid course content)
 DROP POLICY IF EXISTS "Authenticated users can view lesson videos" ON public.lesson_videos;
+DROP POLICY IF EXISTS "Course-access users or admins can view lesson videos" ON public.lesson_videos;
 CREATE POLICY "Course-access users or admins can view lesson videos"
 ON public.lesson_videos
 FOR SELECT
@@ -76,6 +78,7 @@ USING (
 -- ============================================
 DROP POLICY IF EXISTS "Authenticated users can view communities" ON public.fb_communities;
 
+DROP POLICY IF EXISTS "Users view communities they have access to" ON public.fb_communities;
 CREATE POLICY "Users view communities they have access to"
 ON public.fb_communities
 FOR SELECT

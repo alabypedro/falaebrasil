@@ -61,6 +61,7 @@ ON CONFLICT (product_key) DO NOTHING;
 -- 4. Hide non-A1 courses from regular users
 DROP POLICY IF EXISTS "Anyone authenticated can view published courses" ON public.courses;
 
+DROP POLICY IF EXISTS "Users view published A1 or admins view all" ON public.courses;
 CREATE POLICY "Users view published A1 or admins view all"
   ON public.courses
   FOR SELECT
@@ -94,6 +95,7 @@ $$;
 -- Update library_bst SELECT policy to gate by access_key
 DROP POLICY IF EXISTS "Anyone authenticated can view library" ON public.library_bst;
 
+DROP POLICY IF EXISTS "Users view library items they have access to" ON public.library_bst;
 CREATE POLICY "Users view library items they have access to"
   ON public.library_bst
   FOR SELECT

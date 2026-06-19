@@ -2,6 +2,7 @@
 -- 1) library_bst: replace blanket SELECT with access-key check
 DROP POLICY IF EXISTS "Authenticated can view library items list" ON public.library_bst;
 
+DROP POLICY IF EXISTS "Users view library items they have access to" ON public.library_bst;
 CREATE POLICY "Users view library items they have access to"
 ON public.library_bst
 FOR SELECT
@@ -11,6 +12,7 @@ USING (public.has_bst_item_access(access_key));
 -- 2) storage: restrict community-audio reads to users with channel access
 DROP POLICY IF EXISTS "Authenticated can read community audio" ON storage.objects;
 
+DROP POLICY IF EXISTS "Users read community audio they have access to" ON storage.objects;
 CREATE POLICY "Users read community audio they have access to"
 ON storage.objects
 FOR SELECT
