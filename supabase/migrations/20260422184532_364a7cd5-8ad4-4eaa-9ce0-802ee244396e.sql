@@ -228,11 +228,13 @@ DROP POLICY "Public read avatar files" ON storage.objects;
 
 -- Keep public per-object reads (needed for <img src>) and admin-only listing
 -- enforced via a tighter SELECT policy on lesson-files.
+DROP POLICY IF EXISTS "Public read avatars" ON storage.objects;
 CREATE POLICY "Public read avatars"
   ON storage.objects FOR SELECT
   TO anon, authenticated
   USING (bucket_id = 'avatars');
 
+DROP POLICY IF EXISTS "Public read lesson files" ON storage.objects;
 CREATE POLICY "Public read lesson files"
   ON storage.objects FOR SELECT
   TO anon, authenticated

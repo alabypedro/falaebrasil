@@ -1,4 +1,5 @@
 -- Permitir acesso público de leitura ao bucket lesson-files
+DROP POLICY IF EXISTS "Public Access for lesson-files" ON storage.objects;
 CREATE POLICY "Public Access for lesson-files"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'lesson-files');

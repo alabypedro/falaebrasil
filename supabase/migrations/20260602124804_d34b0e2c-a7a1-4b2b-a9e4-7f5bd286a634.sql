@@ -10,11 +10,13 @@ DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects
 DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 
 -- 1. Allow anyone to view avatar images (since it's a public bucket)
+DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;
 CREATE POLICY "Avatar images are publicly accessible"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'avatars');
 
 -- 2. Let authenticated users upload to their own folder
+DROP POLICY IF EXISTS "Users can upload their own avatar" ON storage.objects;
 CREATE POLICY "Users can upload their own avatar"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -24,6 +26,7 @@ WITH CHECK (
 );
 
 -- 3. Let authenticated users update their own files
+DROP POLICY IF EXISTS "Users can update their own avatar" ON storage.objects;
 CREATE POLICY "Users can update their own avatar"
 ON storage.objects FOR UPDATE
 TO authenticated
@@ -37,6 +40,7 @@ WITH CHECK (
 );
 
 -- 4. Let authenticated users delete their own files
+DROP POLICY IF EXISTS "Users can delete their own avatar" ON storage.objects;
 CREATE POLICY "Users can delete their own avatar"
 ON storage.objects FOR DELETE
 TO authenticated

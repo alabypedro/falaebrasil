@@ -95,11 +95,13 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('community-audio', 'community-audio', false)
 ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Authenticated can read community audio" ON storage.objects;
 CREATE POLICY "Authenticated can read community audio"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'community-audio');
 
+DROP POLICY IF EXISTS "Users can upload their own community audio" ON storage.objects;
 CREATE POLICY "Users can upload their own community audio"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -108,6 +110,7 @@ WITH CHECK (
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
 
+DROP POLICY IF EXISTS "Users can delete their own community audio" ON storage.objects;
 CREATE POLICY "Users can delete their own community audio"
 ON storage.objects FOR DELETE
 TO authenticated
@@ -122,4 +125,4 @@ USING (
 INSERT INTO public.community_channels (name, slug, description, display_order) VALUES
   ('Geral', 'geral', 'Bate-papo geral da comunidade Falaê Brasil', 1),
   ('Dúvidas', 'duvidas', 'Tire suas dúvidas sobre inglês e os cursos', 2),
-  ('Conversação', 'conversacao', 'Pratique inglês com outros estudantes (envie áudios!)', 3);
+  ('Conversação', 'conversacao', 'Pratique inglês com outros estudantes (envie áudios!)', 3) ON CONFLICT (slug) DO NOTHING;

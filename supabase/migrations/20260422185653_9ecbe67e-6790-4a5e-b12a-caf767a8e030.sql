@@ -141,12 +141,14 @@ DROP POLICY IF EXISTS "Authenticated can list lesson-files" ON storage.objects;
 
 -- Only authenticated users can list/select objects metadata in these buckets.
 -- Direct CDN/public URL access remains functional independent of these policies.
+DROP POLICY IF EXISTS "Authenticated can list avatars" ON storage.objects;
 CREATE POLICY "Authenticated can list avatars"
 ON storage.objects
 FOR SELECT
 TO authenticated
 USING (bucket_id = 'avatars');
 
+DROP POLICY IF EXISTS "Authenticated can list lesson-files" ON storage.objects;
 CREATE POLICY "Authenticated can list lesson-files"
 ON storage.objects
 FOR SELECT

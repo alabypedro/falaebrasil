@@ -1,6 +1,9 @@
 
 -- 1. Role enum and user_roles table
-CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+DO $$ BEGIN
+  CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -194,17 +197,21 @@ DROP POLICY IF EXISTS "Users can insert own attempts" ON public.quiz_attempts; C
 INSERT INTO storage.buckets (id, name, public) VALUES ('lesson-files', 'lesson-files', true)
   ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Anyone can view lesson files" ON storage.objects;
 CREATE POLICY "Anyone can view lesson files" ON storage.objects
   FOR SELECT USING (bucket_id = 'lesson-files');
 
+DROP POLICY IF EXISTS "Admins can upload lesson files" ON storage.objects;
 CREATE POLICY "Admins can upload lesson files" ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'lesson-files' AND public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can update lesson files" ON storage.objects;
 CREATE POLICY "Admins can update lesson files" ON storage.objects
   FOR UPDATE TO authenticated
   USING (bucket_id = 'lesson-files' AND public.has_role(auth.uid(), 'admin'));
 
+DROP POLICY IF EXISTS "Admins can delete lesson files" ON storage.objects;
 CREATE POLICY "Admins can delete lesson files" ON storage.objects
   FOR DELETE TO authenticated
   USING (bucket_id = 'lesson-files' AND public.has_role(auth.uid(), 'admin'));

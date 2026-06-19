@@ -48,25 +48,29 @@ INSERT INTO public.contracts (tier, title) VALUES
   ('pro', 'Contrato Modelo PRO'),
   ('vip', 'Contrato Modelo VIP'),
   ('teens', 'Contrato Modelo TEENS'),
-  ('kids', 'Contrato Modelo KIDS');
+  ('kids', 'Contrato Modelo KIDS') ON CONFLICT (tier) DO NOTHING;
 
 -- Create storage bucket for contracts (public so users can download)
-INSERT INTO storage.buckets (id, name, public) VALUES ('contracts', 'contracts', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('contracts', 'contracts', true) ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Public can read contracts" ON storage.objects;
 CREATE POLICY "Public can read contracts"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'contracts');
 
+DROP POLICY IF EXISTS "Admins can upload contracts" ON storage.objects;
 CREATE POLICY "Admins can upload contracts"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'contracts' AND public.has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can update contracts files" ON storage.objects;
 CREATE POLICY "Admins can update contracts files"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (bucket_id = 'contracts' AND public.has_role(auth.uid(), 'admin'::app_role));
 
+DROP POLICY IF EXISTS "Admins can delete contracts files" ON storage.objects;
 CREATE POLICY "Admins can delete contracts files"
 ON storage.objects FOR DELETE
 TO authenticated
