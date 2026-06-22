@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       chat_messages: {
@@ -1397,7 +1372,122 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      library_bst_safe: {
+        Row: {
+          access_key: string | null
+          audio_url: string | null
+          created_at: string | null
+          file_url: string | null
+          id: string | null
+          title: string | null
+          type: string | null
+        }
+        Insert: {
+          access_key?: string | null
+          audio_url?: never
+          created_at?: string | null
+          file_url?: never
+          id?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Update: {
+          access_key?: string | null
+          audio_url?: never
+          created_at?: string | null
+          file_url?: never
+          id?: string | null
+          title?: string | null
+          type?: string | null
+        }
+        Relationships: []
+      }
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          level: string | null
+          streak_days: number | null
+          updated_at: string | null
+          user_id: string | null
+          user_type: string | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          level?: string | null
+          streak_days?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_type?: string | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          level?: string | null
+          streak_days?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          user_type?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
+      quiz_questions_public: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string | null
+          options: Json | null
+          question_text: string | null
+          quiz_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          quiz_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string | null
+          options?: Json | null
+          question_text?: string | null
+          quiz_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      xp_ranking: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          level: string | null
+          rank_position: number | null
+          total_xp: number | null
+          user_id: string | null
+          user_type: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _strip_correct_index: { Args: { _content: Json }; Returns: Json }
@@ -1471,8 +1561,6 @@ export type Database = {
       recharge_monthly_tokens: { Args: never; Returns: undefined }
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
       tier_rank: { Args: { _tier: string }; Returns: number }
       uncomplete_video: { Args: { _video_id: string }; Returns: Json }
@@ -1604,9 +1692,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
