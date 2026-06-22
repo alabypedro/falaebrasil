@@ -18,6 +18,12 @@ const ACCESS_FIELDS = [
 
 type AccessField = typeof ACCESS_FIELDS[number];
 
+const jsonResponse = (payload: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -27,20 +33,14 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
     const admin = createClient(SUPABASE_URL, SERVICE);
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userErr } = await admin.auth.getUser(token);
     if (userErr || !userData?.user?.id) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Unauthorized" }, 401);
     }
     const callerId = userData.user.id;
 
@@ -49,10 +49,7 @@ Deno.serve(async (req) => {
       _role: "admin",
     });
     if (!isAdminData) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Forbidden" }, 403);
     }
 
     const body = await req.json();
@@ -61,19 +58,13 @@ Deno.serve(async (req) => {
     const grant = body.grant !== false; // default true
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return new Response(JSON.stringify({ error: "Email inválido" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Email inválido" }, 400);
     }
     const validAccesses = accesses.filter((a): a is AccessField =>
       (ACCESS_FIELDS as readonly string[]).includes(a)
     );
     if (validAccesses.length === 0) {
-      return new Response(JSON.stringify({ error: "Selecione ao menos um acesso." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Selecione ao menos um acesso." }, 400);
     }
 
     // Find user by email
@@ -98,9 +89,23 @@ Deno.serve(async (req) => {
     }
 
     if (!foundId) {
-      return new Response(JSON.stringify({ error: "Usuário não encontrado com esse email" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const localPart = email.split("@")[0]?.replace(/[._-]+/g, "%") ?? "";
+      const { data: suggestions } = localPart
+        ? await admin
+            .from("profiles")
+            .select("email")
+            .ilike("email", `%${localPart}%`)
+            .not("email", "is", null)
+            .limit(3)
+        : { data: [] };
+      const suggestionEmails = (suggestions ?? [])
+        .map((p: { email: string | null }) => p.email)
+        .filter(Boolean);
+      return jsonResponse({
+        ok: false,
+        error: suggestionEmails.length
+          ? `Usuário não encontrado com esse email. Você quis dizer: ${suggestionEmails.join(", ")}?`
+          : "Usuário não encontrado com esse email",
       });
     }
 
@@ -113,14 +118,9 @@ Deno.serve(async (req) => {
       .eq("user_id", foundId);
     if (upErr) throw upErr;
 
-    return new Response(JSON.stringify({ ok: true, applied: updates }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ ok: true, applied: updates });
   } catch (e) {
     console.error("grant-access-admin error", e);
-    return new Response(JSON.stringify({ error: (e as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: (e as Error).message }, 500);
   }
 });
