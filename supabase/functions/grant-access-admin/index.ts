@@ -78,6 +78,15 @@ Deno.serve(async (req) => {
 
     // Find user by email
     let foundId: string | null = null;
+
+    // Try profiles table first (faster + works when email is stored there)
+    const { data: profileMatch } = await admin
+      .from("profiles")
+      .select("user_id")
+      .ilike("email", email)
+      .maybeSingle();
+    if (profileMatch?.user_id) foundId = profileMatch.user_id;
+
     let page = 1;
     while (page <= 20 && !foundId) {
       const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
