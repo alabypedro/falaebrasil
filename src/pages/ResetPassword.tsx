@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -18,6 +18,30 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Exchange recovery link tokens for a session (PKCE ?code=, or ?token_hash=&type=recovery)
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const tokenHash = url.searchParams.get("token_hash");
+    const type = url.searchParams.get("type");
+
+    (async () => {
+      try {
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(window.location.href);
+        } else if (tokenHash && type) {
+          await supabase.auth.verifyOtp({ token_hash: tokenHash, type: type as any });
+        }
+        // Clean sensitive params from URL
+        if (code || tokenHash) {
+          window.history.replaceState({}, "", url.pathname);
+        }
+      } catch (err) {
+        console.error("Recovery link exchange failed:", err);
+      }
+    })();
+  }, []);
+
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
@@ -30,6 +54,12 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sessão de recuperação expirada. Solicite um novo e-mail de redefinição.");
+        setLoading(false);
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       toast.success("Senha atualizada com sucesso!");
