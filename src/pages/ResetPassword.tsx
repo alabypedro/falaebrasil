@@ -99,7 +99,7 @@ export default function ResetPassword() {
               </div>
             </div>
 
-            <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading || !hasSession}>
+            <Button type="submit" variant="gradient" className="w-full h-11" disabled={loading}>
               {loading ? "Salvando..." : "Atualizar senha"}
             </Button>
 
