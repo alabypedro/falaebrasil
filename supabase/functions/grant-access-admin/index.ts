@@ -89,24 +89,37 @@ Deno.serve(async (req) => {
     }
 
     if (!foundId) {
-      const localPart = email.split("@")[0]?.replace(/[._-]+/g, "%") ?? "";
-      const { data: suggestions } = localPart
-        ? await admin
-            .from("profiles")
-            .select("email")
-            .ilike("email", `%${localPart}%`)
-            .not("email", "is", null)
-            .limit(3)
-        : { data: [] };
-      const suggestionEmails = (suggestions ?? [])
-        .map((p: { email: string | null }) => p.email)
-        .filter(Boolean);
-      return jsonResponse({
-        ok: false,
-        error: suggestionEmails.length
-          ? `Usuário não encontrado com esse email. Você quis dizer: ${suggestionEmails.join(", ")}?`
-          : "Usuário não encontrado com esse email",
+      // Auto-create the user so admin can grant access before first login
+      const tempPassword = crypto.randomUUID() + "Aa1!";
+      const { data: created, error: createErr } = await admin.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { created_by_admin: true },
       });
+      if (createErr || !created?.user?.id) {
+        return jsonResponse({
+          error: `Não foi possível criar o usuário: ${createErr?.message ?? "desconhecido"}`,
+        }, 400);
+      }
+      foundId = created.user.id;
+
+      // Ensure profile row exists
+      await admin.from("profiles").upsert(
+        { user_id: foundId, email },
+        { onConflict: "user_id" }
+      );
+
+      // Send password reset / welcome email so the user can set a password
+      const redirectTo = `${SUPABASE_URL.replace(/\.supabase\.co.*/, "")}`;
+      try {
+        await admin.auth.admin.generateLink({
+          type: "recovery",
+          email,
+        });
+      } catch (_) {
+        // best-effort
+      }
     }
 
     const updates: Record<string, boolean> = {};
