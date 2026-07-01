@@ -19,6 +19,7 @@ const dict: Dict = {
   "nav.voice": { pt: "IA Falaê", en: "AI Falaê" },
   "nav.listening": { pt: "IA Escutaê", en: "AI Escutaê" },
   "nav.writing": { pt: "IA Escreveaê", en: "AI Escreveaê" },
+  "nav.leiae": { pt: "IA Leiaê", en: "AI Leiaê" },
   "nav.library": { pt: "Biblioteca BST", en: "BST Library" },
   "nav.communities": { pt: "Comunidades FB", en: "FB Communities" },
   "nav.tutorials": { pt: "Tutoriais", en: "Tutorials" },
