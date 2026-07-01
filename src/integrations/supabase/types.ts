@@ -696,6 +696,94 @@ export type Database = {
         }
         Relationships: []
       }
+      memorize_cards: {
+        Row: {
+          audio_url: string | null
+          back_text: string
+          created_at: string
+          deck_id: string
+          display_order: number
+          example_sentence: string | null
+          front_text: string
+          id: string
+          image_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          back_text: string
+          created_at?: string
+          deck_id: string
+          display_order?: number
+          example_sentence?: string | null
+          front_text: string
+          id?: string
+          image_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          back_text?: string
+          created_at?: string
+          deck_id?: string
+          display_order?: number
+          example_sentence?: string | null
+          front_text?: string
+          id?: string
+          image_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memorize_cards_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "memorize_decks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memorize_decks: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          target_topic: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          target_topic?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          target_topic?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memorize_decks_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           course_id: string
@@ -1142,6 +1230,59 @@ export type Database = {
         }
         Relationships: []
       }
+      user_card_reviews: {
+        Row: {
+          card_id: string
+          created_at: string
+          due_at: string
+          ease_factor: number
+          id: string
+          interval_days: number
+          lapses: number
+          last_rating: number | null
+          last_reviewed_at: string | null
+          repetitions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          due_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          lapses?: number
+          last_rating?: number | null
+          last_reviewed_at?: string | null
+          repetitions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          due_at?: string
+          ease_factor?: number
+          id?: string
+          interval_days?: number
+          lapses?: number
+          last_rating?: number | null
+          last_reviewed_at?: string | null
+          repetitions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_card_reviews_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "memorize_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_course_access: {
         Row: {
           course_id: string
@@ -1562,6 +1703,10 @@ export type Database = {
       recharge_monthly_tokens: { Args: never; Returns: undefined }
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
+      submit_card_review: {
+        Args: { _card_id: string; _rating: number }
+        Returns: Json
+      }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
       tier_rank: { Args: { _tier: string }; Returns: number }
       uncomplete_video: { Args: { _video_id: string }; Returns: Json }
