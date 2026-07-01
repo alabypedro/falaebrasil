@@ -43,8 +43,15 @@ Deno.serve(async (req) => {
       )
     }
 
+    // The Immersive Reader SDK expects the bare subdomain (e.g. "falaebrasil-immersive"),
+    // not the full endpoint URL. Normalize in case the secret was set as a URL.
+    const normalized = subdomain
+      .replace(/^https?:\/\//, '')
+      .replace(/\/.*$/, '')
+      .replace(/\.cognitiveservices\.azure\.com$/i, '')
+
     return new Response(
-      JSON.stringify({ token: tokenData.access_token, subdomain }),
+      JSON.stringify({ token: tokenData.access_token, subdomain: normalized }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (err) {
