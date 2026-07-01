@@ -15,6 +15,7 @@ const dict: Dict = {
   // Sidebar nav
   "nav.dashboard": { pt: "Painel", en: "Dashboard" },
   "nav.courses": { pt: "Cursos Falaê Brasil! (FB)", en: "Falaê Brasil! Courses (FB)" },
+  "nav.memorizae": { pt: "IA Memorizaê", en: "AI Memorizaê" },
   "nav.voice": { pt: "IA Falaê", en: "AI Falaê" },
   "nav.listening": { pt: "IA Escutaê", en: "AI Escutaê" },
   "nav.writing": { pt: "IA Escreveaê", en: "AI Escreveaê" },
