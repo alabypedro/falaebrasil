@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload } from "lucide-react";
+import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X } from "lucide-react";
 
 interface Course { id: string; title: string; }
 interface Deck {
@@ -61,6 +61,8 @@ export default function MemorizaeManager() {
   const [cardForm, setCardForm] = useState<{ front: string; back: string; example: string; audio: string; image: string; }>({
     front: "", back: "", example: "", audio: "", image: "",
   });
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Bulk import
   const [bulkDialog, setBulkDialog] = useState(false);
@@ -161,6 +163,38 @@ export default function MemorizaeManager() {
     if (error) { toast.error(error.message); return; }
     toast.success("Carta removida");
     load();
+  };
+
+  // ---------- File uploads ----------
+  const uploadAsset = async (file: File, kind: "audio" | "image"): Promise<string | null> => {
+    const maxMb = kind === "audio" ? 15 : 8;
+    if (file.size > maxMb * 1024 * 1024) {
+      toast.error(`Arquivo muito grande (máx ${maxMb}MB)`);
+      return null;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || (kind === "audio" ? "mp3" : "png");
+    const path = `${kind}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("memorizae-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) { toast.error(`Falha no upload: ${error.message}`); return null; }
+    const { data } = supabase.storage.from("memorizae-assets").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleAudioFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingAudio(true);
+    const url = await uploadAsset(file, "audio");
+    setUploadingAudio(false);
+    if (url) setCardForm((f) => ({ ...f, audio: url }));
+  };
+  const handleImageFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingImage(true);
+    const url = await uploadAsset(file, "image");
+    setUploadingImage(false);
+    if (url) setCardForm((f) => ({ ...f, image: url }));
   };
 
   const bulkImport = async () => {
@@ -279,13 +313,53 @@ export default function MemorizaeManager() {
                 <Textarea rows={2} value={cardForm.example} onChange={(e) => setCardForm({ ...cardForm, example: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>URL do áudio</Label>
-                  <Input value={cardForm.audio} onChange={(e) => setCardForm({ ...cardForm, audio: e.target.value })} placeholder="https://..." />
+                <div className="space-y-1.5">
+                  <Label>Áudio (mp3, wav, m4a…)</Label>
+                  {cardForm.audio ? (
+                    <div className="flex items-center gap-2 rounded-md border p-2">
+                      <Music className="h-4 w-4 text-primary shrink-0" />
+                      <audio src={cardForm.audio} controls className="h-8 flex-1 min-w-0" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCardForm({ ...cardForm, audio: "" })}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
+                      {uploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      <span>{uploadingAudio ? "Enviando…" : "Selecionar áudio"}</span>
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        className="hidden"
+                        disabled={uploadingAudio}
+                        onChange={(e) => handleAudioFile(e.target.files?.[0])}
+                      />
+                    </label>
+                  )}
                 </div>
-                <div>
-                  <Label>URL da imagem</Label>
-                  <Input value={cardForm.image} onChange={(e) => setCardForm({ ...cardForm, image: e.target.value })} placeholder="https://..." />
+                <div className="space-y-1.5">
+                  <Label>Imagem (png, jpg, webp…)</Label>
+                  {cardForm.image ? (
+                    <div className="flex items-center gap-2 rounded-md border p-2">
+                      <img src={cardForm.image} alt="preview" className="h-10 w-10 rounded object-cover shrink-0" />
+                      <span className="text-xs text-muted-foreground truncate flex-1">Imagem carregada</span>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCardForm({ ...cardForm, image: "" })}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
+                      {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                      <span>{uploadingImage ? "Enviando…" : "Selecionar imagem"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingImage}
+                        onChange={(e) => handleImageFile(e.target.files?.[0])}
+                      />
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
