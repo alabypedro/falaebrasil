@@ -22,6 +22,7 @@ import CourseDetail from "@/pages/CourseDetail";
 import Install from "@/pages/Install";
 import Tutoriais from "@/pages/Tutoriais";
 import Communities from "@/pages/Communities";
+import Memorizae from "@/pages/Memorizae";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import CoursesManager from "@/pages/admin/CoursesManager";
@@ -38,6 +39,7 @@ import CommunitiesManager from "@/pages/admin/CommunitiesManager";
 import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosManager";
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
 import ContractsManager from "@/pages/admin/ContractsManager";
+import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
 
@@ -129,6 +131,7 @@ const App = () => {
                         <Route path="/tutoriais" element={<Tutoriais />} />
                         <Route path="/communities" element={<Communities />} />
                         <Route path="/contratos" element={<Contratos />} />
+                        <Route path="/memorizae" element={<Memorizae />} />
                         
                         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                         <Route path="/success" element={<Success />} />
@@ -155,6 +158,7 @@ const App = () => {
                           <Route path="admins" element={<AdminsManager />} />
                           <Route path="hubla" element={<HublaProductsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
+                          <Route path="memorizae" element={<MemorizaeManager />} />
                         </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>
