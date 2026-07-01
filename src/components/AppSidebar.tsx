@@ -11,6 +11,7 @@ import {
   FileText,
   MessageSquareText,
   Headphones,
+  Brain,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +34,7 @@ import {
 const navItems = [
   { key: "nav.dashboard", url: "/", icon: LayoutDashboard },
   { key: "nav.courses", url: "/courses", icon: BookOpen },
+  { key: "nav.memorizae", url: "/memorizae", icon: Brain },
   { key: "nav.voice", url: "/voice-lab", icon: Mic },
   { key: "nav.listening", url: "/listening-lab", icon: Headphones },
   { key: "nav.writing", url: "/writing-lab", icon: MessageSquareText },
