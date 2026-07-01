@@ -10,9 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap, MessageSquareText, Headphones } from "lucide-react";
+import { BookText } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
 import { PdfReader } from "@/components/library/PdfReader";
+import { useLeiae } from "@/hooks/useLeiae";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,6 +86,7 @@ export default function CourseDetail() {
   const { user } = useAuth();
   const { profile, refreshProfile } = useAuth();
   const { isAdmin } = useAdmin();
+  const { open: openLeiae, loading: leiaeLoading } = useLeiae("pt-BR");
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -558,6 +561,35 @@ export default function CourseDetail() {
                              <FileText className="h-4 w-4 mr-2" /> PDF
                            </Button>
                          )}
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           disabled={leiaeLoading}
+                           onClick={() => {
+                             const parts: string[] = [];
+                             if (activeLesson.title) parts.push(activeLesson.title);
+                             if (activeLesson.description) parts.push(activeLesson.description);
+                             if (activeLesson.practice_text) parts.push(activeLesson.practice_text);
+                             const content = parts.join("\n\n").trim();
+                             if (!content) {
+                               toast.info("Esta aula ainda não tem texto para leitura interativa.");
+                               return;
+                             }
+                             openLeiae([
+                               {
+                                 title: activeLesson.title,
+                                 content,
+                                 lang: "en",
+                                 mimeType: "text/plain",
+                               },
+                             ]);
+                           }}
+                           className="w-full md:min-w-[140px]"
+                           title="Abrir leitura interativa da aula (tradução, sílabas, áudio palavra a palavra)"
+                         >
+                           <BookText className="h-4 w-4 mr-2" />
+                           {leiaeLoading ? "Abrindo…" : "IA Leiaê"}
+                         </Button>
                        </div>
                      </div>
                   </div>
