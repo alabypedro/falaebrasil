@@ -12,6 +12,7 @@ import {
   MessageSquareText,
   Headphones,
   Brain,
+  BookText,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +39,7 @@ const navItems = [
   { key: "nav.voice", url: "/voice-lab", icon: Mic },
   { key: "nav.listening", url: "/listening-lab", icon: Headphones },
   { key: "nav.writing", url: "/writing-lab", icon: MessageSquareText },
+  { key: "nav.leiae", url: "/leiae", icon: BookText },
   { key: "nav.library", url: "/library", icon: Library },
   { key: "nav.communities", url: "/communities", icon: Users },
   { key: "nav.tutorials", url: "/tutoriais", icon: HelpCircle },
