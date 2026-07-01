@@ -165,6 +165,38 @@ export default function MemorizaeManager() {
     load();
   };
 
+  // ---------- File uploads ----------
+  const uploadAsset = async (file: File, kind: "audio" | "image"): Promise<string | null> => {
+    const maxMb = kind === "audio" ? 15 : 8;
+    if (file.size > maxMb * 1024 * 1024) {
+      toast.error(`Arquivo muito grande (máx ${maxMb}MB)`);
+      return null;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || (kind === "audio" ? "mp3" : "png");
+    const path = `${kind}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("memorizae-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) { toast.error(`Falha no upload: ${error.message}`); return null; }
+    const { data } = supabase.storage.from("memorizae-assets").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const handleAudioFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingAudio(true);
+    const url = await uploadAsset(file, "audio");
+    setUploadingAudio(false);
+    if (url) setCardForm((f) => ({ ...f, audio: url }));
+  };
+  const handleImageFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadingImage(true);
+    const url = await uploadAsset(file, "image");
+    setUploadingImage(false);
+    if (url) setCardForm((f) => ({ ...f, image: url }));
+  };
+
   const bulkImport = async () => {
     if (!activeDeck) return;
     const lines = bulkText.split("\n").map((l) => l.trim()).filter(Boolean);
