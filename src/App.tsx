@@ -23,6 +23,7 @@ import Install from "@/pages/Install";
 import Tutoriais from "@/pages/Tutoriais";
 import Communities from "@/pages/Communities";
 import Memorizae from "@/pages/Memorizae";
+import Leiae from "@/pages/Leiae";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import CoursesManager from "@/pages/admin/CoursesManager";
@@ -132,6 +133,7 @@ const App = () => {
                         <Route path="/communities" element={<Communities />} />
                         <Route path="/contratos" element={<Contratos />} />
                         <Route path="/memorizae" element={<Memorizae />} />
+                        <Route path="/leiae" element={<Leiae />} />
                         
                         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                         <Route path="/success" element={<Success />} />
