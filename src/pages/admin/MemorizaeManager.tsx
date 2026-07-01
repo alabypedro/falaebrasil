@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload } from "lucide-react";
+import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X } from "lucide-react";
 
 interface Course { id: string; title: string; }
 interface Deck {
@@ -61,6 +61,8 @@ export default function MemorizaeManager() {
   const [cardForm, setCardForm] = useState<{ front: string; back: string; example: string; audio: string; image: string; }>({
     front: "", back: "", example: "", audio: "", image: "",
   });
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Bulk import
   const [bulkDialog, setBulkDialog] = useState(false);
