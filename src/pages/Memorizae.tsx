@@ -64,6 +64,25 @@ export default function Memorizae() {
   const [showBack, setShowBack] = useState(false);
   const [sessionStats, setSessionStats] = useState({ reviewed: 0, good: 0, easy: 0, again: 0 });
   const [busy, setBusy] = useState(false);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  const extractPath = (value: string) => {
+    const marker = "/memorizae-assets/";
+    const i = value.indexOf(marker);
+    return i >= 0 ? value.slice(i + marker.length) : value;
+  };
+
+  const ensureSigned = async (raw: string | null): Promise<string | null> => {
+    if (!raw) return null;
+    if (signedUrls[raw]) return signedUrls[raw];
+    const path = extractPath(raw);
+    const { data } = await supabase.storage
+      .from("memorizae-assets")
+      .createSignedUrl(path, 3600);
+    const url = data?.signedUrl ?? null;
+    if (url) setSignedUrls((s) => ({ ...s, [raw]: url }));
+    return url;
+  };
 
   const load = async () => {
     setLoading(true);
@@ -87,6 +106,17 @@ export default function Memorizae() {
   };
 
   useEffect(() => { load(); }, [user?.id]);
+
+  // Pre-sign assets of the current card + next one for smooth playback
+  useEffect(() => {
+    if (!activeDeck) return;
+    const toSign = [queue[idx], queue[idx + 1]].filter(Boolean) as Card[];
+    toSign.forEach((c) => {
+      if (c.audio_url) ensureSigned(c.audio_url);
+      if (c.image_url) ensureSigned(c.image_url);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDeck?.id, idx, queue.length]);
 
   const masteredCount = useMemo(
     () => Object.values(reviews).filter((r) => r.interval_days >= 21 && r.ease_factor >= 2.5).length,
@@ -235,12 +265,15 @@ export default function Memorizae() {
         ) : (
           <Card className="min-h-[360px] flex flex-col">
             <CardContent className="flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center">
-              {card.image_url && (
-                <img src={card.image_url} alt="" className="max-h-32 rounded-md object-contain" />
+              {card.image_url && signedUrls[card.image_url] && (
+                <img src={signedUrls[card.image_url]} alt="" className="max-h-32 rounded-md object-contain" />
               )}
               <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
               {card.audio_url && (
-                <Button variant="outline" size="sm" onClick={() => new Audio(card.audio_url!).play()}>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  const url = await ensureSigned(card.audio_url);
+                  if (url) new Audio(url).play().catch((e) => toast.error("Falha ao tocar áudio: " + e.message));
+                }}>
                   <Volume2 className="h-4 w-4 mr-1" /> Ouvir
                 </Button>
               )}

@@ -63,6 +63,8 @@ export default function MemorizaeManager() {
   });
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [audioPreview, setAudioPreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   // Bulk import
   const [bulkDialog, setBulkDialog] = useState(false);
@@ -128,14 +130,18 @@ export default function MemorizaeManager() {
   const openNewCard = () => {
     setEditingCard(null);
     setCardForm({ front: "", back: "", example: "", audio: "", image: "" });
+    setAudioPreview("");
+    setImagePreview("");
     setCardDialog(true);
   };
-  const openEditCard = (c: CardRow) => {
+  const openEditCard = async (c: CardRow) => {
     setEditingCard(c);
     setCardForm({
       front: c.front_text, back: c.back_text, example: c.example_sentence ?? "",
       audio: c.audio_url ?? "", image: c.image_url ?? "",
     });
+    setAudioPreview(c.audio_url ? await signMemorizaeUrl(c.audio_url) : "");
+    setImagePreview(c.image_url ? await signMemorizaeUrl(c.image_url) : "");
     setCardDialog(true);
   };
   const saveCard = async () => {
@@ -178,23 +184,37 @@ export default function MemorizaeManager() {
       .from("memorizae-assets")
       .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
     if (error) { toast.error(`Falha no upload: ${error.message}`); return null; }
-    const { data } = supabase.storage.from("memorizae-assets").getPublicUrl(path);
-    return data.publicUrl;
+    // Bucket is private; store the storage path and sign on read.
+    return path;
+  };
+
+  const signMemorizaeUrl = async (value: string): Promise<string> => {
+    const marker = "/memorizae-assets/";
+    const i = value.indexOf(marker);
+    const path = i >= 0 ? value.slice(i + marker.length) : value;
+    const { data } = await supabase.storage.from("memorizae-assets").createSignedUrl(path, 3600);
+    return data?.signedUrl ?? "";
   };
 
   const handleAudioFile = async (file: File | undefined) => {
     if (!file) return;
     setUploadingAudio(true);
-    const url = await uploadAsset(file, "audio");
+    const path = await uploadAsset(file, "audio");
     setUploadingAudio(false);
-    if (url) setCardForm((f) => ({ ...f, audio: url }));
+    if (path) {
+      setCardForm((f) => ({ ...f, audio: path }));
+      setAudioPreview(await signMemorizaeUrl(path));
+    }
   };
   const handleImageFile = async (file: File | undefined) => {
     if (!file) return;
     setUploadingImage(true);
-    const url = await uploadAsset(file, "image");
+    const path = await uploadAsset(file, "image");
     setUploadingImage(false);
-    if (url) setCardForm((f) => ({ ...f, image: url }));
+    if (path) {
+      setCardForm((f) => ({ ...f, image: path }));
+      setImagePreview(await signMemorizaeUrl(path));
+    }
   };
 
   const bulkImport = async () => {
@@ -318,8 +338,8 @@ export default function MemorizaeManager() {
                   {cardForm.audio ? (
                     <div className="flex items-center gap-2 rounded-md border p-2">
                       <Music className="h-4 w-4 text-primary shrink-0" />
-                      <audio src={cardForm.audio} controls className="h-8 flex-1 min-w-0" />
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCardForm({ ...cardForm, audio: "" })}>
+                      <audio src={audioPreview} controls className="h-8 flex-1 min-w-0" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setCardForm({ ...cardForm, audio: "" }); setAudioPreview(""); }}>
                         <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -341,9 +361,9 @@ export default function MemorizaeManager() {
                   <Label>Imagem (png, jpg, webp…)</Label>
                   {cardForm.image ? (
                     <div className="flex items-center gap-2 rounded-md border p-2">
-                      <img src={cardForm.image} alt="preview" className="h-10 w-10 rounded object-cover shrink-0" />
+                      <img src={imagePreview} alt="preview" className="h-10 w-10 rounded object-cover shrink-0" />
                       <span className="text-xs text-muted-foreground truncate flex-1">Imagem carregada</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCardForm({ ...cardForm, image: "" })}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setCardForm({ ...cardForm, image: "" }); setImagePreview(""); }}>
                         <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
