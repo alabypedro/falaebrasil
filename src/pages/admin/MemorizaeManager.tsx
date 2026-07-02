@@ -467,6 +467,53 @@ export default function MemorizaeManager() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* PDF → AI import dialog */}
+        <Dialog open={pdfDialog} onOpenChange={setPdfDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> Gerar cartas a partir de PDF
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Envie o PDF do livro da lição. A IA escolherá as palavras-chave mais úteis
+                e criará automaticamente cartas (frente/verso/exemplo) neste deck.
+              </p>
+              <div className="space-y-1.5">
+                <Label>Arquivo PDF</Label>
+                {pdfFile ? (
+                  <div className="flex items-center gap-2 rounded-md border p-2">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-xs truncate flex-1">{pdfFile.name}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPdfFile(null)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-4 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
+                    <Upload className="h-4 w-4" />
+                    <span>Selecionar PDF</span>
+                    <input type="file" accept="application/pdf" className="hidden"
+                      onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)} />
+                  </label>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label>Máximo de cartas a gerar</Label>
+                <Input type="number" min={5} max={60} value={pdfMax}
+                  onChange={(e) => setPdfMax(parseInt(e.target.value || "20", 10))} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPdfDialog(false)} disabled={pdfBusy}>Cancelar</Button>
+              <Button onClick={importPdf} disabled={pdfBusy || !pdfFile}>
+                {pdfBusy ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Gerando…</> : "Gerar cartas"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
