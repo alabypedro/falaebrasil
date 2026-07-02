@@ -53,9 +53,9 @@ Deno.serve(async (req) => {
       if (ids.length === 0) return json({ ok: true, deleted: 0 });
       query = query.in("card_id", ids);
     }
-    const { error, count } = await query.select("*", { count: "exact", head: true });
+    const { data: deleted, error } = await query.select("id");
     if (error) return json({ error: error.message }, 500);
-    return json({ ok: true, deleted: count ?? 0 });
+    return json({ ok: true, deleted: deleted?.length ?? 0 });
   } catch (e) {
     console.error("memorizae-reset-review error", e);
     return json({ error: (e as Error).message }, 500);
