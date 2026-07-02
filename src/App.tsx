@@ -41,6 +41,7 @@ import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosMan
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
 import ContractsManager from "@/pages/admin/ContractsManager";
 import MemorizaeManager from "@/pages/admin/MemorizaeManager";
+import LeiaeManager from "@/pages/admin/LeiaeManager";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
 
@@ -161,6 +162,7 @@ const App = () => {
                           <Route path="hubla" element={<HublaProductsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />
+                          <Route path="leiae" element={<LeiaeManager />} />
                         </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>
