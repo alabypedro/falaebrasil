@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X, FileText, RotateCcw, Sparkles } from "lucide-react";
+import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X, Video, RotateCcw, Sparkles, Link as LinkIcon } from "lucide-react";
 
 interface Course { id: string; title: string; }
 interface Deck {
@@ -70,11 +70,13 @@ export default function MemorizaeManager() {
   const [bulkDialog, setBulkDialog] = useState(false);
   const [bulkText, setBulkText] = useState("");
 
-  // PDF import (AI)
-  const [pdfDialog, setPdfDialog] = useState(false);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [pdfMax, setPdfMax] = useState(20);
-  const [pdfBusy, setPdfBusy] = useState(false);
+  // Video import (AI)
+  const [videoDialog, setVideoDialog] = useState(false);
+  const [videoSource, setVideoSource] = useState<"file" | "url">("file");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoMax, setVideoMax] = useState(20);
+  const [videoBusy, setVideoBusy] = useState(false);
 
   // Reset review by email
   const [resetEmail, setResetEmail] = useState("");
@@ -251,29 +253,33 @@ export default function MemorizaeManager() {
     load();
   };
 
-  const importPdf = async () => {
-    if (!activeDeck || !pdfFile) { toast.error("Selecione um PDF"); return; }
-    setPdfBusy(true);
+  const importVideo = async () => {
+    if (!activeDeck) return;
+    if (videoSource === "file" && !videoFile) { toast.error("Selecione um vídeo"); return; }
+    if (videoSource === "url" && !videoUrl.trim()) { toast.error("Informe a URL do vídeo"); return; }
+    setVideoBusy(true);
     try {
       const fd = new FormData();
-      fd.append("file", pdfFile);
+      if (videoSource === "file" && videoFile) fd.append("file", videoFile);
+      if (videoSource === "url") fd.append("url", videoUrl.trim());
       fd.append("deck_id", activeDeck.id);
-      fd.append("max_cards", String(pdfMax));
+      fd.append("max_cards", String(videoMax));
       const { data: sess } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke("memorizae-import-pdf", {
+      const { data, error } = await supabase.functions.invoke("memorizae-import-video", {
         body: fd,
         headers: { Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       toast.success(`${(data as any).inserted} cartas geradas pela IA`);
-      setPdfDialog(false);
-      setPdfFile(null);
+      setVideoDialog(false);
+      setVideoFile(null);
+      setVideoUrl("");
       load();
     } catch (e: any) {
-      toast.error(e.message ?? "Falha ao importar PDF");
+      toast.error(e.message ?? "Falha ao importar vídeo");
     } finally {
-      setPdfBusy(false);
+      setVideoBusy(false);
     }
   };
 
@@ -306,8 +312,8 @@ export default function MemorizaeManager() {
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar aos decks
           </Button>
           <div className="ml-auto flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setPdfDialog(true)}>
-              <Sparkles className="h-4 w-4 mr-1" /> Importar PDF (IA)
+            <Button size="sm" variant="outline" onClick={() => setVideoDialog(true)}>
+              <Sparkles className="h-4 w-4 mr-1" /> Importar vídeo (IA)
             </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkDialog(true)}>
               <Upload className="h-4 w-4 mr-1" /> Importar em lote
@@ -468,48 +474,74 @@ export default function MemorizaeManager() {
           </DialogContent>
         </Dialog>
 
-        {/* PDF → AI import dialog */}
-        <Dialog open={pdfDialog} onOpenChange={setPdfDialog}>
+        {/* Video → AI import dialog */}
+        <Dialog open={videoDialog} onOpenChange={setVideoDialog}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" /> Gerar cartas a partir de PDF
+                <Sparkles className="h-4 w-4 text-primary" /> Gerar cartas a partir de vídeo
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Envie o PDF do livro da lição. A IA escolherá as palavras-chave mais úteis
+                Envie um vídeo em inglês (mp4/webm/mov, até 20MB) ou cole a URL de um mp4.
+                A IA vai assistir, escolher as palavras-chave mais úteis
                 e criará automaticamente cartas (frente/verso/exemplo) neste deck.
               </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={videoSource === "file" ? "default" : "outline"}
+                  onClick={() => setVideoSource("file")}
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1" /> Arquivo
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={videoSource === "url" ? "default" : "outline"}
+                  onClick={() => setVideoSource("url")}
+                >
+                  <LinkIcon className="h-3.5 w-3.5 mr-1" /> Link
+                </Button>
+              </div>
               <div className="space-y-1.5">
-                <Label>Arquivo PDF</Label>
-                {pdfFile ? (
-                  <div className="flex items-center gap-2 rounded-md border p-2">
-                    <FileText className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-xs truncate flex-1">{pdfFile.name}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPdfFile(null)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                {videoSource === "file" ? (
+                  videoFile ? (
+                    <div className="flex items-center gap-2 rounded-md border p-2">
+                      <Video className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-xs truncate flex-1">{videoFile.name}</span>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setVideoFile(null)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-4 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
+                      <Upload className="h-4 w-4" />
+                      <span>Selecionar vídeo (mp4/webm/mov)</span>
+                      <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" className="hidden"
+                        onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)} />
+                    </label>
+                  )
                 ) : (
-                  <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-4 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
-                    <Upload className="h-4 w-4" />
-                    <span>Selecionar PDF</span>
-                    <input type="file" accept="application/pdf" className="hidden"
-                      onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)} />
-                  </label>
+                  <Input
+                    placeholder="https://exemplo.com/aula.mp4"
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                  />
                 )}
               </div>
               <div className="space-y-1.5">
                 <Label>Máximo de cartas a gerar</Label>
-                <Input type="number" min={5} max={60} value={pdfMax}
-                  onChange={(e) => setPdfMax(parseInt(e.target.value || "20", 10))} />
+                <Input type="number" min={5} max={60} value={videoMax}
+                  onChange={(e) => setVideoMax(parseInt(e.target.value || "20", 10))} />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setPdfDialog(false)} disabled={pdfBusy}>Cancelar</Button>
-              <Button onClick={importPdf} disabled={pdfBusy || !pdfFile}>
-                {pdfBusy ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Gerando…</> : "Gerar cartas"}
+              <Button variant="outline" onClick={() => setVideoDialog(false)} disabled={videoBusy}>Cancelar</Button>
+              <Button onClick={importVideo} disabled={videoBusy || (videoSource === "file" ? !videoFile : !videoUrl.trim())}>
+                {videoBusy ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Gerando…</> : "Gerar cartas"}
               </Button>
             </DialogFooter>
           </DialogContent>
