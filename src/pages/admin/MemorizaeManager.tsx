@@ -63,6 +63,8 @@ export default function MemorizaeManager() {
   });
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [audioPreview, setAudioPreview] = useState<string>("");
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   // Bulk import
   const [bulkDialog, setBulkDialog] = useState(false);
@@ -178,23 +180,37 @@ export default function MemorizaeManager() {
       .from("memorizae-assets")
       .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
     if (error) { toast.error(`Falha no upload: ${error.message}`); return null; }
-    const { data } = supabase.storage.from("memorizae-assets").getPublicUrl(path);
-    return data.publicUrl;
+    // Bucket is private; store the storage path and sign on read.
+    return path;
+  };
+
+  const signMemorizaeUrl = async (value: string): Promise<string> => {
+    const marker = "/memorizae-assets/";
+    const i = value.indexOf(marker);
+    const path = i >= 0 ? value.slice(i + marker.length) : value;
+    const { data } = await supabase.storage.from("memorizae-assets").createSignedUrl(path, 3600);
+    return data?.signedUrl ?? "";
   };
 
   const handleAudioFile = async (file: File | undefined) => {
     if (!file) return;
     setUploadingAudio(true);
-    const url = await uploadAsset(file, "audio");
+    const path = await uploadAsset(file, "audio");
     setUploadingAudio(false);
-    if (url) setCardForm((f) => ({ ...f, audio: url }));
+    if (path) {
+      setCardForm((f) => ({ ...f, audio: path }));
+      setAudioPreview(await signMemorizaeUrl(path));
+    }
   };
   const handleImageFile = async (file: File | undefined) => {
     if (!file) return;
     setUploadingImage(true);
-    const url = await uploadAsset(file, "image");
+    const path = await uploadAsset(file, "image");
     setUploadingImage(false);
-    if (url) setCardForm((f) => ({ ...f, image: url }));
+    if (path) {
+      setCardForm((f) => ({ ...f, image: path }));
+      setImagePreview(await signMemorizaeUrl(path));
+    }
   };
 
   const bulkImport = async () => {
