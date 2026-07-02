@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X } from "lucide-react";
+import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X, FileText, RotateCcw, Sparkles } from "lucide-react";
 
 interface Course { id: string; title: string; }
 interface Deck {
@@ -69,6 +69,18 @@ export default function MemorizaeManager() {
   // Bulk import
   const [bulkDialog, setBulkDialog] = useState(false);
   const [bulkText, setBulkText] = useState("");
+
+  // PDF import (AI)
+  const [pdfDialog, setPdfDialog] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfMax, setPdfMax] = useState(20);
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  // Reset review by email
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetScope, setResetScope] = useState<"all" | "deck">("all");
+  const [resetDeckId, setResetDeckId] = useState<string>("");
+  const [resetBusy, setResetBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -239,6 +251,52 @@ export default function MemorizaeManager() {
     load();
   };
 
+  const importPdf = async () => {
+    if (!activeDeck || !pdfFile) { toast.error("Selecione um PDF"); return; }
+    setPdfBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", pdfFile);
+      fd.append("deck_id", activeDeck.id);
+      fd.append("max_cards", String(pdfMax));
+      const { data: sess } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("memorizae-import-pdf", {
+        body: fd,
+        headers: { Authorization: `Bearer ${sess.session?.access_token ?? ""}` },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`${(data as any).inserted} cartas geradas pela IA`);
+      setPdfDialog(false);
+      setPdfFile(null);
+      load();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao importar PDF");
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
+  const resetReview = async () => {
+    const email = resetEmail.trim().toLowerCase();
+    if (!email) { toast.error("Informe o email"); return; }
+    if (resetScope === "deck" && !resetDeckId) { toast.error("Selecione o deck"); return; }
+    setResetBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("memorizae-reset-review", {
+        body: { email, scope: resetScope, deck_id: resetScope === "deck" ? resetDeckId : null },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`${(data as any).deleted} revisões resetadas para ${email}`);
+      setResetEmail("");
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao resetar");
+    } finally {
+      setResetBusy(false);
+    }
+  };
+
   // ---------- UI ----------
   if (activeDeck) {
     return (
@@ -248,6 +306,9 @@ export default function MemorizaeManager() {
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar aos decks
           </Button>
           <div className="ml-auto flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setPdfDialog(true)}>
+              <Sparkles className="h-4 w-4 mr-1" /> Importar PDF (IA)
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkDialog(true)}>
               <Upload className="h-4 w-4 mr-1" /> Importar em lote
             </Button>
@@ -406,6 +467,53 @@ export default function MemorizaeManager() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* PDF → AI import dialog */}
+        <Dialog open={pdfDialog} onOpenChange={setPdfDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> Gerar cartas a partir de PDF
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Envie o PDF do livro da lição. A IA escolherá as palavras-chave mais úteis
+                e criará automaticamente cartas (frente/verso/exemplo) neste deck.
+              </p>
+              <div className="space-y-1.5">
+                <Label>Arquivo PDF</Label>
+                {pdfFile ? (
+                  <div className="flex items-center gap-2 rounded-md border p-2">
+                    <FileText className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-xs truncate flex-1">{pdfFile.name}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPdfFile(null)}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-4 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
+                    <Upload className="h-4 w-4" />
+                    <span>Selecionar PDF</span>
+                    <input type="file" accept="application/pdf" className="hidden"
+                      onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)} />
+                  </label>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label>Máximo de cartas a gerar</Label>
+                <Input type="number" min={5} max={60} value={pdfMax}
+                  onChange={(e) => setPdfMax(parseInt(e.target.value || "20", 10))} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPdfDialog(false)} disabled={pdfBusy}>Cancelar</Button>
+              <Button onClick={importPdf} disabled={pdfBusy || !pdfFile}>
+                {pdfBusy ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Gerando…</> : "Gerar cartas"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -433,6 +541,45 @@ export default function MemorizaeManager() {
       <div className="flex justify-end">
         <Button onClick={openNewDeck}><Plus className="h-4 w-4 mr-1" /> Novo deck</Button>
       </div>
+
+      {/* Reset review by email */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <RotateCcw className="h-4 w-4 text-primary" /> Resetar revisões de um aluno
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Apaga o histórico "Errei / Bom / Fácil" do aluno para forçá-lo a revisar as cartas novamente.
+          </p>
+          <div className="grid gap-3 md:grid-cols-[1fr_180px_1fr_auto]">
+            <Input
+              placeholder="email@exemplo.com"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+            />
+            <Select value={resetScope} onValueChange={(v: "all" | "deck") => setResetScope(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os decks</SelectItem>
+                <SelectItem value="deck">Um deck específico</SelectItem>
+              </SelectContent>
+            </Select>
+            {resetScope === "deck" ? (
+              <Select value={resetDeckId} onValueChange={setResetDeckId}>
+                <SelectTrigger><SelectValue placeholder="Escolha o deck" /></SelectTrigger>
+                <SelectContent>
+                  {decks.map((d) => <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : <div />}
+            <Button onClick={resetReview} disabled={resetBusy}>
+              {resetBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Resetar"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
