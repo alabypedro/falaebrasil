@@ -542,6 +542,45 @@ export default function MemorizaeManager() {
         <Button onClick={openNewDeck}><Plus className="h-4 w-4 mr-1" /> Novo deck</Button>
       </div>
 
+      {/* Reset review by email */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <RotateCcw className="h-4 w-4 text-primary" /> Resetar revisões de um aluno
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Apaga o histórico "Errei / Bom / Fácil" do aluno para forçá-lo a revisar as cartas novamente.
+          </p>
+          <div className="grid gap-3 md:grid-cols-[1fr_180px_1fr_auto]">
+            <Input
+              placeholder="email@exemplo.com"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+            />
+            <Select value={resetScope} onValueChange={(v: "all" | "deck") => setResetScope(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os decks</SelectItem>
+                <SelectItem value="deck">Um deck específico</SelectItem>
+              </SelectContent>
+            </Select>
+            {resetScope === "deck" ? (
+              <Select value={resetDeckId} onValueChange={setResetDeckId}>
+                <SelectTrigger><SelectValue placeholder="Escolha o deck" /></SelectTrigger>
+                <SelectContent>
+                  {decks.map((d) => <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : <div />}
+            <Button onClick={resetReview} disabled={resetBusy}>
+              {resetBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Resetar"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : decks.length === 0 ? (
