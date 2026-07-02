@@ -265,12 +265,15 @@ export default function Memorizae() {
         ) : (
           <Card className="min-h-[360px] flex flex-col">
             <CardContent className="flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center">
-              {card.image_url && (
-                <img src={card.image_url} alt="" className="max-h-32 rounded-md object-contain" />
+              {card.image_url && signedUrls[card.image_url] && (
+                <img src={signedUrls[card.image_url]} alt="" className="max-h-32 rounded-md object-contain" />
               )}
               <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
               {card.audio_url && (
-                <Button variant="outline" size="sm" onClick={() => new Audio(card.audio_url!).play()}>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  const url = await ensureSigned(card.audio_url);
+                  if (url) new Audio(url).play().catch((e) => toast.error("Falha ao tocar áudio: " + e.message));
+                }}>
                   <Volume2 className="h-4 w-4 mr-1" /> Ouvir
                 </Button>
               )}
