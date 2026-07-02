@@ -551,6 +551,47 @@ export type Database = {
         }
         Relationships: []
       }
+      leiae_texts: {
+        Row: {
+          content: string
+          course_id: string | null
+          created_at: string
+          display_order: number
+          id: string
+          level: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          course_id?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          level?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          course_id?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          level?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leiae_texts_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_videos: {
         Row: {
           created_at: string
