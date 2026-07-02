@@ -64,6 +64,25 @@ export default function Memorizae() {
   const [showBack, setShowBack] = useState(false);
   const [sessionStats, setSessionStats] = useState({ reviewed: 0, good: 0, easy: 0, again: 0 });
   const [busy, setBusy] = useState(false);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  const extractPath = (value: string) => {
+    const marker = "/memorizae-assets/";
+    const i = value.indexOf(marker);
+    return i >= 0 ? value.slice(i + marker.length) : value;
+  };
+
+  const ensureSigned = async (raw: string | null): Promise<string | null> => {
+    if (!raw) return null;
+    if (signedUrls[raw]) return signedUrls[raw];
+    const path = extractPath(raw);
+    const { data } = await supabase.storage
+      .from("memorizae-assets")
+      .createSignedUrl(path, 3600);
+    const url = data?.signedUrl ?? null;
+    if (url) setSignedUrls((s) => ({ ...s, [raw]: url }));
+    return url;
+  };
 
   const load = async () => {
     setLoading(true);
@@ -87,6 +106,17 @@ export default function Memorizae() {
   };
 
   useEffect(() => { load(); }, [user?.id]);
+
+  // Pre-sign assets of the current card + next one for smooth playback
+  useEffect(() => {
+    if (!activeDeck) return;
+    const toSign = [queue[idx], queue[idx + 1]].filter(Boolean) as Card[];
+    toSign.forEach((c) => {
+      if (c.audio_url) ensureSigned(c.audio_url);
+      if (c.image_url) ensureSigned(c.image_url);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDeck?.id, idx, queue.length]);
 
   const masteredCount = useMemo(
     () => Object.values(reviews).filter((r) => r.interval_days >= 21 && r.ease_factor >= 2.5).length,
