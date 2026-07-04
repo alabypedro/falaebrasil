@@ -219,6 +219,27 @@ export default function Memorizae() {
     return formatInterval(next);
   };
 
+  // TTS: speak front (EN), then back (PT) and example (EN) if already revealed.
+  const speakCard = (card: Card, includeBack: boolean) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      toast.error("Seu navegador não suporta síntese de voz.");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const say = (text: string, lang: string) => {
+      if (!text?.trim()) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang;
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    };
+    say(card.front_text, "en-US");
+    if (includeBack) {
+      say(card.back_text, "pt-BR");
+      if (card.example_sentence) say(card.example_sentence, "en-US");
+    }
+  };
+
   // ---------- Review mode ----------
   if (activeDeck) {
     const card = queue[idx];
@@ -269,14 +290,9 @@ export default function Memorizae() {
                 <img src={signedUrls[card.image_url]} alt="" className="max-h-32 rounded-md object-contain" />
               )}
               <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
-              {card.audio_url && (
-                <Button variant="outline" size="sm" onClick={async () => {
-                  const url = await ensureSigned(card.audio_url);
-                  if (url) new Audio(url).play().catch((e) => toast.error("Falha ao tocar áudio: " + e.message));
-                }}>
-                  <Volume2 className="h-4 w-4 mr-1" /> Ouvir
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={() => speakCard(card, showBack)}>
+                <Volume2 className="h-4 w-4 mr-1" /> Ouvir
+              </Button>
 
               {showBack && (
                 <div className="w-full border-t pt-6 space-y-3 animate-fade-in">
