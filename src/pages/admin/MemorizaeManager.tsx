@@ -399,31 +399,10 @@ export default function MemorizaeManager() {
                 <Label>Exemplo (opcional)</Label>
                 <Textarea rows={2} value={cardForm.example} onChange={(e) => setCardForm({ ...cardForm, example: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Áudio (mp3, wav, m4a…)</Label>
-                  {cardForm.audio ? (
-                    <div className="flex items-center gap-2 rounded-md border p-2">
-                      <Music className="h-4 w-4 text-primary shrink-0" />
-                      <audio src={audioPreview} controls className="h-8 flex-1 min-w-0" />
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setCardForm({ ...cardForm, audio: "" }); setAudioPreview(""); }}>
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
-                      {uploadingAudio ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      <span>{uploadingAudio ? "Enviando…" : "Selecionar áudio"}</span>
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        className="hidden"
-                        disabled={uploadingAudio}
-                        onChange={(e) => handleAudioFile(e.target.files?.[0])}
-                      />
-                    </label>
-                  )}
-                </div>
+              <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+                🔊 O áudio é gerado automaticamente a partir dos textos da carta (frente, verso e exemplo) — não é preciso enviar arquivo.
+              </div>
+              <div className="grid grid-cols-1 gap-3">
                 <div className="space-y-1.5">
                   <Label>Imagem (png, jpg, webp…)</Label>
                   {cardForm.image ? (
