@@ -269,14 +269,9 @@ export default function Memorizae() {
                 <img src={signedUrls[card.image_url]} alt="" className="max-h-32 rounded-md object-contain" />
               )}
               <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
-              {card.audio_url && (
-                <Button variant="outline" size="sm" onClick={async () => {
-                  const url = await ensureSigned(card.audio_url);
-                  if (url) new Audio(url).play().catch((e) => toast.error("Falha ao tocar áudio: " + e.message));
-                }}>
-                  <Volume2 className="h-4 w-4 mr-1" /> Ouvir
-                </Button>
-              )}
+              <Button variant="outline" size="sm" onClick={() => speakCard(card, showBack)}>
+                <Volume2 className="h-4 w-4 mr-1" /> Ouvir
+              </Button>
 
               {showBack && (
                 <div className="w-full border-t pt-6 space-y-3 animate-fade-in">
