@@ -393,7 +393,40 @@ export default function MemorizaeManager() {
                 <Textarea rows={2} value={cardForm.front} onChange={(e) => setCardForm({ ...cardForm, front: e.target.value })} />
               </div>
               <div>
-                <Label>Verso (tradução / explicação)</Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label>Verso (tradução / explicação)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    disabled={translatingFront || !cardForm.front.trim()}
+                    onClick={async () => {
+                      setTranslatingFront(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("translate-en-pt", {
+                          body: { text: cardForm.front.trim() },
+                        });
+                        if (error) throw error;
+                        if ((data as any)?.error) throw new Error((data as any).error);
+                        const translation = (data as any)?.translation?.trim();
+                        if (translation) {
+                          setCardForm((f) => ({ ...f, back: translation }));
+                          toast.success("Tradução preenchida");
+                        } else {
+                          toast.error("Tradução vazia");
+                        }
+                      } catch (e: any) {
+                        toast.error(e.message ?? "Falha ao traduzir");
+                      } finally {
+                        setTranslatingFront(false);
+                      }
+                    }}
+                  >
+                    {translatingFront ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                    Traduzir da frente
+                  </Button>
+                </div>
                 <Textarea rows={2} value={cardForm.back} onChange={(e) => setCardForm({ ...cardForm, back: e.target.value })} />
               </div>
               <div>
