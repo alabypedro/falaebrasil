@@ -219,25 +219,18 @@ export default function Memorizae() {
     return formatInterval(next);
   };
 
-  // TTS: speak front (EN), then back (PT) and example (EN) if already revealed.
-  const speakCard = (card: Card, includeBack: boolean) => {
+  // TTS: always speak only the front (EN), even when the back is revealed.
+  const speakCard = (card: Card) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       toast.error("Seu navegador não suporta síntese de voz.");
       return;
     }
     window.speechSynthesis.cancel();
-    const say = (text: string, lang: string) => {
-      if (!text?.trim()) return;
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang;
-      u.rate = 0.95;
-      window.speechSynthesis.speak(u);
-    };
-    say(card.front_text, "en-US");
-    if (includeBack) {
-      say(card.back_text, "pt-BR");
-      if (card.example_sentence) say(card.example_sentence, "en-US");
-    }
+    if (!card.front_text?.trim()) return;
+    const u = new SpeechSynthesisUtterance(card.front_text);
+    u.lang = "en-US";
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
   };
 
   // ---------- Review mode ----------
@@ -290,7 +283,7 @@ export default function Memorizae() {
                 <img src={signedUrls[card.image_url]} alt="" className="max-h-32 rounded-md object-contain" />
               )}
               <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
-              <Button variant="outline" size="sm" onClick={() => speakCard(card, showBack)}>
+              <Button variant="outline" size="sm" onClick={() => speakCard(card)}>
                 <Volume2 className="h-4 w-4 mr-1" /> Ouvir
               </Button>
 
