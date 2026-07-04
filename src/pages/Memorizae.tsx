@@ -219,6 +219,27 @@ export default function Memorizae() {
     return formatInterval(next);
   };
 
+  // TTS: speak front (EN), then back (PT) and example (EN) if already revealed.
+  const speakCard = (card: Card, includeBack: boolean) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      toast.error("Seu navegador não suporta síntese de voz.");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const say = (text: string, lang: string) => {
+      if (!text?.trim()) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang;
+      u.rate = 0.95;
+      window.speechSynthesis.speak(u);
+    };
+    say(card.front_text, "en-US");
+    if (includeBack) {
+      say(card.back_text, "pt-BR");
+      if (card.example_sentence) say(card.example_sentence, "en-US");
+    }
+  };
+
   // ---------- Review mode ----------
   if (activeDeck) {
     const card = queue[idx];
