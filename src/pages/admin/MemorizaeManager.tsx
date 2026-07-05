@@ -85,6 +85,9 @@ export default function MemorizaeManager() {
   const [resetDeckId, setResetDeckId] = useState<string>("");
   const [resetBusy, setResetBusy] = useState(false);
 
+  // Course filter (pill buttons on deck list)
+  const [courseFilter, setCourseFilter] = useState<string>("all");
+
   const load = async () => {
     setLoading(true);
     const [{ data: cs }, { data: ds }, { data: cd }] = await Promise.all([
