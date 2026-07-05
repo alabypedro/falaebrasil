@@ -85,6 +85,9 @@ export default function MemorizaeManager() {
   const [resetDeckId, setResetDeckId] = useState<string>("");
   const [resetBusy, setResetBusy] = useState(false);
 
+  // Course filter (pill buttons on deck list)
+  const [courseFilter, setCourseFilter] = useState<string>("all");
+
   const load = async () => {
     setLoading(true);
     const [{ data: cs }, { data: ds }, { data: cd }] = await Promise.all([
@@ -631,6 +634,16 @@ export default function MemorizaeManager() {
       ) : decks.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum deck ainda. Crie o primeiro.</CardContent></Card>
       ) : (
+        <>
+        <div className="flex gap-1 flex-wrap">
+          <Button size="sm" variant={courseFilter === "all" ? "default" : "outline"} onClick={() => setCourseFilter("all")}>Todos</Button>
+          <Button size="sm" variant={courseFilter === "none" ? "default" : "outline"} onClick={() => setCourseFilter("none")}>Global</Button>
+          {courses.map((c) => (
+            <Button key={c.id} size="sm" variant={courseFilter === c.id ? "default" : "outline"} onClick={() => setCourseFilter(c.id)}>
+              {c.title}
+            </Button>
+          ))}
+        </div>
         <div className="rounded-lg border overflow-auto">
           <Table>
             <TableHeader>
@@ -643,7 +656,13 @@ export default function MemorizaeManager() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {decks.map((d) => {
+              {decks
+                .filter((d) =>
+                  courseFilter === "all" ? true :
+                  courseFilter === "none" ? d.course_id === null :
+                  d.course_id === courseFilter
+                )
+                .map((d) => {
                 const count = cards.filter((c) => c.deck_id === d.id).length;
                 const course = courses.find((c) => c.id === d.course_id);
                 return (
@@ -684,6 +703,7 @@ export default function MemorizaeManager() {
             </TableBody>
           </Table>
         </div>
+        </>
       )}
 
       {/* Deck dialog */}
