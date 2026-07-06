@@ -171,7 +171,7 @@ export default function Memorizae() {
     load();
   };
 
-  const rate = async (rating: 0 | 3 | 5) => {
+  const rate = async (rating: 1 | 2 | 3 | 4) => {
     if (busy) return;
     const card = queue[idx];
     if (!card) return;
@@ -195,28 +195,23 @@ export default function Memorizae() {
     setSessionStats((s) => ({
       reviewed: s.reviewed + 1,
       good: s.good + (rating === 3 ? 1 : 0),
-      easy: s.easy + (rating === 5 ? 1 : 0),
-      again: s.again + (rating === 0 ? 1 : 0),
+      easy: s.easy + (rating === 4 ? 1 : 0),
+      again: s.again + (rating === 1 || rating === 2 ? 1 : 0),
     }));
 
-    // Re-queue "Errei" cards at the end
-    if (rating === 0) {
+    // Re-queue "Novamente" cards at the end
+    if (rating === 1) {
       setQueue((q) => [...q, card]);
     }
     setIdx((i) => i + 1);
     setShowBack(false);
   };
 
-  const previewInterval = (rating: 0 | 3 | 5, card: Card): string => {
-    const rv = reviews[card.id];
-    const reps = rv?.repetitions ?? 0;
-    const interval = rv?.interval_days ?? 0;
-    const ease = rv?.ease_factor ?? 2.5;
-    let next = 0;
-    if (rating === 0) next = 10 / 1440;
-    else if (rating === 3) next = reps === 0 ? 1 : reps === 1 ? 3 : Math.round(interval * ease);
-    else next = reps === 0 ? 4 : reps === 1 ? 6 : Math.round(interval * (ease + 0.15));
-    return formatInterval(next);
+  const previewInterval = (rating: 1 | 2 | 3 | 4): string => {
+    if (rating === 1) return "<1min";
+    if (rating === 2) return "<1d";
+    if (rating === 3) return "15d";
+    return "90d";
   };
 
   // TTS: always speak only the front (EN), even when the back is revealed.
@@ -302,33 +297,42 @@ export default function Memorizae() {
                   Mostrar resposta
                 </Button>
               ) : (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-col h-auto py-3 border-neutral-700 bg-neutral-900 hover:bg-neutral-800 text-neutral-100"
+                    disabled={busy}
+                    onClick={() => rate(1)}
+                  >
+                    <span className="font-semibold">Novamente</span>
+                    <span className="text-[10px] opacity-70">{previewInterval(1)}</span>
+                  </Button>
                   <Button
                     variant="outline"
                     className="flex-col h-auto py-3 border-red-500/50 hover:bg-red-500/10 text-red-600"
                     disabled={busy}
-                    onClick={() => rate(0)}
+                    onClick={() => rate(2)}
                   >
-                    <span className="font-semibold">Errei</span>
-                    <span className="text-[10px] opacity-70">+{previewInterval(0, card)}</span>
+                    <span className="font-semibold">Difícil</span>
+                    <span className="text-[10px] opacity-70">{previewInterval(2)}</span>
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex-col h-auto py-3 border-blue-500/50 hover:bg-blue-500/10 text-blue-600"
+                    className="flex-col h-auto py-3 border-yellow-500/50 hover:bg-yellow-500/10 text-yellow-600"
                     disabled={busy}
                     onClick={() => rate(3)}
                   >
                     <span className="font-semibold">Bom</span>
-                    <span className="text-[10px] opacity-70">+{previewInterval(3, card)}</span>
+                    <span className="text-[10px] opacity-70">{previewInterval(3)}</span>
                   </Button>
                   <Button
                     variant="outline"
                     className="flex-col h-auto py-3 border-green-500/50 hover:bg-green-500/10 text-green-600"
                     disabled={busy}
-                    onClick={() => rate(5)}
+                    onClick={() => rate(4)}
                   >
                     <span className="font-semibold">Fácil</span>
-                    <span className="text-[10px] opacity-70">+{previewInterval(5, card)}</span>
+                    <span className="text-[10px] opacity-70">{previewInterval(4)}</span>
                   </Button>
                 </div>
               )}
