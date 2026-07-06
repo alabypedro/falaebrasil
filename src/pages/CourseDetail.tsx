@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap, MessageSquareText, Headphones } from "lucide-react";
+import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap, MessageSquareText, Headphones, Brain, BookText } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
 import { PdfReader } from "@/components/library/PdfReader";
@@ -503,63 +503,86 @@ export default function CourseDetail() {
                         <p className="text-sm text-muted-foreground mt-1 break-words">{activeLesson.description}</p>
                       )}
                     </div>
-                     <div className="flex flex-wrap gap-3 md:flex-shrink-0 md:justify-end">
-                       <div className="flex flex-col gap-2 w-full md:w-auto">
-                         <Button
-                           variant="outline"
-                           size="sm"
-                           onClick={() => {
+                     <div className="flex flex-col gap-2 md:flex-shrink-0">
+                        <div className="grid grid-cols-3 gap-2 w-full">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
                               sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
-                             const unitMatch = activeLesson.title.match(/unit\s*0*(\d+)/i);
-                             const params = new URLSearchParams();
-                             if (course?.level) params.set('level', course.level);
-                             if (unitMatch) params.set('unit', unitMatch[1]);
-                             const qs = params.toString();
-                             navigate(`/listening-lab${qs ? `?${qs}` : ''}`);
-                           }}
-                           className="w-full md:min-w-[140px]"
-                         >
-                           <Headphones className="h-4 w-4 mr-2" /> IA Escutaê
-                         </Button>
-                         <Button
-                           variant="outline"
-                           size="sm"
-                           onClick={() => {
+                              navigate(`/memorizae`);
+                            }}
+                            className="w-full"
+                          >
+                            <Brain className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">IA Memorizaê</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
                               sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
-                             navigate(`/writing-lab${course?.level ? `?level=${course.level}` : ''}`);
-                           }}
-                           className="w-full md:min-w-[140px]"
-                         >
-                           <MessageSquareText className="h-4 w-4 mr-2" /> IA Escreveaê
-                         </Button>
-                       </div>
-
-                       <div className="flex flex-col gap-2 w-full md:w-auto">
-                         {activeLesson.practice_text && (
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => {
+                              const unitMatch = activeLesson.title.match(/unit\s*0*(\d+)/i);
+                              const params = new URLSearchParams();
+                              if (course?.level) params.set('level', course.level);
+                              if (unitMatch) params.set('unit', unitMatch[1]);
+                              const qs = params.toString();
+                              navigate(`/listening-lab${qs ? `?${qs}` : ''}`);
+                            }}
+                            className="w-full"
+                          >
+                            <Headphones className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">IA Escutaê</span>
+                          </Button>
+                          {activeLesson.practice_text ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
                                 sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
-                               navigate(`/voice-lab?lesson=${activeLesson.id}`);
-                             }}
-                             className="w-full md:min-w-[140px]"
-                           >
-                             <Mic className="h-4 w-4 mr-2" /> IA Falaê
-                           </Button>
-                         )}
-                         {activeLesson.pdf_url && (
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => window.open(`${activeLesson.pdf_url}#toolbar=0&navpanes=0`, '_blank', 'noopener,noreferrer')}
-                             className="w-full md:min-w-[140px]"
-                           >
-                             <FileText className="h-4 w-4 mr-2" /> PDF
-                           </Button>
-                         )}
-                       </div>
-                     </div>
+                                navigate(`/voice-lab?lesson=${activeLesson.id}`);
+                              }}
+                              className="w-full"
+                            >
+                              <Mic className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">IA Falaê</span>
+                            </Button>
+                          ) : (
+                            <div />
+                          )}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 w-full">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
+                              navigate(`/leiae`);
+                            }}
+                            className="w-full"
+                          >
+                            <BookText className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">IA Leiaê</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              sessionStorage.setItem("ai-return-url", `/courses/${courseId}?lesson=${activeLesson.id}`);
+                              navigate(`/writing-lab${course?.level ? `?level=${course.level}` : ''}`);
+                            }}
+                            className="w-full"
+                          >
+                            <MessageSquareText className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">IA Escreveaê</span>
+                          </Button>
+                          {activeLesson.pdf_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(`${activeLesson.pdf_url}#toolbar=0&navpanes=0`, '_blank', 'noopener,noreferrer')}
+                              className="w-full"
+                            >
+                              <FileText className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">PDF</span>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                   </div>
                 </CardContent>
               </Card>
