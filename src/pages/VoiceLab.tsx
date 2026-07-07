@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle } from "lucide-react";
 import BackToLessonButton from "@/components/BackToLessonButton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 type NormalizedAzureResponse = {
   status?: string;
