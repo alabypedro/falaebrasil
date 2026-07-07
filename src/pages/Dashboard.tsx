@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Flame, BookOpen, Trophy, ArrowRight, GraduationCap, Info } from "lucide-react";
+import { Zap, Flame, BookOpen, Trophy, ArrowRight, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { useGPA } from "@/hooks/useGPA";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { fetchAiXpBreakdown, AI_LABELS, type AiSource } from "@/lib/aiXp";
 
 interface CourseProgress {
   name: string;
@@ -32,7 +33,23 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
+  const [aiXp, setAiXp] = useState<Record<AiSource, number> & { total: number }>({
+    memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, total: 0,
+  });
   const gpaData = useGPA(user?.id);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchAiXpBreakdown(user.id).then(setAiXp);
+  }, [user?.id]);
+
+  const aiButtons: { source: AiSource; icon: any; path: string }[] = [
+    { source: "memorizae", icon: Brain, path: "/memorizae" },
+    { source: "falae", icon: Mic, path: "/voice-lab" },
+    { source: "escutae", icon: Headphones, path: "/listening-lab" },
+    { source: "escreveae", icon: MessageSquare, path: "/writing-lab" },
+    { source: "leiae", icon: BookText, path: "/leiae" },
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -108,6 +125,23 @@ export default function Dashboard() {
         <p className="text-sm md:text-base text-muted-foreground mt-2">
           {t("dashboard.welcome")}
         </p>
+      </div>
+
+      {/* AI quick-access */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 animate-fade-up">
+        {aiButtons.map(({ source, icon: Icon, path }) => (
+          <button
+            key={source}
+            onClick={() => navigate(path)}
+            className="group flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card p-3 text-center hover:border-primary hover:bg-primary/5 transition"
+          >
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+              <Icon className="h-4 w-4 text-primary" />
+            </div>
+            <span className="text-[11px] font-semibold text-foreground leading-tight">{AI_LABELS[source]}</span>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{aiXp[source]} XP</span>
+          </button>
+        ))}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
