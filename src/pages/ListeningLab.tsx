@@ -231,6 +231,12 @@ export default function ListeningLab() {
     setScore(result.score ?? 0);
     setCorrectMap((result.correct_answers ?? {}) as Record<string, number>);
     setFinished(true);
+    try {
+      const { awardAiXp } = await import("@/lib/aiXp");
+      const pts = Math.max(1, Math.min(25, Math.round((result.score ?? 0) / 4)));
+      const res = await awardAiXp("escutae", pts, `escutae:${selectedLesson.id}:${Date.now()}`);
+      if (res?.awarded) toast.success(`+${res.points} XP · IA Escutaê`);
+    } catch {}
   };
 
   if (loading) {

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Flame, BookOpen, Trophy, ArrowRight, GraduationCap, Info } from "lucide-react";
+import { Zap, Flame, BookOpen, Trophy, ArrowRight, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { useGPA } from "@/hooks/useGPA";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { fetchAiXpBreakdown, AI_LABELS, type AiSource } from "@/lib/aiXp";
 
 interface CourseProgress {
   name: string;
@@ -32,7 +33,23 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
+  const [aiXp, setAiXp] = useState<Record<AiSource, number> & { total: number }>({
+    memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, total: 0,
+  });
   const gpaData = useGPA(user?.id);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchAiXpBreakdown(user.id).then(setAiXp);
+  }, [user?.id]);
+
+  const aiButtons: { source: AiSource; icon: any; path: string }[] = [
+    { source: "memorizae", icon: Brain, path: "/memorizae" },
+    { source: "falae", icon: Mic, path: "/voice-lab" },
+    { source: "escutae", icon: Headphones, path: "/listening-lab" },
+    { source: "escreveae", icon: MessageSquare, path: "/writing-lab" },
+    { source: "leiae", icon: BookText, path: "/leiae" },
+  ];
 
   useEffect(() => {
     if (!user) return;
@@ -108,6 +125,23 @@ export default function Dashboard() {
         <p className="text-sm md:text-base text-muted-foreground mt-2">
           {t("dashboard.welcome")}
         </p>
+      </div>
+
+      {/* AI quick-access */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 animate-fade-up">
+        {aiButtons.map(({ source, icon: Icon, path }) => (
+          <button
+            key={source}
+            onClick={() => navigate(path)}
+            className="group flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card p-3 text-center hover:border-primary hover:bg-primary/5 transition"
+          >
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+              <Icon className="h-4 w-4 text-primary" />
+            </div>
+            <span className="text-[11px] font-semibold text-foreground leading-tight">{AI_LABELS[source]}</span>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{aiXp[source]} XP</span>
+          </button>
+        ))}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -229,34 +263,32 @@ export default function Dashboard() {
       )}
 
       <Card
-        className="relative overflow-hidden bg-gradient-hero text-white border-0 animate-fade-up hover-lift-lg shadow-elegant"
+        className="animate-fade-up border-border/50"
         style={{ "--delay": "550ms" } as React.CSSProperties}
       >
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -top-20 -right-20 h-64 w-64 rounded-full bg-white/10 blur-3xl animate-blob" />
-        <div className="pointer-events-none absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-accent/30 blur-3xl animate-blob" style={{ animationDelay: "3s" }} />
-
-        <CardContent className="relative flex flex-col items-center gap-5 p-8 md:p-10 text-center sm:flex-row sm:text-left">
-          <div className="flex-1 space-y-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1 text-xs font-semibold border border-white/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-glow animate-pulse" />
-              {t("dashboard.cta.badge")}
-            </div>
-            <h2 className="text-xl md:text-2xl font-display font-extrabold leading-tight">
-              {t("dashboard.cta.title")}
-            </h2>
-            <p className="text-sm md:text-base opacity-90 leading-relaxed">
-              {t("dashboard.cta.desc")}
-            </p>
-          </div>
-          <Button
-            size="lg"
-            onClick={() => navigate("/voice-lab")}
-            className="bg-white text-primary hover:bg-white/95 shadow-soft-lg press-effect font-bold"
-          >
-            {t("dashboard.cta.btn")}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-display flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            XP por IA
+            <span className="ml-auto text-xs font-normal text-muted-foreground">
+              Total: <span className="font-bold text-foreground tabular-nums">{aiXp.total} XP</span>
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          {aiButtons.map(({ source, icon: Icon, path }) => (
+            <button
+              key={source}
+              onClick={() => navigate(path)}
+              className="flex flex-col items-start gap-1 rounded-lg bg-muted/40 p-3 hover:bg-muted transition text-left"
+            >
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Icon className="h-3.5 w-3.5" />
+                <span className="truncate">{AI_LABELS[source]}</span>
+              </div>
+              <span className="text-lg font-display font-bold tabular-nums">{aiXp[source]}<span className="text-xs text-muted-foreground ml-1">XP</span></span>
+            </button>
+          ))}
         </CardContent>
       </Card>
     </div>

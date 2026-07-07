@@ -181,6 +181,7 @@ export default function Memorizae() {
     if (error) { toast.error(error.message); return; }
 
     const r = data as any;
+    if (r?.xp_earned > 0) toast.success(`+${r.xp_earned} XP`);
     setReviews((prev) => ({
       ...prev,
       [card.id]: {

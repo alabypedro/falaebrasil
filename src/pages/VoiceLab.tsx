@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { AlertCircle } from "lucide-react";
 import BackToLessonButton from "@/components/BackToLessonButton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 type NormalizedAzureResponse = {
   status?: string;
@@ -401,6 +402,14 @@ export default function VoiceLab() {
           // Refresh profile again to get updated high scores for GPA calculation
           void refreshProfile();
         }
+
+        // Gamificação IA Falaê: até 25 XP por sessão (proporcional à nota)
+        try {
+          const { awardAiXp } = await import("@/lib/aiXp");
+          const pts = Math.max(1, Math.min(25, Math.round(sessionScore / 4)));
+          const res = await awardAiXp("falae", pts);
+          if (res?.awarded) toast.success(`+${res.points} XP · IA Falaê`);
+        } catch {}
       }
 
       // Generate AI-powered specific feedback
