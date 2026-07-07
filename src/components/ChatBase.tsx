@@ -334,6 +334,12 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                 .update({ best_writing_score: score })
                 .eq('user_id', user.id);
             }
+
+            try {
+              const { awardAiXp } = await import("@/lib/aiXp");
+              const pts = Math.max(1, Math.min(25, Math.round(score / 4)));
+              await awardAiXp("escreveae", pts);
+            } catch {}
           }
         }
       }
