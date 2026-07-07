@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_xp_events: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          points: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          points?: number
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          points?: number
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -1673,6 +1700,10 @@ export type Database = {
     }
     Functions: {
       _strip_correct_index: { Args: { _content: Json }; Returns: Json }
+      award_ai_xp: {
+        Args: { _key: string; _points: number; _source: string }
+        Returns: Json
+      }
       calculate_level_from_xp: { Args: { _xp: number }; Returns: string }
       can_access_level: { Args: { _level: string }; Returns: boolean }
       complete_video: { Args: { _video_id: string }; Returns: Json }
