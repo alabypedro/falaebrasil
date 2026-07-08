@@ -268,35 +268,6 @@ export default function Dashboard() {
         </Card>
       )}
 
-      <Card
-        className="animate-fade-up border-border/50"
-        style={{ "--delay": "550ms" } as React.CSSProperties}
-      >
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-display flex items-center gap-2">
-            <Zap className="h-4 w-4 text-primary" />
-            XP por IA
-            <span className="ml-auto text-xs font-normal text-muted-foreground">
-              Total: <span className="font-bold text-foreground tabular-nums">{aiXp.total} XP</span>
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-5 gap-2">
-          {aiButtons.map(({ source, icon: Icon, path }) => (
-            <button
-              key={source}
-              onClick={() => navigate(path)}
-              className="flex flex-col items-start gap-1 rounded-lg bg-muted/40 p-3 hover:bg-muted transition text-left"
-            >
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <Icon className="h-3.5 w-3.5" />
-                <span className="truncate">{AI_LABELS[source]}</span>
-              </div>
-              <span className="text-lg font-display font-bold tabular-nums">{aiXp[source]}<span className="text-xs text-muted-foreground ml-1">XP</span></span>
-            </button>
-          ))}
-        </CardContent>
-      </Card>
     </div>
   );
 }
