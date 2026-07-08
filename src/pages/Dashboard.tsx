@@ -99,7 +99,14 @@ export default function Dashboard() {
   }, [user, profile?.plan_tier]);
 
   const stats = [
-    { label: t("dashboard.xp"), value: String(profile?.xp ?? 0), icon: Zap, gradient: "bg-gradient-xp", iconColor: "text-xp-foreground" },
+    {
+      label: t("dashboard.xp"),
+      value: String(profile?.xp ?? 0),
+      icon: Zap,
+      gradient: "bg-gradient-xp",
+      iconColor: "text-xp-foreground",
+      tooltip: "XP total = aulas assistidas + quizzes + práticas nas IAs (Memorizaê, Falaê, Escutaê, Escreveaê e Leiaê).",
+    },
     { label: t("dashboard.level"), value: profile?.level ?? "A1", icon: Trophy, gradient: "bg-gradient-accent", iconColor: "text-accent-foreground" },
     {
       label: t("dashboard.gpa"),
