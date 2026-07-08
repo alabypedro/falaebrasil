@@ -101,7 +101,7 @@ export default function Dashboard() {
   const stats = [
     {
       label: t("dashboard.xp"),
-      value: String(profile?.xp ?? 0),
+      value: String((profile?.xp ?? 0) + (aiXp.total ?? 0)),
       icon: Zap,
       gradient: "bg-gradient-xp",
       iconColor: "text-xp-foreground",
