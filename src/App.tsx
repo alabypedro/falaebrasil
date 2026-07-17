@@ -39,6 +39,7 @@ import TutorialsManager from "@/pages/admin/TutorialsManager";
 import CommunitiesManager from "@/pages/admin/CommunitiesManager";
 import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosManager";
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
+import CreateStudent from "@/pages/admin/CreateStudent";
 import ContractsManager from "@/pages/admin/ContractsManager";
 import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import LeiaeManager from "@/pages/admin/LeiaeManager";
@@ -161,6 +162,7 @@ const App = () => {
                           <Route path="admins" element={<AdminsManager />} />
                           <Route path="hubla" element={<HublaProductsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
+                          <Route path="create-student" element={<CreateStudent />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />
                           <Route path="leiae" element={<LeiaeManager />} />
                         </Route>
