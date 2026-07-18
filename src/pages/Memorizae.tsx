@@ -278,17 +278,22 @@ export default function Memorizae() {
               {card.image_url && signedUrls[card.image_url] && (
                 <img src={signedUrls[card.image_url]} alt="" className="max-h-32 rounded-md object-contain" />
               )}
-              <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
-              <Button variant="outline" size="sm" onClick={() => speakCard(card)}>
-                <Volume2 className="h-4 w-4 mr-1" /> Ouvir
-              </Button>
-
-              {showBack && (
-                <div className="w-full border-t pt-6 space-y-3 animate-fade-in">
-                  <p className="text-lg text-primary font-medium">{card.back_text}</p>
-                  {card.example_sentence && (
-                    <p className="text-sm italic text-muted-foreground">"{card.example_sentence}"</p>
-                  )}
+              {!showBack ? (
+                <Button variant="outline" size="lg" onClick={() => speakCard(card)}>
+                  <Volume2 className="h-4 w-4 mr-2" /> Ouça e Repita
+                </Button>
+              ) : (
+                <div className="w-full space-y-4 animate-fade-in">
+                  <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
+                  <Button variant="outline" size="sm" onClick={() => speakCard(card)}>
+                    <Volume2 className="h-4 w-4 mr-1" /> Ouvir
+                  </Button>
+                  <div className="w-full border-t pt-4 space-y-3">
+                    <p className="text-lg text-primary font-medium">{card.back_text}</p>
+                    {card.example_sentence && (
+                      <p className="text-sm italic text-muted-foreground">"{card.example_sentence}"</p>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>
