@@ -391,13 +391,17 @@ export default function MemorizaeManager() {
               <DialogTitle>{editingCard ? "Editar carta" : "Nova carta"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
-              <div>
-                <Label>Frente (inglês)</Label>
-                <Textarea rows={2} value={cardForm.front} onChange={(e) => setCardForm({ ...cardForm, front: e.target.value })} />
+              <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                A frente da carta mostra apenas a imagem e o botão "Ouça e Repita". A sentença em inglês e a tradução aparecem no verso, depois que o aluno vira a carta.
               </div>
-              <div>
+              <div className="space-y-3 rounded-md border p-3">
+                <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Verso (aparece depois de virar)</div>
+                <div>
+                  <Label>Sentença em inglês (usada no áudio)</Label>
+                  <Textarea rows={2} value={cardForm.front} onChange={(e) => setCardForm({ ...cardForm, front: e.target.value })} />
+                </div>
                 <div className="flex items-center justify-between gap-2">
-                  <Label>Verso (tradução / explicação)</Label>
+                  <Label>Tradução em português</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -427,14 +431,14 @@ export default function MemorizaeManager() {
                     }}
                   >
                     {translatingFront ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                    Traduzir da frente
+                    Traduzir do inglês
                   </Button>
                 </div>
                 <Textarea rows={2} value={cardForm.back} onChange={(e) => setCardForm({ ...cardForm, back: e.target.value })} />
-              </div>
-              <div>
-                <Label>Exemplo (opcional)</Label>
-                <Textarea rows={2} value={cardForm.example} onChange={(e) => setCardForm({ ...cardForm, example: e.target.value })} />
+                <div>
+                  <Label>Exemplo (opcional)</Label>
+                  <Textarea rows={2} value={cardForm.example} onChange={(e) => setCardForm({ ...cardForm, example: e.target.value })} />
+                </div>
               </div>
               <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
                 🔊 O áudio é gerado automaticamente a partir dos textos da carta (frente, verso e exemplo) — não é preciso enviar arquivo.
