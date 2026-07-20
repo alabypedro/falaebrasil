@@ -46,6 +46,7 @@ type PaymentProduct = {
   grants_ebook3_access: boolean;
   grants_scripted_seconds: number;
   grants_unscripted_seconds: number;
+  checkout_url: string | null;
 };
 
 type CourseRow = { id: string; title: string; level: string; required_tier: string };
@@ -98,6 +99,7 @@ const emptyProduct: PaymentProduct = {
   grants_ebook3_access: false,
   grants_scripted_seconds: 0,
   grants_unscripted_seconds: 0,
+  checkout_url: "",
 };
 
 export default function PaymentsManager() {
@@ -219,6 +221,7 @@ export default function PaymentsManager() {
       grants_ebook3_access: draft.grants_ebook3_access,
       grants_scripted_seconds: draft.grants_scripted_seconds,
       grants_unscripted_seconds: draft.grants_unscripted_seconds,
+      checkout_url: draft.checkout_url?.trim() || null,
     };
 
     if (draftIsNew) {
@@ -401,7 +404,20 @@ export default function PaymentsManager() {
                     {p.grants_unscripted_seconds > 0 && (
                       <Badge variant="outline">+{p.grants_unscripted_seconds}s livre</Badge>
                     )}
+                    {p.checkout_url
+                      ? <Badge variant="outline" className="text-emerald-600 border-emerald-600/40">Checkout OK</Badge>
+                      : <Badge variant="outline" className="text-amber-600 border-amber-600/40">Sem checkout URL</Badge>}
                   </div>
+                  {p.checkout_url && (
+                    <div className="flex items-center gap-2">
+                      <Input value={p.checkout_url} readOnly className="text-xs bg-muted font-mono" />
+                      <Button variant="outline" size="icon" asChild>
+                        <a href={p.checkout_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  )}
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" size="sm" onClick={() => setDraft(p)}>
                       Editar
@@ -772,6 +788,20 @@ export default function PaymentsManager() {
                   Ativo no checkout
                 </Label>
               </div>
+            </div>
+
+            <div className="space-y-1.5 border-t pt-4">
+              <Label className="text-xs font-semibold">URL de checkout externa (ASAAS)</Label>
+              <Input
+                value={draft.checkout_url ?? ""}
+                onChange={(e) => setDraft({ ...draft, checkout_url: e.target.value })}
+                placeholder="https://www.asaas.com/c/xxxxxxxx"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Cole aqui o link de pagamento gerado no painel do ASAAS (Cobranças &gt; Link de Pagamento).
+                Ao clicar em <strong>Comprar agora</strong>, o aluno será redirecionado direto para essa URL —
+                o próprio checkout do ASAAS pede CPF, e-mail e forma de pagamento.
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-4">

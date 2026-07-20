@@ -1106,6 +1106,7 @@ export type Database = {
           billing_cycle:
             | Database["public"]["Enums"]["payment_billing_cycle"]
             | null
+          checkout_url: string | null
           created_at: string
           description: string | null
           display_order: number
@@ -1128,6 +1129,7 @@ export type Database = {
           billing_cycle?:
             | Database["public"]["Enums"]["payment_billing_cycle"]
             | null
+          checkout_url?: string | null
           created_at?: string
           description?: string | null
           display_order?: number
@@ -1150,6 +1152,7 @@ export type Database = {
           billing_cycle?:
             | Database["public"]["Enums"]["payment_billing_cycle"]
             | null
+          checkout_url?: string | null
           created_at?: string
           description?: string | null
           display_order?: number

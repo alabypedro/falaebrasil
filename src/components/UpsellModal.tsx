@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Lock, ExternalLink, Mic, Loader2, AlertCircle } from "lucide-react";
+import { Lock, ExternalLink, Mic, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface UpsellModalProps {
   open: boolean;
@@ -27,6 +24,7 @@ interface PaymentProduct {
   price_cents: number;
   grants_scripted_seconds: number;
   grants_unscripted_seconds: number;
+  checkout_url: string | null;
 }
 
 export function UpsellModal({
@@ -37,19 +35,11 @@ export function UpsellModal({
   description,
   requiresCourseFirst,
 }: UpsellModalProps) {
-  const { profile } = useAuth();
   const [product, setProduct] = useState<PaymentProduct | null>(null);
   const [loading, setLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [cpf, setCpf] = useState("");
-  const [needsCpf, setNeedsCpf] = useState(false);
-  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
-      setInvoiceUrl(null);
-      setNeedsCpf(false);
-      setCpf(profile?.phone ? "" : "");
       return;
     }
     setLoading(true);
@@ -71,56 +61,8 @@ export function UpsellModal({
 
   const total = product ? product.grants_scripted_seconds + product.grants_unscripted_seconds : 0;
 
-  const createCheckout = async () => {
-    if (!product) return;
-    const cpfClean = cpf.replace(/\D/g, "");
-    if (needsCpf && cpfClean.length < 11) {
-      toast.error("Informe um CPF/CNPJ válido");
-      return;
-    }
-    setCreating(true);
-    const { data: session } = await supabase.auth.getSession();
-    const token = session?.session?.access_token;
-    if (!token) {
-      toast.error("Você precisa estar logado");
-      setCreating(false);
-      return;
-    }
-    try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          product_key: product.product_key,
-          cpf_cnpj: cpfClean || undefined,
-          phone: profile?.phone || undefined,
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        if (body.needsCpf) {
-          setNeedsCpf(true);
-          toast.error("Informe o CPF/CNPJ para continuar");
-        } else {
-          toast.error(body.error || "Erro ao criar checkout");
-        }
-        setCreating(false);
-        return;
-      }
-      setInvoiceUrl(body.invoice_url);
-      toast.success("Checkout criado!");
-      window.open(body.invoice_url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setCreating(false);
-    }
-  };
-
   const displayName = productName || product?.name || productKey;
+  const checkoutUrl = product?.checkout_url?.trim() || null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,20 +121,6 @@ export function UpsellModal({
               </div>
             )}
 
-            {needsCpf && (
-              <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  CPF/CNPJ obrigatório em produção
-                </Label>
-                <Input
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={(e) => setCpf(e.target.value)}
-                />
-              </div>
-            )}
-
             {requiresCourseFirst && (
               <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
                 ⚠️ Os Order Bumps só podem ser adquiridos junto com o curso <strong>Falaê Brasil!</strong>.
@@ -200,20 +128,19 @@ export function UpsellModal({
             )}
 
             <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
-              {invoiceUrl ? (
+              {checkoutUrl ? (
                 <Button asChild className="w-full">
-                  <a href={invoiceUrl} target="_blank" rel="noopener noreferrer">
-                    Abrir checkout <ExternalLink className="ml-1.5 h-4 w-4" />
+                  <a href={checkoutUrl} target="_blank" rel="noopener noreferrer">
+                    Comprar agora <ExternalLink className="ml-1.5 h-4 w-4" />
                   </a>
                 </Button>
               ) : (
-                <Button onClick={createCheckout} disabled={creating} className="w-full">
-                  {creating ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                  ) : (
-                    <ExternalLink className="ml-1.5 h-4 w-4" />
-                  )}
-                  {creating ? "Gerando checkout..." : "Comprar agora"}
+                <Button
+                  className="w-full"
+                  disabled
+                  onClick={() => toast.error("Checkout ainda não configurado. Fale com o suporte.")}
+                >
+                  Checkout indisponível
                 </Button>
               )}
               <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">

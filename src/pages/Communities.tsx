@@ -99,45 +99,18 @@ function UpsellInlineCheckout({
   paidChatLabel: string;
   onClose: () => void;
 }) {
-  const { profile } = useAuth();
-  const [creating, setCreating] = useState(false);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
-  const buy = async () => {
+  useEffect(() => {
     if (!productKey) return;
-    setCreating(true);
-    const { data: session } = await supabase.auth.getSession();
-    const token = session?.session?.access_token;
-    if (!token) {
-      toast?.error?.("Você precisa estar logado");
-      setCreating(false);
-      return;
-    }
-    try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          product_key: productKey,
-          phone: profile?.phone || undefined,
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        toast?.error?.(body.error || "Erro ao criar checkout");
-        setCreating(false);
-        return;
-      }
-      window.open(body.invoice_url, "_blank", "noopener,noreferrer");
-      onClose();
-    } catch (e) {
-      toast?.error?.((e as Error).message);
-    } finally {
-      setCreating(false);
-    }
-  };
+    supabase
+      .from("payment_products")
+      .select("checkout_url")
+      .eq("product_key", productKey)
+      .eq("active", true)
+      .maybeSingle()
+      .then(({ data }) => setCheckoutUrl((data as any)?.checkout_url ?? null));
+  }, [productKey]);
 
   if (paidChatUrl) {
     return (
@@ -153,9 +126,15 @@ function UpsellInlineCheckout({
     return <Button disabled className="w-full">Checkout em breve</Button>;
   }
 
+  if (!checkoutUrl) {
+    return <Button disabled className="w-full">Checkout indisponível</Button>;
+  }
+
   return (
-    <Button className="w-full" onClick={buy} disabled={creating}>
-      {creating ? "Gerando..." : "Comprar agora"}
+    <Button asChild className="w-full">
+      <a href={checkoutUrl} target="_blank" rel="noopener noreferrer" onClick={onClose}>
+        Comprar agora <ExternalLink className="ml-1.5 h-4 w-4" />
+      </a>
     </Button>
   );
 }
