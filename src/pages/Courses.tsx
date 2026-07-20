@@ -142,11 +142,12 @@ export default function Courses() {
 
     const load = async () => {
       const { data: prodData } = await supabase
-        .from("hubla_product_mapping")
-        .select("display_name, checkout_url")
-        .eq("hubla_product_id", "7YNOATVITU1bdajEeUGU")
+        .from("payment_products")
+        .select("name, price_cents, type")
+        .eq("product_key", "plano_open")
+        .eq("active", true)
         .maybeSingle();
-      if (prodData) setCoursePrice(prodData as any);
+      if (prodData) setCoursePrice({ display_name: prodData.name, checkout_url: null });
 
       const { data: granted } = await supabase
         .from("user_course_access")
