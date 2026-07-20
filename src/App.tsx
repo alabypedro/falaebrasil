@@ -35,6 +35,7 @@ import PromptsManager from "@/pages/admin/PromptsManager";
 import ListeningManager from "@/pages/admin/ListeningManager";
 import AdminsManager from "@/pages/admin/AdminsManager";
 import HublaProductsManager from "@/pages/admin/HublaProductsManager";
+import PaymentsManager from "@/pages/admin/PaymentsManager";
 import TutorialsManager from "@/pages/admin/TutorialsManager";
 import CommunitiesManager from "@/pages/admin/CommunitiesManager";
 import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosManager";
