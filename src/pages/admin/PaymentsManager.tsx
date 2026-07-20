@@ -46,6 +46,7 @@ type PaymentProduct = {
   grants_ebook3_access: boolean;
   grants_scripted_seconds: number;
   grants_unscripted_seconds: number;
+  checkout_url: string | null;
 };
 
 type CourseRow = { id: string; title: string; level: string; required_tier: string };
@@ -98,6 +99,7 @@ const emptyProduct: PaymentProduct = {
   grants_ebook3_access: false,
   grants_scripted_seconds: 0,
   grants_unscripted_seconds: 0,
+  checkout_url: "",
 };
 
 export default function PaymentsManager() {
@@ -219,6 +221,7 @@ export default function PaymentsManager() {
       grants_ebook3_access: draft.grants_ebook3_access,
       grants_scripted_seconds: draft.grants_scripted_seconds,
       grants_unscripted_seconds: draft.grants_unscripted_seconds,
+      checkout_url: draft.checkout_url?.trim() || null,
     };
 
     if (draftIsNew) {
