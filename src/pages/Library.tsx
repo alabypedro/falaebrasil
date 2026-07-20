@@ -237,7 +237,6 @@ export default function Library() {
           onOpenChange={(o) => !o && setUpsellItem(null)}
           productKey={upsellProductKey}
           productName={upsellProduct?.display_name ?? upsellItem.title}
-          checkoutUrl={upsellProduct?.checkout_url ?? null}
           requiresCourseFirst={!profile?.has_course_access}
           description={`Para acessar "${upsellItem.title}" você precisa adquirir o Order Bump correspondente junto com o curso Essential Pro A1.`}
         />
