@@ -371,9 +371,8 @@ export default function Courses() {
       <UpsellModal
         open={showUpsell}
         onOpenChange={setShowUpsell}
-        productKey="7YNOATVITU1bdajEeUGU"
+        productKey="plano_open"
         productName={coursePrice?.display_name ?? "Plano OPEN"}
-        checkoutUrl={coursePrice?.checkout_url ?? null}
         description="Para acessar o conteúdo do curso Falaê Brasil! você precisa adquirir o curso."
       />
     </div>
