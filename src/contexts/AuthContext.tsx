@@ -26,6 +26,9 @@ interface AuthContextType {
     subscription_status: string;
     subscription_grace_until: string | null;
     subscription_current_period_end: string | null;
+    phone: string | null;
+    asaas_customer_id: string | null;
+    asaas_subscription_id: string | null;
   } | null;
   refreshProfile: () => Promise<void>;
 }
