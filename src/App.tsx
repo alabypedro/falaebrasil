@@ -162,6 +162,7 @@ const App = () => {
                           <Route path="contracts" element={<ContractsManager />} />
                           <Route path="admins" element={<AdminsManager />} />
                           <Route path="hubla" element={<HublaProductsManager />} />
+                          <Route path="payments" element={<PaymentsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
                           <Route path="create-student" element={<CreateStudent />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />
