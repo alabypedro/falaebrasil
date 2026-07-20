@@ -92,8 +92,10 @@ Deno.serve(async (req) => {
     const userName = profile?.display_name ?? userEmail.split("@")[0] ?? "Aluno";
     const userPhone = phone ?? profile?.phone ?? "";
 
-    // CPF is required in production for boleto/PIX
-    if (!isSandbox && !cpfCnpj) {
+    // ASAAS requires CPF/CNPJ to create charges
+    const existingCpf = (profile as any)?.cpf_cnpj as string | undefined;
+    const cpfToUse = cpfCnpj || (existingCpf ? existingCpf.replace(/\D/g, "") : null);
+    if (!cpfToUse) {
       return new Response(
         JSON.stringify({ error: "CPF/CNPJ obrigatório para pagamentos em produção", needsCpf: true }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -107,7 +109,7 @@ Deno.serve(async (req) => {
         name: userName,
         email: userEmail,
         phone: userPhone || undefined,
-        cpfCnpj: cpfCnpj || undefined,
+        cpfCnpj: cpfToUse,
       };
       const customerResp = await fetchAsaas("/customers", {
         method: "POST",
@@ -124,7 +126,7 @@ Deno.serve(async (req) => {
         {
           user_id: userId,
           asaas_customer_id: customerId,
-          cpf_cnpj: cpfCnpj,
+          cpf_cnpj: cpfToUse,
           phone: userPhone,
         },
         { onConflict: "user_id" },
@@ -134,6 +136,12 @@ Deno.serve(async (req) => {
         .from("profiles")
         .update({ asaas_customer_id: customerId })
         .eq("user_id", userId);
+    } else if (cpfCnpj) {
+      // Update existing customer's CPF if it wasn't set before
+      await fetchAsaas(`/customers/${customerId}`, {
+        method: "POST",
+        body: JSON.stringify({ cpfCnpj: cpfToUse, name: userName, email: userEmail }),
+      });
     }
 
     // Create subscription or one-time payment
