@@ -19,6 +19,7 @@ const adminNav = [
   { to: "/admin/install-videos", icon: Smartphone, label: "Vídeos de Instalação" },
   { to: "/admin/admins", icon: ShieldCheck, label: "Admins" },
   { to: "/admin/hubla", icon: ShoppingCart, label: "Vendas Hubla" },
+  { to: "/admin/payments", icon: CreditCard, label: "Pagamentos ASAAS" },
   { to: "/admin/welcome-email", icon: Mail, label: "Email Boas-vindas" },
   { to: "/admin/create-student", icon: UserPlus, label: "Criar Aluno" },
 ];
