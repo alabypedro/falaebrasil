@@ -33,13 +33,6 @@ interface CardRow {
   display_order: number;
 }
 
-const TOPICS = [
-  { value: "vocabulario_infinito", label: "Vocabulário Infinito" },
-  { value: "agilidade_mental", label: "Agilidade Mental" },
-  { value: "foco_dificil", label: "Foco no que é Difícil" },
-  { value: "geral", label: "Geral" },
-];
-
 export default function MemorizaeManager() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -583,10 +576,6 @@ export default function MemorizaeManager() {
             Cadastre decks de flashcards baseados no conteúdo dos cursos. O algoritmo SM-2 agenda automaticamente
             cada revisão para destruir a Curva do Esquecimento.
           </p>
-          <p className="text-[11px] text-muted-foreground">
-            Escolha o tópico-alvo do deck (Vocabulário Infinito, Agilidade Mental, Foco no que é Difícil ou Geral)
-            para orientar o aluno sobre o objetivo do treino.
-          </p>
         </CardContent>
       </Card>
 
@@ -653,7 +642,6 @@ export default function MemorizaeManager() {
             <TableHeader>
               <TableRow>
                 <TableHead>Deck</TableHead>
-                <TableHead>Tópico</TableHead>
                 <TableHead>Curso</TableHead>
                 <TableHead>Cartas</TableHead>
                 <TableHead className="w-32 text-right">Ações</TableHead>
@@ -677,7 +665,6 @@ export default function MemorizaeManager() {
                       </button>
                       {d.description && <div className="text-[11px] text-muted-foreground">{d.description}</div>}
                     </TableCell>
-                    <TableCell><Badge variant="outline" className="text-[10px]">{TOPICS.find((t) => t.value === d.target_topic)?.label ?? d.target_topic}</Badge></TableCell>
                     <TableCell className="text-xs text-muted-foreground">{course?.title ?? "—"}</TableCell>
                     <TableCell><Badge variant="secondary">{count}</Badge></TableCell>
                     <TableCell className="text-right">
@@ -725,26 +712,15 @@ export default function MemorizaeManager() {
               <Label>Descrição</Label>
               <Textarea rows={2} value={deckForm.description} onChange={(e) => setDeckForm({ ...deckForm, description: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Tópico-alvo</Label>
-                <Select value={deckForm.target_topic} onValueChange={(v) => setDeckForm({ ...deckForm, target_topic: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {TOPICS.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Curso vinculado (opcional)</Label>
-                <Select value={deckForm.course_id} onValueChange={(v) => setDeckForm({ ...deckForm, course_id: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum (global)</SelectItem>
-                    {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label>Curso vinculado (opcional)</Label>
+              <Select value={deckForm.course_id} onValueChange={(v) => setDeckForm({ ...deckForm, course_id: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (global)</SelectItem>
+                  {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Ordem</Label>
