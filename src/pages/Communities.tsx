@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { UpsellModal } from "@/components/UpsellModal";
+import { toast } from "sonner";
 
 type Tier = "open" | "pro" | "vip" | "kids" | "teens";
 
