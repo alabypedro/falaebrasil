@@ -44,6 +44,7 @@ import CreateStudent from "@/pages/admin/CreateStudent";
 import ContractsManager from "@/pages/admin/ContractsManager";
 import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import LeiaeManager from "@/pages/admin/LeiaeManager";
+import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
 
