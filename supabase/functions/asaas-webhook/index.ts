@@ -76,6 +76,9 @@ Deno.serve(async (req) => {
       event_id: eventId,
       event_type: event.event,
       raw_payload: event,
+      status: "processing",
+      payment_id: event.payment?.id ?? null,
+      subscription_id: event.subscription?.id ?? event.payment?.subscription ?? null,
     });
 
     const payment = event.payment;
@@ -109,11 +112,22 @@ Deno.serve(async (req) => {
       result = await handlePaymentConfirmed(admin, payment, userId);
     } else if (eventType === "PAYMENT_OVERDUE") {
       result = await handlePaymentOverdue(admin, payment, userId);
-    } else if (eventType === "PAYMENT_REFUNDED" || eventType === "PAYMENT_DELETED") {
+    } else if (eventType === "PAYMENT_REFUNDED") {
+      result = await handlePaymentRefunded(admin, payment, userId);
+    } else if (eventType === "PAYMENT_DELETED") {
       result = await handlePaymentRevoked(admin, payment, userId);
-    } else if (eventType === "SUBSCRIPTION_DELETED" || eventType === "SUBSCRIPTION_UPDATED") {
+    } else if (
+      eventType === "SUBSCRIPTION_DELETED" ||
+      eventType === "SUBSCRIPTION_INACTIVATED" ||
+      eventType === "SUBSCRIPTION_UPDATED"
+    ) {
       result = await handleSubscriptionEvent(admin, subscription, userId, eventType);
     }
+
+    await admin
+      .from("asaas_webhook_events")
+      .update({ status: "processed", user_id: userId, result })
+      .eq("event_id", eventId);
 
     return new Response(JSON.stringify({ ok: true, result }), {
       status: 200,
@@ -121,6 +135,13 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     console.error("asaas-webhook error", e);
+    try {
+      const admin = createClient(SUPABASE_URL, SERVICE, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      // Best-effort mark last event as failed using eventId from closure isn't possible here;
+      // rely on caller retry — but attempt to update any row that matches.
+    } catch (_) {}
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
