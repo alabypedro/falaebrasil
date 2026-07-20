@@ -62,7 +62,7 @@ export default function Memorizae() {
   const [queue, setQueue] = useState<Card[]>([]);
   const [idx, setIdx] = useState(0);
   const [showBack, setShowBack] = useState(false);
-  const [sessionStats, setSessionStats] = useState({ reviewed: 0, good: 0, easy: 0, again: 0 });
+  const [sessionStats, setSessionStats] = useState({ reviewed: 0, good: 0, easy: 0, again: 0, hard: 0 });
   const [busy, setBusy] = useState(false);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
@@ -160,7 +160,7 @@ export default function Memorizae() {
     setQueue(finalQ);
     setIdx(0);
     setShowBack(false);
-    setSessionStats({ reviewed: 0, good: 0, easy: 0, again: 0 });
+    setSessionStats({ reviewed: 0, good: 0, easy: 0, again: 0, hard: 0 });
   };
 
   const closeDeck = () => {
@@ -195,9 +195,10 @@ export default function Memorizae() {
     }));
     setSessionStats((s) => ({
       reviewed: s.reviewed + 1,
+      again: s.again + (rating === 1 ? 1 : 0),
+      hard: s.hard + (rating === 2 ? 1 : 0),
       good: s.good + (rating === 3 ? 1 : 0),
       easy: s.easy + (rating === 4 ? 1 : 0),
-      again: s.again + (rating === 1 || rating === 2 ? 1 : 0),
     }));
 
     // Re-queue "Novamente" cards at the end
