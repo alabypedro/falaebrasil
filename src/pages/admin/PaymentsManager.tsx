@@ -35,7 +35,7 @@ type PaymentProduct = {
   name: string;
   description: string | null;
   type: "subscription" | "one_time";
-  billing_cycle: "MONTHLY" | "YEARLY" | "WEEKLY" | "DAILY" | null;
+  billing_cycle: "MONTHLY" | "YEARLY" | "WEEKLY" | "QUARTERLY" | "SEMIANNUALLY" | null;
   price_cents: number;
   plan_tier: string | null;
   active: boolean;
