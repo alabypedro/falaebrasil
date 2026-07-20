@@ -154,11 +154,18 @@ export default function Library() {
       const { data: itemsData } = await supabase.from("library_bst_safe").select("*");
       if (itemsData) setItems(sortLibrary(itemsData as LibraryItem[]));
       const { data: prodData } = await supabase
-        .from("hubla_product_mapping")
-        .select("product_key, display_name, checkout_url");
+        .from("payment_products")
+        .select("product_key, name, description, price_cents, type")
+        .eq("active", true);
       if (prodData) {
         const map: Record<string, ProductInfo> = {};
-        for (const p of prodData) map[p.product_key] = p as ProductInfo;
+        for (const p of prodData) {
+          map[p.product_key] = {
+            product_key: p.product_key,
+            display_name: p.name,
+            checkout_url: null,
+          };
+        }
         setProducts(map);
       }
       setLoading(false);
