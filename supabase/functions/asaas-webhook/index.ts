@@ -107,41 +107,51 @@ Deno.serve(async (req) => {
     // Route actions by event type
     const eventType = event.event;
     let result: any = { processed: true };
+    try {
+      if (eventType === "PAYMENT_CREATED" || eventType === "PAYMENT_RECEIVED" || eventType === "PAYMENT_CONFIRMED") {
+        result = await handlePaymentConfirmed(admin, payment, userId);
+      } else if (eventType === "PAYMENT_OVERDUE") {
+        result = await handlePaymentOverdue(admin, payment, userId);
+      } else if (eventType === "PAYMENT_REFUNDED") {
+        result = await handlePaymentRefunded(admin, payment, userId);
+      } else if (eventType === "PAYMENT_DELETED") {
+        result = await handlePaymentRevoked(admin, payment, userId);
+      } else if (
+        eventType === "SUBSCRIPTION_DELETED" ||
+        eventType === "SUBSCRIPTION_INACTIVATED" ||
+        eventType === "SUBSCRIPTION_UPDATED"
+      ) {
+        result = await handleSubscriptionEvent(admin, subscription, userId, eventType);
+      } else {
+        result = { handled: false, reason: "unhandled_event_type" };
+      }
 
-    if (eventType === "PAYMENT_CREATED" || eventType === "PAYMENT_RECEIVED" || eventType === "PAYMENT_CONFIRMED") {
-      result = await handlePaymentConfirmed(admin, payment, userId);
-    } else if (eventType === "PAYMENT_OVERDUE") {
-      result = await handlePaymentOverdue(admin, payment, userId);
-    } else if (eventType === "PAYMENT_REFUNDED") {
-      result = await handlePaymentRefunded(admin, payment, userId);
-    } else if (eventType === "PAYMENT_DELETED") {
-      result = await handlePaymentRevoked(admin, payment, userId);
-    } else if (
-      eventType === "SUBSCRIPTION_DELETED" ||
-      eventType === "SUBSCRIPTION_INACTIVATED" ||
-      eventType === "SUBSCRIPTION_UPDATED"
-    ) {
-      result = await handleSubscriptionEvent(admin, subscription, userId, eventType);
+      await admin
+        .from("asaas_webhook_events")
+        .update({ status: "processed", user_id: userId, result })
+        .eq("event_id", eventId);
+
+      return new Response(JSON.stringify({ ok: true, result }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (innerErr) {
+      console.error("asaas-webhook handler error", innerErr);
+      await admin
+        .from("asaas_webhook_events")
+        .update({
+          status: "failed",
+          user_id: userId,
+          error: (innerErr as Error).message,
+        })
+        .eq("event_id", eventId);
+      return new Response(JSON.stringify({ error: (innerErr as Error).message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    await admin
-      .from("asaas_webhook_events")
-      .update({ status: "processed", user_id: userId, result })
-      .eq("event_id", eventId);
-
-    return new Response(JSON.stringify({ ok: true, result }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     console.error("asaas-webhook error", e);
-    try {
-      const admin = createClient(SUPABASE_URL, SERVICE, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
-      // Best-effort mark last event as failed using eventId from closure isn't possible here;
-      // rely on caller retry — but attempt to update any row that matches.
-    } catch (_) {}
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
