@@ -85,6 +85,80 @@ function SubfolderRow({
   );
 }
 
+function UpsellInlineCheckout({
+  productKey,
+  productName,
+  paidChatUrl,
+  paidChatLabel,
+  onClose,
+}: {
+  productKey: string | null;
+  productName: string;
+  paidChatUrl: string | null;
+  paidChatLabel: string;
+  onClose: () => void;
+}) {
+  const { profile } = useAuth();
+  const [creating, setCreating] = useState(false);
+
+  const buy = async () => {
+    if (!productKey) return;
+    setCreating(true);
+    const { data: session } = await supabase.auth.getSession();
+    const token = session?.session?.access_token;
+    if (!token) {
+      toast?.error?.("Você precisa estar logado");
+      setCreating(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-create-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_key: productKey,
+          phone: profile?.phone || undefined,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        toast?.error?.(body.error || "Erro ao criar checkout");
+        setCreating(false);
+        return;
+      }
+      window.open(body.invoice_url, "_blank", "noopener,noreferrer");
+      onClose();
+    } catch (e) {
+      toast?.error?.((e as Error).message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (paidChatUrl) {
+    return (
+      <Button asChild className="w-full">
+        <a href={paidChatUrl} target="_blank" rel="noopener noreferrer">
+          Conversar sobre {paidChatLabel} <ExternalLink className="ml-1.5 h-4 w-4" />
+        </a>
+      </Button>
+    );
+  }
+
+  if (!productKey) {
+    return <Button disabled className="w-full">Checkout em breve</Button>;
+  }
+
+  return (
+    <Button className="w-full" onClick={buy} disabled={creating}>
+      {creating ? "Gerando..." : "Comprar agora"}
+    </Button>
+  );
+}
+
 export default function Communities() {
   const [items, setItems] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
