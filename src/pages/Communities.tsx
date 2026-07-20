@@ -217,8 +217,6 @@ export default function Communities() {
     );
   }
 
-  const upsellCheckoutUrl = upsellTier === "vip" ? vipCheckoutUrl : proCheckoutUrl;
-
   const generalItems = items.filter((i) => i.all_tiers);
   const groupedByTier: Record<Tier, Community[]> = {
     kids: [], teens: [], open: [], pro: [], vip: [],
