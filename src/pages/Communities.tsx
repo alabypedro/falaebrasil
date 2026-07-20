@@ -90,8 +90,8 @@ export default function Communities() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Community | null>(null);
   const [upsellTier, setUpsellTier] = useState<"pro" | "vip" | null>(null);
-  const [proCheckoutUrl, setProCheckoutUrl] = useState<string | null>(null);
-  const [vipCheckoutUrl, setVipCheckoutUrl] = useState<string | null>(null);
+  const [productKeys, setProductKeys] = useState<{ pro: string | null; vip: string | null }>({ pro: null, vip: null });
+  const [productNames, setProductNames] = useState<{ pro: string; vip: string }>({ pro: "Plano PRO", vip: "Plano VIP" });
   const [teacherUrl, setTeacherUrl] = useState<string | null>(null);
   const [paidChatUrl, setPaidChatUrl] = useState<string | null>(null);
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
@@ -103,17 +103,22 @@ export default function Communities() {
 
   useEffect(() => {
     (async () => {
-      const [communitiesRes, teacherRes, mappingRes] = await Promise.all([
+      const [communitiesRes, teacherRes, productsRes] = await Promise.all([
         supabase.from("fb_communities").select("*").order("sort_order", { ascending: true }),
         supabase.from("vip_config").select("teacher_chat_url, paid_chat_url").eq("id", 1).maybeSingle(),
-        supabase.from("hubla_product_mapping").select("product_key, checkout_url").in("product_key", ["plano_pro", "plano_vip"]),
+        supabase.from("payment_products").select("product_key, name").in("product_key", ["plano_pro", "plano_vip"]).eq("active", true),
       ]);
       if (communitiesRes.data) setItems(communitiesRes.data as Community[]);
       setTeacherUrl(teacherRes.data?.teacher_chat_url ?? null);
       setPaidChatUrl((teacherRes.data as any)?.paid_chat_url ?? null);
-      const mapping = mappingRes.data ?? [];
-      setProCheckoutUrl(mapping.find((m: any) => m.product_key === "plano_pro")?.checkout_url ?? null);
-      setVipCheckoutUrl(mapping.find((m: any) => m.product_key === "plano_vip")?.checkout_url ?? null);
+      const products = productsRes.data ?? [];
+      const pro = products.find((p: any) => p.product_key === "plano_pro");
+      const vip = products.find((p: any) => p.product_key === "plano_vip");
+      setProductKeys({ pro: pro?.product_key ?? null, vip: vip?.product_key ?? null });
+      setProductNames({
+        pro: pro?.name ?? "Plano PRO",
+        vip: vip?.name ?? "Plano VIP",
+      });
       setLoading(false);
     })();
   }, []);
