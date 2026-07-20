@@ -582,6 +582,20 @@ export default function PaymentsManager() {
         <TabsContent value="webhook" className="space-y-4">
           <Card>
             <CardHeader>
+              <CardTitle className="text-base">Ambiente ASAAS</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                O ambiente é definido pelo secret de backend <code>ASAAS_ENV</code>. Valores aceitos: <strong>sandbox</strong> (teste) ou <strong>production</strong> (produção). Quando o valor é <code>sandbox</code>, as edge functions usam a URL <code>https://sandbox.asaas.com/api/v3</code> e a chave <code>ASAAS_API_KEY_SANDBOX</code>. Em <code>production</code>, usam <code>https://api.asaas.com/v3</code> e <code>ASAAS_API_KEY</code>.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Esse secret não fica nesta tela. Ele é salvo junto com as outras chaves ASAAS no backend (segredos de runtime). Para trocar de ambiente, altere o valor de <code>ASAAS_ENV</code> e redeploye as edge functions.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle className="text-base">Webhook ASAAS</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
