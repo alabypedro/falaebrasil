@@ -181,22 +181,37 @@ export type Database = {
           error: string | null
           event_id: string
           event_type: string
+          payment_id: string | null
           processed_at: string
           raw_payload: Json
+          result: Json | null
+          status: string
+          subscription_id: string | null
+          user_id: string | null
         }
         Insert: {
           error?: string | null
           event_id: string
           event_type: string
+          payment_id?: string | null
           processed_at?: string
           raw_payload: Json
+          result?: Json | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string | null
         }
         Update: {
           error?: string | null
           event_id?: string
           event_type?: string
+          payment_id?: string | null
           processed_at?: string
           raw_payload?: Json
+          result?: Json | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

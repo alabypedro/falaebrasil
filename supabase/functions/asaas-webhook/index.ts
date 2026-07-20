@@ -76,6 +76,9 @@ Deno.serve(async (req) => {
       event_id: eventId,
       event_type: event.event,
       raw_payload: event,
+      status: "processing",
+      payment_id: event.payment?.id ?? null,
+      subscription_id: event.subscription?.id ?? event.payment?.subscription ?? null,
     });
 
     const payment = event.payment;
@@ -104,21 +107,49 @@ Deno.serve(async (req) => {
     // Route actions by event type
     const eventType = event.event;
     let result: any = { processed: true };
+    try {
+      if (eventType === "PAYMENT_CREATED" || eventType === "PAYMENT_RECEIVED" || eventType === "PAYMENT_CONFIRMED") {
+        result = await handlePaymentConfirmed(admin, payment, userId);
+      } else if (eventType === "PAYMENT_OVERDUE") {
+        result = await handlePaymentOverdue(admin, payment, userId);
+      } else if (eventType === "PAYMENT_REFUNDED") {
+        result = await handlePaymentRefunded(admin, payment, userId);
+      } else if (eventType === "PAYMENT_DELETED") {
+        result = await handlePaymentRevoked(admin, payment, userId);
+      } else if (
+        eventType === "SUBSCRIPTION_DELETED" ||
+        eventType === "SUBSCRIPTION_INACTIVATED" ||
+        eventType === "SUBSCRIPTION_UPDATED"
+      ) {
+        result = await handleSubscriptionEvent(admin, subscription, userId, eventType);
+      } else {
+        result = { handled: false, reason: "unhandled_event_type" };
+      }
 
-    if (eventType === "PAYMENT_CREATED" || eventType === "PAYMENT_RECEIVED" || eventType === "PAYMENT_CONFIRMED") {
-      result = await handlePaymentConfirmed(admin, payment, userId);
-    } else if (eventType === "PAYMENT_OVERDUE") {
-      result = await handlePaymentOverdue(admin, payment, userId);
-    } else if (eventType === "PAYMENT_REFUNDED" || eventType === "PAYMENT_DELETED") {
-      result = await handlePaymentRevoked(admin, payment, userId);
-    } else if (eventType === "SUBSCRIPTION_DELETED" || eventType === "SUBSCRIPTION_UPDATED") {
-      result = await handleSubscriptionEvent(admin, subscription, userId, eventType);
+      await admin
+        .from("asaas_webhook_events")
+        .update({ status: "processed", user_id: userId, result })
+        .eq("event_id", eventId);
+
+      return new Response(JSON.stringify({ ok: true, result }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (innerErr) {
+      console.error("asaas-webhook handler error", innerErr);
+      await admin
+        .from("asaas_webhook_events")
+        .update({
+          status: "failed",
+          user_id: userId,
+          error: (innerErr as Error).message,
+        })
+        .eq("event_id", eventId);
+      return new Response(JSON.stringify({ error: (innerErr as Error).message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-
-    return new Response(JSON.stringify({ ok: true, result }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   } catch (e) {
     console.error("asaas-webhook error", e);
     return new Response(JSON.stringify({ error: (e as Error).message }), {
@@ -298,10 +329,60 @@ async function handlePaymentRevoked(admin: any, payment: any, userId: string | n
   return { handled: true, status: "canceled" };
 }
 
+async function handlePaymentRefunded(admin: any, payment: any, userId: string | null) {
+  if (!userId) return { handled: false, reason: "missing_user" };
+
+  const productKey = await resolveProductKey(admin, payment);
+  if (!productKey) return { handled: false, reason: "unknown_product_key" };
+
+  const { data: product } = await admin
+    .from("payment_products")
+    .select("id, type, grants_course_access, grants_ebook1_access, grants_ebook2_access, grants_ebook3_access, grants_scripted_seconds, grants_unscripted_seconds")
+    .eq("product_key", productKey)
+    .maybeSingle();
+  if (!product) return { handled: false, reason: "product_not_found" };
+
+  const update: Record<string, any> = {};
+  if (product.grants_course_access) update.has_course_access = false;
+  if (product.grants_ebook1_access) update.has_ebook1_access = false;
+  if (product.grants_ebook2_access) update.has_ebook2_access = false;
+  if (product.grants_ebook3_access) update.has_ebook3_access = false;
+  if (product.type === "subscription") {
+    update.subscription_status = "canceled";
+    update.subscription_grace_until = null;
+  }
+
+  if (Object.keys(update).length > 0) {
+    await admin.from("profiles").update(update).eq("user_id", userId);
+  }
+
+  // Remove course access rows tied to this product
+  const { data: prodCourses } = await admin
+    .from("payment_product_courses")
+    .select("course_id")
+    .eq("product_id", product.id);
+  if (prodCourses && prodCourses.length > 0) {
+    await admin
+      .from("user_course_access")
+      .delete()
+      .eq("user_id", userId)
+      .in("course_id", prodCourses.map((c: any) => c.course_id));
+  }
+
+  return { handled: true, status: "refunded", revoked: update, product_key: productKey };
+}
+
 async function handleSubscriptionEvent(admin: any, subscription: any, userId: string | null, eventType: string) {
   if (!userId || !subscription?.id) return { handled: false, reason: "missing_user_or_subscription" };
 
-  if (subscription.status === "CANCELED" || subscription.status === "EXPIRED" || eventType === "SUBSCRIPTION_DELETED") {
+  const isInactivation =
+    eventType === "SUBSCRIPTION_DELETED" ||
+    eventType === "SUBSCRIPTION_INACTIVATED" ||
+    subscription.status === "CANCELED" ||
+    subscription.status === "EXPIRED" ||
+    subscription.status === "INACTIVE";
+
+  if (isInactivation) {
     await admin
       .from("profiles")
       .update({
@@ -310,8 +391,28 @@ async function handleSubscriptionEvent(admin: any, subscription: any, userId: st
         has_ebook1_access: false,
         has_ebook2_access: false,
         has_ebook3_access: false,
+        subscription_grace_until: null,
       })
       .eq("user_id", userId);
+
+    // Remove all course_access rows granted through subscription products for this user
+    const { data: subProducts } = await admin
+      .from("payment_products")
+      .select("id")
+      .eq("type", "subscription");
+    if (subProducts && subProducts.length > 0) {
+      const { data: prodCourses } = await admin
+        .from("payment_product_courses")
+        .select("course_id")
+        .in("product_id", subProducts.map((p: any) => p.id));
+      if (prodCourses && prodCourses.length > 0) {
+        await admin
+          .from("user_course_access")
+          .delete()
+          .eq("user_id", userId)
+          .in("course_id", prodCourses.map((c: any) => c.course_id));
+      }
+    }
   } else {
     await admin
       .from("profiles")
@@ -323,5 +424,5 @@ async function handleSubscriptionEvent(admin: any, subscription: any, userId: st
       .eq("user_id", userId);
   }
 
-  return { handled: true, status: subscription.status };
+  return { handled: true, status: subscription.status, event: eventType, inactivated: isInactivation };
 }

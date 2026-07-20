@@ -44,6 +44,7 @@ import CreateStudent from "@/pages/admin/CreateStudent";
 import ContractsManager from "@/pages/admin/ContractsManager";
 import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import LeiaeManager from "@/pages/admin/LeiaeManager";
+import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
 
@@ -163,6 +164,7 @@ const App = () => {
                           <Route path="admins" element={<AdminsManager />} />
                           <Route path="hubla" element={<HublaProductsManager />} />
                           <Route path="payments" element={<PaymentsManager />} />
+                          <Route path="webhook-logs" element={<WebhookLogsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
                           <Route path="create-student" element={<CreateStudent />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />
