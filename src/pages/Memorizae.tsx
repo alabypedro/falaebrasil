@@ -14,6 +14,7 @@ interface Deck {
   description: string | null;
   target_topic: string;
   display_order: number;
+  course_id: string | null;
 }
 
 interface Card {
@@ -35,12 +36,8 @@ interface ReviewRow {
   ease_factor: number;
 }
 
-const TOPIC_LABEL: Record<string, string> = {
-  vocabulario_infinito: "Vocabulário Infinito",
-  agilidade_mental: "Agilidade Mental",
-  foco_dificil: "Foco no que é Difícil",
-  geral: "Geral",
-};
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+type Level = typeof LEVELS[number];
 
 const NEW_PER_DAY = 20;
 
@@ -54,6 +51,8 @@ function formatInterval(days: number) {
 export default function Memorizae() {
   const { user } = useAuth();
   const [decks, setDecks] = useState<Deck[]>([]);
+  const [courseLevelById, setCourseLevelById] = useState<Record<string, string>>({});
+  const [selectedLevel, setSelectedLevel] = useState<Level>("A1");
   const [cardsByDeck, setCardsByDeck] = useState<Record<string, Card[]>>({});
   const [reviews, setReviews] = useState<Record<string, ReviewRow>>({});
   const [loading, setLoading] = useState(true);
@@ -86,14 +85,18 @@ export default function Memorizae() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: d }, { data: c }, { data: r }] = await Promise.all([
-      supabase.from("memorize_decks").select("id,title,description,target_topic,display_order").order("display_order"),
+    const [{ data: d }, { data: c }, { data: r }, { data: cs }] = await Promise.all([
+      supabase.from("memorize_decks").select("id,title,description,target_topic,display_order,course_id").order("display_order"),
       supabase.from("memorize_cards").select("id,deck_id,front_text,back_text,example_sentence,audio_url,image_url").order("display_order"),
       user
         ? supabase.from("user_card_reviews").select("card_id,due_at,interval_days,repetitions,lapses,ease_factor").eq("user_id", user.id)
         : Promise.resolve({ data: [] as any }),
+      supabase.from("courses").select("id,level"),
     ]);
     setDecks((d as Deck[]) || []);
+    const lvlMap: Record<string, string> = {};
+    ((cs as { id: string; level: string }[]) || []).forEach((c) => { lvlMap[c.id] = c.level; });
+    setCourseLevelById(lvlMap);
     const grouped: Record<string, Card[]> = {};
     ((c as Card[]) || []).forEach((card) => {
       (grouped[card.deck_id] ||= []).push(card);
@@ -424,15 +427,42 @@ export default function Memorizae() {
           </CardContent>
         </Card>
       ) : (
+        <>
+        <div className="flex justify-center gap-2 flex-wrap">
+          {LEVELS.map((lv) => (
+            <Button
+              key={lv}
+              size="sm"
+              variant={selectedLevel === lv ? "default" : "outline"}
+              className="rounded-full w-11 h-11"
+              onClick={() => setSelectedLevel(lv)}
+            >
+              {lv}
+            </Button>
+          ))}
+        </div>
+        {(() => {
+          const filtered = decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false));
+          if (filtered.length === 0) {
+            return (
+              <Card>
+                <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                  Nenhum deck disponível no nível {selectedLevel} ainda.
+                </CardContent>
+              </Card>
+            );
+          }
+          return (
         <div className="grid gap-3 md:grid-cols-2">
-          {decks.map((d) => {
+          {filtered.map((d) => {
             const s = deckStats(d.id);
+            const deckLevel = d.course_id ? courseLevelById[d.course_id] : null;
             return (
               <Card key={d.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base leading-tight">{d.title}</CardTitle>
-                    <Badge variant="outline" className="text-[10px]">{TOPIC_LABEL[d.target_topic] ?? d.target_topic}</Badge>
+                    {deckLevel && <Badge variant="outline" className="text-[10px]">{deckLevel}</Badge>}
                   </div>
                   {d.description && <p className="text-xs text-muted-foreground mt-1">{d.description}</p>}
                 </CardHeader>
@@ -456,6 +486,9 @@ export default function Memorizae() {
             );
           })}
         </div>
+          );
+        })()}
+        </>
       )}
     </div>
   );
