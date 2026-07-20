@@ -62,7 +62,7 @@ export default function Memorizae() {
   const [queue, setQueue] = useState<Card[]>([]);
   const [idx, setIdx] = useState(0);
   const [showBack, setShowBack] = useState(false);
-  const [sessionStats, setSessionStats] = useState({ reviewed: 0, good: 0, easy: 0, again: 0 });
+  const [sessionStats, setSessionStats] = useState({ reviewed: 0, good: 0, easy: 0, again: 0, hard: 0 });
   const [busy, setBusy] = useState(false);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
@@ -160,7 +160,7 @@ export default function Memorizae() {
     setQueue(finalQ);
     setIdx(0);
     setShowBack(false);
-    setSessionStats({ reviewed: 0, good: 0, easy: 0, again: 0 });
+    setSessionStats({ reviewed: 0, good: 0, easy: 0, again: 0, hard: 0 });
   };
 
   const closeDeck = () => {
@@ -195,9 +195,10 @@ export default function Memorizae() {
     }));
     setSessionStats((s) => ({
       reviewed: s.reviewed + 1,
+      again: s.again + (rating === 1 ? 1 : 0),
+      hard: s.hard + (rating === 2 ? 1 : 0),
       good: s.good + (rating === 3 ? 1 : 0),
       easy: s.easy + (rating === 4 ? 1 : 0),
-      again: s.again + (rating === 1 || rating === 2 ? 1 : 0),
     }));
 
     // Re-queue "Novamente" cards at the end
@@ -255,18 +256,26 @@ export default function Memorizae() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-muted">
                   <div className="text-2xl font-bold">{sessionStats.reviewed}</div>
                   <div className="text-xs text-muted-foreground">Revisadas</div>
                 </div>
-                <div className="p-3 rounded-lg bg-green-500/10">
-                  <div className="text-2xl font-bold text-green-600">{sessionStats.easy + sessionStats.good}</div>
-                  <div className="text-xs text-muted-foreground">Acertos</div>
+                <div className="p-3 rounded-lg bg-neutral-900 border border-neutral-700">
+                  <div className="text-2xl font-bold text-neutral-100">{sessionStats.again}</div>
+                  <div className="text-xs text-muted-foreground">Novamente</div>
                 </div>
                 <div className="p-3 rounded-lg bg-red-500/10">
-                  <div className="text-2xl font-bold text-red-600">{sessionStats.again}</div>
-                  <div className="text-xs text-muted-foreground">Errei</div>
+                  <div className="text-2xl font-bold text-red-600">{sessionStats.hard}</div>
+                  <div className="text-xs text-muted-foreground">Difícil</div>
+                </div>
+                <div className="p-3 rounded-lg bg-yellow-500/10">
+                  <div className="text-2xl font-bold text-yellow-600">{sessionStats.good}</div>
+                  <div className="text-xs text-muted-foreground">Bom</div>
+                </div>
+                <div className="p-3 rounded-lg bg-green-500/10 col-span-2">
+                  <div className="text-2xl font-bold text-green-600">{sessionStats.easy}</div>
+                  <div className="text-xs text-muted-foreground">Fácil</div>
                 </div>
               </div>
               <Button onClick={closeDeck} className="w-full">Concluir</Button>
