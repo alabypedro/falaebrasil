@@ -427,15 +427,42 @@ export default function Memorizae() {
           </CardContent>
         </Card>
       ) : (
+        <>
+        <div className="flex justify-center gap-2 flex-wrap">
+          {LEVELS.map((lv) => (
+            <Button
+              key={lv}
+              size="sm"
+              variant={selectedLevel === lv ? "default" : "outline"}
+              className="rounded-full w-11 h-11"
+              onClick={() => setSelectedLevel(lv)}
+            >
+              {lv}
+            </Button>
+          ))}
+        </div>
+        {(() => {
+          const filtered = decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false));
+          if (filtered.length === 0) {
+            return (
+              <Card>
+                <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                  Nenhum deck disponível no nível {selectedLevel} ainda.
+                </CardContent>
+              </Card>
+            );
+          }
+          return (
         <div className="grid gap-3 md:grid-cols-2">
-          {decks.map((d) => {
+          {filtered.map((d) => {
             const s = deckStats(d.id);
+            const deckLevel = d.course_id ? courseLevelById[d.course_id] : null;
             return (
               <Card key={d.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-base leading-tight">{d.title}</CardTitle>
-                    <Badge variant="outline" className="text-[10px]">{TOPIC_LABEL[d.target_topic] ?? d.target_topic}</Badge>
+                    {deckLevel && <Badge variant="outline" className="text-[10px]">{deckLevel}</Badge>}
                   </div>
                   {d.description && <p className="text-xs text-muted-foreground mt-1">{d.description}</p>}
                 </CardHeader>
@@ -459,6 +486,9 @@ export default function Memorizae() {
             );
           })}
         </div>
+          );
+        })()}
+        </>
       )}
     </div>
   );
