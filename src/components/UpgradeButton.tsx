@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, Check, Crown, ExternalLink, MessageCircle, GraduationCap, Loader2 } from "lucide-react";
+import { Sparkles, Crown, ExternalLink, MessageCircle, GraduationCap, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 interface Product {
   product_key: string;
@@ -14,6 +12,7 @@ interface Product {
   price_cents: number;
   type: "subscription" | "one_time";
   description: string | null;
+  checkout_url: string | null;
 }
 
 export default function UpgradeButton() {
@@ -21,9 +20,6 @@ export default function UpgradeButton() {
   const [open, setOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-  const [creating, setCreating] = useState<string | null>(null);
-  const [cpf, setCpf] = useState("");
-  const [needsCpf, setNeedsCpf] = useState(false);
 
   const tier: "open" | "pro" | "vip" = (profile?.plan_tier as any) ?? "open";
 
@@ -42,54 +38,6 @@ export default function UpgradeButton() {
   }, [open]);
 
   if (tier === "vip") return null;
-
-  const createCheckout = async (productKey: string) => {
-    const cpfClean = cpf.replace(/\D/g, "");
-    if (needsCpf && cpfClean.length < 11) {
-      toast.error("Informe um CPF/CNPJ válido");
-      return;
-    }
-    setCreating(productKey);
-    const { data: session } = await supabase.auth.getSession();
-    const token = session?.session?.access_token;
-    if (!token) {
-      toast.error("Você precisa estar logado");
-      setCreating(null);
-      return;
-    }
-    try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          product_key: productKey,
-          cpf_cnpj: cpfClean || undefined,
-          phone: profile?.phone || undefined,
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) {
-        if (body.needsCpf) {
-          setNeedsCpf(true);
-          toast.error("Informe o CPF/CNPJ para continuar");
-        } else {
-          toast.error(body.error || "Erro ao criar checkout");
-        }
-        setCreating(null);
-        return;
-      }
-      toast.success("Checkout criado!");
-      window.open(body.invoice_url, "_blank", "noopener,noreferrer");
-      setOpen(false);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setCreating(null);
-    }
-  };
 
   return (
     <>
@@ -131,17 +79,6 @@ export default function UpgradeButton() {
             </div>
           )}
 
-          {needsCpf && (
-            <div className="space-y-1.5">
-              <Label className="text-xs">CPF/CNPJ obrigatório em produção</Label>
-              <Input
-                placeholder="000.000.000-00"
-                value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
-              />
-            </div>
-          )}
-
           <div className="grid sm:grid-cols-2 gap-4 mt-2">
             {products.map((p) => (
               <div
@@ -166,18 +103,17 @@ export default function UpgradeButton() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground flex-1">{p.description || "—"}</p>
-                <Button
-                  className="w-full mt-4"
-                  onClick={() => createCheckout(p.product_key)}
-                  disabled={creating === p.product_key}
-                >
-                  {creating === p.product_key ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                  ) : (
-                    <ExternalLink className="ml-1.5 h-4 w-4" />
-                  )}
-                  {creating === p.product_key ? "Gerando..." : "Comprar agora"}
-                </Button>
+                {p.checkout_url ? (
+                  <Button asChild className="w-full mt-4">
+                    <a href={p.checkout_url} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
+                      Comprar agora <ExternalLink className="ml-1.5 h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : (
+                  <Button className="w-full mt-4" disabled onClick={() => toast.error("Checkout ainda não configurado.")}>
+                    Checkout indisponível
+                  </Button>
+                )}
               </div>
             ))}
           </div>
