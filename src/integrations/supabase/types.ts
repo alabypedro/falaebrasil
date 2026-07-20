@@ -41,6 +41,165 @@ export type Database = {
         }
         Relationships: []
       }
+      asaas_customers: {
+        Row: {
+          asaas_customer_id: string
+          cpf_cnpj: string | null
+          created_at: string
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asaas_customer_id: string
+          cpf_cnpj?: string | null
+          created_at?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asaas_customer_id?: string
+          cpf_cnpj?: string | null
+          created_at?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      asaas_payments: {
+        Row: {
+          asaas_payment_id: string
+          asaas_subscription_id: string | null
+          bank_slip_url: string | null
+          billing_type: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_url: string | null
+          net_value_cents: number | null
+          paid_at: string | null
+          pix_copy_paste: string | null
+          pix_qr_code: string | null
+          product_key: string | null
+          raw_payload: Json | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          value_cents: number
+        }
+        Insert: {
+          asaas_payment_id: string
+          asaas_subscription_id?: string | null
+          bank_slip_url?: string | null
+          billing_type?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_url?: string | null
+          net_value_cents?: number | null
+          paid_at?: string | null
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
+          product_key?: string | null
+          raw_payload?: Json | null
+          status: string
+          updated_at?: string
+          user_id?: string | null
+          value_cents?: number
+        }
+        Update: {
+          asaas_payment_id?: string
+          asaas_subscription_id?: string | null
+          bank_slip_url?: string | null
+          billing_type?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_url?: string | null
+          net_value_cents?: number | null
+          paid_at?: string | null
+          pix_copy_paste?: string | null
+          pix_qr_code?: string | null
+          product_key?: string | null
+          raw_payload?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          value_cents?: number
+        }
+        Relationships: []
+      }
+      asaas_subscriptions: {
+        Row: {
+          asaas_subscription_id: string
+          canceled_at: string | null
+          created_at: string
+          cycle: Database["public"]["Enums"]["payment_billing_cycle"] | null
+          id: string
+          next_due_date: string | null
+          product_key: string
+          status: string
+          updated_at: string
+          user_id: string
+          value_cents: number
+        }
+        Insert: {
+          asaas_subscription_id: string
+          canceled_at?: string | null
+          created_at?: string
+          cycle?: Database["public"]["Enums"]["payment_billing_cycle"] | null
+          id?: string
+          next_due_date?: string | null
+          product_key: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          value_cents?: number
+        }
+        Update: {
+          asaas_subscription_id?: string
+          canceled_at?: string | null
+          created_at?: string
+          cycle?: Database["public"]["Enums"]["payment_billing_cycle"] | null
+          id?: string
+          next_due_date?: string | null
+          product_key?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          value_cents?: number
+        }
+        Relationships: []
+      }
+      asaas_webhook_events: {
+        Row: {
+          error: string | null
+          event_id: string
+          event_type: string
+          processed_at: string
+          raw_payload: Json
+        }
+        Insert: {
+          error?: string | null
+          event_id: string
+          event_type: string
+          processed_at?: string
+          raw_payload: Json
+        }
+        Update: {
+          error?: string | null
+          event_id?: string
+          event_type?: string
+          processed_at?: string
+          raw_payload?: Json
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -890,8 +1049,115 @@ export type Database = {
           },
         ]
       }
+      payment_product_courses: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_product_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_product_courses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "payment_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_products: {
+        Row: {
+          active: boolean
+          billing_cycle:
+            | Database["public"]["Enums"]["payment_billing_cycle"]
+            | null
+          created_at: string
+          description: string | null
+          display_order: number
+          grants_course_access: boolean
+          grants_ebook1_access: boolean
+          grants_ebook2_access: boolean
+          grants_ebook3_access: boolean
+          grants_scripted_seconds: number
+          grants_unscripted_seconds: number
+          id: string
+          name: string
+          plan_tier: string | null
+          price_cents: number
+          product_key: string
+          type: Database["public"]["Enums"]["payment_product_type"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          billing_cycle?:
+            | Database["public"]["Enums"]["payment_billing_cycle"]
+            | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          grants_course_access?: boolean
+          grants_ebook1_access?: boolean
+          grants_ebook2_access?: boolean
+          grants_ebook3_access?: boolean
+          grants_scripted_seconds?: number
+          grants_unscripted_seconds?: number
+          id?: string
+          name: string
+          plan_tier?: string | null
+          price_cents?: number
+          product_key: string
+          type?: Database["public"]["Enums"]["payment_product_type"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          billing_cycle?:
+            | Database["public"]["Enums"]["payment_billing_cycle"]
+            | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          grants_course_access?: boolean
+          grants_ebook1_access?: boolean
+          grants_ebook2_access?: boolean
+          grants_ebook3_access?: boolean
+          grants_scripted_seconds?: number
+          grants_unscripted_seconds?: number
+          id?: string
+          name?: string
+          plan_tier?: string | null
+          price_cents?: number
+          product_key?: string
+          type?: Database["public"]["Enums"]["payment_product_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
           avatar_url: string | null
           best_listening_score: number | null
           best_scripted_score: number | null
@@ -929,6 +1195,8 @@ export type Database = {
           xp: number
         }
         Insert: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           avatar_url?: string | null
           best_listening_score?: number | null
           best_scripted_score?: number | null
@@ -966,6 +1234,8 @@ export type Database = {
           xp?: number
         }
         Update: {
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           avatar_url?: string | null
           best_listening_score?: number | null
           best_scripted_score?: number | null
@@ -1735,6 +2005,15 @@ export type Database = {
         Args: { _answers: Json; _lesson_id: string }
         Returns: Json
       }
+      grant_access_from_asaas: {
+        Args: {
+          _asaas_payment_id: string
+          _product_key: string
+          _raw?: Json
+          _user_id: string
+        }
+        Returns: Json
+      }
       grant_voice_credits: {
         Args: {
           _hubla_event_id: string
@@ -1785,6 +2064,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      payment_billing_cycle:
+        | "MONTHLY"
+        | "YEARLY"
+        | "WEEKLY"
+        | "QUARTERLY"
+        | "SEMIANNUALLY"
+      payment_product_type: "subscription" | "one_time"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1913,6 +2199,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      payment_billing_cycle: [
+        "MONTHLY",
+        "YEARLY",
+        "WEEKLY",
+        "QUARTERLY",
+        "SEMIANNUALLY",
+      ],
+      payment_product_type: ["subscription", "one_time"],
     },
   },
 } as const
