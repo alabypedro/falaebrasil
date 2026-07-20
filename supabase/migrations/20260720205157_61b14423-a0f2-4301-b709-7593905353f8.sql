@@ -1,0 +1,1 @@
+ALTER TABLE public.payment_products ADD COLUMN IF NOT EXISTS checkout_url text;
