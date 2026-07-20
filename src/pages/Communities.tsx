@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { UpsellModal } from "@/components/UpsellModal";
 
 type Tier = "open" | "pro" | "vip" | "kids" | "teens";
 
