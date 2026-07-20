@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { UpsellModal } from "@/components/UpsellModal";
+import { toast } from "sonner";
 
 type Tier = "open" | "pro" | "vip" | "kids" | "teens";
 
@@ -84,13 +86,87 @@ function SubfolderRow({
   );
 }
 
+function UpsellInlineCheckout({
+  productKey,
+  productName,
+  paidChatUrl,
+  paidChatLabel,
+  onClose,
+}: {
+  productKey: string | null;
+  productName: string;
+  paidChatUrl: string | null;
+  paidChatLabel: string;
+  onClose: () => void;
+}) {
+  const { profile } = useAuth();
+  const [creating, setCreating] = useState(false);
+
+  const buy = async () => {
+    if (!productKey) return;
+    setCreating(true);
+    const { data: session } = await supabase.auth.getSession();
+    const token = session?.session?.access_token;
+    if (!token) {
+      toast?.error?.("Você precisa estar logado");
+      setCreating(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-create-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_key: productKey,
+          phone: profile?.phone || undefined,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        toast?.error?.(body.error || "Erro ao criar checkout");
+        setCreating(false);
+        return;
+      }
+      window.open(body.invoice_url, "_blank", "noopener,noreferrer");
+      onClose();
+    } catch (e) {
+      toast?.error?.((e as Error).message);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (paidChatUrl) {
+    return (
+      <Button asChild className="w-full">
+        <a href={paidChatUrl} target="_blank" rel="noopener noreferrer">
+          Conversar sobre {paidChatLabel} <ExternalLink className="ml-1.5 h-4 w-4" />
+        </a>
+      </Button>
+    );
+  }
+
+  if (!productKey) {
+    return <Button disabled className="w-full">Checkout em breve</Button>;
+  }
+
+  return (
+    <Button className="w-full" onClick={buy} disabled={creating}>
+      {creating ? "Gerando..." : "Comprar agora"}
+    </Button>
+  );
+}
+
 export default function Communities() {
   const [items, setItems] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Community | null>(null);
   const [upsellTier, setUpsellTier] = useState<"pro" | "vip" | null>(null);
-  const [proCheckoutUrl, setProCheckoutUrl] = useState<string | null>(null);
-  const [vipCheckoutUrl, setVipCheckoutUrl] = useState<string | null>(null);
+  const [productKeys, setProductKeys] = useState<{ pro: string | null; vip: string | null }>({ pro: null, vip: null });
+  const [productNames, setProductNames] = useState<{ pro: string; vip: string }>({ pro: "Plano PRO", vip: "Plano VIP" });
   const [teacherUrl, setTeacherUrl] = useState<string | null>(null);
   const [paidChatUrl, setPaidChatUrl] = useState<string | null>(null);
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
@@ -102,17 +178,22 @@ export default function Communities() {
 
   useEffect(() => {
     (async () => {
-      const [communitiesRes, teacherRes, mappingRes] = await Promise.all([
+      const [communitiesRes, teacherRes, productsRes] = await Promise.all([
         supabase.from("fb_communities").select("*").order("sort_order", { ascending: true }),
         supabase.from("vip_config").select("teacher_chat_url, paid_chat_url").eq("id", 1).maybeSingle(),
-        supabase.from("hubla_product_mapping").select("product_key, checkout_url").in("product_key", ["plano_pro", "plano_vip"]),
+        supabase.from("payment_products").select("product_key, name").in("product_key", ["plano_pro", "plano_vip"]).eq("active", true),
       ]);
       if (communitiesRes.data) setItems(communitiesRes.data as Community[]);
       setTeacherUrl(teacherRes.data?.teacher_chat_url ?? null);
       setPaidChatUrl((teacherRes.data as any)?.paid_chat_url ?? null);
-      const mapping = mappingRes.data ?? [];
-      setProCheckoutUrl(mapping.find((m: any) => m.product_key === "plano_pro")?.checkout_url ?? null);
-      setVipCheckoutUrl(mapping.find((m: any) => m.product_key === "plano_vip")?.checkout_url ?? null);
+      const products = productsRes.data ?? [];
+      const pro = products.find((p: any) => p.product_key === "plano_pro");
+      const vip = products.find((p: any) => p.product_key === "plano_vip");
+      setProductKeys({ pro: pro?.product_key ?? null, vip: vip?.product_key ?? null });
+      setProductNames({
+        pro: pro?.name ?? "Plano PRO",
+        vip: vip?.name ?? "Plano VIP",
+      });
       setLoading(false);
     })();
   }, []);
@@ -135,8 +216,6 @@ export default function Communities() {
       </div>
     );
   }
-
-  const upsellCheckoutUrl = upsellTier === "vip" ? vipCheckoutUrl : proCheckoutUrl;
 
   const generalItems = items.filter((i) => i.all_tiers);
   const groupedByTier: Record<Tier, Community[]> = {
@@ -331,7 +410,7 @@ export default function Communities() {
               {upsellTier === "vip" ? <Crown className="h-6 w-6 text-primary" /> : <Lock className="h-6 w-6 text-primary" />}
             </div>
             <DialogTitle className="text-center">
-              {upsellTier === "vip" ? "Plano VIP" : "Plano PRO"}
+              {upsellTier === "vip" ? productNames.vip : productNames.pro}
             </DialogTitle>
             <DialogDescription className="text-center">
               {upsellTier === "vip"
@@ -340,21 +419,13 @@ export default function Communities() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
-            {paidChatUrl ? (
-              <Button asChild className="w-full">
-                <a href={paidChatUrl} target="_blank" rel="noopener noreferrer">
-                  Conversar sobre {upsellTier === "vip" ? "VIP" : "PRO"} <ExternalLink className="ml-1.5 h-4 w-4" />
-                </a>
-              </Button>
-            ) : upsellCheckoutUrl ? (
-              <Button asChild className="w-full">
-                <a href={upsellCheckoutUrl} target="_blank" rel="noopener noreferrer">
-                  Comprar agora <ExternalLink className="ml-1.5 h-4 w-4" />
-                </a>
-              </Button>
-            ) : (
-              <Button disabled className="w-full">Checkout em breve</Button>
-            )}
+            <UpsellInlineCheckout
+              productKey={upsellTier === "vip" ? productKeys.vip : productKeys.pro}
+              productName={upsellTier === "vip" ? productNames.vip : productNames.pro}
+              paidChatUrl={paidChatUrl}
+              paidChatLabel={upsellTier === "vip" ? "VIP" : "PRO"}
+              onClose={() => setUpsellTier(null)}
+            />
             <Button variant="outline" onClick={() => setUpsellTier(null)} className="w-full">
               Fechar
             </Button>

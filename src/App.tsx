@@ -35,6 +35,7 @@ import PromptsManager from "@/pages/admin/PromptsManager";
 import ListeningManager from "@/pages/admin/ListeningManager";
 import AdminsManager from "@/pages/admin/AdminsManager";
 import HublaProductsManager from "@/pages/admin/HublaProductsManager";
+import PaymentsManager from "@/pages/admin/PaymentsManager";
 import TutorialsManager from "@/pages/admin/TutorialsManager";
 import CommunitiesManager from "@/pages/admin/CommunitiesManager";
 import InstallTutorialVideosManager from "@/pages/admin/InstallTutorialVideosManager";
@@ -161,6 +162,7 @@ const App = () => {
                           <Route path="contracts" element={<ContractsManager />} />
                           <Route path="admins" element={<AdminsManager />} />
                           <Route path="hubla" element={<HublaProductsManager />} />
+                          <Route path="payments" element={<PaymentsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
                           <Route path="create-student" element={<CreateStudent />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />

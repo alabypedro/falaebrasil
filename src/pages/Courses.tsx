@@ -142,11 +142,12 @@ export default function Courses() {
 
     const load = async () => {
       const { data: prodData } = await supabase
-        .from("hubla_product_mapping")
-        .select("display_name, checkout_url")
-        .eq("hubla_product_id", "7YNOATVITU1bdajEeUGU")
+        .from("payment_products")
+        .select("name, price_cents, type")
+        .eq("product_key", "plano_open")
+        .eq("active", true)
         .maybeSingle();
-      if (prodData) setCoursePrice(prodData as any);
+      if (prodData) setCoursePrice({ display_name: prodData.name, checkout_url: null });
 
       const { data: granted } = await supabase
         .from("user_course_access")
@@ -370,9 +371,8 @@ export default function Courses() {
       <UpsellModal
         open={showUpsell}
         onOpenChange={setShowUpsell}
-        productKey="7YNOATVITU1bdajEeUGU"
+        productKey="plano_open"
         productName={coursePrice?.display_name ?? "Plano OPEN"}
-        checkoutUrl={coursePrice?.checkout_url ?? null}
         description="Para acessar o conteúdo do curso Falaê Brasil! você precisa adquirir o curso."
       />
     </div>
