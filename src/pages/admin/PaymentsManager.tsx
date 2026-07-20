@@ -718,6 +718,9 @@ export default function PaymentsManager() {
                     <SelectItem value="null">—</SelectItem>
                     <SelectItem value="MONTHLY">Mensal</SelectItem>
                     <SelectItem value="YEARLY">Anual</SelectItem>
+                    <SelectItem value="QUARTERLY">Trimestral</SelectItem>
+                    <SelectItem value="SEMIANNUALLY">Semestral</SelectItem>
+                    <SelectItem value="WEEKLY">Semanal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
