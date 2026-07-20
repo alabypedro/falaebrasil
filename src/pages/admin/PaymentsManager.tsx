@@ -404,7 +404,20 @@ export default function PaymentsManager() {
                     {p.grants_unscripted_seconds > 0 && (
                       <Badge variant="outline">+{p.grants_unscripted_seconds}s livre</Badge>
                     )}
+                    {p.checkout_url
+                      ? <Badge variant="outline" className="text-emerald-600 border-emerald-600/40">Checkout OK</Badge>
+                      : <Badge variant="outline" className="text-amber-600 border-amber-600/40">Sem checkout URL</Badge>}
                   </div>
+                  {p.checkout_url && (
+                    <div className="flex items-center gap-2">
+                      <Input value={p.checkout_url} readOnly className="text-xs bg-muted font-mono" />
+                      <Button variant="outline" size="icon" asChild>
+                        <a href={p.checkout_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  )}
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" size="sm" onClick={() => setDraft(p)}>
                       Editar
