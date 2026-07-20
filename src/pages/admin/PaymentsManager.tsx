@@ -777,6 +777,20 @@ export default function PaymentsManager() {
               </div>
             </div>
 
+            <div className="space-y-1.5 border-t pt-4">
+              <Label className="text-xs font-semibold">URL de checkout externa (ASAAS)</Label>
+              <Input
+                value={draft.checkout_url ?? ""}
+                onChange={(e) => setDraft({ ...draft, checkout_url: e.target.value })}
+                placeholder="https://www.asaas.com/c/xxxxxxxx"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Cole aqui o link de pagamento gerado no painel do ASAAS (Cobranças &gt; Link de Pagamento).
+                Ao clicar em <strong>Comprar agora</strong>, o aluno será redirecionado direto para essa URL —
+                o próprio checkout do ASAAS pede CPF, e-mail e forma de pagamento.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-4">
               <Label className="text-xs sm:col-span-2 font-semibold">Permissões liberadas ao pagar</Label>
               <div className="space-y-1.5">
