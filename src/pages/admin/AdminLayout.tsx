@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle, Users, Smartphone, Mail, FileSignature, Brain, BookText, UserPlus, CreditCard } from "lucide-react";
+import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle, Users, Smartphone, Mail, FileSignature, Brain, BookText, UserPlus, CreditCard, Webhook } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNav = [
@@ -20,6 +20,7 @@ const adminNav = [
   { to: "/admin/admins", icon: ShieldCheck, label: "Admins" },
   { to: "/admin/hubla", icon: ShoppingCart, label: "Vendas Hubla" },
   { to: "/admin/payments", icon: CreditCard, label: "Pagamentos ASAAS" },
+  { to: "/admin/webhook-logs", icon: Webhook, label: "Logs Webhook ASAAS" },
   { to: "/admin/welcome-email", icon: Mail, label: "Email Boas-vindas" },
   { to: "/admin/create-student", icon: UserPlus, label: "Criar Aluno" },
 ];
