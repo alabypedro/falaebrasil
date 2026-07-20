@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle, Users, Smartphone, Mail, FileSignature, Brain, BookText, UserPlus } from "lucide-react";
+import { BookOpen, Layers, FileText, HelpCircle, LayoutDashboard, Library, Mic, ShieldCheck, ShoppingCart, PlayCircle, Users, Smartphone, Mail, FileSignature, Brain, BookText, UserPlus, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const adminNav = [
