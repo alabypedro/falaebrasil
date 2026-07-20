@@ -337,7 +337,7 @@ export default function Communities() {
               {upsellTier === "vip" ? <Crown className="h-6 w-6 text-primary" /> : <Lock className="h-6 w-6 text-primary" />}
             </div>
             <DialogTitle className="text-center">
-              {upsellTier === "vip" ? "Plano VIP" : "Plano PRO"}
+              {upsellTier === "vip" ? productNames.vip : productNames.pro}
             </DialogTitle>
             <DialogDescription className="text-center">
               {upsellTier === "vip"
@@ -346,21 +346,13 @@ export default function Communities() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
-            {paidChatUrl ? (
-              <Button asChild className="w-full">
-                <a href={paidChatUrl} target="_blank" rel="noopener noreferrer">
-                  Conversar sobre {upsellTier === "vip" ? "VIP" : "PRO"} <ExternalLink className="ml-1.5 h-4 w-4" />
-                </a>
-              </Button>
-            ) : upsellCheckoutUrl ? (
-              <Button asChild className="w-full">
-                <a href={upsellCheckoutUrl} target="_blank" rel="noopener noreferrer">
-                  Comprar agora <ExternalLink className="ml-1.5 h-4 w-4" />
-                </a>
-              </Button>
-            ) : (
-              <Button disabled className="w-full">Checkout em breve</Button>
-            )}
+            <UpsellInlineCheckout
+              productKey={upsellTier === "vip" ? productKeys.vip : productKeys.pro}
+              productName={upsellTier === "vip" ? productNames.vip : productNames.pro}
+              paidChatUrl={paidChatUrl}
+              paidChatLabel={upsellTier === "vip" ? "VIP" : "PRO"}
+              onClose={() => setUpsellTier(null)}
+            />
             <Button variant="outline" onClick={() => setUpsellTier(null)} className="w-full">
               Fechar
             </Button>
