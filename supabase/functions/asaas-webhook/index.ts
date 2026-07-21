@@ -249,26 +249,40 @@ async function upsertSubscription(admin: any, subscription: any, userId: string 
 }
 
 async function resolveProductKey(admin: any, payment: any): Promise<string | null> {
-  const rawKey = payment.description ?? payment.subscription?.description ?? null;
-  if (!rawKey) return null;
+  const rawKey = (payment.description ?? payment.subscription?.description ?? "").trim();
 
   // First, try exact product_key match
-  const { data: exact } = await admin
-    .from("payment_products")
-    .select("product_key")
-    .eq("product_key", rawKey)
-    .eq("active", true)
-    .maybeSingle();
-  if (exact) return exact.product_key;
+  if (rawKey) {
+    const { data: exact } = await admin
+      .from("payment_products")
+      .select("product_key")
+      .eq("product_key", rawKey)
+      .eq("active", true)
+      .maybeSingle();
+    if (exact) return exact.product_key;
 
-  // Fallback: match by name (case-insensitive)
-  const { data: byName } = await admin
-    .from("payment_products")
-    .select("product_key")
-    .ilike("name", rawKey)
-    .eq("active", true)
-    .maybeSingle();
-  if (byName) return byName.product_key;
+    // Fallback: match by name (case-insensitive)
+    const { data: byName } = await admin
+      .from("payment_products")
+      .select("product_key")
+      .ilike("name", rawKey)
+      .eq("active", true)
+      .maybeSingle();
+    if (byName) return byName.product_key;
+  }
+
+  // Static ASAAS payment links often arrive without description. In that case,
+  // match the webhook paymentLink id to the Admin checkout_url saved for the product.
+  const paymentLinkId = (payment.paymentLink ?? payment.paymentLinkId ?? "").trim();
+  if (paymentLinkId) {
+    const { data: byCheckoutUrl } = await admin
+      .from("payment_products")
+      .select("product_key")
+      .ilike("checkout_url", `%${paymentLinkId}%`)
+      .eq("active", true)
+      .maybeSingle();
+    if (byCheckoutUrl) return byCheckoutUrl.product_key;
+  }
 
   return null;
 }
