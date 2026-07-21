@@ -984,6 +984,120 @@ export default function PaymentsManager() {
               </div>
             </div>
 
+            {/* COMBO / BUNDLE ITEMS */}
+            {!draftIsNew && (
+              <div className="border-t pt-4 space-y-2">
+                <Label className="text-xs font-semibold">Itens inclusos (combo / order bump)</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Ao pagar este produto, o aluno recebe também tudo o que estes produtos liberam
+                  (ebooks, segundos de IA Falaê, cursos). Use pra montar "Plano Open + 3 Ebooks" num único link.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {products
+                    .filter((op) => op.id !== draft.id)
+                    .map((op) => {
+                      const checked = productBundles[draft.id]?.has(op.id) ?? false;
+                      return (
+                        <label
+                          key={op.id}
+                          className="flex items-center gap-2 text-sm rounded-md border border-border/50 px-2 py-1.5 cursor-pointer hover:bg-muted/40"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => toggleBundleItem(draft.id, op.id, !!v)}
+                          />
+                          <span className="flex-1">{op.name}</span>
+                          <span className="text-[10px] uppercase text-muted-foreground font-mono">
+                            {priceLabel(op.price_cents)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* COUPONS / ALTERNATIVE LINKS */}
+            {!draftIsNew && (
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs font-semibold">Cupons / links promocionais</Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Crie um link de pagamento alternativo no ASAAS com preço promocional e cadastre aqui.
+                      O aluno acessa via <code>/promo/CODIGO</code>. O produto liberado é o mesmo.
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={addDraftCoupon}>
+                    <Plus className="h-4 w-4 mr-1.5" /> Novo cupom
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {draftCoupons.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Nenhum cupom cadastrado.</p>
+                  )}
+                  {draftCoupons.map((c) => {
+                    const promoUrl = `${window.location.origin}/promo/${c.code || "CODIGO"}`;
+                    return (
+                      <div key={c.id} className="rounded-md border p-3 space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Código</Label>
+                            <Input
+                              value={c.code}
+                              onChange={(e) => updateDraftCoupon(c.id, { code: e.target.value.toUpperCase().replace(/\s+/g, "") })}
+                              placeholder="BLACK20"
+                              className="uppercase font-mono text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Preço promo (centavos)</Label>
+                            <Input
+                              type="number"
+                              value={c.price_cents}
+                              onChange={(e) => updateDraftCoupon(c.id, { price_cents: parseInt(e.target.value) || 0 })}
+                            />
+                            <p className="text-[10px] text-muted-foreground">{priceLabel(c.price_cents)}</p>
+                          </div>
+                          <div className="md:col-span-2 space-y-1">
+                            <Label className="text-[10px]">URL do link ASAAS (promocional)</Label>
+                            <Input
+                              value={c.checkout_url}
+                              onChange={(e) => updateDraftCoupon(c.id, { checkout_url: e.target.value })}
+                              placeholder="https://www.asaas.com/c/xxxxxxxx"
+                              className="text-xs font-mono"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <Label className="text-xs flex items-center gap-2">
+                              <Switch
+                                checked={c.active}
+                                onCheckedChange={(v) => updateDraftCoupon(c.id, { active: v })}
+                              />
+                              Ativo
+                            </Label>
+                            {c.code && (
+                              <div className="flex items-center gap-1">
+                                <Input value={promoUrl} readOnly className="text-[11px] font-mono h-7 w-[280px]" />
+                                <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => copyToClipboard(promoUrl)}>
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <Button size="sm" variant="destructive" onClick={() => removeDraftCoupon(c.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setDraft(null)}>
                 Cancelar
