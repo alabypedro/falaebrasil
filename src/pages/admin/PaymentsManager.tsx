@@ -102,6 +102,15 @@ const emptyProduct: PaymentProduct = {
   checkout_url: "",
 };
 
+type Coupon = {
+  id: string;
+  product_id: string;
+  code: string;
+  checkout_url: string;
+  price_cents: number;
+  active: boolean;
+};
+
 export default function PaymentsManager() {
   const [activeTab, setActiveTab] = useState("produtos");
   const [products, setProducts] = useState<PaymentProduct[]>([]);
@@ -115,12 +124,17 @@ export default function PaymentsManager() {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [hublaItems, setHublaItems] = useState<any[]>([]);
   const [hublaCourses, setHublaCourses] = useState<Record<string, Set<string>>>({});
+  const [productBundles, setProductBundles] = useState<Record<string, Set<string>>>({});
+  const [productCoupons, setProductCoupons] = useState<Record<string, Coupon[]>>({});
+  const [draftCoupons, setDraftCoupons] = useState<Coupon[]>([]);
 
   const loadProducts = async () => {
-    const [{ data: p }, { data: c }, { data: links }] = await Promise.all([
+    const [{ data: p }, { data: c }, { data: links }, { data: bundles }, { data: coupons }] = await Promise.all([
       supabase.from("payment_products").select("*").order("display_order"),
       supabase.from("courses").select("id, title, level, required_tier").eq("published", true).order("display_order"),
       supabase.from("payment_product_courses").select("product_id, course_id"),
+      supabase.from("payment_product_bundles").select("product_id, included_product_id"),
+      supabase.from("payment_product_coupons").select("*").order("created_at"),
     ]);
     if (p) setProducts(p as PaymentProduct[]);
     if (c) setCourses(c);
@@ -131,6 +145,22 @@ export default function PaymentsManager() {
         map[row.product_id].add(row.course_id);
       }
       setProductCourses(map);
+    }
+    if (bundles) {
+      const map: Record<string, Set<string>> = {};
+      for (const row of bundles as any[]) {
+        if (!map[row.product_id]) map[row.product_id] = new Set();
+        map[row.product_id].add(row.included_product_id);
+      }
+      setProductBundles(map);
+    }
+    if (coupons) {
+      const map: Record<string, Coupon[]> = {};
+      for (const c of coupons as Coupon[]) {
+        if (!map[c.product_id]) map[c.product_id] = [];
+        map[c.product_id].push(c);
+      }
+      setProductCoupons(map);
     }
   };
 
@@ -198,6 +228,43 @@ export default function PaymentsManager() {
   const isEditing = !!draft;
   const draftIsNew = draft?.id === "__new__";
 
+  useEffect(() => {
+    if (!draft) return;
+    setDraftCoupons(draft.id === "__new__" ? [] : (productCoupons[draft.id] ?? []).map((c) => ({ ...c })));
+  }, [draft?.id]);
+
+  const toggleBundleItem = (productId: string, includedId: string, checked: boolean) => {
+    setProductBundles((prev) => {
+      const next = { ...prev };
+      const set = new Set(next[productId] ?? []);
+      if (checked) set.add(includedId); else set.delete(includedId);
+      next[productId] = set;
+      return next;
+    });
+  };
+
+  const addDraftCoupon = () => {
+    setDraftCoupons((prev) => [
+      ...prev,
+      {
+        id: `__new_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        product_id: draft!.id,
+        code: "",
+        checkout_url: "",
+        price_cents: 0,
+        active: true,
+      },
+    ]);
+  };
+
+  const updateDraftCoupon = (id: string, patch: Partial<Coupon>) => {
+    setDraftCoupons((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  };
+
+  const removeDraftCoupon = (id: string) => {
+    setDraftCoupons((prev) => prev.filter((c) => c.id !== id));
+  };
+
   const upsertProduct = async () => {
     if (!draft) return;
     if (!draft.product_key.trim() || !draft.name.trim()) {
@@ -247,6 +314,39 @@ export default function PaymentsManager() {
     if (selected.length > 0) {
       const rows = selected.map((cid) => ({ product_id: draft.id, course_id: cid }));
       await supabase.from("payment_product_courses").insert(rows);
+    }
+
+    // sync bundles
+    const bundleIds = Array.from(productBundles[draft.id] ?? []).filter((id) => id !== draft.id);
+    await supabase.from("payment_product_bundles").delete().eq("product_id", draft.id);
+    if (bundleIds.length > 0) {
+      const rows = bundleIds.map((iid) => ({ product_id: draft.id, included_product_id: iid }));
+      await supabase.from("payment_product_bundles").insert(rows);
+    }
+
+    // sync coupons
+    const existingIds = new Set((productCoupons[draft.id] ?? []).map((c) => c.id));
+    const keptIds = new Set(draftCoupons.filter((c) => !c.id.startsWith("__new_")).map((c) => c.id));
+    const toDelete = [...existingIds].filter((id) => !keptIds.has(id));
+    if (toDelete.length > 0) {
+      await supabase.from("payment_product_coupons").delete().in("id", toDelete);
+    }
+    for (const c of draftCoupons) {
+      const payload = {
+        product_id: draft.id,
+        code: c.code.trim(),
+        checkout_url: c.checkout_url.trim(),
+        price_cents: c.price_cents,
+        active: c.active,
+      };
+      if (!payload.code || !payload.checkout_url) continue;
+      if (c.id.startsWith("__new_")) {
+        const { error: ce } = await supabase.from("payment_product_coupons").insert(payload);
+        if (ce) toast.error(`Cupom ${payload.code}: ${ce.message}`);
+      } else {
+        const { error: ce } = await supabase.from("payment_product_coupons").update(payload).eq("id", c.id);
+        if (ce) toast.error(`Cupom ${payload.code}: ${ce.message}`);
+      }
     }
 
     toast.success("Produto salvo!");
@@ -883,6 +983,120 @@ export default function PaymentsManager() {
                 })}
               </div>
             </div>
+
+            {/* COMBO / BUNDLE ITEMS */}
+            {!draftIsNew && (
+              <div className="border-t pt-4 space-y-2">
+                <Label className="text-xs font-semibold">Itens inclusos (combo / order bump)</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  Ao pagar este produto, o aluno recebe também tudo o que estes produtos liberam
+                  (ebooks, segundos de IA Falaê, cursos). Use pra montar "Plano Open + 3 Ebooks" num único link.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {products
+                    .filter((op) => op.id !== draft.id)
+                    .map((op) => {
+                      const checked = productBundles[draft.id]?.has(op.id) ?? false;
+                      return (
+                        <label
+                          key={op.id}
+                          className="flex items-center gap-2 text-sm rounded-md border border-border/50 px-2 py-1.5 cursor-pointer hover:bg-muted/40"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => toggleBundleItem(draft.id, op.id, !!v)}
+                          />
+                          <span className="flex-1">{op.name}</span>
+                          <span className="text-[10px] uppercase text-muted-foreground font-mono">
+                            {priceLabel(op.price_cents)}
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* COUPONS / ALTERNATIVE LINKS */}
+            {!draftIsNew && (
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs font-semibold">Cupons / links promocionais</Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Crie um link de pagamento alternativo no ASAAS com preço promocional e cadastre aqui.
+                      O aluno acessa via <code>/promo/CODIGO</code>. O produto liberado é o mesmo.
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={addDraftCoupon}>
+                    <Plus className="h-4 w-4 mr-1.5" /> Novo cupom
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {draftCoupons.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Nenhum cupom cadastrado.</p>
+                  )}
+                  {draftCoupons.map((c) => {
+                    const promoUrl = `${window.location.origin}/promo/${c.code || "CODIGO"}`;
+                    return (
+                      <div key={c.id} className="rounded-md border p-3 space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Código</Label>
+                            <Input
+                              value={c.code}
+                              onChange={(e) => updateDraftCoupon(c.id, { code: e.target.value.toUpperCase().replace(/\s+/g, "") })}
+                              placeholder="BLACK20"
+                              className="uppercase font-mono text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Preço promo (centavos)</Label>
+                            <Input
+                              type="number"
+                              value={c.price_cents}
+                              onChange={(e) => updateDraftCoupon(c.id, { price_cents: parseInt(e.target.value) || 0 })}
+                            />
+                            <p className="text-[10px] text-muted-foreground">{priceLabel(c.price_cents)}</p>
+                          </div>
+                          <div className="md:col-span-2 space-y-1">
+                            <Label className="text-[10px]">URL do link ASAAS (promocional)</Label>
+                            <Input
+                              value={c.checkout_url}
+                              onChange={(e) => updateDraftCoupon(c.id, { checkout_url: e.target.value })}
+                              placeholder="https://www.asaas.com/c/xxxxxxxx"
+                              className="text-xs font-mono"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <Label className="text-xs flex items-center gap-2">
+                              <Switch
+                                checked={c.active}
+                                onCheckedChange={(v) => updateDraftCoupon(c.id, { active: v })}
+                              />
+                              Ativo
+                            </Label>
+                            {c.code && (
+                              <div className="flex items-center gap-1">
+                                <Input value={promoUrl} readOnly className="text-[11px] font-mono h-7 w-[280px]" />
+                                <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => copyToClipboard(promoUrl)}>
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <Button size="sm" variant="destructive" onClick={() => removeDraftCoupon(c.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setDraft(null)}>

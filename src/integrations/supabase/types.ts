@@ -1070,6 +1070,83 @@ export type Database = {
           },
         ]
       }
+      payment_product_bundles: {
+        Row: {
+          created_at: string
+          id: string
+          included_product_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          included_product_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          included_product_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_product_bundles_included_product_id_fkey"
+            columns: ["included_product_id"]
+            isOneToOne: false
+            referencedRelation: "payment_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_product_bundles_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "payment_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_product_coupons: {
+        Row: {
+          active: boolean
+          checkout_url: string
+          code: string
+          created_at: string
+          id: string
+          price_cents: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          checkout_url: string
+          code: string
+          created_at?: string
+          id?: string
+          price_cents?: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          checkout_url?: string
+          code?: string
+          created_at?: string
+          id?: string
+          price_cents?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_product_coupons_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "payment_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_product_courses: {
         Row: {
           course_id: string

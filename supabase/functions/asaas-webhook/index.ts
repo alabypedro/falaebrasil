@@ -282,6 +282,17 @@ async function resolveProductKey(admin: any, payment: any): Promise<string | nul
       .eq("active", true)
       .maybeSingle();
     if (byCheckoutUrl) return byCheckoutUrl.product_key;
+
+    // Coupon / promotional link → resolves to the parent product_key
+    const { data: coupon } = await admin
+      .from("payment_product_coupons")
+      .select("product_id, payment_products!inner(product_key, active)")
+      .ilike("checkout_url", `%${paymentLinkId}%`)
+      .eq("active", true)
+      .maybeSingle();
+    if (coupon && (coupon as any).payment_products?.active) {
+      return (coupon as any).payment_products.product_key;
+    }
   }
 
   return null;
