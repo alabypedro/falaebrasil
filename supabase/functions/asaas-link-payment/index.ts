@@ -148,6 +148,18 @@ Deno.serve(async (req) => {
           .eq("active", true)
           .maybeSingle();
         if (byCheckoutUrl) productKey = byCheckoutUrl.product_key;
+
+        if (!productKey) {
+          const { data: coupon } = await admin
+            .from("payment_product_coupons")
+            .select("payment_products!inner(product_key, active)")
+            .ilike("checkout_url", `%${paymentLinkId}%`)
+            .eq("active", true)
+            .maybeSingle();
+          if (coupon && (coupon as any).payment_products?.active) {
+            productKey = (coupon as any).payment_products.product_key;
+          }
+        }
       }
     }
 
