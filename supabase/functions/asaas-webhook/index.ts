@@ -94,6 +94,54 @@ Deno.serve(async (req) => {
         .eq("asaas_customer_id", customerId)
         .maybeSingle();
       userId = customerRow?.user_id ?? null;
+
+      // Fallback: customer created directly on ASAAS (static payment link).
+      // Fetch customer from ASAAS and match by email to an existing auth user.
+      if (!userId) {
+        try {
+          const custResp = await fetchAsaas(`/customers/${customerId}`);
+          if (custResp.ok) {
+            const cust = await custResp.json();
+            const email = (cust.email ?? "").toLowerCase().trim();
+            const cpfCnpj = (cust.cpfCnpj ?? "").replace(/\D/g, "");
+            const phone = (cust.mobilePhone ?? cust.phone ?? "").replace(/\D/g, "");
+
+            if (email) {
+              const { data: userRow } = await admin
+                .schema("auth" as any)
+                .from("users")
+                .select("id")
+                .ilike("email", email)
+                .maybeSingle();
+              if (userRow?.id) {
+                userId = userRow.id;
+              }
+            }
+
+            if (userId) {
+              await admin.from("asaas_customers").upsert(
+                {
+                  user_id: userId,
+                  asaas_customer_id: customerId,
+                  cpf_cnpj: cpfCnpj || null,
+                  phone: phone || null,
+                },
+                { onConflict: "user_id" },
+              );
+              await admin
+                .from("profiles")
+                .update({ asaas_customer_id: customerId })
+                .eq("user_id", userId);
+            } else {
+              console.warn(`No user matched for ASAAS customer ${customerId} (email=${email})`);
+            }
+          } else {
+            console.warn(`Failed to fetch ASAAS customer ${customerId}: ${custResp.status}`);
+          }
+        } catch (err) {
+          console.error("Fallback customer lookup failed", err);
+        }
+      }
     }
 
     // Normalize payment/subscription payload into our tables
