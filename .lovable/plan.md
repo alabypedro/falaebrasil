@@ -1,103 +1,80 @@
-# Migração Hubla → ASAAS
+# Plano: Combos + Cupons na plataforma + Migração pra produção
 
-## Passo a passo do que você precisa fazer no ASAAS (antes de eu codar)
-
-1. **Pegar API Key**
-   - Painel ASAAS → menu do usuário (canto superior direito) → **Integrações** → **Gerar nova chave de API**
-   - Gere **duas**: uma em **Sandbox** (`https://sandbox.asaas.com`) para testes e outra em **Produção**
-   - Guarde as duas — vou pedir via formulário seguro quando chegar a hora
-
-2. **Configurar Webhook**
-   - Menu do usuário → **Integrações** → **Notificações via URL**
-   - URL: `https://teastozdtgoogrpghpzj.supabase.co/functions/v1/asaas-webhook` (vou criar essa function no passo 3 do desenvolvimento)
-   - Token de autenticação: gere uma string forte (você define) — vou pedir também
-   - Eventos marcados: `PAYMENT_CREATED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`, `PAYMENT_REFUNDED`, `PAYMENT_DELETED`, `SUBSCRIPTION_CREATED`, `SUBSCRIPTION_UPDATED`, `SUBSCRIPTION_DELETED`
-
-3. **Criar os produtos base** (opcional — podemos gerenciar tudo pelo nosso admin)
-   - ASAAS não tem "catálogo de produtos" nativo como Hubla; cada cobrança é criada via API com valor/descrição. Vou modelar isso na nossa tabela `payment_products` do lado do Lovable.
+Duas frentes em paralelo. A parte de código eu faço; a parte de painel ASAAS é você.
 
 ---
 
-## O que vou construir (desenvolvimento)
+## Parte 1 — Combos (order bumps "manuais")
 
-### 1. Banco de dados (migração única)
-Criar novas tabelas paralelas às `hubla_*` e adicionar colunas em `profiles`:
+Ideia: um "combo" é um **produto novo** no admin que, quando pago, libera **vários produtos de uma vez** (ex: Plano Open + 3 ebooks). Você cria 1 link de pagamento na ASAAS com o valor do combo, e o webhook libera todos os itens vinculados.
 
-- **`payment_products`**: substitui `hubla_product_mapping`. Colunas: `product_key` (`plano_open`, `ebook_anfitriao`, `ebook_decodificador`, `ebook_vocabulario`), `name`, `type` (`subscription` | `one_time`), `price_cents`, `billing_cycle` (`MONTHLY`/`YEARLY`/`null`), `description`, `active`, `grants_course_access`, `grants_ebook1/2/3_access`, `grants_scripted_seconds`, `grants_unscripted_seconds`, `plan_tier`
-- **`payment_product_courses`**: substitui `hubla_product_courses` (product_id → course_id)
-- **`asaas_customers`**: mapeia `user_id` ↔ `asaas_customer_id`
-- **`asaas_subscriptions`**: `user_id`, `asaas_subscription_id`, `product_key`, `status`, `next_due_date`, `cycle`
-- **`asaas_payments`**: log de todas as cobranças (`asaas_payment_id`, `user_id`, `product_key`, `status`, `value`, `billing_type`, `invoice_url`, `pix_qr_code`, `paid_at`)
-- **`asaas_webhook_events`**: idempotência dos webhooks (`event_id` PK, `event_type`, `raw_payload`, `processed_at`)
-- **`profiles`**: adicionar `asaas_customer_id`, `asaas_subscription_id` (manter os `hubla_*` como histórico read-only)
+### O que eu construo
+- Nova tabela `payment_product_bundles` (produto pai → produtos filhos)
+- Admin → Pagamentos: no editor de produto, seção **"Itens inclusos (combo)"** com multi-select dos outros produtos ativos
+- `grant_access_from_asaas` passa a: liberar o produto principal **+** todos os produtos vinculados como itens do combo (soma segundos de voz, marca acessos de ebook, libera cursos)
+- Idempotência mantida via `access_granted_at`
 
-Novo RPC `grant_access_from_asaas(_user_id, _asaas_payment_id, _product_key, _raw)` que substitui `grant_voice_credits` — idempotente por `asaas_payment_id`, concede acessos e créditos conforme o `payment_products`.
-
-Tabelas `hubla_*` **não são deletadas** (histórico), mas ficam invisíveis no admin.
-
-### 2. Edge functions
-
-- **`asaas-webhook`** (`verify_jwt = false`): valida header `asaas-access-token` contra `ASAAS_WEBHOOK_TOKEN`, insere no `asaas_webhook_events` com idempotência, roteia por `event.event`:
-  - `PAYMENT_CONFIRMED`/`PAYMENT_RECEIVED` → chama `grant_access_from_asaas`, marca profile `subscription_status='active'`, atualiza `subscription_current_period_end`
-  - `PAYMENT_OVERDUE` → `subscription_status='past_due'`, define `subscription_grace_until = now() + 7 dias`
-  - `SUBSCRIPTION_DELETED`/`PAYMENT_REFUNDED` → `subscription_status='canceled'`, revoga acessos após grace
-- **`asaas-create-checkout`** (chamada pelo frontend, `verify_jwt=true`): recebe `product_key`, cria/reusa `asaas_customer_id`, cria assinatura (para plano OPEN) ou cobrança única (para ebooks) via API ASAAS (`POST /v3/subscriptions` ou `/v3/payments`), retorna `invoiceUrl`/PIX/link para o aluno pagar
-- **`asaas-cancel-subscription`** (`verify_jwt=true`): admin cancela via `DELETE /v3/subscriptions/{id}`
-- **Remover/depreciar** `hubla-webhook` (mantenho o arquivo com um `410 Gone` por 30 dias para não quebrar webhooks antigos)
-- Adaptar `grant-voice-credits-admin` e `grant-access-admin` para usar as novas tabelas
-
-### 3. Admin panel
-
-- Renomear rota `/admin/hubla` → `/admin/payments`
-- **`PaymentProductsManager.tsx`** (substitui `HublaProductsManager`): CRUD dos produtos ASAAS, define acessos concedidos, cursos vinculados, preço, ciclo. Aba separada "Legado Hubla" (read-only) mostra o histórico.
-- Nova aba **"Assinaturas ASAAS"**: lista `asaas_subscriptions` com filtro por status, botão de cancelar
-- Nova aba **"Pagamentos"**: lista `asaas_payments` com filtro por status/data, link para `invoiceUrl`
-
-### 4. Frontend do aluno
-
-- `SubscriptionStatusBanner`: passa a ler de `asaas_subscriptions` + `payment_products` para pegar link de repagamento (nova API `POST /v3/payments/{id}/refund` não se aplica aqui — usamos o `invoiceUrl` da última cobrança em aberto)
-- `UpsellModal`: chama `asaas-create-checkout` em vez de abrir `checkout_url` estático → retorna `invoiceUrl` que abre em nova aba (PIX/cartão/boleto na tela do ASAAS)
-- `UpgradeButton`: idem — cria assinatura sob demanda
-- `Success.tsx`: continua igual (polling do profile), só muda a fonte dos dados
-
-### 5. Secrets necessárias
-- `ASAAS_API_KEY` (produção)
-- `ASAAS_API_KEY_SANDBOX` (para testar antes de virar live)
-- `ASAAS_WEBHOOK_TOKEN` (mesmo valor que você configura no painel ASAAS)
-- `ASAAS_ENV` = `sandbox` ou `production` (para o código escolher qual URL/key usar)
+### O que você faz
+1. Cria no ASAAS o link do combo (ex: "Plano Open + 3 Ebooks" — R$ X)
+2. Cria o produto no admin, cola o `checkout_url`, marca os 4 itens no combo, salva
 
 ---
 
-## Ordem de execução (proposta)
+## Parte 2 — Cupons via link alternativo
 
-1. **Migração de banco** (tabelas + RPC novo + colunas em `profiles`)
-2. **Peço as 4 secrets** via formulário seguro
-3. **Edge functions ASAAS** (`asaas-webhook` + `asaas-create-checkout` + cancel)
-4. **Admin novo** (`PaymentProductsManager` + Assinaturas + Pagamentos)
-5. **Frontend** (`UpsellModal`, `UpgradeButton`, `SubscriptionStatusBanner`)
-6. **Depreciar `hubla-webhook`** e esconder tela antiga
-7. **Você popula** os 4 produtos no admin novo (Plano OPEN mensal + 3 ebooks)
-8. **Teste em sandbox**: eu te guio para trocar `ASAAS_ENV=sandbox`, fazer uma compra teste, ver o webhook chegar, o acesso liberar
-9. **Vira produção**: `ASAAS_ENV=production`
+Ideia: você cria **um link de pagamento por preço** na ASAAS (preço cheio + preço com desconto) e distribui a URL "com cupom" só pra quem deve receber. A plataforma trata os dois como o mesmo produto lógico.
 
-## O que NÃO vou fazer (para não quebrar)
-- Não deleto tabelas `hubla_*` — viram histórico
-- Não migro automaticamente alunos ativos do Hubla para ASAAS (impossível sem eles reautorizarem cartão). Você vai precisar avisá-los e recriar as assinaturas no ASAAS. Enquanto isso os acessos deles permanecem porque `has_course_access=true` no profile não é revogado pela migração.
+### O que eu construo
+- Nova tabela `payment_product_coupons`: `product_id`, `code`, `checkout_url`, `price_cents`, `active`
+- Admin → editor de produto: seção **"Cupons / links promocionais"** com CRUD (código, valor, URL do link ASAAS, ativo/inativo, botão copiar link)
+- Página pública `/promo/:code` que:
+  - Busca o cupom ativo, mostra o preço com desconto e o nome do produto
+  - Botão "Ir para o checkout" abre o `checkout_url` do cupom
+- Webhook: quando o pagamento chega, se o `paymentLink` bate com um `checkout_url` de cupom, credita o **mesmo produto pai** (libera os mesmos acessos, com o valor pago do cupom)
 
-## Detalhes técnicos relevantes
-
-**API ASAAS base URLs:**
-- Sandbox: `https://sandbox.asaas.com/api/v3`
-- Prod: `https://api.asaas.com/v3`
-
-**Autenticação:** header `access_token: <API_KEY>` (não é Bearer)
-
-**Criação de cliente:** `POST /customers` com `{name, email, cpfCnpj?}` — CPF é opcional na sandbox, obrigatório em prod para boleto/PIX. Vou coletar CPF do aluno no fluxo de checkout se ainda não tiver no profile.
-
-**Assinatura:** `POST /subscriptions` com `{customer, billingType: 'UNDEFINED', value, nextDueDate, cycle: 'MONTHLY', description}`. `UNDEFINED` deixa o aluno escolher PIX/cartão/boleto na hora.
-
-**Webhook idempotência:** ASAAS reenvia até receber HTTP 200. `event.id` como chave única no `asaas_webhook_events`.
+### O que você faz
+1. Cria links extras no ASAAS com valores promocionais
+2. No admin, adiciona cada cupom (código + URL + valor) dentro do produto
+3. Divulga `https://app.falaebrasil.com.br/promo/BLACK20` pros clientes
 
 ---
 
-Confirma que a ordem e o escopo estão bons e eu começo pela migração de banco?
+## Parte 3 — Migração Sandbox → Produção
+
+### O que você faz no painel ASAAS de PRODUÇÃO (`https://www.asaas.com`)
+**A. Conta aprovada** — Minha Conta → completar dados PF/PJ, documentos, conta bancária. Aguardar liberação (~1 dia útil).
+
+**B. Webhook**
+- Integrações → Notificações via URL → Adicionar
+- URL: `https://teastozdtgoogrpghpzj.supabase.co/functions/v1/asaas-webhook`
+- Versão API: v3 · Envio: Sequencial
+- Token: **o mesmo valor** salvo no backend como `ASAAS_WEBHOOK_TOKEN` (se você não lembra o valor, me avisa que eu gero um novo dos dois lados)
+- Eventos: `PAYMENT_CREATED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`, `PAYMENT_REFUNDED`, `PAYMENT_DELETED`, `SUBSCRIPTION_CREATED`, `SUBSCRIPTION_UPDATED`, `SUBSCRIPTION_DELETED`, `SUBSCRIPTION_INACTIVATED`
+
+**C. Recriar links de pagamento em produção** (sandbox não vale em prod):
+1. Plano Open — assinatura mensal, valor real
+2. Ebook 1, Ebook 2, Ebook 3 — cobrança única
+3. (Opcional) Combo Open + 3 Ebooks
+4. (Opcional) Links promocionais com valor de cupom
+
+**D. Colar os links em Admin → Pagamentos**
+- Cada produto recebe o `checkout_url` de produção
+- Combos: marcar itens inclusos
+- Cupons: cadastrar código + URL + valor
+
+**E. Me avisar quando A–D estiverem prontos.**
+
+### O que EU faço na virada
+- Troco o secret `ASAAS_ENV` de `sandbox` → `production`
+- A partir desse momento, toda compra vai pra sua conta real
+
+---
+
+## Ordem de execução do meu lado
+1. Migração DB: `payment_product_bundles` + `payment_product_coupons`
+2. Webhook + `grant_access_from_asaas`: suporte a combos e a cupons
+3. Admin `PaymentsManager`: UI de combos e cupons dentro do editor de produto
+4. Rota pública `/promo/:code`
+5. Aguardar seu OK em A–D → virar `ASAAS_ENV=production`
+
+Confirma que posso começar por 1–4 já?
