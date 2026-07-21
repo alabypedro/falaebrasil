@@ -102,6 +102,15 @@ const emptyProduct: PaymentProduct = {
   checkout_url: "",
 };
 
+type Coupon = {
+  id: string;
+  product_id: string;
+  code: string;
+  checkout_url: string;
+  price_cents: number;
+  active: boolean;
+};
+
 export default function PaymentsManager() {
   const [activeTab, setActiveTab] = useState("produtos");
   const [products, setProducts] = useState<PaymentProduct[]>([]);
@@ -115,12 +124,17 @@ export default function PaymentsManager() {
   const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [hublaItems, setHublaItems] = useState<any[]>([]);
   const [hublaCourses, setHublaCourses] = useState<Record<string, Set<string>>>({});
+  const [productBundles, setProductBundles] = useState<Record<string, Set<string>>>({});
+  const [productCoupons, setProductCoupons] = useState<Record<string, Coupon[]>>({});
+  const [draftCoupons, setDraftCoupons] = useState<Coupon[]>([]);
 
   const loadProducts = async () => {
-    const [{ data: p }, { data: c }, { data: links }] = await Promise.all([
+    const [{ data: p }, { data: c }, { data: links }, { data: bundles }, { data: coupons }] = await Promise.all([
       supabase.from("payment_products").select("*").order("display_order"),
       supabase.from("courses").select("id, title, level, required_tier").eq("published", true).order("display_order"),
       supabase.from("payment_product_courses").select("product_id, course_id"),
+      supabase.from("payment_product_bundles").select("product_id, included_product_id"),
+      supabase.from("payment_product_coupons").select("*").order("created_at"),
     ]);
     if (p) setProducts(p as PaymentProduct[]);
     if (c) setCourses(c);
@@ -131,6 +145,22 @@ export default function PaymentsManager() {
         map[row.product_id].add(row.course_id);
       }
       setProductCourses(map);
+    }
+    if (bundles) {
+      const map: Record<string, Set<string>> = {};
+      for (const row of bundles as any[]) {
+        if (!map[row.product_id]) map[row.product_id] = new Set();
+        map[row.product_id].add(row.included_product_id);
+      }
+      setProductBundles(map);
+    }
+    if (coupons) {
+      const map: Record<string, Coupon[]> = {};
+      for (const c of coupons as Coupon[]) {
+        if (!map[c.product_id]) map[c.product_id] = [];
+        map[c.product_id].push(c);
+      }
+      setProductCoupons(map);
     }
   };
 
@@ -198,6 +228,43 @@ export default function PaymentsManager() {
   const isEditing = !!draft;
   const draftIsNew = draft?.id === "__new__";
 
+  useEffect(() => {
+    if (!draft) return;
+    setDraftCoupons(draft.id === "__new__" ? [] : (productCoupons[draft.id] ?? []).map((c) => ({ ...c })));
+  }, [draft?.id]);
+
+  const toggleBundleItem = (productId: string, includedId: string, checked: boolean) => {
+    setProductBundles((prev) => {
+      const next = { ...prev };
+      const set = new Set(next[productId] ?? []);
+      if (checked) set.add(includedId); else set.delete(includedId);
+      next[productId] = set;
+      return next;
+    });
+  };
+
+  const addDraftCoupon = () => {
+    setDraftCoupons((prev) => [
+      ...prev,
+      {
+        id: `__new_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        product_id: draft!.id,
+        code: "",
+        checkout_url: "",
+        price_cents: 0,
+        active: true,
+      },
+    ]);
+  };
+
+  const updateDraftCoupon = (id: string, patch: Partial<Coupon>) => {
+    setDraftCoupons((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  };
+
+  const removeDraftCoupon = (id: string) => {
+    setDraftCoupons((prev) => prev.filter((c) => c.id !== id));
+  };
+
   const upsertProduct = async () => {
     if (!draft) return;
     if (!draft.product_key.trim() || !draft.name.trim()) {
@@ -247,6 +314,39 @@ export default function PaymentsManager() {
     if (selected.length > 0) {
       const rows = selected.map((cid) => ({ product_id: draft.id, course_id: cid }));
       await supabase.from("payment_product_courses").insert(rows);
+    }
+
+    // sync bundles
+    const bundleIds = Array.from(productBundles[draft.id] ?? []).filter((id) => id !== draft.id);
+    await supabase.from("payment_product_bundles").delete().eq("product_id", draft.id);
+    if (bundleIds.length > 0) {
+      const rows = bundleIds.map((iid) => ({ product_id: draft.id, included_product_id: iid }));
+      await supabase.from("payment_product_bundles").insert(rows);
+    }
+
+    // sync coupons
+    const existingIds = new Set((productCoupons[draft.id] ?? []).map((c) => c.id));
+    const keptIds = new Set(draftCoupons.filter((c) => !c.id.startsWith("__new_")).map((c) => c.id));
+    const toDelete = [...existingIds].filter((id) => !keptIds.has(id));
+    if (toDelete.length > 0) {
+      await supabase.from("payment_product_coupons").delete().in("id", toDelete);
+    }
+    for (const c of draftCoupons) {
+      const payload = {
+        product_id: draft.id,
+        code: c.code.trim(),
+        checkout_url: c.checkout_url.trim(),
+        price_cents: c.price_cents,
+        active: c.active,
+      };
+      if (!payload.code || !payload.checkout_url) continue;
+      if (c.id.startsWith("__new_")) {
+        const { error: ce } = await supabase.from("payment_product_coupons").insert(payload);
+        if (ce) toast.error(`Cupom ${payload.code}: ${ce.message}`);
+      } else {
+        const { error: ce } = await supabase.from("payment_product_coupons").update(payload).eq("id", c.id);
+        if (ce) toast.error(`Cupom ${payload.code}: ${ce.message}`);
+      }
     }
 
     toast.success("Produto salvo!");
