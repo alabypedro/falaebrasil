@@ -34,7 +34,6 @@ import LibraryManager from "@/pages/admin/LibraryManager";
 import PromptsManager from "@/pages/admin/PromptsManager";
 import ListeningManager from "@/pages/admin/ListeningManager";
 import AdminsManager from "@/pages/admin/AdminsManager";
-import HublaProductsManager from "@/pages/admin/HublaProductsManager";
 import PaymentsManager from "@/pages/admin/PaymentsManager";
 import TutorialsManager from "@/pages/admin/TutorialsManager";
 import CommunitiesManager from "@/pages/admin/CommunitiesManager";
@@ -46,6 +45,7 @@ import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import LeiaeManager from "@/pages/admin/LeiaeManager";
 import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
+import { CoursesHub, AIHub, TutorialsHub, AdminsHub, AsaasHub } from "@/pages/admin/hubs/AdminHubs";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
 import Promo from "@/pages/Promo";
@@ -153,6 +153,11 @@ const App = () => {
                           }
                         >
                           <Route index element={<AdminDashboard />} />
+                          <Route path="hub/courses" element={<CoursesHub />} />
+                          <Route path="hub/ai" element={<AIHub />} />
+                          <Route path="hub/tutorials" element={<TutorialsHub />} />
+                          <Route path="hub/admins" element={<AdminsHub />} />
+                          <Route path="hub/asaas" element={<AsaasHub />} />
                           <Route path="courses" element={<CoursesManager />} />
                           <Route path="modules" element={<ModulesManager />} />
                           <Route path="lessons" element={<LessonsManager />} />
@@ -165,7 +170,6 @@ const App = () => {
                           <Route path="communities" element={<CommunitiesManager />} />
                           <Route path="contracts" element={<ContractsManager />} />
                           <Route path="admins" element={<AdminsManager />} />
-                          <Route path="hubla" element={<HublaProductsManager />} />
                           <Route path="payments" element={<PaymentsManager />} />
                           <Route path="webhook-logs" element={<WebhookLogsManager />} />
                         <Route path="link-payment" element={<LinkPayment />} />
