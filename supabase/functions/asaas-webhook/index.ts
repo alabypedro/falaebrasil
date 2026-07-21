@@ -107,14 +107,13 @@ Deno.serve(async (req) => {
             const phone = (cust.mobilePhone ?? cust.phone ?? "").replace(/\D/g, "");
 
             if (email) {
-              const { data: userRow } = await admin
-                .schema("auth" as any)
-                .from("users")
-                .select("id")
+              const { data: profileRow } = await admin
+                .from("profiles")
+                .select("user_id")
                 .ilike("email", email)
                 .maybeSingle();
-              if (userRow?.id) {
-                userId = userRow.id;
+              if (profileRow?.user_id) {
+                userId = profileRow.user_id;
               }
             }
 
