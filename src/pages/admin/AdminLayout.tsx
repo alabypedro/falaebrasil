@@ -1,6 +1,7 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Sparkles, Users, PlayCircle, FileSignature, ShieldCheck, CreditCard } from "lucide-react";
+import { NavLink, Outlet, useLocation, Link } from "react-router-dom";
+import { LayoutDashboard, BookOpen, Sparkles, Users, PlayCircle, FileSignature, ShieldCheck, CreditCard, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 // Top-level admin nav. Each entry (except Painel) leads to a hub page that
 // links to the actual managers. Sub-routes still work directly.
@@ -15,6 +16,27 @@ const adminNav = [
   { to: "/admin/hub/asaas", icon: CreditCard, label: "ASAAS", match: ["/admin/hub/asaas", "/admin/payments", "/admin/webhook-logs", "/admin/link-payment"] },
 ];
 
+// Map each sub-page path to the hub it belongs to.
+const HUB_BY_SUBPATH: Record<string, { to: string; label: string }> = {
+  "/admin/courses": { to: "/admin/hub/courses", label: "Cursos" },
+  "/admin/modules": { to: "/admin/hub/courses", label: "Cursos" },
+  "/admin/lessons": { to: "/admin/hub/courses", label: "Cursos" },
+  "/admin/quizzes": { to: "/admin/hub/courses", label: "Cursos" },
+  "/admin/memorizae": { to: "/admin/hub/ai", label: "IAs" },
+  "/admin/leiae": { to: "/admin/hub/ai", label: "IAs" },
+  "/admin/library": { to: "/admin/hub/ai", label: "IAs" },
+  "/admin/listening": { to: "/admin/hub/ai", label: "IAs" },
+  "/admin/prompts": { to: "/admin/hub/ai", label: "IAs" },
+  "/admin/tutorials": { to: "/admin/hub/tutorials", label: "Tutoriais" },
+  "/admin/install-videos": { to: "/admin/hub/tutorials", label: "Tutoriais" },
+  "/admin/admins": { to: "/admin/hub/admins", label: "Admins" },
+  "/admin/create-student": { to: "/admin/hub/admins", label: "Admins" },
+  "/admin/welcome-email": { to: "/admin/hub/admins", label: "Admins" },
+  "/admin/payments": { to: "/admin/hub/asaas", label: "ASAAS" },
+  "/admin/webhook-logs": { to: "/admin/hub/asaas", label: "ASAAS" },
+  "/admin/link-payment": { to: "/admin/hub/asaas", label: "ASAAS" },
+};
+
 export default function AdminLayout() {
   return (
     <div className="space-y-6">
@@ -25,8 +47,24 @@ export default function AdminLayout() {
 
       <AdminNav />
 
+      <BackToHub />
+
       <Outlet />
     </div>
+  );
+}
+
+function BackToHub() {
+  const { pathname } = useLocation();
+  const hub = HUB_BY_SUBPATH[pathname];
+  if (!hub) return null;
+  return (
+    <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit text-muted-foreground hover:text-foreground">
+      <Link to={hub.to}>
+        <ArrowLeft className="h-4 w-4 mr-1.5" />
+        Voltar para {hub.label}
+      </Link>
+    </Button>
   );
 }
 
