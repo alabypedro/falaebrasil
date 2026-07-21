@@ -73,6 +73,8 @@ export type Database = {
       }
       asaas_payments: {
         Row: {
+          access_grant_result: Json | null
+          access_granted_at: string | null
           asaas_payment_id: string
           asaas_subscription_id: string | null
           bank_slip_url: string | null
@@ -93,6 +95,8 @@ export type Database = {
           value_cents: number
         }
         Insert: {
+          access_grant_result?: Json | null
+          access_granted_at?: string | null
           asaas_payment_id: string
           asaas_subscription_id?: string | null
           bank_slip_url?: string | null
@@ -113,6 +117,8 @@ export type Database = {
           value_cents?: number
         }
         Update: {
+          access_grant_result?: Json | null
+          access_granted_at?: string | null
           asaas_payment_id?: string
           asaas_subscription_id?: string | null
           bank_slip_url?: string | null

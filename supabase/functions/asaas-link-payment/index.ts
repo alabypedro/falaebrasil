@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
     );
 
     // Resolve product_key
-    const rawKey = payment.description;
+    const rawKey = (payment.description ?? "").trim();
     let productKey: string | null = null;
     if (rawKey) {
       const { data: exact } = await admin
@@ -133,6 +133,21 @@ Deno.serve(async (req) => {
           .eq("active", true)
           .maybeSingle();
         if (byName) productKey = byName.product_key;
+      }
+    }
+
+    // Static ASAAS payment links may arrive without description. Match by the
+    // paymentLink id inside the checkout_url configured in Admin > Pagamentos.
+    if (!productKey) {
+      const paymentLinkId = (payment.paymentLink ?? payment.paymentLinkId ?? "").trim();
+      if (paymentLinkId) {
+        const { data: byCheckoutUrl } = await admin
+          .from("payment_products")
+          .select("product_key")
+          .ilike("checkout_url", `%${paymentLinkId}%`)
+          .eq("active", true)
+          .maybeSingle();
+        if (byCheckoutUrl) productKey = byCheckoutUrl.product_key;
       }
     }
 
