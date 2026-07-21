@@ -48,6 +48,7 @@ import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
+import Promo from "@/pages/Promo";
 
 import { useEffect } from "react";
 import { registerPushNotification, updateLastActivity } from "@/services/pushNotifications";
@@ -120,6 +121,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/install" element={<Install />} />
+              <Route path="/promo/:code" element={<Promo />} />
               <Route
                 path="/*"
                 element={
