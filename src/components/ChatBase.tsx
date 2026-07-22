@@ -12,6 +12,7 @@ import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import BackToLessonButton from "@/components/BackToLessonButton";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 function CopyAssistantButton({ text, className }: { text: string; className?: string }) {
@@ -506,7 +507,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
 
   return (
     <div className="flex flex-col h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-10rem)] max-w-4xl mx-auto px-2 sm:px-4 pb-2 sm:pb-4 overflow-hidden relative">
-      <BackToDashboardButtonInline />
+      <BackToDashboardButton className="-ml-2 mb-2 text-muted-foreground hover:text-foreground w-fit" />
       <div className="mb-2 sm:mb-4 shrink-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
