@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Brain, ArrowLeft, Loader2, Volume2, Sparkles, Trophy, Timer, Target } from "lucide-react";
 import { toast } from "sonner";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface Deck {
   id: string;
