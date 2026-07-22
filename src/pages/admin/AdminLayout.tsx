@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Sparkles, Users, PlayCircle, FileSignature, ShieldCheck, CreditCard, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, BookOpen, Sparkles, Users, PlayCircle, FileSignature, ShieldCheck, CreditCard, ArrowLeft, Library } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +9,7 @@ const adminNav = [
   { to: "/admin", icon: LayoutDashboard, label: "Painel", end: true, match: ["/admin"] },
   { to: "/admin/hub/courses", icon: BookOpen, label: "Cursos", match: ["/admin/hub/courses", "/admin/courses", "/admin/modules", "/admin/lessons", "/admin/quizzes"] },
   { to: "/admin/hub/ai", icon: Sparkles, label: "IAs", match: ["/admin/hub/ai", "/admin/memorizae", "/admin/leiae", "/admin/library", "/admin/listening", "/admin/prompts"] },
+  { to: "/admin/library", icon: Library, label: "Biblioteca BST", match: ["/admin/library"] },
   { to: "/admin/communities", icon: Users, label: "Comunidades FB", match: ["/admin/communities"] },
   { to: "/admin/hub/tutorials", icon: PlayCircle, label: "Tutoriais", match: ["/admin/hub/tutorials", "/admin/tutorials", "/admin/install-videos"] },
   { to: "/admin/contracts", icon: FileSignature, label: "Contratos", match: ["/admin/contracts"] },
