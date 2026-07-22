@@ -13,6 +13,8 @@ const ASAAS_API_KEY = isSandbox ? getEnv("ASAAS_API_KEY_SANDBOX") : getEnv("ASAA
 
 const SUPABASE_URL = getEnv("SUPABASE_URL");
 const SERVICE = getEnv("SUPABASE_SERVICE_ROLE_KEY");
+const ANON = getEnv("SUPABASE_ANON_KEY");
+const APP_URL = "https://falaebrasil.lovable.app";
 
 interface AsaasEvent {
   event: string;
@@ -114,6 +116,34 @@ Deno.serve(async (req) => {
                 .maybeSingle();
               if (profileRow?.user_id) {
                 userId = profileRow.user_id;
+              }
+            }
+
+            // Still no match → create a new auth user so we can grant access
+            // and send the welcome email. Marks `from_hubla: true` so the
+            // auth-email-hook uses the branded welcome_purchase template.
+            if (!userId && email) {
+              try {
+                const { data: created, error: createErr } =
+                  await admin.auth.admin.createUser({
+                    email,
+                    email_confirm: true,
+                    password:
+                      crypto.randomUUID() + crypto.randomUUID(),
+                    user_metadata: {
+                      from_hubla: true,
+                      full_name: cust.name ?? null,
+                      phone: phone || null,
+                    },
+                  });
+                if (!createErr && created?.user?.id) {
+                  userId = created.user.id;
+                  console.log("Created new user from ASAAS purchase", { email, userId });
+                } else if (createErr) {
+                  console.error("Failed to create user from ASAAS", createErr);
+                }
+              } catch (createEx) {
+                console.error("createUser threw", createEx);
               }
             }
 
@@ -313,6 +343,13 @@ async function handlePaymentConfirmed(admin: any, payment: any, userId: string |
   });
   if (error) throw error;
 
+  // Send welcome/onboarding email for first-time buyers (no prior sign-in).
+  try {
+    await sendWelcomePurchaseEmail(admin, userId);
+  } catch (mailErr) {
+    console.error("welcome email send failed (non-fatal)", mailErr);
+  }
+
   // Update subscription period end if it is a subscription payment
   if (payment.subscription?.id) {
     const subResp = await fetchAsaas(`/subscriptions/${payment.subscription.id}`);
@@ -497,4 +534,39 @@ async function handleSubscriptionEvent(admin: any, subscription: any, userId: st
   }
 
   return { handled: true, status: subscription.status, event: eventType, inactivated: isInactivation };
+}
+
+// Sends the branded "welcome_purchase" email to first-time buyers.
+// Reuses the auth-email-hook flow: the hook detects `from_hubla=true`
+// + never signed in and swaps recovery → welcome_purchase automatically.
+async function sendWelcomePurchaseEmail(admin: any, userId: string) {
+  const { data: userRes, error: getErr } = await admin.auth.admin.getUserById(userId);
+  if (getErr || !userRes?.user) return;
+  const user = userRes.user;
+  const email = user.email;
+  if (!email) return;
+
+  // Only onboard first-time buyers. Returning users already have access.
+  if (user.last_sign_in_at) return;
+
+  // Ensure the flag is set so auth-email-hook renders welcome_purchase.
+  const meta = user.user_metadata || {};
+  if (meta.from_hubla !== true) {
+    await admin.auth.admin.updateUserById(userId, {
+      user_metadata: { ...meta, from_hubla: true },
+    });
+  }
+
+  const redirectTo = `${APP_URL}/welcome?email=${encodeURIComponent(email)}`;
+  const publicClient = createClient(SUPABASE_URL, ANON, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error: resetErr } = await publicClient.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+  if (resetErr) {
+    console.error("resetPasswordForEmail (asaas welcome) failed", resetErr);
+  } else {
+    console.log("Welcome purchase email sent", { email, userId });
+  }
 }
