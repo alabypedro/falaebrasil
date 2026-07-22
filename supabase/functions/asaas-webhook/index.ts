@@ -14,7 +14,7 @@ const ASAAS_API_KEY = isSandbox ? getEnv("ASAAS_API_KEY_SANDBOX") : getEnv("ASAA
 const SUPABASE_URL = getEnv("SUPABASE_URL");
 const SERVICE = getEnv("SUPABASE_SERVICE_ROLE_KEY");
 const ANON = getEnv("SUPABASE_ANON_KEY");
-const APP_URL = "https://falaebrasil.lovable.app";
+const APP_URL = "https://app.falaebrasil.com.br";
 
 interface AsaasEvent {
   event: string;
