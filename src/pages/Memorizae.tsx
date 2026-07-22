@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Brain, ArrowLeft, Loader2, Volume2, Sparkles, Trophy, Timer, Target } from "lucide-react";
 import { toast } from "sonner";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface Deck {
   id: string;
@@ -364,6 +365,7 @@ export default function Memorizae() {
   // ---------- Deck list ----------
   return (
     <div className="space-y-6">
+      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <Brain className="h-5 w-5 text-primary" />

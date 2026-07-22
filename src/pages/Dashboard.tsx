@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText } from "lucide-react";
+import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -133,8 +133,8 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* AI quick-access */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 animate-fade-up">
+      {/* AI quick-access + Courses */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 animate-fade-up">
         {aiButtons.map(({ source, icon: Icon, path }) => (
           <button
             key={source}
@@ -148,6 +148,16 @@ export default function Dashboard() {
             <span className="text-[10px] text-muted-foreground tabular-nums">{aiXp[source]} XP</span>
           </button>
         ))}
+        <button
+          onClick={() => navigate("/courses")}
+          className="group flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card p-3 text-center hover:border-primary hover:bg-primary/5 transition"
+        >
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+            <GradIcon className="h-4 w-4 text-primary" />
+          </div>
+          <span className="text-[11px] font-semibold text-foreground leading-tight">Cursos FB!</span>
+          <span className="text-[10px] text-muted-foreground tabular-nums">Acessar</span>
+        </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

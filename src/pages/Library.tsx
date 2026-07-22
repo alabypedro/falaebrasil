@@ -10,6 +10,7 @@ import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { PdfReader } from "@/components/library/PdfReader";
 import { useLanguage } from "@/contexts/LanguageContext";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface LibraryItem {
   id: string;
@@ -196,6 +197,7 @@ export default function Library() {
 
   return (
     <div className="space-y-6 max-w-6xl page-transition">
+      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div>
         <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t("library.subtitle")}</p>

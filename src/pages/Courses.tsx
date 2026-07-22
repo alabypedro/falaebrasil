@@ -10,6 +10,7 @@ import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface CourseWithProgress {
   id: string;
@@ -336,6 +337,7 @@ export default function Courses() {
 
   return (
     <div className="space-y-6 max-w-6xl page-transition">
+      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div className="animate-fade-up">
         <h1 className="text-2xl font-bold text-foreground">{t("courses.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">{t("courses.subtitle")}</p>

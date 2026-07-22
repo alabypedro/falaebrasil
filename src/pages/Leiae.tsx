@@ -7,6 +7,7 @@ import { BookText, Sparkles, Languages, Volume2, Image as ImageIcon, Loader2, Pl
 import { useLeiae } from "@/hooks/useLeiae";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 type Level = typeof LEVELS[number];
@@ -62,6 +63,7 @@ export default function Leiae() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-foreground">IA Leiaê</h1>

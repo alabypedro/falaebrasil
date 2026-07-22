@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import BackToLessonButton from "@/components/BackToLessonButton";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ListeningLesson {
@@ -257,6 +258,7 @@ export default function ListeningLab() {
 
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
+        <BackToDashboardButton className="-ml-2 mb-2 text-muted-foreground hover:text-foreground" />
         <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="flex-1">
             <div className="flex items-start justify-between gap-3 mb-2">
