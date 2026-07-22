@@ -13,6 +13,8 @@ const ASAAS_API_KEY = isSandbox ? getEnv("ASAAS_API_KEY_SANDBOX") : getEnv("ASAA
 
 const SUPABASE_URL = getEnv("SUPABASE_URL");
 const SERVICE = getEnv("SUPABASE_SERVICE_ROLE_KEY");
+const ANON = getEnv("SUPABASE_ANON_KEY");
+const APP_URL = "https://falaebrasil.lovable.app";
 
 interface AsaasEvent {
   event: string;
@@ -312,6 +314,13 @@ async function handlePaymentConfirmed(admin: any, payment: any, userId: string |
     _raw: payment,
   });
   if (error) throw error;
+
+  // Send welcome/onboarding email for first-time buyers (no prior sign-in).
+  try {
+    await sendWelcomePurchaseEmail(admin, userId);
+  } catch (mailErr) {
+    console.error("welcome email send failed (non-fatal)", mailErr);
+  }
 
   // Update subscription period end if it is a subscription payment
   if (payment.subscription?.id) {
