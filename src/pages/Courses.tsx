@@ -10,6 +10,7 @@ import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface CourseWithProgress {
   id: string;
