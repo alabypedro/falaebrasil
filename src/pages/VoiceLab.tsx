@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle } from "lucide-react";
 import BackToLessonButton from "@/components/BackToLessonButton";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
@@ -500,6 +501,7 @@ export default function VoiceLab() {
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
+      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">IA Falaê</h1>
