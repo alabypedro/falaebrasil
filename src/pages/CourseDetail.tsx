@@ -429,6 +429,8 @@ export default function CourseDetail() {
                       {/* Cantos inferiores: Bloqueia botões de compartilhamento extras e logo do YouTube */}
                       <div className="absolute bottom-0 right-0 w-[120px] h-[50px] z-10 cursor-default" />
                       <div className="absolute bottom-0 left-0 w-[80px] h-[50px] z-10 cursor-default" />
+                      {/* Bloqueia o botão de legendas (CC) do YouTube */}
+                      <div className="absolute bottom-0 right-[120px] w-[45px] h-[40px] z-10 cursor-default" />
                     </>
                   )}
                 </div>
