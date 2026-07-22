@@ -507,3 +507,38 @@ async function handleSubscriptionEvent(admin: any, subscription: any, userId: st
 
   return { handled: true, status: subscription.status, event: eventType, inactivated: isInactivation };
 }
+
+// Sends the branded "welcome_purchase" email to first-time buyers.
+// Reuses the auth-email-hook flow: the hook detects `from_hubla=true`
+// + never signed in and swaps recovery → welcome_purchase automatically.
+async function sendWelcomePurchaseEmail(admin: any, userId: string) {
+  const { data: userRes, error: getErr } = await admin.auth.admin.getUserById(userId);
+  if (getErr || !userRes?.user) return;
+  const user = userRes.user;
+  const email = user.email;
+  if (!email) return;
+
+  // Only onboard first-time buyers. Returning users already have access.
+  if (user.last_sign_in_at) return;
+
+  // Ensure the flag is set so auth-email-hook renders welcome_purchase.
+  const meta = user.user_metadata || {};
+  if (meta.from_hubla !== true) {
+    await admin.auth.admin.updateUserById(userId, {
+      user_metadata: { ...meta, from_hubla: true },
+    });
+  }
+
+  const redirectTo = `${APP_URL}/welcome?email=${encodeURIComponent(email)}`;
+  const publicClient = createClient(SUPABASE_URL, ANON, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { error: resetErr } = await publicClient.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+  if (resetErr) {
+    console.error("resetPasswordForEmail (asaas welcome) failed", resetErr);
+  } else {
+    console.log("Welcome purchase email sent", { email, userId });
+  }
+}
