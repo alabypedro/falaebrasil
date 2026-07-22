@@ -39,6 +39,7 @@ export default function ListeningLab() {
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
   const [correctMap, setCorrectMap] = useState<Record<string, number>>({});
+  const [showDetails, setShowDetails] = useState(false);
   
   // Audio state
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -100,6 +101,7 @@ export default function ListeningLab() {
     setFinished(false);
     setScore(0);
     setCorrectMap({});
+    setShowDetails(false);
     synth.cancel();
   };
 
@@ -387,8 +389,19 @@ export default function ListeningLab() {
               {t("listening.tryAgain")}
             </Button>
           </div>
+          <div className="mt-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDetails((v) => !v)}
+              className="rounded-full"
+            >
+              {showDetails ? "Ocultar detalhes" : "Ver detalhes das notas"}
+            </Button>
+          </div>
         </Card>
 
+        {showDetails && (
         <div className="space-y-4">
           <h3 className="text-xl font-bold px-2">{t("listening.review")}</h3>
           <div className="grid gap-4">
@@ -431,6 +444,7 @@ export default function ListeningLab() {
             })}
           </div>
         </div>
+        )}
 
         <div className="flex justify-center pt-8">
           <Button 
