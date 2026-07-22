@@ -119,6 +119,34 @@ Deno.serve(async (req) => {
               }
             }
 
+            // Still no match → create a new auth user so we can grant access
+            // and send the welcome email. Marks `from_hubla: true` so the
+            // auth-email-hook uses the branded welcome_purchase template.
+            if (!userId && email) {
+              try {
+                const { data: created, error: createErr } =
+                  await admin.auth.admin.createUser({
+                    email,
+                    email_confirm: true,
+                    password:
+                      crypto.randomUUID() + crypto.randomUUID(),
+                    user_metadata: {
+                      from_hubla: true,
+                      full_name: cust.name ?? null,
+                      phone: phone || null,
+                    },
+                  });
+                if (!createErr && created?.user?.id) {
+                  userId = created.user.id;
+                  console.log("Created new user from ASAAS purchase", { email, userId });
+                } else if (createErr) {
+                  console.error("Failed to create user from ASAAS", createErr);
+                }
+              } catch (createEx) {
+                console.error("createUser threw", createEx);
+              }
+            }
+
             if (userId) {
               await admin.from("asaas_customers").upsert(
                 {
