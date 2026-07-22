@@ -549,8 +549,16 @@ async function sendWelcomePurchaseEmail(admin: any, userId: string) {
   // Only onboard first-time buyers. Returning users already have access.
   if (user.last_sign_in_at) return;
 
-  // Ensure the flag is set so auth-email-hook renders welcome_purchase.
   const meta = user.user_metadata || {};
+  // Skip if we already sent a welcome email recently (prevents dup sends
+  // when ASAAS emits CREATED + RECEIVED + CONFIRMED in quick succession
+  // and hits the auth email rate limit).
+  if (meta.welcome_email_sent_at) {
+    console.log("Welcome purchase email already sent, skipping", { email, userId });
+    return;
+  }
+
+  // Ensure the flag is set so auth-email-hook renders welcome_purchase.
   if (meta.from_hubla !== true) {
     await admin.auth.admin.updateUserById(userId, {
       user_metadata: { ...meta, from_hubla: true },
@@ -566,7 +574,14 @@ async function sendWelcomePurchaseEmail(admin: any, userId: string) {
   });
   if (resetErr) {
     console.error("resetPasswordForEmail (asaas welcome) failed", resetErr);
-  } else {
-    console.log("Welcome purchase email sent", { email, userId });
+    return;
   }
+  console.log("Welcome purchase email sent", { email, userId });
+  await admin.auth.admin.updateUserById(userId, {
+    user_metadata: {
+      ...meta,
+      from_hubla: true,
+      welcome_email_sent_at: new Date().toISOString(),
+    },
+  });
 }
