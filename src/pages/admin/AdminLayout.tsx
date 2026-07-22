@@ -25,7 +25,6 @@ const HUB_BY_SUBPATH: Record<string, { to: string; label: string }> = {
   "/admin/quizzes": { to: "/admin/hub/courses", label: "Cursos" },
   "/admin/memorizae": { to: "/admin/hub/ai", label: "IAs" },
   "/admin/leiae": { to: "/admin/hub/ai", label: "IAs" },
-  "/admin/library": { to: "/admin/hub/ai", label: "IAs" },
   "/admin/listening": { to: "/admin/hub/ai", label: "IAs" },
   "/admin/prompts": { to: "/admin/hub/ai", label: "IAs" },
   "/admin/tutorials": { to: "/admin/hub/tutorials", label: "Tutoriais" },
