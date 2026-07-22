@@ -506,6 +506,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
 
   return (
     <div className="flex flex-col h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-10rem)] max-w-4xl mx-auto px-2 sm:px-4 pb-2 sm:pb-4 overflow-hidden relative">
+      <BackToDashboardButtonInline />
       <div className="mb-2 sm:mb-4 shrink-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
