@@ -10,6 +10,7 @@ import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { PdfReader } from "@/components/library/PdfReader";
 import { useLanguage } from "@/contexts/LanguageContext";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface LibraryItem {
   id: string;
