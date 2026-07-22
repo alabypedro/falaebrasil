@@ -74,7 +74,6 @@ export function AIHub() {
         { to: "/admin/prompts", label: "IA Falaê", description: "Textos de conversação", icon: Mic, gradient: "bg-gradient-to-br from-pink-500 to-rose-600 text-white" },
         { to: "/admin/listening", label: "IA Escutaê", description: "Áudios e transcrições", icon: Headphones, gradient: "bg-gradient-to-br from-blue-500 to-cyan-600 text-white" },
         { to: "/admin/leiae", label: "IA Leiaê", description: "Textos de leitura", icon: BookText, gradient: "bg-gradient-to-br from-emerald-500 to-teal-600 text-white" },
-        { to: "/admin/library", label: "Biblioteca BST", description: "PDFs da biblioteca", icon: MessageSquare, gradient: "bg-gradient-to-br from-amber-500 to-orange-600 text-white" },
       ]}
     />
   );
