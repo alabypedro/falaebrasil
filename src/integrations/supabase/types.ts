@@ -2162,6 +2162,10 @@ export type Database = {
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
       tier_rank: { Args: { _tier: string }; Returns: number }
       uncomplete_video: { Args: { _video_id: string }; Returns: Json }
+      update_best_score: {
+        Args: { _kind: string; _value: number }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
