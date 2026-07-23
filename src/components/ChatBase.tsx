@@ -100,6 +100,20 @@ function FormattedWritingFeedback({ content }: { content: string }) {
   );
 }
 
+function extractWritingOverallScore(content: string): number | null {
+  const normalized = content
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
+  const scoreMatch = normalized.match(/pontuacao\s+geral\s*:?\s*(\d{1,3})(?:\s*\/\s*100)?/i);
+  if (!scoreMatch) return null;
+
+  const score = Number(scoreMatch[1]);
+  if (!Number.isFinite(score)) return null;
+  return Math.min(100, Math.max(0, score));
+}
+
 type Message = {
   id: string;
   role: 'user' | 'assistant';
@@ -306,12 +320,11 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       });
       
       if (mode === 'writing') {
-        const scoreMatch = botContent.match(/General Score:\s*(\d+)/i) || botContent.match(/Score:\s*(\d+)/i);
+        const overallScore = extractWritingOverallScore(botContent);
         const responseTime = Date.now() - startTime;
         
-        if (scoreMatch && user) {
-          const score = parseInt(scoreMatch[1]);
-          if (!isNaN(score)) {
+        if (overallScore !== null && user) {
+          const score = overallScore;
             // Log CEFR Metrics
             await supabase.from('fb_cefr_metrics').insert({
               user_id: user.id,
@@ -333,7 +346,6 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               const pts = Math.max(1, Math.min(25, Math.round(score / 4)));
               await awardAiXp("escreveae", pts);
             } catch {}
-          }
         }
       }
       
