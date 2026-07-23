@@ -323,18 +323,10 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
               word_count: wordCount
             });
 
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('best_writing_score')
-              .eq('user_id', user.id)
-              .maybeSingle();
-            
-            if (profile && score > (profile.best_writing_score || 0)) {
-              await supabase
-                .from('profiles')
-                .update({ best_writing_score: score })
-                .eq('user_id', user.id);
-            }
+            await supabase.rpc('update_best_score' as any, {
+              _kind: 'writing',
+              _value: score,
+            });
 
             try {
               const { awardAiXp } = await import("@/lib/aiXp");

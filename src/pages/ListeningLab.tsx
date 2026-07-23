@@ -235,6 +235,12 @@ export default function ListeningLab() {
     setCorrectMap((result.correct_answers ?? {}) as Record<string, number>);
     setFinished(true);
     try {
+      await supabase.rpc("update_best_score" as any, {
+        _kind: "listening",
+        _value: result.score ?? 0,
+      });
+    } catch {}
+    try {
       const { awardAiXp } = await import("@/lib/aiXp");
       const pts = Math.max(1, Math.min(25, Math.round((result.score ?? 0) / 4)));
       const res = await awardAiXp("escutae", pts, `escutae:${selectedLesson.id}:${Date.now()}`);
