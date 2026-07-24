@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Brain, ArrowLeft, Loader2, Volume2, Sparkles, Trophy, Timer, Target } from "lucide-react";
 import { toast } from "sonner";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Deck {
   id: string;
@@ -51,6 +52,7 @@ function formatInterval(days: number) {
 
 export default function Memorizae() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [decks, setDecks] = useState<Deck[]>([]);
   const [courseLevelById, setCourseLevelById] = useState<Record<string, string>>({});
   const [selectedLevel, setSelectedLevel] = useState<Level>("A1");
@@ -244,7 +246,7 @@ export default function Memorizae() {
       <div className="max-w-2xl mx-auto space-y-4 py-6">
         <div className="flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={closeDeck}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+            <ArrowLeft className="h-4 w-4 mr-1" /> {t("common.back")}
           </Button>
           <div className="text-xs text-muted-foreground">
             {Math.min(idx + (done ? 0 : 1), queue.length)} / {queue.length}
@@ -256,33 +258,33 @@ export default function Memorizae() {
           <Card className="text-center">
             <CardHeader>
               <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-                <Trophy className="h-6 w-6 text-primary" /> Sessão concluída!
+                <Trophy className="h-6 w-6 text-primary" /> {t("memorizae.sessionDone")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-muted">
                   <div className="text-2xl font-bold">{sessionStats.reviewed}</div>
-                  <div className="text-xs text-muted-foreground">Revisadas</div>
+                  <div className="text-xs text-muted-foreground">{t("memorizae.reviewed")}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-neutral-900 border border-neutral-700">
                   <div className="text-2xl font-bold text-neutral-100">{sessionStats.again}</div>
-                  <div className="text-xs text-muted-foreground">Novamente</div>
+                  <div className="text-xs text-muted-foreground">{t("memorizae.again")}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-red-500/10">
                   <div className="text-2xl font-bold text-red-600">{sessionStats.hard}</div>
-                  <div className="text-xs text-muted-foreground">Difícil</div>
+                  <div className="text-xs text-muted-foreground">{t("memorizae.hard")}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-yellow-500/10">
                   <div className="text-2xl font-bold text-yellow-600">{sessionStats.good}</div>
-                  <div className="text-xs text-muted-foreground">Bom</div>
+                  <div className="text-xs text-muted-foreground">{t("memorizae.good")}</div>
                 </div>
                 <div className="p-3 rounded-lg bg-green-500/10 col-span-2">
                   <div className="text-2xl font-bold text-green-600">{sessionStats.easy}</div>
-                  <div className="text-xs text-muted-foreground">Fácil</div>
+                  <div className="text-xs text-muted-foreground">{t("memorizae.easy")}</div>
                 </div>
               </div>
-              <Button onClick={closeDeck} className="w-full">Concluir</Button>
+              <Button onClick={closeDeck} className="w-full">{t("memorizae.finish")}</Button>
             </CardContent>
           </Card>
         ) : (
@@ -293,13 +295,13 @@ export default function Memorizae() {
               )}
               {!showBack ? (
                 <Button variant="outline" size="lg" onClick={() => speakCard(card)}>
-                  <Volume2 className="h-4 w-4 mr-2" /> Ouça e Repita
+                  <Volume2 className="h-4 w-4 mr-2" /> {t("memorizae.listenRepeat")}
                 </Button>
               ) : (
                 <div className="w-full space-y-4 animate-fade-in">
                   <p className="text-2xl font-display font-semibold leading-snug">{card.front_text}</p>
                   <Button variant="outline" size="sm" onClick={() => speakCard(card)}>
-                    <Volume2 className="h-4 w-4 mr-1" /> Ouvir
+                    <Volume2 className="h-4 w-4 mr-1" /> {t("memorizae.listen")}
                   </Button>
                   <div className="w-full border-t pt-4 space-y-3">
                     <p className="text-lg text-primary font-medium">{card.back_text}</p>
@@ -313,7 +315,7 @@ export default function Memorizae() {
             <div className="p-4 border-t">
               {!showBack ? (
                 <Button className="w-full" size="lg" onClick={() => setShowBack(true)}>
-                  Mostrar resposta
+                  {t("memorizae.showAnswer")}
                 </Button>
               ) : (
                 <div className="grid grid-cols-4 gap-2">
@@ -323,7 +325,7 @@ export default function Memorizae() {
                     disabled={busy}
                     onClick={() => rate(1)}
                   >
-                    <span className="font-semibold">Novamente</span>
+                    <span className="font-semibold">{t("memorizae.again")}</span>
                     <span className="text-[10px] opacity-70">{previewInterval(1)}</span>
                   </Button>
                   <Button
@@ -332,7 +334,7 @@ export default function Memorizae() {
                     disabled={busy}
                     onClick={() => rate(2)}
                   >
-                    <span className="font-semibold">Difícil</span>
+                    <span className="font-semibold">{t("memorizae.hard")}</span>
                     <span className="text-[10px] opacity-70">{previewInterval(2)}</span>
                   </Button>
                   <Button
@@ -341,7 +343,7 @@ export default function Memorizae() {
                     disabled={busy}
                     onClick={() => rate(3)}
                   >
-                    <span className="font-semibold">Bom</span>
+                    <span className="font-semibold">{t("memorizae.good")}</span>
                     <span className="text-[10px] opacity-70">{previewInterval(3)}</span>
                   </Button>
                   <Button
@@ -350,7 +352,7 @@ export default function Memorizae() {
                     disabled={busy}
                     onClick={() => rate(4)}
                   >
-                    <span className="font-semibold">Fácil</span>
+                    <span className="font-semibold">{t("memorizae.easy")}</span>
                     <span className="text-[10px] opacity-70">{previewInterval(4)}</span>
                   </Button>
                 </div>
@@ -372,10 +374,7 @@ export default function Memorizae() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-foreground">IA Memorizaê</h1>
-          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Treino diário de flashcards com Repetição Espaçada (SRS). O algoritmo escolhe o momento perfeito para você
-            revisar cada carta e destruir a Curva do Esquecimento — 5 a 10 minutos por dia bastam.
-          </p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{t("memorizae.subtitle")}</p>
         </div>
       </div>
 
@@ -385,7 +384,7 @@ export default function Memorizae() {
             <Sparkles className="h-5 w-5 text-primary" />
             <div>
               <div className="text-xl font-bold">{masteredCount}</div>
-              <div className="text-[11px] text-muted-foreground">Cartas dominadas</div>
+              <div className="text-[11px] text-muted-foreground">{t("memorizae.mastered")}</div>
             </div>
           </CardContent>
         </Card>
@@ -394,7 +393,7 @@ export default function Memorizae() {
             <Target className="h-5 w-5 text-primary" />
             <div>
               <div className="text-xl font-bold">{totalReviews}</div>
-              <div className="text-[11px] text-muted-foreground">No seu deck</div>
+              <div className="text-[11px] text-muted-foreground">{t("memorizae.inDeck")}</div>
             </div>
           </CardContent>
         </Card>
@@ -405,7 +404,7 @@ export default function Memorizae() {
               <div className="text-xl font-bold">
                 {Object.values(reviews).filter((r) => new Date(r.due_at).getTime() <= Date.now()).length}
               </div>
-              <div className="text-[11px] text-muted-foreground">Devidas agora</div>
+              <div className="text-[11px] text-muted-foreground">{t("memorizae.dueNow")}</div>
             </div>
           </CardContent>
         </Card>
@@ -414,7 +413,7 @@ export default function Memorizae() {
             <Trophy className="h-5 w-5 text-primary" />
             <div>
               <div className="text-xl font-bold">{decks.length}</div>
-              <div className="text-[11px] text-muted-foreground">Decks disponíveis</div>
+              <div className="text-[11px] text-muted-foreground">{t("memorizae.decksAvailable")}</div>
             </div>
           </CardContent>
         </Card>
