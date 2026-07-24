@@ -222,6 +222,47 @@ const dict: Dict = {
   "install.button": { pt: "Instalar Falaê Brasil", en: "Install Falaê Brasil" },
   "install.installNow": { pt: "Instalar agora", en: "Install now" },
   "install.hint": { pt: "Dica: a instalação só funciona no app publicado, não dentro do editor.", en: "Tip: install only works on the published app, not inside the editor." },
+
+  // Common
+  "common.backToDashboard": { pt: "Voltar ao Painel", en: "Back to Dashboard" },
+  "common.back": { pt: "Voltar", en: "Back" },
+
+  // Memorizae
+  "memorizae.subtitle": {
+    pt: "Treino diário de flashcards com Repetição Espaçada (SRS). O algoritmo escolhe o momento perfeito para você revisar cada carta e destruir a Curva do Esquecimento — 5 a 10 minutos por dia bastam.",
+    en: "Daily flashcard training with Spaced Repetition (SRS). The algorithm picks the perfect moment for you to review each card and destroy the Forgetting Curve — 5 to 10 minutes a day is enough.",
+  },
+  "memorizae.mastered": { pt: "Cartas dominadas", en: "Mastered cards" },
+  "memorizae.inDeck": { pt: "No seu deck", en: "In your deck" },
+  "memorizae.dueNow": { pt: "Devidas agora", en: "Due now" },
+  "memorizae.decksAvailable": { pt: "Decks disponíveis", en: "Available decks" },
+  "memorizae.listenRepeat": { pt: "Ouça e Repita", en: "Listen and Repeat" },
+  "memorizae.listen": { pt: "Ouvir", en: "Listen" },
+  "memorizae.showAnswer": { pt: "Mostrar resposta", en: "Show answer" },
+  "memorizae.again": { pt: "Novamente", en: "Again" },
+  "memorizae.hard": { pt: "Difícil", en: "Hard" },
+  "memorizae.good": { pt: "Bom", en: "Good" },
+  "memorizae.easy": { pt: "Fácil", en: "Easy" },
+  "memorizae.reviewed": { pt: "Revisadas", en: "Reviewed" },
+  "memorizae.sessionDone": { pt: "Sessão concluída!", en: "Session complete!" },
+  "memorizae.finish": { pt: "Concluir", en: "Finish" },
+
+  // Leiaê
+  "leiae.badge": { pt: "Leitura Técnica Interativa", en: "Interactive Technical Reading" },
+  "leiae.subtitle": {
+    pt: "Decifre relatórios de auditoria, e-mails da matriz e guias de embarque de forma independente. Clique em qualquer palavra para ver tradução, sílabas, imagem e áudio.",
+    en: "Decipher audit reports, headquarters emails, and boarding guides independently. Click any word to see translation, syllables, image, and audio.",
+  },
+  "leiae.feature.translation": { pt: "Tradução PT-BR instantânea", en: "Instant PT-BR translation" },
+  "leiae.feature.audio": { pt: "Áudio palavra por palavra", en: "Word-by-word audio" },
+  "leiae.feature.syllables": { pt: "Divisão silábica", en: "Syllable breakdown" },
+  "leiae.feature.images": { pt: "Imagens de suporte", en: "Support images" },
+  "leiae.textsByLevel": { pt: "Textos disponíveis por nível", en: "Texts available by level" },
+  "leiae.pasteOwnText": { pt: "Ou cole seu próprio texto", en: "Or paste your own text" },
+  "leiae.titlePlaceholder": { pt: "Título (opcional) — ex.: Auditoria Q3", en: "Title (optional) — e.g., Q3 Audit" },
+  "leiae.contentPlaceholder": { pt: "Cole aqui o relatório, e-mail ou guia em inglês…", en: "Paste the report, email or guide in English here…" },
+  "leiae.open": { pt: "Abrir IA Leiaê", en: "Open AI Leiaê" },
+  "leiae.opening": { pt: "Abrindo IA Leiaê…", en: "Opening AI Leiaê…" },
 };
 
 interface LanguageContextType {
