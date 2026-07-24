@@ -58,7 +58,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 aria-label={t("header.language")}
                 className="press-effect rounded-lg hover:bg-accent/10 hover:text-accent transition-all duration-300 text-xs font-bold tabular-nums"
               >
-                {language === "pt" ? "EN" : "PT"}
+                <span className="inline-flex items-center gap-0.5">
+                  <span className={language === "pt" ? "text-accent" : "opacity-40"}>PT</span>
+                  <span className="opacity-40">/</span>
+                  <span className={language === "en" ? "text-accent" : "opacity-40"}>EN</span>
+                </span>
               </Button>
               <UpgradeButton />
               <XPBadge xp={profile?.xp ?? 0} level={profile?.level ?? "A1"} compact />

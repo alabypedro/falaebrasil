@@ -8,6 +8,7 @@ import { useLeiae } from "@/hooks/useLeiae";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 type Level = typeof LEVELS[number];
@@ -21,6 +22,7 @@ interface LeiaeText {
 }
 
 export default function Leiae() {
+  const { t } = useLanguage();
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
   const [level, setLevel] = useState<Level>("A1");
@@ -67,20 +69,17 @@ export default function Leiae() {
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-foreground">IA Leiaê</h1>
-          <Badge className="bg-primary/15 text-primary border-0">Leitura Técnica Interativa</Badge>
+          <Badge className="bg-primary/15 text-primary border-0">{t("leiae.badge")}</Badge>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
-          Decifre relatórios de auditoria, e-mails da matriz e guias de embarque de forma independente.
-          Clique em qualquer palavra para ver tradução, sílabas, imagem e áudio.
-        </p>
+        <p className="text-sm text-muted-foreground mt-1">{t("leiae.subtitle")}</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
         {[
-          { icon: Languages, label: "Tradução PT-BR instantânea" },
-          { icon: Volume2, label: "Áudio palavra por palavra" },
-          { icon: BookText, label: "Divisão silábica" },
-          { icon: ImageIcon, label: "Imagens de suporte" },
+          { icon: Languages, label: t("leiae.feature.translation") },
+          { icon: Volume2, label: t("leiae.feature.audio") },
+          { icon: BookText, label: t("leiae.feature.syllables") },
+          { icon: ImageIcon, label: t("leiae.feature.images") },
         ].map(({ icon: Icon, label }) => (
           <div
             key={label}
@@ -94,7 +93,7 @@ export default function Leiae() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Textos disponíveis por nível</CardTitle>
+          <CardTitle className="text-base">{t("leiae.textsByLevel")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-center gap-2 flex-wrap">
@@ -140,26 +139,26 @@ export default function Leiae() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Ou cole seu próprio texto</CardTitle>
+          <CardTitle className="text-base">{t("leiae.pasteOwnText")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título (opcional) — ex.: Auditoria Q3"
+            placeholder={t("leiae.titlePlaceholder")}
             className="w-full rounded-md border bg-background px-3 py-2 text-sm"
           />
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Cole aqui o relatório, e-mail ou guia em inglês…"
+            placeholder={t("leiae.contentPlaceholder")}
             className="min-h-[220px] font-mono text-sm"
           />
           <div className="flex justify-end">
             <Button onClick={handleOpen} disabled={loading} size="lg">
               <BookText className="h-4 w-4 mr-2" />
-              {loading ? "Abrindo IA Leiaê…" : "Abrir IA Leiaê"}
+              {loading ? t("leiae.opening") : t("leiae.open")}
             </Button>
           </div>
         </CardContent>
