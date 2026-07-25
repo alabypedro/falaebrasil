@@ -577,7 +577,7 @@ export default function CourseDetail() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => window.open(`${activeLesson.pdf_url}#toolbar=0&navpanes=0`, '_blank', 'noopener,noreferrer')}
+                              onClick={() => setReadingPdf({ url: activeLesson.pdf_url!, title: activeLesson.title })}
                               className="w-full"
                             >
                               <FileText className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">PDF</span>
