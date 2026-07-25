@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap, MessageSquareText, Headphones, Brain, BookText } from "lucide-react";
+import { CheckCircle, Circle, PlayCircle, FileText, ArrowLeft, BookOpen, HelpCircle, Mic, RotateCcw, Check, Zap, MessageSquareText, Headphones, Brain, BookText, Download } from "lucide-react";
 import { toast } from "sonner";
 import InlineQuiz from "@/components/InlineQuiz";
 import { PdfReader } from "@/components/library/PdfReader";
@@ -581,6 +581,23 @@ export default function CourseDetail() {
                               className="w-full"
                             >
                               <FileText className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">PDF</span>
+                            </Button>
+                          )}
+                          {activeLesson.pdf_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                              className="w-full"
+                            >
+                              <a
+                                href={activeLesson.pdf_url}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <Download className="h-4 w-4 mr-1.5" /> <span className="hidden sm:inline">Baixar PDF</span>
+                              </a>
                             </Button>
                           )}
                         </div>
