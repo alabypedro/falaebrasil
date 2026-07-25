@@ -83,6 +83,24 @@ export function PdfReader({ url, title, isOpen, onClose, allowDownload = false }
     });
   };
 
+  const handleDownload = async () => {
+    try {
+      const res = await fetch(url, { credentials: "omit" });
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      const safeTitle = (title || "documento").replace(/[^\w\-. ]+/g, "_");
+      a.download = safeTitle.endsWith(".pdf") ? safeTitle : `${safeTitle}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (e) {
+      console.error("Falha ao baixar PDF", e);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
@@ -127,13 +145,11 @@ export function PdfReader({ url, title, isOpen, onClose, allowDownload = false }
                 <Button
                   variant="ghost"
                   size="icon"
-                  asChild
                   className="text-zinc-400 hover:text-white hover:bg-zinc-800 h-7 w-7 md:h-8 md:w-8"
                   title="Baixar PDF"
+                  onClick={handleDownload}
                 >
-                  <a href={url} download target="_blank" rel="noopener noreferrer">
-                    <Download className="h-4 w-4" />
-                  </a>
+                  <Download className="h-4 w-4" />
                 </Button>
               )}
               <Button
