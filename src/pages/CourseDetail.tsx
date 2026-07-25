@@ -676,6 +676,7 @@ export default function CourseDetail() {
           onClose={() => setReadingPdf(null)}
           url={readingPdf.url}
           title={readingPdf.title}
+          allowDownload
         />
       )}
     </div>
