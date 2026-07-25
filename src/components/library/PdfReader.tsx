@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Maximize2, Minimize2, ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut } from "lucide-react";
+import { X, Maximize2, Minimize2, ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { Document, Page, pdfjs } from 'react-pdf';
 
 // Configure PDF.js worker
@@ -17,9 +17,10 @@ interface PdfReaderProps {
   title: string;
   isOpen: boolean;
   onClose: () => void;
+  allowDownload?: boolean;
 }
 
-export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
+export function PdfReader({ url, title, isOpen, onClose, allowDownload = false }: PdfReaderProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [numPages, setNumPages] = useState<number>();
   const [pageNumber, setPageNumber] = useState(1);
@@ -122,6 +123,19 @@ export function PdfReader({ url, title, isOpen, onClose }: PdfReaderProps) {
             )}
 
             <div className="flex items-center gap-1">
+              {allowDownload && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="text-zinc-400 hover:text-white hover:bg-zinc-800 h-7 w-7 md:h-8 md:w-8"
+                  title="Baixar PDF"
+                >
+                  <a href={url} download target="_blank" rel="noopener noreferrer">
+                    <Download className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
