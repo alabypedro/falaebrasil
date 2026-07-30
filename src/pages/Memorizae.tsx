@@ -50,7 +50,8 @@ function formatInterval(days: number) {
   return `${Math.round(days / 30)}mo`;
 }
 
-export default function Memorizae() {
+export default function Memorizae({ bstProductId }: { bstProductId?: string } = {}) {
+  const bstMode = !!bstProductId;
   const { user } = useAuth();
   const { t } = useLanguage();
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -88,8 +89,14 @@ export default function Memorizae() {
 
   const load = async () => {
     setLoading(true);
+    const deckQuery = supabase
+      .from("memorize_decks")
+      .select("id,title,description,target_topic,display_order,course_id");
     const [{ data: d }, { data: c }, { data: r }, { data: cs }] = await Promise.all([
-      supabase.from("memorize_decks").select("id,title,description,target_topic,display_order,course_id").order("display_order"),
+      (bstMode
+        ? deckQuery.eq("bst_product_id", bstProductId)
+        : deckQuery.is("bst_product_id", null)
+      ).order("display_order"),
       supabase.from("memorize_cards").select("id,deck_id,front_text,back_text,example_sentence,audio_url,image_url").order("display_order"),
       user
         ? supabase.from("user_card_reviews").select("card_id,due_at,interval_days,repetitions,lapses,ease_factor").eq("user_id", user.id)
@@ -111,7 +118,7 @@ export default function Memorizae() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); }, [user?.id, bstProductId]);
 
   // Pre-sign assets of the current card + next one for smooth playback
   useEffect(() => {
