@@ -436,6 +436,7 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
         </Card>
       ) : (
         <>
+        {!bstMode && (
         <div className="flex justify-center gap-2 flex-wrap">
           {LEVELS.map((lv) => (
             <Button
@@ -449,13 +450,18 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
             </Button>
           ))}
         </div>
+        )}
         {(() => {
-          const filtered = decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false));
+          const filtered = bstMode
+            ? decks
+            : decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false));
           if (filtered.length === 0) {
             return (
               <Card>
                 <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                  Nenhum deck disponível no nível {selectedLevel} ainda.
+                  {bstMode
+                    ? "Nenhum baralho disponível neste produto ainda."
+                    : `Nenhum deck disponível no nível ${selectedLevel} ainda.`}
                 </CardContent>
               </Card>
             );
