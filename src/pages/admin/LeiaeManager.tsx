@@ -22,44 +22,49 @@ interface LeiaeText {
   content: string;
   level: Level;
   course_id: string | null;
+  bst_product_id: string | null;
   display_order: number;
 }
 interface Course { id: string; title: string; }
+interface BstProduct { id: string; title: string; }
 
 export default function LeiaeManager() {
   const [items, setItems] = useState<LeiaeText[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [bstProducts, setBstProducts] = useState<BstProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Level | "all">("all");
 
   const [dialog, setDialog] = useState(false);
   const [editing, setEditing] = useState<LeiaeText | null>(null);
-  const [form, setForm] = useState<{ title: string; content: string; level: Level; course_id: string; display_order: number; }>({
-    title: "", content: "", level: "A1", course_id: "none", display_order: 0,
+  const [form, setForm] = useState<{ title: string; content: string; level: Level; course_id: string; bst_product_id: string; display_order: number; }>({
+    title: "", content: "", level: "A1", course_id: "none", bst_product_id: "none", display_order: 0,
   });
 
   const load = async () => {
     setLoading(true);
-    const [{ data: xs }, { data: cs }] = await Promise.all([
+    const [{ data: xs }, { data: cs }, { data: bp }] = await Promise.all([
       supabase.from("leiae_texts").select("*").order("level").order("display_order"),
       supabase.from("courses").select("id,title").order("display_order"),
+      supabase.from("bst_products").select("id,title").order("display_order"),
     ]);
     setItems((xs as LeiaeText[]) || []);
     setCourses((cs as Course[]) || []);
+    setBstProducts((bp as BstProduct[]) || []);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", content: "", level: "A1", course_id: "none", display_order: items.length });
+    setForm({ title: "", content: "", level: "A1", course_id: "none", bst_product_id: "none", display_order: items.length });
     setDialog(true);
   };
   const openEdit = (x: LeiaeText) => {
     setEditing(x);
     setForm({
       title: x.title, content: x.content, level: x.level,
-      course_id: x.course_id ?? "none", display_order: x.display_order,
+      course_id: x.course_id ?? "none", bst_product_id: x.bst_product_id ?? "none", display_order: x.display_order,
     });
     setDialog(true);
   };
@@ -70,6 +75,7 @@ export default function LeiaeManager() {
       content: form.content.trim(),
       level: form.level,
       course_id: form.course_id === "none" ? null : form.course_id,
+      bst_product_id: form.bst_product_id === "none" ? null : form.bst_product_id,
       display_order: form.display_order,
     };
     const { error } = editing
@@ -228,6 +234,17 @@ export default function LeiaeManager() {
             <div>
               <Label>Ordem</Label>
               <Input type="number" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: parseInt(e.target.value || "0", 10) })} />
+            </div>
+            <div>
+              <Label>Produto BST (opcional)</Label>
+              <Select value={form.bst_product_id} onValueChange={(v) => setForm({ ...form, bst_product_id: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (plataforma FB)</SelectItem>
+                  {bstProducts.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Ao vincular, o texto aparece só dentro do produto BST.</p>
             </div>
           </div>
           <DialogFooter>
