@@ -221,6 +221,130 @@ export type Database = {
         }
         Relationships: []
       }
+      bst_product_access: {
+        Row: {
+          created_at: string
+          granted_at: string
+          id: string
+          product_id: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_at?: string
+          id?: string
+          product_id: string
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_at?: string
+          id?: string
+          product_id?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bst_product_access_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bst_products: {
+        Row: {
+          active: boolean
+          checkout_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          pdf_url: string | null
+          price_cents: number
+          secondary_tool: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          checkout_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          pdf_url?: string | null
+          price_cents?: number
+          secondary_tool?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          checkout_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          pdf_url?: string | null
+          price_cents?: number
+          secondary_tool?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bst_voice_scripts: {
+        Row: {
+          bst_product_id: string
+          created_at: string
+          display_order: number
+          id: string
+          level: string
+          script_text: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bst_product_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          level?: string
+          script_text: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bst_product_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          level?: string
+          script_text?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bst_voice_scripts_bst_product_id_fkey"
+            columns: ["bst_product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           content: string
@@ -760,6 +884,7 @@ export type Database = {
       }
       leiae_texts: {
         Row: {
+          bst_product_id: string | null
           content: string
           course_id: string | null
           created_at: string
@@ -770,6 +895,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bst_product_id?: string | null
           content: string
           course_id?: string | null
           created_at?: string
@@ -780,6 +906,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bst_product_id?: string | null
           content?: string
           course_id?: string | null
           created_at?: string
@@ -790,6 +917,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "leiae_texts_bst_product_id_fkey"
+            columns: ["bst_product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "leiae_texts_course_id_fkey"
             columns: ["course_id"]
@@ -993,6 +1127,7 @@ export type Database = {
       }
       memorize_decks: {
         Row: {
+          bst_product_id: string | null
           course_id: string | null
           created_at: string
           description: string | null
@@ -1003,6 +1138,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bst_product_id?: string | null
           course_id?: string | null
           created_at?: string
           description?: string | null
@@ -1013,6 +1149,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bst_product_id?: string | null
           course_id?: string | null
           created_at?: string
           description?: string | null
@@ -1023,6 +1160,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "memorize_decks_bst_product_id_fkey"
+            columns: ["bst_product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "memorize_decks_course_id_fkey"
             columns: ["course_id"]
@@ -2125,6 +2269,10 @@ export type Database = {
         Returns: Json
       }
       has_bst_item_access: { Args: { _access_key: string }; Returns: boolean }
+      has_bst_product_access: {
+        Args: { _product_id: string }
+        Returns: boolean
+      }
       has_course_access: { Args: { _course_id: string }; Returns: boolean }
       has_role: {
         Args: {
