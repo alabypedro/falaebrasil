@@ -1,80 +1,47 @@
-# Plano: Combos + Cupons na plataforma + Migração pra produção
+## Objetivo
 
-Duas frentes em paralelo. A parte de código eu faço; a parte de painel ASAAS é você.
+Transformar a Biblioteca BST em uma vitrine de **produtos BST** (guias/cartilhas low-ticket), cada um com ambiente blindado contendo PDF + IA Memorizaê BST + IA Falaê scripted (ou IA Leiaê, na Cartilha). Alunos OPEN/PRO/VIP continuam com acesso total; o aluno BST só acessa o produto que comprou.
 
----
+## 1. Biblioteca BST (aluno)
 
-## Parte 1 — Combos (order bumps "manuais")
+- Remover as abas **Todos / E-books / Audiobooks**.
+- Nova descrição: "Brasil Sem Trava: Guias, Cartilhas e Manuais - ferramentas de treinamento para uso prático em situações específicas."
+- Lista **numerada em ordem alfabética** dos produtos BST (1., 2., 3. ...), com badge de bloqueado/liberado.
+- Produto liberado → abre a página do produto. Produto bloqueado → modal de upsell com o link de checkout do produto.
 
-Ideia: um "combo" é um **produto novo** no admin que, quando pago, libera **vários produtos de uma vez** (ex: Plano Open + 3 ebooks). Você cria 1 link de pagamento na ASAAS com o valor do combo, e o webhook libera todos os itens vinculados.
+## 2. Ambiente blindado do produto (`/library/:slug`)
 
-### O que eu construo
-- Nova tabela `payment_product_bundles` (produto pai → produtos filhos)
-- Admin → Pagamentos: no editor de produto, seção **"Itens inclusos (combo)"** com multi-select dos outros produtos ativos
-- `grant_access_from_asaas` passa a: liberar o produto principal **+** todos os produtos vinculados como itens do combo (soma segundos de voz, marca acessos de ebook, libera cursos)
-- Idempotência mantida via `access_granted_at`
+Três ferramentas, dentro do próprio produto:
 
-### O que você faz
-1. Cria no ASAAS o link do combo (ex: "Plano Open + 3 Ebooks" — R$ X)
-2. Cria o produto no admin, cola o `checkout_url`, marca os 4 itens no combo, salva
+1. **PDF** — leitor em tela cheia com download liberado (mesmo componente das aulas).
+2. **IA Memorizaê BST** — flashcards, SRS de 4 botões (Novamente/Difícil/Bom/Fácil) e TTS, idênticos ao existente, mas com baralhos exclusivos do produto.
+3. **IA Falaê (scripted)** — apenas scripted, com scripts próprios do produto; sem unscripted.
+   - No produto "BST Cartilha de Inglês Instrumental do Zero A1 ao C2 Avançado", a IA Falaê é substituída por **IA Leiaê** com textos próprios do produto.
 
----
+Isolamento de conteúdo: os baralhos/cards, scripts e textos BST recebem vínculo com o produto e são **excluídos** das IAs do restante da plataforma (cursos FB e botões do painel), e vice-versa.
 
-## Parte 2 — Cupons via link alternativo
+## 3. Aluno BST (restrito)
 
-Ideia: você cria **um link de pagamento por preço** na ASAAS (preço cheio + preço com desconto) e distribui a URL "com cupom" só pra quem deve receber. A plataforma trata os dois como o mesmo produto lógico.
+- Ao comprar um produto BST e se cadastrar, o aluno recebe acesso somente àquele produto e é levado direto para ele após o login.
+- Ele navega livremente pela plataforma (cursos, IAs, dashboard) mas vê tudo **bloqueado com CTA de upgrade** — funciona como vitrine.
+- Gamificação (XP) das atividades BST entra no XP total do aluno.
 
-### O que eu construo
-- Nova tabela `payment_product_coupons`: `product_id`, `code`, `checkout_url`, `price_cents`, `active`
-- Admin → editor de produto: seção **"Cupons / links promocionais"** com CRUD (código, valor, URL do link ASAAS, ativo/inativo, botão copiar link)
-- Página pública `/promo/:code` que:
-  - Busca o cupom ativo, mostra o preço com desconto e o nome do produto
-  - Botão "Ir para o checkout" abre o `checkout_url` do cupom
-- Webhook: quando o pagamento chega, se o `paymentLink` bate com um `checkout_url` de cupom, credita o **mesmo produto pai** (libera os mesmos acessos, com o valor pago do cupom)
+## 4. Painel admin (`/admin/library`)
 
-### O que você faz
-1. Cria links extras no ASAAS com valores promocionais
-2. No admin, adiciona cada cupom (código + URL + valor) dentro do produto
-3. Divulga `https://app.falaebrasil.com.br/promo/BLACK20` pros clientes
+- CRUD de **produtos BST**: título, slug, ordem/nome para ordenação alfabética, descrição, upload do PDF, ferramenta secundária (Falaê ou Leiaê), link de checkout ASAAS, ativo.
+- Dentro de cada produto: gerenciar baralhos/cards do Memorizaê BST, scripts do Falaê BST e textos do Leiaê BST.
+- Todo produto BST novo aparece automaticamente na lista.
+- Em **Criar Aluno** e na gestão de alunos: toggles por produto BST, para o admin liberar manualmente.
 
----
+## Detalhes técnicos
 
-## Parte 3 — Migração Sandbox → Produção
+- Nova tabela `bst_products` (slug, title, description, pdf_url, secondary_tool, checkout_url, active, display_order) e `bst_product_access` (user_id, product_id) com RLS: aluno lê o próprio acesso; admin gerencia.
+- Reaproveitar as tabelas existentes adicionando `bst_product_id` a `memorize_decks` e `leiae_texts`, mais nova tabela `bst_voice_scripts`. Todas as consultas atuais passam a filtrar `bst_product_id IS NULL`; as BST filtram pelo produto e exigem acesso via função `has_bst_product_access(uuid)` (SECURITY DEFINER).
+- SRS/`user_card_reviews`, `submit_card_review`, `award_ai_xp` e `reset_all_progress` continuam servindo os dois mundos (XP com `source` já existente).
+- Frontend: `src/pages/Library.tsx` reescrita como lista numerada; nova `src/pages/BstProduct.tsx` + componentes `BstMemorizae`, `BstVoiceScripted`, `BstLeiae` reutilizando a lógica atual; `PdfReader` com `allowDownload`.
+- Admin: `src/pages/admin/LibraryManager.tsx` reescrito para produtos BST + sub-abas de conteúdo; `CreateStudent.tsx` com toggles dos produtos.
+- Manter as tabelas/flags antigas (`library_bst`, `has_ebookN_access`) intactas para não quebrar histórico.
 
-### O que você faz no painel ASAAS de PRODUÇÃO (`https://www.asaas.com`)
-**A. Conta aprovada** — Minha Conta → completar dados PF/PJ, documentos, conta bancária. Aguardar liberação (~1 dia útil).
+## Checkout ASAAS (passo a passo manual, entregue no fim)
 
-**B. Webhook**
-- Integrações → Notificações via URL → Adicionar
-- URL: `https://teastozdtgoogrpghpzj.supabase.co/functions/v1/asaas-webhook`
-- Versão API: v3 · Envio: Sequencial
-- Token: **o mesmo valor** salvo no backend como `ASAAS_WEBHOOK_TOKEN` (se você não lembra o valor, me avisa que eu gero um novo dos dois lados)
-- Eventos: `PAYMENT_CREATED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_OVERDUE`, `PAYMENT_REFUNDED`, `PAYMENT_DELETED`, `SUBSCRIPTION_CREATED`, `SUBSCRIPTION_UPDATED`, `SUBSCRIPTION_DELETED`, `SUBSCRIPTION_INACTIVATED`
-
-**C. Recriar links de pagamento em produção** (sandbox não vale em prod):
-1. Plano Open — assinatura mensal, valor real
-2. Ebook 1, Ebook 2, Ebook 3 — cobrança única
-3. (Opcional) Combo Open + 3 Ebooks
-4. (Opcional) Links promocionais com valor de cupom
-
-**D. Colar os links em Admin → Pagamentos**
-- Cada produto recebe o `checkout_url` de produção
-- Combos: marcar itens inclusos
-- Cupons: cadastrar código + URL + valor
-
-**E. Me avisar quando A–D estiverem prontos.**
-
-### O que EU faço na virada
-- Troco o secret `ASAAS_ENV` de `sandbox` → `production`
-- A partir desse momento, toda compra vai pra sua conta real
-
----
-
-## Ordem de execução do meu lado
-1. Migração DB: `payment_product_bundles` + `payment_product_coupons`
-2. Webhook + `grant_access_from_asaas`: suporte a combos e a cupons
-3. Admin `PaymentsManager`: UI de combos e cupons dentro do editor de produto
-4. Rota pública `/promo/:code`
-5. Aguardar seu OK em A–D → virar `ASAAS_ENV=production`
-
-Confirma que posso começar por 1–4 já?
+Instruções para criar 3 links de cobrança avulsos no ASAAS (um por produto BST), preço único low-ticket, e colar cada link no campo "Checkout URL" do produto no admin — incluindo como o webhook já existente libera o acesso automaticamente.

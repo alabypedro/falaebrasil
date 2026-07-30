@@ -21,7 +21,8 @@ interface LeiaeText {
   display_order: number;
 }
 
-export default function Leiae() {
+export default function Leiae({ bstProductId }: { bstProductId?: string } = {}) {
+  const bstMode = !!bstProductId;
   const { t } = useLanguage();
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
@@ -32,16 +33,20 @@ export default function Leiae() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("leiae_texts")
-        .select("*")
-        .order("display_order");
+      const q = supabase.from("leiae_texts").select("*");
+      const { data } = await (bstMode
+        ? q.eq("bst_product_id", bstProductId)
+        : q.is("bst_product_id", null)
+      ).order("display_order");
       setItems((data as LeiaeText[]) || []);
       setLoadingItems(false);
     })();
-  }, []);
+  }, [bstProductId]);
 
-  const levelItems = useMemo(() => items.filter((x) => x.level === level), [items, level]);
+  const levelItems = useMemo(
+    () => (bstMode ? items : items.filter((x) => x.level === level)),
+    [items, level, bstMode]
+  );
 
   const handleOpen = () => {
     const content = text.trim();
@@ -65,10 +70,10 @@ export default function Leiae() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
+      {!bstMode && <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-foreground">IA Leiaê</h1>
+          <h1 className="text-2xl font-bold text-foreground">IA Leiaê{bstMode ? " BST" : ""}</h1>
           <Badge className="bg-primary/15 text-primary border-0">{t("leiae.badge")}</Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">{t("leiae.subtitle")}</p>
@@ -96,6 +101,7 @@ export default function Leiae() {
           <CardTitle className="text-base">{t("leiae.textsByLevel")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {!bstMode && (
           <div className="flex justify-center gap-2 flex-wrap">
             {LEVELS.map((lv) => (
               <Button
@@ -109,12 +115,13 @@ export default function Leiae() {
               </Button>
             ))}
           </div>
+          )}
 
           {loadingItems ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
           ) : levelItems.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-6">
-              Nenhum texto disponível no nível {level} ainda.
+              {bstMode ? "Nenhum texto disponível neste produto ainda." : `Nenhum texto disponível no nível ${level} ainda.`}
             </p>
           ) : (
             <div className="grid gap-2">

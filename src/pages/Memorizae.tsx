@@ -50,7 +50,8 @@ function formatInterval(days: number) {
   return `${Math.round(days / 30)}mo`;
 }
 
-export default function Memorizae() {
+export default function Memorizae({ bstProductId }: { bstProductId?: string } = {}) {
+  const bstMode = !!bstProductId;
   const { user } = useAuth();
   const { t } = useLanguage();
   const [decks, setDecks] = useState<Deck[]>([]);
@@ -88,8 +89,14 @@ export default function Memorizae() {
 
   const load = async () => {
     setLoading(true);
+    const deckQuery = supabase
+      .from("memorize_decks")
+      .select("id,title,description,target_topic,display_order,course_id");
     const [{ data: d }, { data: c }, { data: r }, { data: cs }] = await Promise.all([
-      supabase.from("memorize_decks").select("id,title,description,target_topic,display_order,course_id").order("display_order"),
+      (bstMode
+        ? deckQuery.eq("bst_product_id", bstProductId)
+        : deckQuery.is("bst_product_id", null)
+      ).order("display_order"),
       supabase.from("memorize_cards").select("id,deck_id,front_text,back_text,example_sentence,audio_url,image_url").order("display_order"),
       user
         ? supabase.from("user_card_reviews").select("card_id,due_at,interval_days,repetitions,lapses,ease_factor").eq("user_id", user.id)
@@ -111,7 +118,7 @@ export default function Memorizae() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); }, [user?.id, bstProductId]);
 
   // Pre-sign assets of the current card + next one for smooth playback
   useEffect(() => {
@@ -367,13 +374,13 @@ export default function Memorizae() {
   // ---------- Deck list ----------
   return (
     <div className="space-y-6">
-      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
+      {!bstMode && <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />}
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <Brain className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">IA Memorizaê</h1>
+          <h1 className="text-2xl font-bold text-foreground">IA Memorizaê{bstMode ? " BST" : ""}</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{t("memorizae.subtitle")}</p>
         </div>
       </div>
@@ -429,6 +436,7 @@ export default function Memorizae() {
         </Card>
       ) : (
         <>
+        {!bstMode && (
         <div className="flex justify-center gap-2 flex-wrap">
           {LEVELS.map((lv) => (
             <Button
@@ -442,13 +450,18 @@ export default function Memorizae() {
             </Button>
           ))}
         </div>
+        )}
         {(() => {
-          const filtered = decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false));
+          const filtered = bstMode
+            ? decks
+            : decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false));
           if (filtered.length === 0) {
             return (
               <Card>
                 <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                  Nenhum deck disponível no nível {selectedLevel} ainda.
+                  {bstMode
+                    ? "Nenhum baralho disponível neste produto ainda."
+                    : `Nenhum deck disponível no nível ${selectedLevel} ainda.`}
                 </CardContent>
               </Card>
             );
