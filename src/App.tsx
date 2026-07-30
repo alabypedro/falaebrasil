@@ -12,6 +12,7 @@ import VoiceLab from "@/pages/VoiceLab";
 import WritingLab from "@/pages/WritingLab";
 import ListeningLab from "@/pages/ListeningLab";
 import Library from "@/pages/Library";
+import BstProduct from "@/pages/BstProduct";
 import Profile from "@/pages/Profile";
 import Auth from "@/pages/Auth";
 import ResetPassword from "@/pages/ResetPassword";
@@ -135,6 +136,7 @@ const App = () => {
                         <Route path="/writing-lab" element={<WritingLab />} />
                         <Route path="/listening-lab" element={<ListeningLab />} />
                         <Route path="/library" element={<Library />} />
+                        <Route path="/library/:slug" element={<BstProduct />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/tutoriais" element={<Tutoriais />} />
                         <Route path="/communities" element={<Communities />} />
