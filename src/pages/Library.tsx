@@ -1,255 +1,94 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Headphones, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChevronRight, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { UpsellModal } from "@/components/UpsellModal";
-import { useAdmin } from "@/hooks/useAdmin";
-import { PdfReader } from "@/components/library/PdfReader";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 
-interface LibraryItem {
+interface BstProduct {
   id: string;
+  slug: string;
   title: string;
-  type: string;
-  file_url: string | null;
-  audio_url: string | null;
-  access_key: string;
-}
-
-interface ProductInfo {
-  product_key: string;
-  display_name: string;
+  description: string | null;
   checkout_url: string | null;
 }
 
-const accessToProductKey: Record<string, "ebook1" | "ebook2" | "ebook3" | null> = {
-  ebook1: "ebook1",
-  ebook2: "ebook2",
-  ebook3: "ebook3",
-  free: null,
-};
-
-/** Normaliza o título removendo prefixos "Ebook"/"Audiobook" e acentos para agrupar pares. */
-function normalizeTitle(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/^\s*(e-?book|audiobook|audio book)\s*[:\-]?\s*/i, "")
-    .trim();
-}
-
-/** Ordena alfabeticamente pelo título base e, dentro do mesmo título, e-book antes de audiobook. */
-function sortLibrary(items: LibraryItem[]): LibraryItem[] {
-  return [...items].sort((a, b) => {
-    const ka = normalizeTitle(a.title);
-    const kb = normalizeTitle(b.title);
-    if (ka !== kb) return ka.localeCompare(kb, "pt-BR");
-    if (a.type === b.type) return a.title.localeCompare(b.title, "pt-BR");
-    return a.type === "ebook" ? -1 : 1;
-  });
-}
-
-function ItemCard({
-  item,
-  locked,
-  onUnlockClick,
-  onReadClick,
-}: {
-  item: LibraryItem;
-  locked: boolean;
-  onUnlockClick: () => void;
-  onReadClick: (item: LibraryItem) => void;
-}) {
-  // Defesa em profundidade: se a URL não veio (a view safe nulifica quando não há acesso),
-  // tratamos como bloqueado independentemente do que o estado do client diga.
-  const missingAsset =
-    (item.type === "ebook" && !item.file_url) ||
-    (item.type === "audiobook" && !item.audio_url);
-  const effectivelyLocked = locked || missingAsset;
-
-  if (effectivelyLocked) {
-    return (
-      <Card className="hover:shadow-md transition-shadow opacity-90">
-        <CardContent className="p-5 space-y-3">
-          <div className="flex items-start justify-between">
-            <span className="text-4xl grayscale">{item.type === "ebook" ? "📘" : "🎧"}</span>
-            <Badge variant="secondary" className="text-[10px] border-0 gap-1">
-              <Lock className="h-3 w-3" /> Bloqueado
-            </Badge>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
-          </div>
-          <Button variant="default" size="sm" className="w-full" onClick={onUnlockClick}>
-            <Lock className="mr-1.5 h-3.5 w-3.5" /> Desbloquear
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-  return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-start justify-between">
-          <span className="text-4xl">{item.type === "ebook" ? "📘" : "🎧"}</span>
-          <Badge variant="secondary" className="text-[10px] border-0">
-            {item.type === "ebook" ? "E-book" : "Audiobook"}
-          </Badge>
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
-        </div>
-        {item.type === "ebook" && item.file_url ? (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full" 
-            onClick={() => onReadClick(item)}
-          >
-            <BookOpen className="mr-1.5 h-3.5 w-3.5" /> Ler
-          </Button>
-        ) : item.type === "audiobook" && item.audio_url ? (
-          <div className="space-y-2">
-            <audio 
-              src={item.audio_url} 
-              controls 
-              controlsList="nodownload" 
-              onContextMenu={(e) => e.preventDefault()}
-              className="w-full h-9" 
-            />
-          </div>
-        ) : (
-          <Button variant="outline" size="sm" className="w-full" disabled>
-            {item.type === "ebook" ? <><BookOpen className="mr-1.5 h-3.5 w-3.5" /> Indisponível</> : <><Headphones className="mr-1.5 h-3.5 w-3.5" /> Indisponível</>}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function Library() {
-  const [items, setItems] = useState<LibraryItem[]>([]);
-  const [products, setProducts] = useState<Record<string, ProductInfo>>({});
+  const [products, setProducts] = useState<BstProduct[]>([]);
+  const [accessIds, setAccessIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [upsellItem, setUpsellItem] = useState<LibraryItem | null>(null);
-  const [readingItem, setReadingItem] = useState<LibraryItem | null>(null);
-  const { profile } = useAuth();
-  const { isAdmin } = useAdmin();
-  const { t } = useLanguage();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const load = async () => {
-      // We fetch ALL items by also querying mapping (but RLS will hide what's not accessible).
-      // To still show locked items, we fetch via a separate "preview" path: select only id/title/type/access_key.
-      // Since RLS hides non-accessible items, we instead fetch the product mapping to know what exists,
-      // and load items the user can see + show "locked" placeholders is complex. Simpler: relax via mapping list.
-      // Use the safe view: file_url/audio_url come back NULL when the user lacks access,
-      // even if the client tries to bypass the UI lock.
-      const { data: itemsData } = await supabase.from("library_bst_safe").select("*");
-      if (itemsData) setItems(sortLibrary(itemsData as LibraryItem[]));
-      const { data: prodData } = await supabase
-        .from("payment_products")
-        .select("product_key, name, description, price_cents, type")
+    (async () => {
+      const { data } = await supabase
+        .from("bst_products")
+        .select("id,slug,title,description,checkout_url")
         .eq("active", true);
-      if (prodData) {
-        const map: Record<string, ProductInfo> = {};
-        for (const p of prodData) {
-          map[p.product_key] = {
-            product_key: p.product_key,
-            display_name: p.name,
-            checkout_url: null,
-          };
-        }
-        setProducts(map);
-      }
+      const list = ((data as BstProduct[]) || []).sort((a, b) =>
+        a.title.localeCompare(b.title, "pt-BR")
+      );
+      setProducts(list);
+
+      const granted = new Set<string>();
+      await Promise.all(
+        list.map(async (p) => {
+          const { data: ok } = await supabase.rpc("has_bst_product_access", { _product_id: p.id });
+          if (ok) granted.add(p.id);
+        })
+      );
+      setAccessIds(granted);
       setLoading(false);
-    };
-    load();
+    })();
   }, []);
 
-  const hasAccess = (accessKey: string): boolean => {
-    if (isAdmin) return true;
-    if (accessKey === "free") return true;
-    if (!profile) return false;
-    if (accessKey === "ebook1") return profile.has_ebook1_access;
-    if (accessKey === "ebook2") return profile.has_ebook2_access;
-    if (accessKey === "ebook3") return profile.has_ebook3_access;
-    return false;
-  };
-
-  const upsellProductKey = upsellItem ? accessToProductKey[upsellItem.access_key] : null;
-  const upsellProduct = upsellProductKey ? products[upsellProductKey] : null;
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6 max-w-6xl page-transition">
+    <div className="space-y-6 max-w-4xl page-transition">
       <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
-        <p className="text-sm text-muted-foreground mt-1">{t("library.subtitle")}</p>
+        <h1 className="text-2xl font-bold text-foreground">Biblioteca BST</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Brasil Sem Trava: Guias, Cartilhas e Manuais - ferramentas de treinamento para uso prático em situações
+          específicas.
+        </p>
       </div>
 
-      <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="ebook">E-books</TabsTrigger>
-          <TabsTrigger value="audiobook">Audiobooks</TabsTrigger>
-        </TabsList>
-
-        {["all", "ebook", "audiobook"].map((tab) => (
-          <TabsContent key={tab} value={tab}>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(tab === "all" ? items : items.filter((i) => i.type === tab)).map((item) => {
-                const locked = !hasAccess(item.access_key);
-                return (
-                  <ItemCard
-                    key={item.id}
-                    item={item}
-                    locked={locked}
-                    onUnlockClick={() => setUpsellItem(item)}
-                    onReadClick={(item) => setReadingItem(item)}
-                  />
-                );
-              })}
-            </div>
-            {(tab === "all" ? items : items.filter((i) => i.type === tab)).length === 0 && (
-              <p className="text-center text-muted-foreground py-8">Nenhum item disponível.</p>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      {upsellItem && upsellProductKey && (
-        <UpsellModal
-          open={!!upsellItem}
-          onOpenChange={(o) => !o && setUpsellItem(null)}
-          productKey={upsellProductKey}
-          productName={upsellProduct?.display_name ?? upsellItem.title}
-          requiresCourseFirst={!profile?.has_course_access}
-          description={`Para acessar "${upsellItem.title}" você precisa adquirir o Order Bump correspondente junto com o curso Essential Pro A1.`}
-        />
-      )}
-      {readingItem && readingItem.file_url && (
-        <PdfReader
-          isOpen={!!readingItem}
-          onClose={() => setReadingItem(null)}
-          url={readingItem.file_url}
-          title={readingItem.title}
-        />
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : products.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum produto disponível ainda.</CardContent></Card>
+      ) : (
+        <ol className="space-y-2">
+          {products.map((p, i) => {
+            const unlocked = accessIds.has(p.id);
+            return (
+              <li key={p.id}>
+                <button
+                  onClick={() => navigate(`/library/${p.slug}`)}
+                  className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
+                >
+                  <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">{p.title}</span>
+                    {p.description && (
+                      <span className="block text-xs text-muted-foreground truncate">{p.description}</span>
+                    )}
+                  </span>
+                  {unlocked ? (
+                    <Badge variant="secondary" className="text-[10px] border-0 shrink-0">Liberado</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] shrink-0 gap-1">
+                      <Lock className="h-3 w-3" /> Bloqueado
+                    </Badge>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       )}
     </div>
   );
