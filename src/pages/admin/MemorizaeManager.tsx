@@ -14,9 +14,11 @@ import { toast } from "sonner";
 import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X, Video, RotateCcw, Sparkles, Link as LinkIcon } from "lucide-react";
 
 interface Course { id: string; title: string; }
+interface BstProduct { id: string; title: string; }
 interface Deck {
   id: string;
   course_id: string | null;
+  bst_product_id: string | null;
   title: string;
   description: string | null;
   target_topic: string;
@@ -35,6 +37,7 @@ interface CardRow {
 
 export default function MemorizaeManager() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [bstProducts, setBstProducts] = useState<BstProduct[]>([]);
   const [decks, setDecks] = useState<Deck[]>([]);
   const [cards, setCards] = useState<CardRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,8 +47,8 @@ export default function MemorizaeManager() {
   // Deck dialog
   const [deckDialog, setDeckDialog] = useState(false);
   const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
-  const [deckForm, setDeckForm] = useState<{ title: string; description: string; target_topic: string; course_id: string; display_order: number; }>({
-    title: "", description: "", target_topic: "geral", course_id: "none", display_order: 0,
+  const [deckForm, setDeckForm] = useState<{ title: string; description: string; target_topic: string; course_id: string; bst_product_id: string; display_order: number; }>({
+    title: "", description: "", target_topic: "geral", course_id: "none", bst_product_id: "none", display_order: 0,
   });
 
   // Card dialog
@@ -83,12 +86,14 @@ export default function MemorizaeManager() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: cs }, { data: ds }, { data: cd }] = await Promise.all([
+    const [{ data: cs }, { data: ds }, { data: cd }, { data: bp }] = await Promise.all([
       supabase.from("courses").select("id,title").order("display_order"),
       supabase.from("memorize_decks").select("*").order("display_order"),
       supabase.from("memorize_cards").select("*").order("display_order"),
+      supabase.from("bst_products").select("id,title").order("display_order"),
     ]);
     setCourses((cs as Course[]) || []);
+    setBstProducts((bp as BstProduct[]) || []);
     setDecks((ds as Deck[]) || []);
     setCards((cd as CardRow[]) || []);
     setLoading(false);
@@ -101,14 +106,14 @@ export default function MemorizaeManager() {
   // ---------- Deck actions ----------
   const openNewDeck = () => {
     setEditingDeck(null);
-    setDeckForm({ title: "", description: "", target_topic: "geral", course_id: "none", display_order: decks.length });
+    setDeckForm({ title: "", description: "", target_topic: "geral", course_id: "none", bst_product_id: "none", display_order: decks.length });
     setDeckDialog(true);
   };
   const openEditDeck = (d: Deck) => {
     setEditingDeck(d);
     setDeckForm({
       title: d.title, description: d.description ?? "", target_topic: d.target_topic,
-      course_id: d.course_id ?? "none", display_order: d.display_order,
+      course_id: d.course_id ?? "none", bst_product_id: d.bst_product_id ?? "none", display_order: d.display_order,
     });
     setDeckDialog(true);
   };
@@ -119,6 +124,7 @@ export default function MemorizaeManager() {
       description: deckForm.description.trim() || null,
       target_topic: deckForm.target_topic,
       course_id: deckForm.course_id === "none" ? null : deckForm.course_id,
+      bst_product_id: deckForm.bst_product_id === "none" ? null : deckForm.bst_product_id,
       display_order: deckForm.display_order,
     };
     const { error } = editingDeck
@@ -725,6 +731,17 @@ export default function MemorizaeManager() {
             <div>
               <Label>Ordem</Label>
               <Input type="number" value={deckForm.display_order} onChange={(e) => setDeckForm({ ...deckForm, display_order: parseInt(e.target.value || "0", 10) })} />
+            </div>
+            <div>
+              <Label>Produto BST (opcional)</Label>
+              <Select value={deckForm.bst_product_id} onValueChange={(v) => setDeckForm({ ...deckForm, bst_product_id: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (plataforma FB)</SelectItem>
+                  {bstProducts.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Ao vincular, o baralho aparece só dentro do produto BST.</p>
             </div>
           </div>
           <DialogFooter>
