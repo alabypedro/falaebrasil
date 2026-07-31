@@ -397,6 +397,23 @@ export default function LibraryManager() {
               <Input value={form.checkout_url} onChange={(e) => setForm({ ...form, checkout_url: e.target.value })} placeholder="https://www.asaas.com/c/..." />
             </div>
             <div>
+              <Label>Produto de pagamento (libera acesso automático)</Label>
+              <Select value={payKey} onValueChange={setPayKey}>
+                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum</SelectItem>
+                  {payProducts.map((pp) => (
+                    <SelectItem key={pp.id} value={pp.product_key}>
+                      {pp.name || pp.product_key} ({pp.product_key})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ao confirmar o pagamento desse produto no ASAAS, o aluno recebe acesso a este BST automaticamente.
+              </p>
+            </div>
+            <div>
               <Label>PDF do produto</Label>
               <Input type="file" accept="application/pdf" onChange={uploadPdf} disabled={uploading} />
               {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
