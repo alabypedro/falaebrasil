@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useBstOnly } from "@/hooks/useBstOnly";
+import { useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Courses from "@/pages/Courses";
@@ -91,6 +93,30 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * Alunos que compraram apenas um produto BST (Low-Ticket) ficam restritos
+ * à Biblioteca BST e ao produto adquirido.
+ */
+function BstGate({ children }: { children: React.ReactNode }) {
+  const { isBstOnly, slug, loading } = useBstOnly();
+  const location = useLocation();
+
+  if (!isBstOnly || loading) return <>{children}</>;
+
+  const path = location.pathname;
+  const allowed =
+    path.startsWith("/library") ||
+    path.startsWith("/profile") ||
+    path.startsWith("/install") ||
+    path.startsWith("/contratos") ||
+    path.startsWith("/tutoriais");
+
+  if (!allowed) {
+    return <Navigate to={slug ? `/library/${slug}` : "/library"} replace />;
+  }
+  return <>{children}</>;
+}
+
 const App = () => {
   useEffect(() => {
     const initNotifications = async () => {
@@ -128,6 +154,7 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
+                      <BstGate>
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/courses" element={<Courses />} />
@@ -182,6 +209,7 @@ const App = () => {
                         </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>
+                      </BstGate>
                     </AppLayout>
                   </ProtectedRoute>
                 }
