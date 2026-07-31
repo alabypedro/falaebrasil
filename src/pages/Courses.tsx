@@ -313,7 +313,7 @@ export default function Courses() {
     ? ["teens"]
     : isKids
     ? ["kids"]
-    : ["open", "pro", "vip"];
+    : ["open", "pro", "vip", "teens", "kids"];
 
   const visibleCourses = courses.filter((c) =>
     allowedTiers.includes((c.required_tier ?? "open").toLowerCase()) ||
