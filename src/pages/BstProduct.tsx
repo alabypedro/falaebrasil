@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { PdfReader } from "@/components/library/PdfReader";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
 import BstFalae from "@/pages/BstFalae";
+import { useBstOnly } from "@/hooks/useBstOnly";
 
 interface BstProduct {
   id: string;
@@ -30,6 +31,7 @@ export default function BstProduct() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("home");
   const [readingPdf, setReadingPdf] = useState(false);
+  const { isBstOnly, slug: ownedSlug, loading: bstLoading } = useBstOnly();
 
   useEffect(() => {
     (async () => {
@@ -49,8 +51,13 @@ export default function BstProduct() {
     })();
   }, [slug]);
 
-  if (loading) {
+  if (loading || bstLoading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  }
+
+  // Aluno restrito (BST only) não pode abrir produto que não comprou
+  if (isBstOnly && product && !hasAccess) {
+    return <Navigate to={ownedSlug ? `/library/${ownedSlug}` : "/library"} replace />;
   }
 
   if (!product) {
