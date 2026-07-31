@@ -217,22 +217,70 @@ export default function CreateStudent() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-4">
               <Label>Acessos a liberar</Label>
-              <div className="grid gap-2 md:grid-cols-2">
-                {ACCESSES.map((a) => (
-                  <label
-                    key={a.key}
-                    className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted"
-                  >
-                    <Checkbox
-                      checked={!!accesses[a.key]}
-                      onCheckedChange={() => toggle(a.key)}
-                    />
-                    <span className="text-sm">{a.label}</span>
-                  </label>
-                ))}
-              </div>
+
+              {grouped.map((g) => (
+                <div key={g.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">
+                      {g.title}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => selectAllCourses(g.items.map((i) => i.id), true)}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:underline"
+                        onClick={() => selectAllCourses(g.items.map((i) => i.id), false)}
+                      >
+                        Nenhum
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {g.items.map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted"
+                      >
+                        <Checkbox
+                          checked={!!selectedCourses[c.id]}
+                          onCheckedChange={() => toggleCourse(c.id)}
+                        />
+                        <span className="text-sm">{c.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {bstProducts.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold uppercase text-muted-foreground">
+                    Biblioteca BST
+                  </span>
+                  <div className="grid gap-2">
+                    {bstProducts.map((p) => (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted"
+                      >
+                        <Checkbox
+                          checked={!!selectedBst[p.id]}
+                          onCheckedChange={() => toggleBst(p.id)}
+                        />
+                        <span className="text-sm">{p.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button type="submit" disabled={loading || !email.trim() || password.length < 8}>
