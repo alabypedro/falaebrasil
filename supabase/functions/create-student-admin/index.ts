@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { applyBstOnlyTier } from "../_shared/grants.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -139,8 +140,13 @@ Deno.serve(async (req) => {
     const updates: Record<string, unknown> = {};
     for (const f of validAccesses) updates[f] = true;
     if (courseIds.length > 0) updates.has_course_access = true;
-    if (planTier && ["open", "pro", "vip", "kids", "teens", "bst"].includes(planTier)) {
-      updates.plan_tier = planTier;
+    // BST-only student (no courses) -> restricted "bst" segment, like the checkout flow
+    const effectiveTier =
+      bstProductIds.length > 0 && courseIds.length === 0 && (!planTier || planTier === "open")
+        ? "bst"
+        : planTier;
+    if (effectiveTier && ["open", "pro", "vip", "kids", "teens", "bst"].includes(effectiveTier)) {
+      updates.plan_tier = effectiveTier;
     }
     if (Object.keys(updates).length > 0) {
       const { error: pErr } = await admin.from("profiles").update(updates).eq("user_id", foundId);
@@ -164,6 +170,8 @@ Deno.serve(async (req) => {
       );
       if (bErr) throw bErr;
     }
+
+    if (effectiveTier === "bst") await applyBstOnlyTier(admin, foundId);
 
     return json({
       ok: true,
