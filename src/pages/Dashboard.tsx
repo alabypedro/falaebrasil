@@ -77,7 +77,7 @@ export default function Dashboard() {
       const allowedTiers =
         userTier === "teens" ? ["teens"]
         : userTier === "kids" ? ["kids"]
-        : ["open", "pro", "vip"];
+        : ["open", "pro", "vip", "teens", "kids"];
 
       const result = (courses || [])
         .filter((c: any) => allowedTiers.includes((c.required_tier ?? "open").toLowerCase()))
