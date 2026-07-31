@@ -11,9 +11,6 @@ const ACCESS_FIELDS = [
   "has_a2_access",
   "has_b1_access",
   "has_b2_access",
-  "has_ebook1_access",
-  "has_ebook2_access",
-  "has_ebook3_access",
 ] as const;
 type AccessField = typeof ACCESS_FIELDS[number];
 
@@ -61,6 +58,12 @@ Deno.serve(async (req) => {
     const displayName = String(body.display_name ?? "").trim();
     const password = String(body.password ?? "").trim() || genTempPassword();
     const accesses = (body.accesses ?? []) as string[];
+    const courseIds = (Array.isArray(body.course_ids) ? body.course_ids : []).map((x: unknown) =>
+      String(x)
+    );
+    const bstProductIds = (Array.isArray(body.bst_product_ids) ? body.bst_product_ids : []).map(
+      (x: unknown) => String(x),
+    );
     const planTier = body.plan_tier ? String(body.plan_tier) : null;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -135,12 +138,31 @@ Deno.serve(async (req) => {
     // Apply accesses
     const updates: Record<string, unknown> = {};
     for (const f of validAccesses) updates[f] = true;
-    if (planTier && ["open", "pro", "vip", "kids", "teens"].includes(planTier)) {
+    if (courseIds.length > 0) updates.has_course_access = true;
+    if (planTier && ["open", "pro", "vip", "kids", "teens", "bst"].includes(planTier)) {
       updates.plan_tier = planTier;
     }
     if (Object.keys(updates).length > 0) {
       const { error: pErr } = await admin.from("profiles").update(updates).eq("user_id", foundId);
       if (pErr) throw pErr;
+    }
+
+    // Grant individual course access
+    if (courseIds.length > 0) {
+      const { error: cErr } = await admin.from("user_course_access").upsert(
+        courseIds.map((course_id) => ({ user_id: foundId, course_id, source: "admin" })),
+        { onConflict: "user_id,course_id" },
+      );
+      if (cErr) throw cErr;
+    }
+
+    // Grant BST library product access
+    if (bstProductIds.length > 0) {
+      const { error: bErr } = await admin.from("bst_product_access").upsert(
+        bstProductIds.map((product_id) => ({ user_id: foundId, product_id, source: "admin" })),
+        { onConflict: "user_id,product_id" },
+      );
+      if (bErr) throw bErr;
     }
 
     return json({
@@ -150,6 +172,8 @@ Deno.serve(async (req) => {
       email,
       password,
       applied: updates,
+      courses_granted: courseIds.length,
+      bst_products_granted: bstProductIds.length,
     });
   } catch (e) {
     console.error("create-student-admin error", e);

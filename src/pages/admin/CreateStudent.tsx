@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +8,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import { UserPlus, Copy, RefreshCw, Eye, EyeOff } from "lucide-react";
 
-const ACCESSES = [
-  { key: "has_course_access", label: "Curso A1 (base)" },
-  { key: "has_a2_access", label: "Curso A2" },
-  { key: "has_b1_access", label: "Curso B1" },
-  { key: "has_b2_access", label: "Curso B2" },
-  { key: "has_ebook1_access", label: "Ebook 1" },
-  { key: "has_ebook2_access", label: "Ebook 2" },
-  { key: "has_ebook3_access", label: "Ebook 3" },
-] as const;
+const TIERS = ["open", "pro", "vip", "kids", "teens", "bst"] as const;
 
-const TIERS = ["open", "pro", "vip", "kids", "teens"] as const;
+interface CourseRow {
+  id: string;
+  title: string;
+  level: string;
+  required_tier: string | null;
+  display_order: number;
+}
+
+interface BstRow {
+  id: string;
+  title: string;
+}
+
+const GROUPS = [
+  { key: "adults", title: "Cursos Adultos (A1 → C2)", tiers: ["open", "pro", "vip"] },
+  { key: "teens", title: "Cursos Teens 1 ao 4", tiers: ["teens"] },
+  { key: "kids", title: "Cursos Kids 1 ao 4", tiers: ["kids"] },
+] as const;
 
 function genPwd(): string {
   const upp = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -38,26 +47,64 @@ export default function CreateStudent() {
   const [password, setPassword] = useState(genPwd());
   const [showPwd, setShowPwd] = useState(true);
   const [tier, setTier] = useState<string>("open");
-  const [accesses, setAccesses] = useState<Record<string, boolean>>({
-    has_course_access: true,
-  });
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [bstProducts, setBstProducts] = useState<BstRow[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<Record<string, boolean>>({});
+  const [selectedBst, setSelectedBst] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ email: string; password: string; created: boolean } | null>(null);
 
-  const toggle = (k: string) =>
-    setAccesses((s) => ({ ...s, [k]: !s[k] }));
+  useEffect(() => {
+    (async () => {
+      const [{ data: c }, { data: b }] = await Promise.all([
+        supabase
+          .from("courses")
+          .select("id,title,level,required_tier,display_order")
+          .eq("published", true)
+          .order("display_order"),
+        supabase.from("bst_products").select("id,title").eq("active", true),
+      ]);
+      setCourses((c as CourseRow[]) ?? []);
+      setBstProducts(
+        ((b as BstRow[]) ?? []).sort((x, y) => x.title.localeCompare(y.title, "pt-BR")),
+      );
+    })();
+  }, []);
+
+  const grouped = useMemo(
+    () =>
+      GROUPS.map((g) => ({
+        ...g,
+        items: courses.filter((c) =>
+          (g.tiers as readonly string[]).includes((c.required_tier ?? "open").toLowerCase()),
+        ),
+      })).filter((g) => g.items.length > 0),
+    [courses],
+  );
+
+  const toggleCourse = (id: string) => setSelectedCourses((s) => ({ ...s, [id]: !s[id] }));
+  const toggleBst = (id: string) => setSelectedBst((s) => ({ ...s, [id]: !s[id] }));
+  const selectAllCourses = (ids: string[], value: boolean) =>
+    setSelectedCourses((s) => {
+      const next = { ...s };
+      ids.forEach((id) => (next[id] = value));
+      return next;
+    });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const chosen = ACCESSES.map((a) => a.key).filter((k) => accesses[k]);
+      const courseIds = Object.keys(selectedCourses).filter((k) => selectedCourses[k]);
+      const bstIds = Object.keys(selectedBst).filter((k) => selectedBst[k]);
       const { data, error } = await supabase.functions.invoke("create-student-admin", {
         body: {
           email: email.trim().toLowerCase(),
           display_name: name.trim(),
           password,
-          accesses: chosen,
+          accesses: [],
+          course_ids: courseIds,
+          bst_product_ids: bstIds,
           plan_tier: tier,
         },
       });
@@ -170,22 +217,70 @@ export default function CreateStudent() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-4">
               <Label>Acessos a liberar</Label>
-              <div className="grid gap-2 md:grid-cols-2">
-                {ACCESSES.map((a) => (
-                  <label
-                    key={a.key}
-                    className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted"
-                  >
-                    <Checkbox
-                      checked={!!accesses[a.key]}
-                      onCheckedChange={() => toggle(a.key)}
-                    />
-                    <span className="text-sm">{a.label}</span>
-                  </label>
-                ))}
-              </div>
+
+              {grouped.map((g) => (
+                <div key={g.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">
+                      {g.title}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => selectAllCourses(g.items.map((i) => i.id), true)}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:underline"
+                        onClick={() => selectAllCourses(g.items.map((i) => i.id), false)}
+                      >
+                        Nenhum
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {g.items.map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted"
+                      >
+                        <Checkbox
+                          checked={!!selectedCourses[c.id]}
+                          onCheckedChange={() => toggleCourse(c.id)}
+                        />
+                        <span className="text-sm">{c.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {bstProducts.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-xs font-semibold uppercase text-muted-foreground">
+                    Biblioteca BST
+                  </span>
+                  <div className="grid gap-2">
+                    {bstProducts.map((p) => (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted"
+                      >
+                        <Checkbox
+                          checked={!!selectedBst[p.id]}
+                          onCheckedChange={() => toggleBst(p.id)}
+                        />
+                        <span className="text-sm">{p.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button type="submit" disabled={loading || !email.trim() || password.length < 8}>
