@@ -18,10 +18,10 @@ interface CourseProgress {
   progress: number;
 }
 
-const desiredOrder = ["A1", "A2", "B1", "B2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
+const desiredOrder = ["A1", "A2", "B1", "B2", "C1", "C2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
 
 function extractCode(title: string): string | null {
-  const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2)\b/i);
+  const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2|C1|C2)\b/i);
   if (m) return m[1].toUpperCase();
   return null;
 }
