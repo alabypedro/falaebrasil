@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { applyGrantsToUser } from "../_shared/grants.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -55,6 +56,13 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const email = String(body.email ?? "").trim().toLowerCase();
     const accesses = (body.accesses ?? []) as string[];
+    const courseIds = (Array.isArray(body.course_ids) ? body.course_ids : []).map((x: unknown) =>
+      String(x)
+    );
+    const bstProductIds = (Array.isArray(body.bst_product_ids) ? body.bst_product_ids : []).map(
+      (x: unknown) => String(x),
+    );
+    const planTier = body.plan_tier ? String(body.plan_tier) : null;
     const grant = body.grant !== false; // default true
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -63,7 +71,7 @@ Deno.serve(async (req) => {
     const validAccesses = accesses.filter((a): a is AccessField =>
       (ACCESS_FIELDS as readonly string[]).includes(a)
     );
-    if (validAccesses.length === 0) {
+    if (validAccesses.length === 0 && courseIds.length === 0 && bstProductIds.length === 0) {
       return jsonResponse({ error: "Selecione ao menos um acesso." }, 400);
     }
 
@@ -124,14 +132,24 @@ Deno.serve(async (req) => {
 
     const updates: Record<string, boolean> = {};
     for (const f of validAccesses) updates[f] = grant;
+    if (Object.keys(updates).length > 0) {
+      const { error: upErr } = await admin
+        .from("profiles")
+        .update(updates)
+        .eq("user_id", foundId);
+      if (upErr) throw upErr;
+    }
 
-    const { error: upErr } = await admin
-      .from("profiles")
-      .update(updates)
-      .eq("user_id", foundId);
-    if (upErr) throw upErr;
+    if (grant) {
+      await applyGrantsToUser(admin, foundId, courseIds, bstProductIds, planTier);
+    }
 
-    return jsonResponse({ ok: true, applied: updates });
+    return jsonResponse({
+      ok: true,
+      applied: updates,
+      courses_granted: grant ? courseIds.length : 0,
+      bst_products_granted: grant ? bstProductIds.length : 0,
+    });
   } catch (e) {
     console.error("grant-access-admin error", e);
     return jsonResponse({ error: (e as Error).message }, 500);
