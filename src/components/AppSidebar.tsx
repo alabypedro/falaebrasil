@@ -145,27 +145,6 @@ export default function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="bg-sidebar border-t border-sidebar-border/30">
-        {!collapsed && (
-          <div className="space-y-2.5 px-3 py-3 animate-fade-in">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-gradient-xp shadow-soft-sm">
-                  <Zap className="h-3 w-3 text-xp-foreground fill-xp-foreground/30" />
-                </div>
-                <span className="text-xs font-bold text-sidebar-foreground tabular-nums truncate">
-                  {profile?.xp ?? 0} XP
-                </span>
-              </div>
-              <span className="text-[10px] font-semibold text-sidebar-foreground/70 px-2 py-0.5 rounded-full bg-sidebar-accent/50 shrink-0">
-                {profile?.level ?? "A1"}
-              </span>
-            </div>
-            <Progress
-              value={((profile?.xp ?? 0) % 500) / 5}
-              className="h-1.5 bg-sidebar-accent/60 [&>div]:bg-gradient-accent"
-            />
-          </div>
-        )}
       </SidebarFooter>
     </Sidebar>
   );
