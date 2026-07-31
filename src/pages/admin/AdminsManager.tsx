@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,24 @@ import { Loader2, Trash2, ShieldCheck, UserPlus, KeyRound, Users } from "lucide-
 
 type AdminEntry = { user_id: string; email: string | null };
 
-const ACCESS_OPTIONS: { id: string; label: string }[] = [
-  { id: "has_course_access", label: "Falaê Brasil! (Plano OPEN)" },
-  { id: "has_a2_access", label: "Curso A2" },
-  { id: "has_b1_access", label: "Curso B1" },
-  { id: "has_b2_access", label: "Curso B2" },
-  { id: "has_ebook1_access", label: "Biblioteca (Anfitrião Soberano)" },
-  { id: "has_ebook2_access", label: "Biblioteca (Decodificador de Gringo)" },
-  { id: "has_ebook3_access", label: "Biblioteca (Vocabulário de Poder)" },
-];
+interface CourseRow {
+  id: string;
+  title: string;
+  level: string;
+  required_tier: string | null;
+  display_order: number;
+}
+
+interface BstRow {
+  id: string;
+  title: string;
+}
+
+const GROUPS = [
+  { key: "adults", title: "Cursos Adultos (A1 → C2)", tiers: ["open", "pro", "vip"] },
+  { key: "teens", title: "Cursos Teens 1 ao 4", tiers: ["teens"] },
+  { key: "kids", title: "Cursos Kids 1 ao 4", tiers: ["kids"] },
+] as const;
 
 export default function AdminsManager() {
   const [admins, setAdmins] = useState<AdminEntry[]>([]);
@@ -26,9 +35,13 @@ export default function AdminsManager() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [grantEmail, setGrantEmail] = useState("");
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [bstProducts, setBstProducts] = useState<BstRow[]>([]);
+  const [selCourses, setSelCourses] = useState<Record<string, boolean>>({});
+  const [selBst, setSelBst] = useState<Record<string, boolean>>({});
   const [grantBusy, setGrantBusy] = useState(false);
-  const [bulkSelected, setBulkSelected] = useState<Record<string, boolean>>({});
+  const [bulkCourses, setBulkCourses] = useState<Record<string, boolean>>({});
+  const [bulkBst, setBulkBst] = useState<Record<string, boolean>>({});
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = async () => {
@@ -44,6 +57,37 @@ export default function AdminsManager() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: c }, { data: b }] = await Promise.all([
+        supabase
+          .from("courses")
+          .select("id,title,level,required_tier,display_order")
+          .eq("published", true)
+          .order("display_order"),
+        supabase.from("bst_products").select("id,title").eq("active", true),
+      ]);
+      setCourses((c as CourseRow[]) ?? []);
+      setBstProducts(
+        ((b as BstRow[]) ?? []).sort((x, y) => x.title.localeCompare(y.title, "pt-BR")),
+      );
+    })();
+  }, []);
+
+  const grouped = useMemo(
+    () =>
+      GROUPS.map((g) => ({
+        ...g,
+        items: courses.filter((c) =>
+          (g.tiers as readonly string[]).includes((c.required_tier ?? "open").toLowerCase()),
+        ),
+      })).filter((g) => g.items.length > 0),
+    [courses],
+  );
+
+  const idsOf = (rec: Record<string, boolean>) =>
+    Object.keys(rec).filter((k) => rec[k]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,15 +122,22 @@ export default function AdminsManager() {
 
   const handleGrantAccess = async (e: React.FormEvent) => {
     e.preventDefault();
-    const accesses = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
+    const courseIds = idsOf(selCourses);
+    const bstIds = idsOf(selBst);
     if (!grantEmail.trim()) return;
-    if (accesses.length === 0) {
+    if (courseIds.length === 0 && bstIds.length === 0) {
       toast.error("Selecione ao menos um acesso");
       return;
     }
     setGrantBusy(true);
     const { data, error } = await supabase.functions.invoke("grant-access-admin", {
-      body: { email: grantEmail.trim(), accesses, grant: true },
+      body: {
+        email: grantEmail.trim(),
+        accesses: [],
+        course_ids: courseIds,
+        bst_product_ids: bstIds,
+        grant: true,
+      },
     });
     setGrantBusy(false);
     if (error || data?.error) {
@@ -95,23 +146,28 @@ export default function AdminsManager() {
     }
     toast.success("Acesso liberado com sucesso");
     setGrantEmail("");
-    setSelected({});
+    setSelCourses({});
+    setSelBst({});
   };
 
   const handleBulkGrant = async (e: React.FormEvent) => {
     e.preventDefault();
-    const accesses = Object.entries(bulkSelected).filter(([, v]) => v).map(([k]) => k);
-    if (accesses.length === 0) {
+    const courseIds = idsOf(bulkCourses);
+    const bstIds = idsOf(bulkBst);
+    if (courseIds.length === 0 && bstIds.length === 0) {
       toast.error("Selecione ao menos um entregável");
       return;
     }
-    const labels = ACCESS_OPTIONS.filter((o) => accesses.includes(o.id)).map((o) => o.label).join(", ");
+    const labels = [
+      ...courses.filter((c) => courseIds.includes(c.id)).map((c) => c.title),
+      ...bstProducts.filter((p) => bstIds.includes(p.id)).map((p) => p.title),
+    ].join(", ");
     if (!confirm(`Liberar [${labels}] para TODOS os usuários cadastrados? Esta ação é irreversível em massa.`)) {
       return;
     }
     setBulkBusy(true);
     const { data, error } = await supabase.functions.invoke("grant-access-bulk", {
-      body: { accesses, grant: true },
+      body: { accesses: [], course_ids: courseIds, bst_product_ids: bstIds, grant: true },
     });
     setBulkBusy(false);
     if (error || data?.error) {
@@ -119,8 +175,95 @@ export default function AdminsManager() {
       return;
     }
     toast.success(`Acesso liberado para todos os usuários${data?.affected ? ` (${data.affected} perfis)` : ""}`);
-    setBulkSelected({});
+    setBulkCourses({});
+    setBulkBst({});
   };
+
+  const AccessPicker = ({
+    selCourse,
+    setSelCourse,
+    selBstState,
+    setSelBstState,
+  }: {
+    selCourse: Record<string, boolean>;
+    setSelCourse: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+    selBstState: Record<string, boolean>;
+    setSelBstState: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  }) => (
+    <div className="space-y-4">
+      {grouped.map((g) => (
+        <div key={g.key} className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase text-muted-foreground">{g.title}</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline"
+                onClick={() =>
+                  setSelCourse((s) => {
+                    const n = { ...s };
+                    g.items.forEach((i) => (n[i.id] = true));
+                    return n;
+                  })
+                }
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:underline"
+                onClick={() =>
+                  setSelCourse((s) => {
+                    const n = { ...s };
+                    g.items.forEach((i) => (n[i.id] = false));
+                    return n;
+                  })
+                }
+              >
+                Nenhum
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {g.items.map((c) => (
+              <label
+                key={c.id}
+                className="flex items-center gap-2 rounded-md border border-border px-3 py-2 cursor-pointer hover:bg-muted/40"
+              >
+                <Checkbox
+                  checked={!!selCourse[c.id]}
+                  onCheckedChange={(v) => setSelCourse((s) => ({ ...s, [c.id]: !!v }))}
+                />
+                <span className="text-sm">{c.title}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {bstProducts.length > 0 && (
+        <div className="space-y-2">
+          <span className="text-xs font-semibold uppercase text-muted-foreground">
+            Biblioteca BST
+          </span>
+          <div className="grid gap-2">
+            {bstProducts.map((p) => (
+              <label
+                key={p.id}
+                className="flex items-center gap-2 rounded-md border border-border px-3 py-2 cursor-pointer hover:bg-muted/40"
+              >
+                <Checkbox
+                  checked={!!selBstState[p.id]}
+                  onCheckedChange={(v) => setSelBstState((s) => ({ ...s, [p.id]: !!v }))}
+                />
+                <span className="text-sm">{p.title}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -164,28 +307,20 @@ export default function AdminsManager() {
               onChange={(e) => setGrantEmail(e.target.value)}
               required
             />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {ACCESS_OPTIONS.map((opt) => (
-                <label
-                  key={opt.id}
-                  className="flex items-center gap-2 rounded-md border border-border px-3 py-2 cursor-pointer hover:bg-muted/40"
-                >
-                  <Checkbox
-                    checked={!!selected[opt.id]}
-                    onCheckedChange={(v) =>
-                      setSelected((s) => ({ ...s, [opt.id]: !!v }))
-                    }
-                  />
-                  <span className="text-sm">{opt.label}</span>
-                </label>
-              ))}
-            </div>
+            <AccessPicker
+              selCourse={selCourses}
+              setSelCourse={setSelCourses}
+              selBstState={selBst}
+              setSelBstState={setSelBst}
+            />
             <Button type="submit" disabled={grantBusy} className="w-full sm:w-auto">
               {grantBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Liberar acesso"}
             </Button>
           </form>
           <p className="text-xs text-muted-foreground mt-3">
-            O usuário precisa já ter uma conta cadastrada com esse email. O acesso será liberado imediatamente.
+            O usuário precisa já ter uma conta cadastrada com esse email. O acesso será liberado
+            imediatamente. Produtos BST liberados sozinhos aplicam o mesmo modelo do checkout
+            (aluno restrito à Biblioteca BST).
           </p>
         </CardContent>
       </Card>
@@ -198,22 +333,12 @@ export default function AdminsManager() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleBulkGrant} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {ACCESS_OPTIONS.map((opt) => (
-                <label
-                  key={opt.id}
-                  className="flex items-center gap-2 rounded-md border border-border px-3 py-2 cursor-pointer hover:bg-muted/40"
-                >
-                  <Checkbox
-                    checked={!!bulkSelected[opt.id]}
-                    onCheckedChange={(v) =>
-                      setBulkSelected((s) => ({ ...s, [opt.id]: !!v }))
-                    }
-                  />
-                  <span className="text-sm">{opt.label}</span>
-                </label>
-              ))}
-            </div>
+            <AccessPicker
+              selCourse={bulkCourses}
+              setSelCourse={setBulkCourses}
+              selBstState={bulkBst}
+              setSelBstState={setBulkBst}
+            />
             <Button
               type="submit"
               disabled={bulkBusy}
