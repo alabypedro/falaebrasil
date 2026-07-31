@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Sun, Moon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import XPBadge from "@/components/XPBadge";
 import SubscriptionStatusBanner from "@/components/SubscriptionStatusBanner";
 import UpgradeButton from "@/components/UpgradeButton";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -68,7 +67,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </span>
               </Button>
               <UpgradeButton />
-              <XPBadge xp={profile?.xp ?? 0} level={profile?.level ?? "A1"} compact />
               <button
                 onClick={() => navigate("/profile")}
                 className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-accent/10 transition-all duration-200 press-effect"
