@@ -6,6 +6,7 @@ import { ChevronRight, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
+import { useBstOnly } from "@/hooks/useBstOnly";
 
 interface BstProduct {
   id: string;
@@ -20,6 +21,7 @@ export default function Library() {
   const [accessIds, setAccessIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { isBstOnly } = useBstOnly();
 
   useEffect(() => {
     (async () => {
@@ -44,9 +46,11 @@ export default function Library() {
     })();
   }, []);
 
+  const visibleProducts = isBstOnly ? products.filter((p) => accessIds.has(p.id)) : products;
+
   return (
     <div className="space-y-6 max-w-4xl page-transition">
-      <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
+      {!isBstOnly && <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Biblioteca BST</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -57,11 +61,11 @@ export default function Library() {
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
-      ) : products.length === 0 ? (
+      ) : visibleProducts.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum produto disponível ainda.</CardContent></Card>
       ) : (
         <ol className="space-y-2">
-          {products.map((p, i) => {
+          {visibleProducts.map((p, i) => {
             const unlocked = accessIds.has(p.id);
             return (
               <li key={p.id}>

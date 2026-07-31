@@ -10,6 +10,8 @@ import XPBadge from "@/components/XPBadge";
 import SubscriptionStatusBanner from "@/components/SubscriptionStatusBanner";
 import UpgradeButton from "@/components/UpgradeButton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useBstOnly } from "@/hooks/useBstOnly";
+import OnboardingTutorialModal from "@/components/OnboardingTutorialModal";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -20,6 +22,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { theme, toggleTheme } = useTheme();
   const { language, toggleLanguage, t } = useLanguage();
   const navigate = useNavigate();
+  const { isBstOnly } = useBstOnly();
 
   const displayName = profile?.display_name || user?.email || "Aluno";
   const initials = displayName
@@ -95,6 +98,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             {children}
           </main>
+          {/* Alunos restritos (BST) não passam pelo Dashboard: o tutorial de
+              instalação do app é exibido aqui antes de usarem o produto. */}
+          {isBstOnly && <OnboardingTutorialModal />}
         </div>
       </div>
     </SidebarProvider>
