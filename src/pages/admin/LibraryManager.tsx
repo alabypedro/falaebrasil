@@ -45,6 +45,14 @@ interface AccessRow {
   granted_at: string;
 }
 
+interface PaymentProduct {
+  id: string;
+  product_key: string;
+  name: string | null;
+  checkout_url: string | null;
+  grants_bst_product_id: string | null;
+}
+
 const emptyForm = {
   title: "",
   slug: "",
@@ -75,6 +83,10 @@ export default function LibraryManager() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // payment products (ASAAS)
+  const [payProducts, setPayProducts] = useState<PaymentProduct[]>([]);
+  const [payKey, setPayKey] = useState<string>("none");
+
   // scripts
   const [scriptsProduct, setScriptsProduct] = useState<BstProduct | null>(null);
   const [scripts, setScripts] = useState<Script[]>([]);
@@ -90,13 +102,19 @@ export default function LibraryManager() {
     setLoading(true);
     const { data } = await supabase.from("bst_products").select("*").order("display_order").order("title");
     setProducts((data as BstProduct[]) || []);
+    const { data: pp } = await supabase
+      .from("payment_products")
+      .select("id,product_key,name,checkout_url,grants_bst_product_id")
+      .order("product_key");
+    setPayProducts((pp as any as PaymentProduct[]) || []);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm, display_order: products.length }); setDialog(true); };
+  const openNew = () => { setEditing(null); setPayKey("none"); setForm({ ...emptyForm, display_order: products.length }); setDialog(true); };
   const openEdit = (p: BstProduct) => {
     setEditing(p);
+    setPayKey(payProducts.find((pp) => pp.grants_bst_product_id === p.id)?.product_key ?? "none");
     setForm({
       title: p.title,
       slug: p.slug,
@@ -139,9 +157,29 @@ export default function LibraryManager() {
       active: form.active,
       display_order: Number(form.display_order) || 0,
     };
-    const { error } = editing
-      ? await supabase.from("bst_products").update(payload).eq("id", editing.id)
-      : await supabase.from("bst_products").insert(payload);
+    let productId = editing?.id ?? null;
+    let error: any = null;
+    if (editing) {
+      ({ error } = await supabase.from("bst_products").update(payload).eq("id", editing.id));
+    } else {
+      const res = await supabase.from("bst_products").insert(payload).select("id").single();
+      error = res.error;
+      productId = (res.data as any)?.id ?? null;
+    }
+
+    // vincula (ou desvincula) o produto de pagamento ASAAS
+    if (!error && productId) {
+      const previous = payProducts.find((pp) => pp.grants_bst_product_id === productId);
+      if (previous && previous.product_key !== payKey) {
+        await supabase.from("payment_products").update({ grants_bst_product_id: null }).eq("id", previous.id);
+      }
+      if (payKey !== "none") {
+        const chosen = payProducts.find((pp) => pp.product_key === payKey);
+        if (chosen) {
+          await supabase.from("payment_products").update({ grants_bst_product_id: productId }).eq("id", chosen.id);
+        }
+      }
+    }
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success(editing ? "Produto atualizado" : "Produto criado");
