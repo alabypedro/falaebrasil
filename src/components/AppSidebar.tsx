@@ -17,6 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useBstOnly } from "@/hooks/useBstOnly";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
@@ -47,12 +48,20 @@ const navItems = [
   { key: "nav.install", url: "/install", icon: Download },
 ];
 
+const bstNavItems = [
+  { key: "nav.library", url: "/library", icon: Library },
+  { key: "nav.tutorials", url: "/tutoriais", icon: HelpCircle },
+  { key: "nav.install", url: "/install", icon: Download },
+];
+
 export default function AppSidebar() {
   const { state, isMobile, setOpen, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
   const { t } = useLanguage();
+  const { isBstOnly } = useBstOnly();
+  const items = isBstOnly ? bstNavItems : navItems;
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -91,7 +100,7 @@ export default function AppSidebar() {
         <SidebarGroup className="relative">
           <SidebarGroupContent>
             <SidebarMenu className={`gap-1 py-2 ${collapsed ? "px-1" : "px-2"}`}>
-              {navItems.map((item, i) => (
+              {items.map((item, i) => (
                 <SidebarMenuItem
                   key={item.key}
                   className="animate-slide-in-left"
@@ -115,7 +124,7 @@ export default function AppSidebar() {
               {isAdmin && (
                 <SidebarMenuItem
                   className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
-                  style={{ "--delay": `${navItems.length * 50}ms` } as React.CSSProperties}
+                  style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
                 >
                   <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t("nav.admin") : undefined}>
                     <NavLink

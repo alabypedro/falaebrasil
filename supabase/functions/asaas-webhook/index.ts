@@ -446,7 +446,7 @@ async function handlePaymentRefunded(admin: any, payment: any, userId: string | 
 
   const { data: product } = await admin
     .from("payment_products")
-    .select("id, type, grants_course_access, grants_ebook1_access, grants_ebook2_access, grants_ebook3_access, grants_scripted_seconds, grants_unscripted_seconds")
+    .select("id, type, grants_bst_product_id, grants_course_access, grants_ebook1_access, grants_ebook2_access, grants_ebook3_access, grants_scripted_seconds, grants_unscripted_seconds")
     .eq("product_key", productKey)
     .maybeSingle();
   if (!product) return { handled: false, reason: "product_not_found" };
@@ -476,6 +476,15 @@ async function handlePaymentRefunded(admin: any, payment: any, userId: string | 
       .delete()
       .eq("user_id", userId)
       .in("course_id", prodCourses.map((c: any) => c.course_id));
+  }
+
+  // Remove BST product access granted by this payment product
+  if (product.grants_bst_product_id) {
+    await admin
+      .from("bst_product_access")
+      .delete()
+      .eq("user_id", userId)
+      .eq("product_id", product.grants_bst_product_id);
   }
 
   return { handled: true, status: "refunded", revoked: update, product_key: productKey };

@@ -1337,6 +1337,7 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number
+          grants_bst_product_id: string | null
           grants_course_access: boolean
           grants_ebook1_access: boolean
           grants_ebook2_access: boolean
@@ -1360,6 +1361,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          grants_bst_product_id?: string | null
           grants_course_access?: boolean
           grants_ebook1_access?: boolean
           grants_ebook2_access?: boolean
@@ -1383,6 +1385,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          grants_bst_product_id?: string | null
           grants_course_access?: boolean
           grants_ebook1_access?: boolean
           grants_ebook2_access?: boolean
@@ -1397,7 +1400,15 @@ export type Database = {
           type?: Database["public"]["Enums"]["payment_product_type"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_products_grants_bst_product_id_fkey"
+            columns: ["grants_bst_product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
