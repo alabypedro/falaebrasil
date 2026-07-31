@@ -11,6 +11,7 @@ export function useBstOnly() {
   const { profile, user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const [slug, setSlug] = useState<string | null>(null);
+  const [slugs, setSlugs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isBstOnly =
@@ -22,6 +23,7 @@ export function useBstOnly() {
   useEffect(() => {
     if (!user || !isBstOnly) {
       setSlug(null);
+      setSlugs([]);
       setLoading(adminLoading || (!!user && !profile));
       return;
     }
@@ -30,13 +32,14 @@ export function useBstOnly() {
         .from("bst_product_access")
         .select("product_id, bst_products(slug)")
         .eq("user_id", user.id)
-        .order("granted_at", { ascending: false })
-        .limit(1);
-      const row: any = data?.[0];
-      setSlug(row?.bst_products?.slug ?? null);
+        .order("granted_at", { ascending: false });
+      const rows: any[] = (data as any[]) ?? [];
+      const list = rows.map((r) => r?.bst_products?.slug).filter(Boolean) as string[];
+      setSlugs(list);
+      setSlug(list[0] ?? null);
       setLoading(false);
     })();
   }, [user, isBstOnly, adminLoading, profile]);
 
-  return { isBstOnly, slug, loading };
+  return { isBstOnly, slug, slugs, loading };
 }
