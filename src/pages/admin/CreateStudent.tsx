@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +8,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import { UserPlus, Copy, RefreshCw, Eye, EyeOff } from "lucide-react";
 
-const ACCESSES = [
-  { key: "has_course_access", label: "Curso A1 (base)" },
-  { key: "has_a2_access", label: "Curso A2" },
-  { key: "has_b1_access", label: "Curso B1" },
-  { key: "has_b2_access", label: "Curso B2" },
-  { key: "has_ebook1_access", label: "Ebook 1" },
-  { key: "has_ebook2_access", label: "Ebook 2" },
-  { key: "has_ebook3_access", label: "Ebook 3" },
-] as const;
+const TIERS = ["open", "pro", "vip", "kids", "teens", "bst"] as const;
 
-const TIERS = ["open", "pro", "vip", "kids", "teens"] as const;
+interface CourseRow {
+  id: string;
+  title: string;
+  level: string;
+  required_tier: string | null;
+  display_order: number;
+}
+
+interface BstRow {
+  id: string;
+  title: string;
+}
+
+const GROUPS = [
+  { key: "adults", title: "Cursos Adultos (A1 → C2)", tiers: ["open", "pro", "vip"] },
+  { key: "teens", title: "Cursos Teens 1 ao 4", tiers: ["teens"] },
+  { key: "kids", title: "Cursos Kids 1 ao 4", tiers: ["kids"] },
+] as const;
 
 function genPwd(): string {
   const upp = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -38,26 +47,64 @@ export default function CreateStudent() {
   const [password, setPassword] = useState(genPwd());
   const [showPwd, setShowPwd] = useState(true);
   const [tier, setTier] = useState<string>("open");
-  const [accesses, setAccesses] = useState<Record<string, boolean>>({
-    has_course_access: true,
-  });
+  const [courses, setCourses] = useState<CourseRow[]>([]);
+  const [bstProducts, setBstProducts] = useState<BstRow[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<Record<string, boolean>>({});
+  const [selectedBst, setSelectedBst] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ email: string; password: string; created: boolean } | null>(null);
 
-  const toggle = (k: string) =>
-    setAccesses((s) => ({ ...s, [k]: !s[k] }));
+  useEffect(() => {
+    (async () => {
+      const [{ data: c }, { data: b }] = await Promise.all([
+        supabase
+          .from("courses")
+          .select("id,title,level,required_tier,display_order")
+          .eq("published", true)
+          .order("display_order"),
+        supabase.from("bst_products").select("id,title").eq("active", true),
+      ]);
+      setCourses((c as CourseRow[]) ?? []);
+      setBstProducts(
+        ((b as BstRow[]) ?? []).sort((x, y) => x.title.localeCompare(y.title, "pt-BR")),
+      );
+    })();
+  }, []);
+
+  const grouped = useMemo(
+    () =>
+      GROUPS.map((g) => ({
+        ...g,
+        items: courses.filter((c) =>
+          (g.tiers as readonly string[]).includes((c.required_tier ?? "open").toLowerCase()),
+        ),
+      })).filter((g) => g.items.length > 0),
+    [courses],
+  );
+
+  const toggleCourse = (id: string) => setSelectedCourses((s) => ({ ...s, [id]: !s[id] }));
+  const toggleBst = (id: string) => setSelectedBst((s) => ({ ...s, [id]: !s[id] }));
+  const selectAllCourses = (ids: string[], value: boolean) =>
+    setSelectedCourses((s) => {
+      const next = { ...s };
+      ids.forEach((id) => (next[id] = value));
+      return next;
+    });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const chosen = ACCESSES.map((a) => a.key).filter((k) => accesses[k]);
+      const courseIds = Object.keys(selectedCourses).filter((k) => selectedCourses[k]);
+      const bstIds = Object.keys(selectedBst).filter((k) => selectedBst[k]);
       const { data, error } = await supabase.functions.invoke("create-student-admin", {
         body: {
           email: email.trim().toLowerCase(),
           display_name: name.trim(),
           password,
-          accesses: chosen,
+          accesses: [],
+          course_ids: courseIds,
+          bst_product_ids: bstIds,
           plan_tier: tier,
         },
       });
