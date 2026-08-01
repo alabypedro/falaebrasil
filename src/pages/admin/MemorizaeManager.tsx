@@ -446,12 +446,33 @@ export default function MemorizaeManager() {
                 <div className="space-y-1.5">
                   <Label>Imagem (png, jpg, webp…)</Label>
                   {cardForm.image ? (
-                    <div className="flex items-center gap-2 rounded-md border p-2">
-                      <img src={imagePreview} alt="preview" className="h-10 w-10 rounded object-cover shrink-0" />
-                      <span className="text-xs text-muted-foreground truncate flex-1">Imagem carregada</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setCardForm({ ...cardForm, image: "" }); setImagePreview(""); }}>
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
+                    <div className="space-y-2 rounded-md border p-2">
+                      <button
+                        type="button"
+                        onClick={() => setImageZoom(true)}
+                        className="block w-full overflow-hidden rounded-md bg-muted/40"
+                        title="Clique para ampliar"
+                      >
+                        <img
+                          src={imagePreview}
+                          alt={cardForm.front || "Pré-visualização da imagem da carta"}
+                          className="max-h-72 w-full object-contain"
+                        />
+                      </button>
+                      <p className="text-center text-sm font-medium">
+                        {cardForm.front || <span className="text-muted-foreground">Sem sentença em inglês</span>}
+                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground">Clique na imagem para ampliar</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 gap-1 text-xs"
+                          onClick={() => { setCardForm({ ...cardForm, image: "" }); setImagePreview(""); }}
+                        >
+                          <X className="h-3.5 w-3.5" /> Remover
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <label className="flex items-center justify-center gap-2 rounded-md border border-dashed p-3 text-xs text-muted-foreground cursor-pointer hover:bg-muted/40 transition">
