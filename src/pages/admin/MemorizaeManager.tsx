@@ -498,6 +498,22 @@ export default function MemorizaeManager() {
           </DialogContent>
         </Dialog>
 
+        {/* Zoom da imagem da carta */}
+        <Dialog open={imageZoom} onOpenChange={setImageZoom}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="text-base">{cardForm.front || "Imagem da carta"}</DialogTitle>
+            </DialogHeader>
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt={cardForm.front || "Imagem da carta em tamanho ampliado"}
+                className="max-h-[70vh] w-full rounded-md object-contain"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Bulk import dialog */}
         <Dialog open={bulkDialog} onOpenChange={setBulkDialog}>
           <DialogContent className="max-w-lg">
