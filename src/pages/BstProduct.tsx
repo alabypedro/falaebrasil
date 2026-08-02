@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Brain, BookText, FileText, Loader2, Lock, Mic } from "lucide-react";
+import { ArrowLeft, Brain, BookText, FileText, HelpCircle, Loader2, Lock, Mic } from "lucide-react";
 import { PdfReader } from "@/components/library/PdfReader";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
 import BstFalae from "@/pages/BstFalae";
+import BstQuiz from "@/pages/BstQuiz";
 import { useBstOnly } from "@/hooks/useBstOnly";
 
 interface BstProduct {
@@ -17,11 +18,12 @@ interface BstProduct {
   title: string;
   description: string | null;
   pdf_url: string | null;
+  primary_tool: "memorizae" | "quiz";
   secondary_tool: "falae" | "leiae";
   checkout_url: string | null;
 }
 
-type View = "home" | "memorizae" | "tool";
+type View = "home" | "primary" | "tool";
 
 export default function BstProduct() {
   const { slug } = useParams<{ slug: string }>();
@@ -38,7 +40,7 @@ export default function BstProduct() {
       setLoading(true);
       const { data } = await supabase
         .from("bst_products")
-        .select("id,slug,title,description,pdf_url,secondary_tool,checkout_url")
+        .select("id,slug,title,description,pdf_url,primary_tool,secondary_tool,checkout_url")
         .eq("slug", slug)
         .maybeSingle();
       const p = (data as BstProduct) || null;
