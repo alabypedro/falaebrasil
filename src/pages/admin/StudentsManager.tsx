@@ -118,7 +118,9 @@ export default function StudentsManager() {
               body: {
                 email: student.email,
                 accesses: ["has_course_access"],
-                plan_tier: "open",
+                plan_tier: ["pro", "vip"].includes((student.plan_tier ?? "").toLowerCase())
+                  ? student.plan_tier
+                  : "open",
                 grant: true,
               },
             });
