@@ -1,35 +1,52 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, Crown, MessageCircle, ExternalLink } from "lucide-react";
+import { Sparkles, Crown, MessageCircle, ExternalLink, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStudentCategories } from "@/hooks/useStudentCategories";
 
 const WHATSAPP_URL = "https://wa.me/5511981612800";
 
 const PLANS = [
   {
+    key: "open",
+    name: "Plano OPEN",
+    icon: BookOpen,
+    description:
+      "Acesso ampliado às IAs e conteúdos avançados para acelerar seu inglês.",
+  },
+  {
     key: "pro",
     name: "Plano PRO",
     icon: MessageCircle,
-    description:
-      "Acesso ampliado às IAs e conteúdos avançados para acelerar seu inglês.",
+    description: "Acesso ampliado às IAs e ciclo de aulas ao vivo (Zoom).",
   },
   {
     key: "vip",
     name: "Plano VIP",
     icon: Crown,
     description:
-      "Experiência completa com atendimento prioritário e todos os recursos liberados.",
+      "Todos os recursos liberados e aulas ao vivo em grupos reduzidos (Zoom).",
   },
 ];
 
 export default function UpgradeButton() {
   const { profile } = useAuth();
+  const { categories, hasOpen, bstCategories, loading } = useStudentCategories();
   const [open, setOpen] = useState(false);
 
-  const tier: "open" | "pro" | "vip" = (profile?.plan_tier as any) ?? "open";
+  const planTier = (profile?.plan_tier as string) ?? "open";
+  // A categoria cadastrada no painel admin manda no rótulo do plano.
+  const currentLabel = (() => {
+    if (!loading && categories.length > 0) {
+      if (!hasOpen && bstCategories.length > 0) return "BST";
+      // OPEN pode ter sido promovido para PRO/VIP pelo plan_tier.
+      if (hasOpen) return ["pro", "vip"].includes(planTier) ? planTier.toUpperCase() : "OPEN";
+    }
+    return planTier.toUpperCase();
+  })();
 
-  if (tier === "vip") return null;
+  if (currentLabel === "VIP") return null;
 
   return (
     <>
@@ -55,12 +72,12 @@ export default function UpgradeButton() {
           <DialogHeader>
             <DialogTitle className="text-center text-xl">Faça upgrade do seu plano</DialogTitle>
             <DialogDescription className="text-center">
-              Você está no plano <strong className="uppercase">{tier}</strong>. Fale com nosso time no WhatsApp para um atendimento personalizado.
+              Você está no plano <strong className="uppercase">{currentLabel}</strong>. Fale com nosso time no WhatsApp para um atendimento personalizado.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid sm:grid-cols-2 gap-4 mt-2">
-            {PLANS.map((p) => {
+          <div className="grid sm:grid-cols-3 gap-4 mt-2">
+            {PLANS.filter((p) => p.name.split(" ")[1] !== currentLabel).map((p) => {
               const Icon = p.icon;
               return (
                 <div
