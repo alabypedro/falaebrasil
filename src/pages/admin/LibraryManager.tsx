@@ -22,6 +22,7 @@ interface BstProduct {
   title: string;
   description: string | null;
   pdf_url: string | null;
+  primary_tool: "memorizae" | "quiz";
   secondary_tool: "falae" | "leiae";
   checkout_url: string | null;
   price_cents: number;
@@ -58,6 +59,7 @@ const emptyForm = {
   slug: "",
   description: "",
   pdf_url: "",
+  primary_tool: "memorizae" as "memorizae" | "quiz",
   secondary_tool: "falae" as "falae" | "leiae",
   checkout_url: "",
   price_cents: 0,
@@ -120,6 +122,7 @@ export default function LibraryManager() {
       slug: p.slug,
       description: p.description ?? "",
       pdf_url: p.pdf_url ?? "",
+      primary_tool: p.primary_tool ?? "memorizae",
       secondary_tool: p.secondary_tool,
       checkout_url: p.checkout_url ?? "",
       price_cents: p.price_cents,
@@ -151,6 +154,7 @@ export default function LibraryManager() {
       slug: (form.slug.trim() || slugify(form.title)).trim(),
       description: form.description.trim() || null,
       pdf_url: form.pdf_url.trim() || null,
+      primary_tool: form.primary_tool,
       secondary_tool: form.secondary_tool,
       checkout_url: form.checkout_url.trim() || null,
       price_cents: Number(form.price_cents) || 0,
