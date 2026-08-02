@@ -68,7 +68,7 @@ export default function UpgradeButton() {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-center text-xl">Faça upgrade do seu plano</DialogTitle>
             <DialogDescription className="text-center">
@@ -77,7 +77,7 @@ export default function UpgradeButton() {
           </DialogHeader>
 
           <div className="grid sm:grid-cols-3 gap-4 mt-2">
-            {PLANS.filter((p) => p.name.split(" ")[1] !== currentLabel).map((p) => {
+            {PLANS.map((p) => {
               const Icon = p.icon;
               return (
                 <div
