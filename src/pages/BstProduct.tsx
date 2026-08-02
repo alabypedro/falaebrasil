@@ -124,10 +124,16 @@ export default function BstProduct() {
 
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3 text-center">
-                  <Brain className="h-7 w-7 mx-auto text-primary" />
-                  <div className="text-sm font-semibold">IA Memorizaê</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("memorizae")}>
-                    Treinar flashcards
+                  {product.primary_tool === "quiz" ? (
+                    <HelpCircle className="h-7 w-7 mx-auto text-primary" />
+                  ) : (
+                    <Brain className="h-7 w-7 mx-auto text-primary" />
+                  )}
+                  <div className="text-sm font-semibold">
+                    {product.primary_tool === "quiz" ? "Quizz" : "IA Memorizaê"}
+                  </div>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("primary")}>
+                    {product.primary_tool === "quiz" ? "Responder quizzes" : "Treinar flashcards"}
                   </Button>
                 </CardContent>
               </Card>
@@ -154,7 +160,11 @@ export default function BstProduct() {
         </>
       )}
 
-      {view === "memorizae" && hasAccess && <Memorizae bstProductId={product.id} />}
+      {view === "primary" && hasAccess && (
+        product.primary_tool === "quiz"
+          ? <BstQuiz bstProductId={product.id} />
+          : <Memorizae bstProductId={product.id} />
+      )}
       {view === "tool" && hasAccess && (
         product.secondary_tool === "leiae"
           ? <Leiae bstProductId={product.id} />
