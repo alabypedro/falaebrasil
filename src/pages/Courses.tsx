@@ -10,6 +10,7 @@ import { UpsellModal } from "@/components/UpsellModal";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useStudentCategories } from "@/hooks/useStudentCategories";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface CourseWithProgress {
@@ -137,6 +138,7 @@ export default function Courses() {
   const { user, profile } = useAuth();
   const { isAdmin } = useAdmin();
   const { t } = useLanguage();
+  const { hasOpen } = useStudentCategories();
 
   useEffect(() => {
     if (!user) return;
@@ -301,7 +303,8 @@ export default function Courses() {
     );
   }
 
-  const isLocked = !isAdmin && !profile?.has_course_access && grantedCourseIds.size === 0;
+  // Regra: aluno com categoria OPEN tem acesso total a todos os cursos.
+  const isLocked = !isAdmin && !hasOpen && !profile?.has_course_access && grantedCourseIds.size === 0;
 
   const userTier = (profile?.plan_tier ?? "open").toLowerCase();
   const isTeens = userTier === "teens";

@@ -112,6 +112,19 @@ export default function StudentsManager() {
         if (error && error.code !== "23505") throw error;
         // OPEN libera tudo e não coexiste com categorias BST.
         if (def.kind === "open") {
+          // Regra: aluno OPEN tem acesso a TUDO (cursos inclusos).
+          if (student.email) {
+            await supabase.functions.invoke("grant-access-admin", {
+              body: {
+                email: student.email,
+                accesses: ["has_course_access"],
+                plan_tier: ["pro", "vip"].includes((student.plan_tier ?? "").toLowerCase())
+                  ? student.plan_tier
+                  : "open",
+                grant: true,
+              },
+            });
+          }
           const bstCodes = defs.filter((d) => d.kind === "bst").map((d) => d.code);
           if (bstCodes.length) {
             await supabase

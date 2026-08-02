@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useStudentCategories } from "@/hooks/useStudentCategories";
 import { Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ export default function CourseDetail() {
   const { user } = useAuth();
   const { profile, refreshProfile } = useAuth();
   const { isAdmin } = useAdmin();
+  const { hasOpen } = useStudentCategories();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -355,7 +357,8 @@ export default function CourseDetail() {
   }
 
   // Gating: bloqueia conteúdo se usuário não comprou o Essential Pro A1 (admins veem tudo)
-  if (!isAdmin && !profile?.has_course_access && !hasIndividualGrant) {
+  // Regra: categoria OPEN libera todos os cursos.
+  if (!isAdmin && !hasOpen && !profile?.has_course_access && !hasIndividualGrant) {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-4">
         <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
