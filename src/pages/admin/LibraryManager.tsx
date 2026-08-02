@@ -22,6 +22,7 @@ interface BstProduct {
   title: string;
   description: string | null;
   pdf_url: string | null;
+  primary_tool: "memorizae" | "quiz";
   secondary_tool: "falae" | "leiae";
   checkout_url: string | null;
   price_cents: number;
@@ -58,6 +59,7 @@ const emptyForm = {
   slug: "",
   description: "",
   pdf_url: "",
+  primary_tool: "memorizae" as "memorizae" | "quiz",
   secondary_tool: "falae" as "falae" | "leiae",
   checkout_url: "",
   price_cents: 0,
@@ -120,6 +122,7 @@ export default function LibraryManager() {
       slug: p.slug,
       description: p.description ?? "",
       pdf_url: p.pdf_url ?? "",
+      primary_tool: p.primary_tool ?? "memorizae",
       secondary_tool: p.secondary_tool,
       checkout_url: p.checkout_url ?? "",
       price_cents: p.price_cents,
@@ -151,6 +154,7 @@ export default function LibraryManager() {
       slug: (form.slug.trim() || slugify(form.title)).trim(),
       description: form.description.trim() || null,
       pdf_url: form.pdf_url.trim() || null,
+      primary_tool: form.primary_tool,
       secondary_tool: form.secondary_tool,
       checkout_url: form.checkout_url.trim() || null,
       price_cents: Number(form.price_cents) || 0,
@@ -299,6 +303,7 @@ export default function LibraryManager() {
             <TableHeader>
               <TableRow>
                 <TableHead>Produto</TableHead>
+                <TableHead className="w-32">1ª ferramenta</TableHead>
                 <TableHead className="w-32">2ª ferramenta</TableHead>
                 <TableHead className="w-24">PDF</TableHead>
                 <TableHead className="w-24">Ativo</TableHead>
@@ -307,13 +312,16 @@ export default function LibraryManager() {
             </TableHeader>
             <TableBody>
               {products.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum produto BST ainda.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum produto BST ainda.</TableCell></TableRow>
               )}
               {products.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="font-medium">{p.title}</div>
                     <div className="text-xs text-muted-foreground font-mono">/library/{p.slug}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{p.primary_tool === "quiz" ? "Quizz" : "IA Memorizaê"}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{p.secondary_tool === "leiae" ? "IA Leiaê" : "IA Falaê"}</Badge>
@@ -376,7 +384,17 @@ export default function LibraryManager() {
               <Label>Descrição</Label>
               <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>1ª ferramenta</Label>
+                <Select value={form.primary_tool} onValueChange={(v: "memorizae" | "quiz") => setForm({ ...form, primary_tool: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="memorizae">IA Memorizaê</SelectItem>
+                    <SelectItem value="quiz">Quizz</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>2ª ferramenta</Label>
                 <Select value={form.secondary_tool} onValueChange={(v: "falae" | "leiae") => setForm({ ...form, secondary_tool: v })}>

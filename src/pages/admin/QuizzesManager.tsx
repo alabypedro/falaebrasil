@@ -12,17 +12,29 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, HelpCircle, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-interface Quiz { id: string; lesson_id: string; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
+interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
 interface LessonOption { id: string; title: string; module_id: string; module_title: string; }
 interface ModuleOption { id: string; title: string; course_title: string; }
+interface BstOption { id: string; title: string }
 
-const emptyQuizForm = { lesson_id: "", title: "", passing_score: 70 };
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
+const emptyQuizForm = {
+  owner: "lesson" as "lesson" | "bst",
+  lesson_id: "",
+  bst_product_id: "",
+  level: "A1",
+  display_order: 0,
+  title: "",
+  passing_score: 70,
+};
 
 export default function QuizzesManager() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [lessons, setLessons] = useState<LessonOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
+  const [bstProducts, setBstProducts] = useState<BstOption[]>([]);
   const [filterModule, setFilterModule] = useState<string>("all");
   const [filterLesson, setFilterLesson] = useState<string>("all");
   const [open, setOpen] = useState(false);
@@ -32,14 +44,16 @@ export default function QuizzesManager() {
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    const [{ data: qz }, { data: lsn }, { data: mods }] = await Promise.all([
+    const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }] = await Promise.all([
       supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title))").order("created_at"),
       supabase.from("lessons").select("id, title, module_id, modules(title)").order("display_order"),
       supabase.from("modules").select("id, title, courses(title)").order("display_order"),
+      supabase.from("bst_products").select("id, title").order("display_order"),
     ]);
     if (qz) setQuizzes(qz);
     if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_id: l.module_id, module_title: l.modules?.title ?? "" })));
     if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
+    if (bst) setBstProducts(bst as BstOption[]);
   };
 
   useEffect(() => { load(); }, []);
@@ -54,14 +68,22 @@ export default function QuizzesManager() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ ...emptyQuizForm, lesson_id: lessons[0]?.id ?? "" });
+    setForm({ ...emptyQuizForm, lesson_id: lessons[0]?.id ?? "", bst_product_id: bstProducts[0]?.id ?? "" });
     setQuestions([{ question_text: "", options: ["", "", "", ""], correct_option_index: 0, display_order: 0 }]);
     setOpen(true);
   };
 
   const openEdit = async (q: Quiz) => {
     setEditing(q);
-    setForm({ lesson_id: q.lesson_id, title: q.title, passing_score: q.passing_score });
+    setForm({
+      owner: q.bst_product_id ? "bst" : "lesson",
+      lesson_id: q.lesson_id ?? "",
+      bst_product_id: q.bst_product_id ?? "",
+      level: q.level ?? "A1",
+      display_order: q.display_order ?? 0,
+      title: q.title,
+      passing_score: q.passing_score,
+    });
     const { data } = await supabase.from("quiz_questions").select("*").eq("quiz_id", q.id).order("display_order");
     setQuestions(data?.map((d: any) => ({ ...d, options: d.options as string[] })) ?? []);
     setOpen(true);
@@ -88,21 +110,33 @@ export default function QuizzesManager() {
   };
 
   const save = async () => {
-    if (!form.title.trim() || !form.lesson_id) { toast.error("Preencha título e lição"); return; }
+    const isBst = form.owner === "bst";
+    if (!form.title.trim() || (isBst ? !form.bst_product_id : !form.lesson_id)) {
+      toast.error(isBst ? "Preencha título e produto BST" : "Preencha título e lição");
+      return;
+    }
     if (questions.some((q) => !q.question_text.trim() || q.options.some((o) => !o.trim()))) {
       toast.error("Preencha todas as perguntas e opções"); return;
     }
     setLoading(true);
 
     let quizId = editing?.id;
+    const payload: Record<string, any> = {
+      lesson_id: isBst ? null : form.lesson_id,
+      bst_product_id: isBst ? form.bst_product_id : null,
+      level: form.level,
+      display_order: Number(form.display_order) || 0,
+      title: form.title.trim(),
+      passing_score: form.passing_score,
+    };
 
     if (editing) {
-      const { error } = await supabase.from("quizzes").update({ lesson_id: form.lesson_id, title: form.title.trim(), passing_score: form.passing_score }).eq("id", editing.id);
+      const { error } = await supabase.from("quizzes").update(payload as any).eq("id", editing.id);
       if (error) { toast.error(error.message); setLoading(false); return; }
       // Delete old questions and re-insert
       await supabase.from("quiz_questions").delete().eq("quiz_id", editing.id);
     } else {
-      const { data, error } = await supabase.from("quizzes").insert({ lesson_id: form.lesson_id, title: form.title.trim(), passing_score: form.passing_score }).select("id").single();
+      const { data, error } = await supabase.from("quizzes").insert(payload as any).select("id").single();
       if (error || !data) { toast.error(error?.message ?? "Erro"); setLoading(false); return; }
       quizId = data.id;
     }
@@ -169,7 +203,11 @@ export default function QuizzesManager() {
             {filtered.map((q) => (
               <TableRow key={q.id}>
                 <TableCell className="font-medium">{q.title}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{(q.lessons as any)?.title ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {q.bst_product_id
+                    ? `BST: ${bstProducts.find((b) => b.id === q.bst_product_id)?.title ?? "—"}`
+                    : (q.lessons as any)?.title ?? "—"}
+                </TableCell>
                 <TableCell>{q.passing_score}%</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(q)}><Pencil className="h-4 w-4" /></Button>
@@ -193,10 +231,13 @@ export default function QuizzesManager() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Lição</Label>
-                <Select value={form.lesson_id} onValueChange={(v) => setForm({ ...form, lesson_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{lessons.map((l) => <SelectItem key={l.id} value={l.id}>{l.module_title} › {l.title}</SelectItem>)}</SelectContent>
+                <Label>Vínculo</Label>
+                <Select value={form.owner} onValueChange={(v: "lesson" | "bst") => setForm({ ...form, owner: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lesson">Lição de curso</SelectItem>
+                    <SelectItem value="bst">Produto BST</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
@@ -204,6 +245,36 @@ export default function QuizzesManager() {
                 <Input type="number" min={0} max={100} value={form.passing_score} onChange={(e) => setForm({ ...form, passing_score: parseInt(e.target.value) || 0 })} />
               </div>
             </div>
+            {form.owner === "lesson" ? (
+              <div className="space-y-2">
+                <Label>Lição</Label>
+                <Select value={form.lesson_id} onValueChange={(v) => setForm({ ...form, lesson_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>{lessons.map((l) => <SelectItem key={l.id} value={l.id}>{l.module_title} › {l.title}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2 col-span-1 sm:col-span-1">
+                  <Label>Produto BST</Label>
+                  <Select value={form.bst_product_id} onValueChange={(v) => setForm({ ...form, bst_product_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{bstProducts.map((b) => <SelectItem key={b.id} value={b.id}>{b.title}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Nível</Label>
+                  <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{LEVELS.map((lv) => <SelectItem key={lv} value={lv}>{lv}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Ordem</Label>
+                  <Input type="number" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: parseInt(e.target.value) || 0 })} />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Título do Quiz</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />

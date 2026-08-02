@@ -4,11 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Brain, BookText, FileText, Loader2, Lock, Mic } from "lucide-react";
+import { ArrowLeft, Brain, BookText, FileText, HelpCircle, Loader2, Lock, Mic } from "lucide-react";
 import { PdfReader } from "@/components/library/PdfReader";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
 import BstFalae from "@/pages/BstFalae";
+import BstQuiz from "@/pages/BstQuiz";
 import { useBstOnly } from "@/hooks/useBstOnly";
 
 interface BstProduct {
@@ -17,11 +18,12 @@ interface BstProduct {
   title: string;
   description: string | null;
   pdf_url: string | null;
+  primary_tool: "memorizae" | "quiz";
   secondary_tool: "falae" | "leiae";
   checkout_url: string | null;
 }
 
-type View = "home" | "memorizae" | "tool";
+type View = "home" | "primary" | "tool";
 
 export default function BstProduct() {
   const { slug } = useParams<{ slug: string }>();
@@ -38,7 +40,7 @@ export default function BstProduct() {
       setLoading(true);
       const { data } = await supabase
         .from("bst_products")
-        .select("id,slug,title,description,pdf_url,secondary_tool,checkout_url")
+        .select("id,slug,title,description,pdf_url,primary_tool,secondary_tool,checkout_url")
         .eq("slug", slug)
         .maybeSingle();
       const p = (data as BstProduct) || null;
@@ -122,10 +124,16 @@ export default function BstProduct() {
 
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3 text-center">
-                  <Brain className="h-7 w-7 mx-auto text-primary" />
-                  <div className="text-sm font-semibold">IA Memorizaê</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("memorizae")}>
-                    Treinar flashcards
+                  {product.primary_tool === "quiz" ? (
+                    <HelpCircle className="h-7 w-7 mx-auto text-primary" />
+                  ) : (
+                    <Brain className="h-7 w-7 mx-auto text-primary" />
+                  )}
+                  <div className="text-sm font-semibold">
+                    {product.primary_tool === "quiz" ? "Quizz" : "IA Memorizaê"}
+                  </div>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("primary")}>
+                    {product.primary_tool === "quiz" ? "Responder quizzes" : "Treinar flashcards"}
                   </Button>
                 </CardContent>
               </Card>
@@ -152,7 +160,11 @@ export default function BstProduct() {
         </>
       )}
 
-      {view === "memorizae" && hasAccess && <Memorizae bstProductId={product.id} />}
+      {view === "primary" && hasAccess && (
+        product.primary_tool === "quiz"
+          ? <BstQuiz bstProductId={product.id} />
+          : <Memorizae bstProductId={product.id} />
+      )}
       {view === "tool" && hasAccess && (
         product.secondary_tool === "leiae"
           ? <Leiae bstProductId={product.id} />
