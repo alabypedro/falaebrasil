@@ -269,6 +269,7 @@ export type Database = {
           id: string
           pdf_url: string | null
           price_cents: number
+          primary_tool: string
           secondary_tool: string
           slug: string
           title: string
@@ -283,6 +284,7 @@ export type Database = {
           id?: string
           pdf_url?: string | null
           price_cents?: number
+          primary_tool?: string
           secondary_tool?: string
           slug: string
           title: string
@@ -297,6 +299,7 @@ export type Database = {
           id?: string
           pdf_url?: string | null
           price_cents?: number
+          primary_tool?: string
           secondary_tool?: string
           slug?: string
           title?: string
@@ -1669,30 +1672,46 @@ export type Database = {
       }
       quizzes: {
         Row: {
+          bst_product_id: string | null
           created_at: string
+          display_order: number
           id: string
-          lesson_id: string
+          lesson_id: string | null
+          level: string
           passing_score: number
           title: string
           updated_at: string
         }
         Insert: {
+          bst_product_id?: string | null
           created_at?: string
+          display_order?: number
           id?: string
-          lesson_id: string
+          lesson_id?: string | null
+          level?: string
           passing_score?: number
           title: string
           updated_at?: string
         }
         Update: {
+          bst_product_id?: string | null
           created_at?: string
+          display_order?: number
           id?: string
-          lesson_id?: string
+          lesson_id?: string | null
+          level?: string
           passing_score?: number
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "quizzes_bst_product_id_fkey"
+            columns: ["bst_product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quizzes_lesson_id_fkey"
             columns: ["lesson_id"]
