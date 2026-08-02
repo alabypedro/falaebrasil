@@ -303,6 +303,7 @@ export default function LibraryManager() {
             <TableHeader>
               <TableRow>
                 <TableHead>Produto</TableHead>
+                <TableHead className="w-32">1ª ferramenta</TableHead>
                 <TableHead className="w-32">2ª ferramenta</TableHead>
                 <TableHead className="w-24">PDF</TableHead>
                 <TableHead className="w-24">Ativo</TableHead>
@@ -311,13 +312,16 @@ export default function LibraryManager() {
             </TableHeader>
             <TableBody>
               {products.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum produto BST ainda.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum produto BST ainda.</TableCell></TableRow>
               )}
               {products.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>
                     <div className="font-medium">{p.title}</div>
                     <div className="text-xs text-muted-foreground font-mono">/library/{p.slug}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{p.primary_tool === "quiz" ? "Quizz" : "IA Memorizaê"}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary">{p.secondary_tool === "leiae" ? "IA Leiaê" : "IA Falaê"}</Badge>
