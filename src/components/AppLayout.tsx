@@ -96,9 +96,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             {children}
           </main>
-          {/* Alunos restritos (BST) não passam pelo Dashboard: o tutorial de
-              instalação do app é exibido aqui antes de usarem o produto. */}
-          {isBstOnly && <OnboardingTutorialModal />}
+          {/* Alunos restritos (BST) não passam pelo Dashboard: no primeiro
+              acesso mostramos o tutorial da Biblioteca BST. */}
+          {isBstOnly && <OnboardingTutorialModal variant="bst" />}
         </div>
       </div>
     </SidebarProvider>

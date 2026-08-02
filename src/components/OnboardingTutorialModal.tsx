@@ -3,16 +3,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Smartphone, Apple, Monitor, PlayCircle } from "lucide-react";
+import { Smartphone, Apple, Monitor, PlayCircle, Library } from "lucide-react";
 import { useOSDetection } from "@/hooks/useOSDetection";
 import { parseYoutube } from "@/lib/tutorialTopics";
 
-export default function OnboardingTutorialModal() {
+type Variant = "install" | "bst";
+
+/**
+ * Pop-up de PRIMEIRO ACESSO.
+ * - variant="install": vídeo de instalação do app (alunos OPEN).
+ * - variant="bst": vídeo tutorial da Biblioteca BST (alunos BST / low ticket).
+ * Cada variante tem sua própria flag no perfil, então aparece só uma vez.
+ */
+export default function OnboardingTutorialModal({ variant = "install" }: { variant?: Variant }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const device = useOSDetection();
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
+  const flagColumn = variant === "bst" ? "has_seen_bst_tutorial" : "has_seen_tutorial";
 
   useEffect(() => {
     if (!user) return;
@@ -20,18 +30,27 @@ export default function OnboardingTutorialModal() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("has_seen_tutorial")
+        .select(flagColumn)
         .eq("user_id", user.id)
         .maybeSingle();
       if (cancelled) return;
-      if (data && data.has_seen_tutorial === false) setOpen(true);
+      if (data && (data as any)[flagColumn] === false) setOpen(true);
     })();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, flagColumn]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (variant === "bst") {
+        const { data } = await supabase
+          .from("tutorials")
+          .select("video_url")
+          .eq("slug", "biblioteca-bst")
+          .maybeSingle();
+        if (!cancelled) setVideoUrl(data?.video_url ?? null);
+        return;
+      }
       const { data } = await supabase
         .from("install_tutorial_videos")
         .select("video_url")
@@ -40,20 +59,28 @@ export default function OnboardingTutorialModal() {
       if (!cancelled) setVideoUrl(data?.video_url ?? null);
     })();
     return () => { cancelled = true; };
-  }, [device]);
+  }, [device, variant]);
 
   const handleConfirm = async () => {
     if (!user) return;
     setSaving(true);
     await supabase
       .from("profiles")
-      .update({ has_seen_tutorial: true })
+      .update({ [flagColumn]: true } as any)
       .eq("user_id", user.id);
     setSaving(false);
     setOpen(false);
   };
 
   const content = (() => {
+    if (variant === "bst") {
+      return {
+        icon: <Library className="h-6 w-6 text-primary" />,
+        title: "Como usar a Biblioteca BST",
+        description:
+          "Assista ao vídeo abaixo para aprender a usar seus guias, cartilhas e manuais da Biblioteca BST.",
+      };
+    }
     if (device === "ios") {
       return {
         icon: <Apple className="h-6 w-6 text-primary" />,
