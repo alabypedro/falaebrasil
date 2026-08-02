@@ -1,30 +1,33 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useStudentCategories } from "@/hooks/useStudentCategories";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Aluno "BST only": comprou apenas um produto Low-Ticket da Biblioteca BST.
- * Não tem acesso ao restante da plataforma.
+ * Aluno "BST only" (low ticket): categorizado como BST1/BST2/... sem a
+ * categoria OPEN. Só pode acessar Biblioteca BST, Tutoriais e Instalar App,
+ * e apenas os produtos BST que comprou.
+ *
+ * O fallback por `plan_tier === 'bst'` mantém compatibilidade com contas
+ * criadas antes da categorização.
  */
 export function useBstOnly() {
   const { profile, user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
+  const { isBstRestricted, loading: catLoading } = useStudentCategories();
   const [slug, setSlug] = useState<string | null>(null);
   const [slugs, setSlugs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isBstOnly =
-    !isAdmin &&
-    !!profile &&
-    profile.plan_tier === "bst" &&
-    !profile.has_course_access;
+  const legacyBst = !!profile && profile.plan_tier === "bst" && !profile.has_course_access;
+  const isBstOnly = !isAdmin && (isBstRestricted || legacyBst);
 
   useEffect(() => {
     if (!user || !isBstOnly) {
       setSlug(null);
       setSlugs([]);
-      setLoading(adminLoading || (!!user && !profile));
+      setLoading(adminLoading || catLoading || (!!user && !profile));
       return;
     }
     (async () => {
@@ -39,7 +42,7 @@ export function useBstOnly() {
       setSlug(list[0] ?? null);
       setLoading(false);
     })();
-  }, [user, isBstOnly, adminLoading, profile]);
+  }, [user, isBstOnly, adminLoading, catLoading, profile]);
 
   return { isBstOnly, slug, slugs, loading };
 }
