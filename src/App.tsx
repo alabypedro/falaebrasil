@@ -48,6 +48,7 @@ import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import LeiaeManager from "@/pages/admin/LeiaeManager";
 import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
+import StudentsManager from "@/pages/admin/StudentsManager";
 import { CoursesHub, AIHub, TutorialsHub, AdminsHub, AsaasHub } from "@/pages/admin/hubs/AdminHubs";
 import Contratos from "@/pages/Contratos";
 import Success from "@/pages/Success";
@@ -108,11 +109,11 @@ function BstGate({ children }: { children: React.ReactNode }) {
     path.startsWith("/library") ||
     path.startsWith("/profile") ||
     path.startsWith("/install") ||
-    path.startsWith("/contratos") ||
     path.startsWith("/tutoriais");
 
   if (!allowed) {
-    return <Navigate to={slug ? `/library/${slug}` : "/library"} replace />;
+    // Alunos BST caem sempre na Biblioteca BST.
+    return <Navigate to="/library" replace />;
   }
   return <>{children}</>;
 }
@@ -199,6 +200,7 @@ const App = () => {
                           <Route path="communities" element={<CommunitiesManager />} />
                           <Route path="contracts" element={<ContractsManager />} />
                           <Route path="admins" element={<AdminsManager />} />
+                          <Route path="students" element={<StudentsManager />} />
                           <Route path="payments" element={<PaymentsManager />} />
                           <Route path="webhook-logs" element={<WebhookLogsManager />} />
                         <Route path="link-payment" element={<LinkPayment />} />
