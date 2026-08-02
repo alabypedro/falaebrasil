@@ -49,6 +49,13 @@ export function useStudentCategories() {
     load();
   }, [load]);
 
+  // Mudanças de categoria feitas pelo admin refletem ao voltar para a aba.
+  useEffect(() => {
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [load]);
+
   const hasOpen = categories.some((c) => c.kind === "open");
   const bstCategories = categories.filter((c) => c.kind === "bst");
 
