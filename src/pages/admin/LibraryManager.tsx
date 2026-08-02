@@ -380,7 +380,17 @@ export default function LibraryManager() {
               <Label>Descrição</Label>
               <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>1ª ferramenta</Label>
+                <Select value={form.primary_tool} onValueChange={(v: "memorizae" | "quiz") => setForm({ ...form, primary_tool: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="memorizae">IA Memorizaê</SelectItem>
+                    <SelectItem value="quiz">Quizz</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>2ª ferramenta</Label>
                 <Select value={form.secondary_tool} onValueChange={(v: "falae" | "leiae") => setForm({ ...form, secondary_tool: v })}>
