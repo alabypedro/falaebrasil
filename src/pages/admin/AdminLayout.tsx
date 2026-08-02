@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, BookOpen, Sparkles, Users, PlayCircle, FileSignature, ShieldCheck, CreditCard, ArrowLeft, Library } from "lucide-react";
+import { LayoutDashboard, BookOpen, Sparkles, Users, PlayCircle, FileSignature, ShieldCheck, CreditCard, ArrowLeft, Library, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 // links to the actual managers. Sub-routes still work directly.
 const adminNav = [
   { to: "/admin", icon: LayoutDashboard, label: "Painel", end: true, match: ["/admin"] },
+  { to: "/admin/students", icon: GraduationCap, label: "Alunos", match: ["/admin/students"] },
   { to: "/admin/hub/courses", icon: BookOpen, label: "Cursos", match: ["/admin/hub/courses", "/admin/courses", "/admin/modules", "/admin/lessons", "/admin/quizzes"] },
   { to: "/admin/hub/ai", icon: Sparkles, label: "IAs", match: ["/admin/hub/ai", "/admin/memorizae", "/admin/leiae", "/admin/listening", "/admin/prompts"] },
   { to: "/admin/library", icon: Library, label: "Biblioteca BST", match: ["/admin/library"] },
