@@ -137,6 +137,7 @@ export default function Courses() {
   const { user, profile } = useAuth();
   const { isAdmin } = useAdmin();
   const { t } = useLanguage();
+  const { hasOpen } = useStudentCategories();
 
   useEffect(() => {
     if (!user) return;
