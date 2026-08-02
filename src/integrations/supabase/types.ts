@@ -1338,6 +1338,7 @@ export type Database = {
           description: string | null
           display_order: number
           grants_bst_product_id: string | null
+          grants_category: string | null
           grants_course_access: boolean
           grants_ebook1_access: boolean
           grants_ebook2_access: boolean
@@ -1362,6 +1363,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           grants_bst_product_id?: string | null
+          grants_category?: string | null
           grants_course_access?: boolean
           grants_ebook1_access?: boolean
           grants_ebook2_access?: boolean
@@ -1386,6 +1388,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           grants_bst_product_id?: string | null
+          grants_category?: string | null
           grants_course_access?: boolean
           grants_ebook1_access?: boolean
           grants_ebook2_access?: boolean
@@ -1408,6 +1411,13 @@ export type Database = {
             referencedRelation: "bst_products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payment_products_grants_category_fkey"
+            columns: ["grants_category"]
+            isOneToOne: false
+            referencedRelation: "student_category_defs"
+            referencedColumns: ["code"]
+          },
         ]
       }
       profiles: {
@@ -1429,6 +1439,7 @@ export type Database = {
           has_ebook1_access: boolean
           has_ebook2_access: boolean
           has_ebook3_access: boolean
+          has_seen_bst_tutorial: boolean
           has_seen_tutorial: boolean
           hubla_customer_id: string | null
           hubla_subscription_id: string | null
@@ -1468,6 +1479,7 @@ export type Database = {
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
           has_ebook3_access?: boolean
+          has_seen_bst_tutorial?: boolean
           has_seen_tutorial?: boolean
           hubla_customer_id?: string | null
           hubla_subscription_id?: string | null
@@ -1507,6 +1519,7 @@ export type Database = {
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
           has_ebook3_access?: boolean
+          has_seen_bst_tutorial?: boolean
           has_seen_tutorial?: boolean
           hubla_customer_id?: string | null
           hubla_subscription_id?: string | null
@@ -1733,6 +1746,79 @@ export type Database = {
           vocabulary_score?: number | null
         }
         Relationships: []
+      }
+      student_categories: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_categories_code_fkey"
+            columns: ["code"]
+            isOneToOne: false
+            referencedRelation: "student_category_defs"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      student_category_defs: {
+        Row: {
+          bst_product_id: string | null
+          code: string
+          created_at: string
+          display_order: number
+          kind: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          bst_product_id?: string | null
+          code: string
+          created_at?: string
+          display_order?: number
+          kind: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          bst_product_id?: string | null
+          code?: string
+          created_at?: string
+          display_order?: number
+          kind?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_category_defs_bst_product_id_fkey"
+            columns: ["bst_product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {
@@ -2226,6 +2312,10 @@ export type Database = {
     }
     Functions: {
       _strip_correct_index: { Args: { _content: Json }; Returns: Json }
+      apply_student_category: {
+        Args: { _code: string; _source?: string; _user_id: string }
+        Returns: undefined
+      }
       award_ai_xp: {
         Args: { _key: string; _points: number; _source: string }
         Returns: Json
@@ -2293,6 +2383,7 @@ export type Database = {
         Returns: boolean
       }
       has_tier: { Args: { _required: string }; Returns: boolean }
+      is_bst_restricted: { Args: { _user_id: string }; Returns: boolean }
       level_rank: { Args: { _level: string }; Returns: number }
       move_to_dlq: {
         Args: {
