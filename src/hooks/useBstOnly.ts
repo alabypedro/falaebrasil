@@ -15,13 +15,15 @@ import { supabase } from "@/integrations/supabase/client";
 export function useBstOnly() {
   const { profile, user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
-  const { isBstRestricted, loading: catLoading } = useStudentCategories();
+  const { isBstRestricted, hasOpen, loading: catLoading } = useStudentCategories();
   const [slug, setSlug] = useState<string | null>(null);
   const [slugs, setSlugs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const legacyBst = !!profile && profile.plan_tier === "bst" && !profile.has_course_access;
-  const isBstOnly = !isAdmin && (isBstRestricted || legacyBst);
+  // Categoria OPEN sempre libera tudo (mesmo que plan_tier legado seja "bst").
+  const legacyBst =
+    !hasOpen && !!profile && profile.plan_tier === "bst" && !profile.has_course_access;
+  const isBstOnly = !isAdmin && !hasOpen && (isBstRestricted || legacyBst);
 
   useEffect(() => {
     if (!user || !isBstOnly) {

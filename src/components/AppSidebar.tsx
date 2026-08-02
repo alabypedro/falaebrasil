@@ -13,6 +13,7 @@ import {
   Headphones,
   Brain,
   BookText,
+  Lock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,11 +49,8 @@ const navItems = [
   { key: "nav.install", url: "/install", icon: Download },
 ];
 
-const bstNavItems = [
-  { key: "nav.library", url: "/library", icon: Library },
-  { key: "nav.tutorials", url: "/tutoriais", icon: HelpCircle },
-  { key: "nav.install", url: "/install", icon: Download },
-];
+/** Rotas liberadas para alunos BST (as outras aparecem bloqueadas). */
+const bstAllowedUrls = ["/library", "/tutoriais", "/install"];
 
 export default function AppSidebar() {
   const { state, isMobile, setOpen, setOpenMobile } = useSidebar();
@@ -61,7 +59,10 @@ export default function AppSidebar() {
   const { isAdmin } = useAdmin();
   const { t } = useLanguage();
   const { isBstOnly } = useBstOnly();
-  const items = isBstOnly ? bstNavItems : navItems;
+  const items = navItems.map((item) => ({
+    ...item,
+    locked: isBstOnly && !bstAllowedUrls.includes(item.url),
+  }));
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -106,18 +107,35 @@ export default function AppSidebar() {
                   className="animate-slide-in-left"
                   style={{ "--delay": `${i * 50}ms` } as React.CSSProperties}
                 >
-                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t(item.key) : undefined}>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      onClick={handleNavClick}
-                      className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                  {item.locked ? (
+                    <SidebarMenuButton
+                      className="h-10 rounded-lg opacity-50 cursor-not-allowed hover:bg-transparent"
+                      tooltip={collapsed ? t(item.key) : undefined}
+                      aria-disabled
+                      onClick={(e) => e.preventDefault()}
                     >
                       <item.icon className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
-                      {!collapsed && <span className="text-sm truncate">{t(item.key)}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
+                      {!collapsed && (
+                        <>
+                          <span className="text-sm truncate">{t(item.key)}</span>
+                          <Lock className="h-3.5 w-3.5 shrink-0 ml-auto" />
+                        </>
+                      )}
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t(item.key) : undefined}>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        onClick={handleNavClick}
+                        className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                      >
+                        <item.icon className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                        {!collapsed && <span className="text-sm truncate">{t(item.key)}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
 
