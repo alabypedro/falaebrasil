@@ -701,7 +701,11 @@ export default function VoiceLab() {
       </Tabs>
 
 
-      <FeedbackCard scores={feedback} suggestions={suggestions.length > 0 ? suggestions : undefined} />
+      <FeedbackCard
+        scores={feedback}
+        suggestions={suggestions.length > 0 ? suggestions : undefined}
+        toolLabel={mode === "scripted" ? "IA Falaê — Scripted" : "IA Falaê — Unscripted"}
+      />
 
       {isAnalyzing && (
         <div className="flex flex-col items-center gap-2 py-4">
