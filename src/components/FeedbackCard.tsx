@@ -7,6 +7,7 @@ import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import EmailResultButton from "@/components/EmailResultButton";
 
 export interface FeedbackScores {
   pronunciation: number;
@@ -32,6 +33,7 @@ interface FeedbackCardProps {
   scores: FeedbackScores | null;
   suggestions?: string[];
   isNewHighScore?: boolean;
+  toolLabel?: string;
 }
 
 function getScoreColor(score: number) {
@@ -47,7 +49,7 @@ function getSnrLabel(snr: number) {
   return { label: "Baixo", color: "text-destructive" };
 }
 
-export default function FeedbackCard({ scores, suggestions, isNewHighScore }: FeedbackCardProps) {
+export default function FeedbackCard({ scores, suggestions, isNewHighScore, toolLabel = "IA Falaê" }: FeedbackCardProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -121,6 +123,23 @@ export default function FeedbackCard({ scores, suggestions, isNewHighScore }: Fe
             )}
           </div>
           <div className="flex items-center gap-2">
+            <EmailResultButton
+              toolLabel={toolLabel}
+              overallScore={overall}
+              metrics={[
+                { label: "Pronúncia", value: Math.round(scores.pronunciation) },
+                { label: "Fluência", value: Math.round(scores.fluency) },
+                { label: "Completude", value: Math.round(scores.completeness ?? scores.grammar) },
+                { label: "Prosódia", value: Math.round(scores.prosody ?? scores.vocabulary) },
+                { label: "PronScore", value: Math.round(scores.pronScore ?? overall) },
+              ]}
+              transcription={scores.transcription}
+              sections={
+                suggestions && suggestions.length
+                  ? [{ title: "Sugestões de melhoria (IA)", lines: suggestions }]
+                  : undefined
+              }
+            />
             <Button
               variant="outline"
               size="sm"
