@@ -14,6 +14,35 @@ import { cn } from "@/lib/utils";
 import BackToLessonButton from "@/components/BackToLessonButton";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import EmailResultButton from "@/components/EmailResultButton";
+
+function parseFeedbackForEmail(content: string) {
+  const clean = content.replace(/\*\*/g, "").replace(/__/g, "");
+  const lines = clean.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  const scoreMatch = clean.match(/(\d{1,3})\s*\/\s*100/);
+  const overallScore = scoreMatch ? Math.min(100, parseInt(scoreMatch[1], 10)) : null;
+  const isHeading = (line: string) =>
+    /^(pontuação geral|erros gramaticais|análise de vocabulário|avaliação do nível cefr|critérios cefr aplicados|sugestões de melhoria|dicas de melhoria|dicas|melhorias|relatório|avaliação)/i.test(line);
+  const sections: Array<{ title: string; lines: string[] }> = [];
+  let current: { title: string; lines: string[] } | null = null;
+  for (const line of lines) {
+    if (isHeading(line)) {
+      current = { title: line.replace(/:$/, ""), lines: [] };
+      sections.push(current);
+    } else {
+      const clean2 = line.replace(/^([-•*]|\d+[.)])\s+/, "");
+      if (!current) {
+        current = { title: "Avaliação", lines: [] };
+        sections.push(current);
+      }
+      current.lines.push(clean2);
+    }
+  }
+  return {
+    overallScore,
+    sections: sections.filter((s) => s.lines.length > 0),
+  };
+}
 
 function CopyAssistantButton({ text, className }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false);
@@ -636,6 +665,12 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
                       <CopyAssistantButton
                         text={m.content.replace(/\*\*/g, "").replace(/__/g, "")}
                         className="opacity-0 group-hover:opacity-100"
+                      />
+                      <EmailResultButton
+                        variant="icon"
+                        className="opacity-0 group-hover:opacity-100"
+                        toolLabel={mode === 'writing' ? 'IA Escreveaê' : 'IA Escutaê'}
+                        {...parseFeedbackForEmail(m.content)}
                       />
                     </div>
                   )}

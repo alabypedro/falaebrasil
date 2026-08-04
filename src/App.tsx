@@ -23,6 +23,7 @@ import NotFound from "@/pages/NotFound";
 import QuizPlayer from "@/pages/QuizPlayer";
 import CourseDetail from "@/pages/CourseDetail";
 import Install from "@/pages/Install";
+import Unsubscribe from "@/pages/Unsubscribe";
 import Tutoriais from "@/pages/Tutoriais";
 import Communities from "@/pages/Communities";
 import Memorizae from "@/pages/Memorizae";
@@ -149,6 +150,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/install" element={<Install />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/promo/:code" element={<Promo />} />
               <Route
                 path="/*"
