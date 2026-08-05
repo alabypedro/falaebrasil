@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Brain, BookText, FileText, HelpCircle, Loader2, Lock, Mic } from "lucide-react";
+import { ArrowLeft, Brain, BookText, ChevronRight, FileText, HelpCircle, Loader2, Lock, Mic } from "lucide-react";
 import { PdfReader } from "@/components/library/PdfReader";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
@@ -24,6 +24,7 @@ interface BstProduct {
 }
 
 type View = "home" | "primary" | "tool";
+type LevelTool = "pdf" | "leiae" | "quiz";
 
 const LEVEL_SLUG = "bst-cartilha-de-ingles-instrumental-do-zero-a1-ao-c2-avancado";
 const LEVELS = [
@@ -35,6 +36,9 @@ const LEVELS = [
   { code: "C2", label: "Avançado" },
 ] as const;
 type LevelCode = typeof LEVELS[number]["code"];
+const UNITS = Array.from({ length: 12 }, (_, i) => i + 1);
+
+interface UnitPdf { unit: number; title: string | null; pdf_url: string | null; }
 
 export default function BstProduct() {
   const { slug } = useParams<{ slug: string }>();
@@ -44,7 +48,12 @@ export default function BstProduct() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("home");
   const [readingPdf, setReadingPdf] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfTitle, setPdfTitle] = useState<string>("");
   const [level, setLevel] = useState<LevelCode | null>(null);
+  const [levelTool, setLevelTool] = useState<LevelTool | null>(null);
+  const [unit, setUnit] = useState<number | null>(null);
+  const [unitPdfs, setUnitPdfs] = useState<UnitPdf[]>([]);
   const { isBstOnly, slug: ownedSlug, loading: bstLoading } = useBstOnly();
 
   useEffect(() => {
@@ -64,6 +73,21 @@ export default function BstProduct() {
       setLoading(false);
     })();
   }, [slug]);
+
+  const levelMode = product?.slug === LEVEL_SLUG;
+
+  useEffect(() => {
+    if (!product || !levelMode || !level) { setUnitPdfs([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("bst_product_pdfs")
+        .select("unit,title,pdf_url")
+        .eq("bst_product_id", product.id)
+        .eq("level", level)
+        .order("unit");
+      setUnitPdfs((data as UnitPdf[]) || []);
+    })();
+  }, [product?.id, levelMode, level]);
 
   if (loading || bstLoading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -85,15 +109,46 @@ export default function BstProduct() {
     );
   }
 
-  const levelMode = product?.slug === LEVEL_SLUG;
+  const toolLabel: Record<LevelTool, string> = { pdf: "PDF do produto", leiae: "IA Leiaê", quiz: "Quiz" };
 
   const back = () => {
+    if (levelMode) {
+      if (unit) { setUnit(null); setView("home"); return; }
+      if (levelTool) return setLevelTool(null);
+      if (level) return setLevel(null);
+      navigate("/library");
+      return;
+    }
     if (view !== "home") return setView("home");
-    if (levelMode && level) return setLevel(null);
     navigate("/library");
   };
 
-  const backLabel = view !== "home" ? product.title : levelMode && level ? product.title : "Biblioteca BST";
+  const backLabel = levelMode
+    ? unit
+      ? `Unidades — ${toolLabel[levelTool!]}`
+      : levelTool
+        ? `${level} - ${LEVELS.find((l) => l.code === level)?.label}`
+        : level
+          ? product.title
+          : "Biblioteca BST"
+    : view !== "home"
+      ? product.title
+      : "Biblioteca BST";
+
+  const openUnit = (u: number) => {
+    setUnit(u);
+    if (levelTool === "pdf") {
+      const row = unitPdfs.find((x) => x.unit === u);
+      if (!row?.pdf_url) return;
+      setPdfUrl(row.pdf_url);
+      setPdfTitle(`${product.title} — ${level} · Unit ${u}`);
+      setReadingPdf(true);
+      return;
+    }
+    setView(levelTool === "quiz" ? "primary" : "tool");
+  };
+
+  const showLevelHome = levelMode && view === "home" && !unit;
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
@@ -101,7 +156,7 @@ export default function BstProduct() {
         <ArrowLeft className="h-4 w-4 mr-1" /> {backLabel}
       </Button>
 
-      {view === "home" && (
+      {((levelMode && showLevelHome) || (!levelMode && view === "home")) && (
         <>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{product.title}</h1>
@@ -111,6 +166,7 @@ export default function BstProduct() {
             {levelMode && level && (
               <p className="text-sm font-semibold text-primary mt-2">
                 {level} - {LEVELS.find((l) => l.code === level)?.label}
+                {levelTool ? ` · ${toolLabel[levelTool]}` : ""}
               </p>
             )}
           </div>
@@ -143,36 +199,61 @@ export default function BstProduct() {
                 </button>
               ))}
             </div>
-          ) : levelMode ? (
+          ) : levelMode && !levelTool ? (
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3 text-center">
                   <FileText className="h-7 w-7 mx-auto text-primary" />
                   <div className="text-sm font-semibold">PDF do produto</div>
-                  <Button size="sm" className="w-full" disabled={!product.pdf_url} onClick={() => setReadingPdf(true)}>
-                    {product.pdf_url ? "Abrir e baixar" : "Indisponível"}
-                  </Button>
+                  <Button size="sm" className="w-full" onClick={() => setLevelTool("pdf")}>Abrir unidades</Button>
                 </CardContent>
               </Card>
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3 text-center">
                   <BookText className="h-7 w-7 mx-auto text-primary" />
                   <div className="text-sm font-semibold">IA Leiaê</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("tool")}>
-                    Ler com a IA
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setLevelTool("leiae")}>
+                    Abrir unidades
                   </Button>
                 </CardContent>
               </Card>
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3 text-center">
                   <HelpCircle className="h-7 w-7 mx-auto text-primary" />
-                  <div className="text-sm font-semibold">Quizz</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("primary")}>
-                    Responder quizzes
+                  <div className="text-sm font-semibold">Quiz</div>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setLevelTool("quiz")}>
+                    Abrir unidades
                   </Button>
                 </CardContent>
               </Card>
             </div>
+          ) : levelMode ? (
+            <ol className="space-y-2">
+              {UNITS.map((u) => {
+                const row = unitPdfs.find((x) => x.unit === u);
+                const missingPdf = levelTool === "pdf" && !row?.pdf_url;
+                return (
+                  <li key={u}>
+                    <button
+                      onClick={() => openUnit(u)}
+                      disabled={missingPdf}
+                      className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card"
+                    >
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-semibold text-foreground">Unit {u}</span>
+                        {levelTool === "pdf" && (
+                          <span className="block text-xs text-muted-foreground">
+                            {row?.pdf_url ? row.title ?? "PDF disponível" : "PDF indisponível"}
+                          </span>
+                        )}
+                      </span>
+                      <Badge variant="outline" className="shrink-0">{level}</Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
           ) : (
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="hover:shadow-md transition-shadow">
@@ -183,7 +264,7 @@ export default function BstProduct() {
                     size="sm"
                     className="w-full"
                     disabled={!product.pdf_url}
-                    onClick={() => setReadingPdf(true)}
+                    onClick={() => { setPdfUrl(product.pdf_url); setPdfTitle(product.title); setReadingPdf(true); }}
                   >
                     {product.pdf_url ? "Abrir e baixar" : "Indisponível"}
                   </Button>
@@ -230,21 +311,21 @@ export default function BstProduct() {
 
       {view === "primary" && hasAccess && (
         product.primary_tool === "quiz" || levelMode
-          ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} />
+          ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
           : <Memorizae bstProductId={product.id} />
       )}
       {view === "tool" && hasAccess && (
         product.secondary_tool === "leiae" || levelMode
-          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} />
+          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
           : <BstFalae bstProductId={product.id} />
       )}
 
-      {readingPdf && product.pdf_url && (
+      {readingPdf && pdfUrl && (
         <PdfReader
           isOpen={readingPdf}
-          onClose={() => setReadingPdf(false)}
-          url={product.pdf_url}
-          title={product.title}
+          onClose={() => { setReadingPdf(false); if (levelMode) setUnit(null); }}
+          url={pdfUrl}
+          title={pdfTitle || product.title}
           allowDownload
         />
       )}
