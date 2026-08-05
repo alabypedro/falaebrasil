@@ -25,6 +25,17 @@ interface BstProduct {
 
 type View = "home" | "primary" | "tool";
 
+const LEVEL_SLUG = "bst-cartilha-de-ingles-instrumental-do-zero-a1-ao-c2-avancado";
+const LEVELS = [
+  { code: "A1", label: "Básico" },
+  { code: "A2", label: "Pré-Intermediário" },
+  { code: "B1", label: "Intermediário" },
+  { code: "B2", label: "Pós-Intermediário" },
+  { code: "C1", label: "Pré-Avançado" },
+  { code: "C2", label: "Avançado" },
+] as const;
+type LevelCode = typeof LEVELS[number]["code"];
+
 export default function BstProduct() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -33,6 +44,7 @@ export default function BstProduct() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("home");
   const [readingPdf, setReadingPdf] = useState(false);
+  const [level, setLevel] = useState<LevelCode | null>(null);
   const { isBstOnly, slug: ownedSlug, loading: bstLoading } = useBstOnly();
 
   useEffect(() => {
@@ -73,12 +85,20 @@ export default function BstProduct() {
     );
   }
 
-  const back = () => (view === "home" ? navigate("/library") : setView("home"));
+  const levelMode = product?.slug === LEVEL_SLUG;
+
+  const back = () => {
+    if (view !== "home") return setView("home");
+    if (levelMode && level) return setLevel(null);
+    navigate("/library");
+  };
+
+  const backLabel = view !== "home" ? product.title : levelMode && level ? product.title : "Biblioteca BST";
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
       <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={back}>
-        <ArrowLeft className="h-4 w-4 mr-1" /> {view === "home" ? "Biblioteca BST" : product.title}
+        <ArrowLeft className="h-4 w-4 mr-1" /> {backLabel}
       </Button>
 
       {view === "home" && (
@@ -87,6 +107,11 @@ export default function BstProduct() {
             <h1 className="text-2xl font-bold text-foreground">{product.title}</h1>
             {product.description && (
               <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
+            )}
+            {levelMode && level && (
+              <p className="text-sm font-semibold text-primary mt-2">
+                {level} - {LEVELS.find((l) => l.code === level)?.label}
+              </p>
             )}
           </div>
 
@@ -105,6 +130,49 @@ export default function BstProduct() {
                 )}
               </CardContent>
             </Card>
+          ) : levelMode && !level ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {LEVELS.map((lv) => (
+                <button
+                  key={lv.code}
+                  onClick={() => setLevel(lv.code)}
+                  className="rounded-lg border bg-card p-5 text-left hover:border-primary hover:bg-muted/40 transition"
+                >
+                  <span className="block text-lg font-bold text-primary">{lv.code}</span>
+                  <span className="block text-sm font-semibold text-foreground">{lv.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : levelMode ? (
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-5 space-y-3 text-center">
+                  <FileText className="h-7 w-7 mx-auto text-primary" />
+                  <div className="text-sm font-semibold">PDF do produto</div>
+                  <Button size="sm" className="w-full" disabled={!product.pdf_url} onClick={() => setReadingPdf(true)}>
+                    {product.pdf_url ? "Abrir e baixar" : "Indisponível"}
+                  </Button>
+                </CardContent>
+              </Card>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-5 space-y-3 text-center">
+                  <BookText className="h-7 w-7 mx-auto text-primary" />
+                  <div className="text-sm font-semibold">IA Leiaê</div>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("tool")}>
+                    Ler com a IA
+                  </Button>
+                </CardContent>
+              </Card>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-5 space-y-3 text-center">
+                  <HelpCircle className="h-7 w-7 mx-auto text-primary" />
+                  <div className="text-sm font-semibold">Quizz</div>
+                  <Button size="sm" variant="outline" className="w-full" onClick={() => setView("primary")}>
+                    Responder quizzes
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="hover:shadow-md transition-shadow">
@@ -161,13 +229,13 @@ export default function BstProduct() {
       )}
 
       {view === "primary" && hasAccess && (
-        product.primary_tool === "quiz"
-          ? <BstQuiz bstProductId={product.id} />
+        product.primary_tool === "quiz" || levelMode
+          ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} />
           : <Memorizae bstProductId={product.id} />
       )}
       {view === "tool" && hasAccess && (
-        product.secondary_tool === "leiae"
-          ? <Leiae bstProductId={product.id} />
+        product.secondary_tool === "leiae" || levelMode
+          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} />
           : <BstFalae bstProductId={product.id} />
       )}
 
