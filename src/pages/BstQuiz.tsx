@@ -14,7 +14,7 @@ interface BstQuizRow {
   display_order: number;
 }
 
-export default function BstQuiz({ bstProductId }: { bstProductId: string }) {
+export default function BstQuiz({ bstProductId, level }: { bstProductId: string; level?: string }) {
   const [quizzes, setQuizzes] = useState<BstQuizRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<BstQuizRow | null>(null);
@@ -22,16 +22,18 @@ export default function BstQuiz({ bstProductId }: { bstProductId: string }) {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      let query = supabase
         .from("quizzes")
         .select("id,title,level,passing_score,display_order")
-        .eq("bst_product_id", bstProductId)
+        .eq("bst_product_id", bstProductId);
+      if (level) query = query.eq("level", level);
+      const { data } = await query
         .order("display_order")
         .order("title");
       setQuizzes((data as any as BstQuizRow[]) || []);
       setLoading(false);
     })();
-  }, [bstProductId]);
+  }, [bstProductId, level]);
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
