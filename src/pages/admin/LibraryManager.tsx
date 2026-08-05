@@ -572,6 +572,65 @@ export default function LibraryManager() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* PDFs por unidade */}
+      <Dialog open={!!unitsProduct} onOpenChange={(o) => !o && setUnitsProduct(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>PDFs por unidade — {unitsProduct?.title}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nível</Label>
+              <Select
+                value={unitsLevel}
+                onValueChange={async (v) => { setUnitsLevel(v); if (unitsProduct) await loadUnitPdfs(unitsProduct, v); }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{LEVELS.map((lv) => <SelectItem key={lv} value={lv}>{lv}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="rounded-md border divide-y">
+              {UNITS.map((u) => {
+                const row = unitRows[u] ?? { title: "", pdf_url: "" };
+                return (
+                  <div key={u} className="p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold w-16 shrink-0">Unit {u}</span>
+                      <Input
+                        placeholder="Título (opcional)"
+                        value={row.title}
+                        onChange={(e) => setUnitRows((r) => ({ ...r, [u]: { ...row, title: e.target.value } }))}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="URL do PDF"
+                        value={row.pdf_url}
+                        onChange={(e) => setUnitRows((r) => ({ ...r, [u]: { ...row, pdf_url: e.target.value } }))}
+                      />
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        id={`unit-pdf-${u}`}
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadUnitPdf(u, f); }}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={unitUploading === u}
+                        onClick={() => document.getElementById(`unit-pdf-${u}`)?.click()}
+                      >
+                        {unitUploading === u ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
+                      </Button>
+                      <Button size="sm" onClick={() => saveUnitPdf(u, row)}>Salvar</Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
