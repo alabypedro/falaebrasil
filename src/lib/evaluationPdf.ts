@@ -43,17 +43,17 @@ export function buildEvaluationPdf(data: EvaluationPdfData): Blob {
   doc.setTextColor(...TEAL);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("FALAE BRASIL", margin, 36);
+  doc.text("FALAÊ BRASIL", margin, 36);
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
-  doc.text("Resultado da sua avaliacao", margin, 62);
+  doc.text("Resultado da sua avaliação", margin, 62);
   y = 120;
 
   // Intro
   doc.setTextColor(...GRAY);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  const intro = `${data.studentName ? `Ola, ${data.studentName}! ` : "Ola! "}Relatorio completo da sua pratica em ${data.toolLabel}${
+  const intro = `${data.studentName ? `Olá, ${data.studentName}! ` : "Olá! "}Relatório completo da sua prática em ${data.toolLabel}${
     data.dateLabel ? ` realizada em ${data.dateLabel}` : ""
   }.`;
   const introLines = doc.splitTextToSize(intro, contentW);
@@ -68,7 +68,7 @@ export function buildEvaluationPdf(data: EvaluationPdfData): Blob {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(122, 134, 153);
-    doc.text("PONTUACAO GERAL", pageW / 2, y + 24, { align: "center" });
+    doc.text("PONTUAÇÃO GERAL", pageW / 2, y + 24, { align: "center" });
     doc.setFontSize(24);
     doc.setTextColor(...scoreColor(data.overallScore));
     doc.text(`${data.overallScore}/100`, pageW / 2, y + 52, { align: "center" });
@@ -84,7 +84,7 @@ export function buildEvaluationPdf(data: EvaluationPdfData): Blob {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...NAVY);
-    doc.text("NOTAS POR CRITERIO", margin + 16, y + 22);
+    doc.text("NOTAS POR CRITÉRIO", margin + 16, y + 22);
     let ry = y + 44;
     data.metrics.forEach((m) => {
       doc.setFont("helvetica", "normal");
@@ -152,7 +152,7 @@ export function buildEvaluationPdf(data: EvaluationPdfData): Blob {
   y += 15;
   doc.setTextColor(150, 150, 150);
   doc.setFontSize(9);
-  doc.text("Duvidas? atendimento@falaebrasil.com.br", margin, y);
+  doc.text("Dúvidas? atendimento@falaebrasil.com.br", margin, y);
 
   return doc.output("blob");
 }
