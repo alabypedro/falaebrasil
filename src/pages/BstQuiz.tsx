@@ -14,7 +14,7 @@ interface BstQuizRow {
   display_order: number;
 }
 
-export default function BstQuiz({ bstProductId, level }: { bstProductId: string; level?: string }) {
+export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: string; level?: string; unit?: number }) {
   const [quizzes, setQuizzes] = useState<BstQuizRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<BstQuizRow | null>(null);
@@ -27,13 +27,14 @@ export default function BstQuiz({ bstProductId, level }: { bstProductId: string;
         .select("id,title,level,passing_score,display_order")
         .eq("bst_product_id", bstProductId);
       if (level) query = query.eq("level", level);
+      if (unit) query = query.eq("unit", unit);
       const { data } = await query
         .order("display_order")
         .order("title");
       setQuizzes((data as any as BstQuizRow[]) || []);
       setLoading(false);
     })();
-  }, [bstProductId, level]);
+  }, [bstProductId, level, unit]);
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -59,12 +60,14 @@ export default function BstQuiz({ bstProductId, level }: { bstProductId: string;
           <HelpCircle className="h-5 w-5 text-primary" /> Quizz
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Teste seus conhecimentos deste guia. Cada quiz vale XP ao atingir a nota mínima.
+          {unit ? `Unit ${unit} — ` : ""}Teste seus conhecimentos deste guia. Cada quiz vale XP ao atingir a nota mínima.
         </p>
       </div>
 
       {quizzes.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum quiz disponível neste produto ainda.</CardContent></Card>
+        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
+          {unit ? `Nenhum quiz disponível na Unit ${unit} ainda.` : "Nenhum quiz disponível neste produto ainda."}
+        </CardContent></Card>
       ) : (
         <ol className="space-y-2">
           {quizzes.map((q, i) => (
