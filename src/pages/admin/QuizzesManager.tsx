@@ -26,6 +26,7 @@ const emptyQuizForm = {
   bst_product_id: "",
   level: "A1",
   display_order: 0,
+  unit: "none",
   title: "",
   passing_score: 70,
 };
