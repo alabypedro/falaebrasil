@@ -3,6 +3,7 @@
 import * as React from 'npm:react@18.3.1'
 import {
   Body,
+  Button,
   Container,
   Column,
   Head,
@@ -35,6 +36,7 @@ interface Props {
   metrics?: Metric[]
   transcription?: string
   sections?: EvaluationSection[]
+  pdfUrl?: string
 }
 
 function scoreColor(score: number) {
@@ -52,6 +54,7 @@ const EvaluationReportEmail = ({
   metrics = [],
   transcription,
   sections = [],
+  pdfUrl,
 }: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
@@ -116,6 +119,19 @@ const EvaluationReportEmail = ({
           </Section>
         ))}
 
+        {pdfUrl && (
+          <Section style={pdfBox}>
+            <Text style={cardTitle}>Avaliação completa em PDF</Text>
+            <Text style={{ ...text, margin: '0 0 14px' }}>
+              Geramos um documento com o relatório completo desta prática para
+              você guardar, imprimir ou compartilhar com seu professor.
+            </Text>
+            <Button href={pdfUrl} style={pdfButton}>
+              Baixar avaliação em PDF
+            </Button>
+          </Section>
+        )}
+
         <Hr style={hr} />
         <Text style={text}>
           Continue praticando todos os dias — a constância é o que faz o seu
@@ -157,6 +173,7 @@ export const template = {
       { label: 'PronScore', value: 86 },
     ],
     transcription: 'There she goes, she goes, she goes.',
+    pdfUrl: 'https://example.com/avaliacao.pdf',
     sections: [
       {
         title: 'Sugestões de melhoria (IA)',
@@ -250,5 +267,22 @@ const bullet = {
   margin: '0 0 8px',
 }
 const hr = { borderColor: '#E4EAF2', margin: '24px 0' }
+const pdfBox = {
+  border: '1px solid #E4EAF2',
+  backgroundColor: '#F1F6FB',
+  borderRadius: '14px',
+  padding: '16px 18px',
+  margin: '0 0 14px',
+}
+const pdfButton = {
+  backgroundColor: '#12A8B5',
+  color: '#ffffff',
+  fontSize: '14px',
+  fontWeight: 'bold' as const,
+  borderRadius: '10px',
+  padding: '12px 20px',
+  textDecoration: 'none',
+  display: 'inline-block',
+}
 const link = { color: '#12A8B5', textDecoration: 'underline' }
 const footer = { fontSize: '12px', color: '#999999', margin: '20px 0 0' }

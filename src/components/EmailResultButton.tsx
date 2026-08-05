@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { buildEvaluationPdf } from "@/lib/evaluationPdf";
 
 export interface EmailResultPayload {
   toolLabel: string;
@@ -32,6 +33,30 @@ export default function EmailResultButton({ variant = "button", className, ...pa
     }
     setSending(true);
     try {
+      const dateLabel = new Date().toLocaleDateString("pt-BR");
+
+      // Gera o PDF da avaliação completa e guarda no armazenamento para anexar (via link) no e-mail
+      let pdfUrl: string | undefined;
+      try {
+        const blob = buildEvaluationPdf({
+          studentName: profile?.display_name ?? undefined,
+          dateLabel,
+          ...payload,
+        });
+        const path = `${user.id}/avaliacao-${Date.now()}.pdf`;
+        const { error: upErr } = await supabase.storage
+          .from("evaluation-reports")
+          .upload(path, blob, { contentType: "application/pdf", upsert: true });
+        if (upErr) throw upErr;
+        const { data: signed, error: signErr } = await supabase.storage
+          .from("evaluation-reports")
+          .createSignedUrl(path, 60 * 60 * 24 * 365);
+        if (signErr) throw signErr;
+        pdfUrl = signed?.signedUrl;
+      } catch (pdfError) {
+        console.error("Falha ao gerar/enviar o PDF da avaliação", pdfError);
+      }
+
       const { error } = await supabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "evaluation-report",
@@ -39,14 +64,20 @@ export default function EmailResultButton({ variant = "button", className, ...pa
           idempotencyKey: `evaluation-report-${user.id}-${Date.now()}`,
           templateData: {
             studentName: profile?.display_name ?? undefined,
-            dateLabel: new Date().toLocaleDateString("pt-BR"),
+            dateLabel,
+            pdfUrl,
             ...payload,
           },
         },
       });
       if (error) throw error;
       setSent(true);
-      toast({ title: "Avaliação enviada!", description: `Enviamos o resultado para ${user.email}.` });
+      toast({
+        title: "Avaliação enviada!",
+        description: pdfUrl
+          ? `Enviamos o resultado e o PDF da avaliação para ${user.email}.`
+          : `Enviamos o resultado para ${user.email}.`,
+      });
       setTimeout(() => setSent(false), 4000);
     } catch (e) {
       toast({ title: "Não foi possível enviar o e-mail", variant: "destructive" });
