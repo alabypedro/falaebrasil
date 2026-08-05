@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, HelpCircle, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
+interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
 interface LessonOption { id: string; title: string; module_id: string; module_title: string; }
 interface ModuleOption { id: string; title: string; course_title: string; }
@@ -26,6 +26,7 @@ const emptyQuizForm = {
   bst_product_id: "",
   level: "A1",
   display_order: 0,
+  unit: "none",
   title: "",
   passing_score: 70,
 };
@@ -81,6 +82,7 @@ export default function QuizzesManager() {
       bst_product_id: q.bst_product_id ?? "",
       level: q.level ?? "A1",
       display_order: q.display_order ?? 0,
+      unit: q.unit ? String(q.unit) : "none",
       title: q.title,
       passing_score: q.passing_score,
     });
@@ -126,6 +128,7 @@ export default function QuizzesManager() {
       bst_product_id: isBst ? form.bst_product_id : null,
       level: form.level,
       display_order: Number(form.display_order) || 0,
+      unit: form.unit === "none" ? null : parseInt(form.unit, 10),
       title: form.title.trim(),
       passing_score: form.passing_score,
     };
@@ -272,6 +275,18 @@ export default function QuizzesManager() {
                 <div className="space-y-2">
                   <Label>Ordem</Label>
                   <Input type="number" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unidade (Unit 1–12)</Label>
+                  <Select value={form.unit} onValueChange={(v) => setForm({ ...form, unit: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma</SelectItem>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((u) => (
+                        <SelectItem key={u} value={String(u)}>Unit {u}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}

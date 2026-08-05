@@ -19,12 +19,14 @@ interface LeiaeText {
   content: string;
   level: Level;
   display_order: number;
+  unit?: number | null;
 }
 
 export default function Leiae({
   bstProductId,
   fixedLevel,
-}: { bstProductId?: string; fixedLevel?: Level } = {}) {
+  unit,
+}: { bstProductId?: string; fixedLevel?: Level; unit?: number } = {}) {
   const bstMode = !!bstProductId;
   const { t } = useLanguage();
   const [text, setText] = useState("");
@@ -47,9 +49,11 @@ export default function Leiae({
   }, [bstProductId]);
 
   const levelItems = useMemo(() => {
-    if (fixedLevel) return items.filter((x) => x.level === fixedLevel);
-    return bstMode ? items : items.filter((x) => x.level === level);
-  }, [items, level, bstMode, fixedLevel]);
+    let list = items;
+    if (unit) list = list.filter((x) => x.unit === unit);
+    if (fixedLevel) return list.filter((x) => x.level === fixedLevel);
+    return bstMode ? list : list.filter((x) => x.level === level);
+  }, [items, level, bstMode, fixedLevel, unit]);
 
   const handleOpen = () => {
     const content = text.trim();
@@ -124,7 +128,9 @@ export default function Leiae({
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
           ) : levelItems.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-6">
-              {fixedLevel
+              {unit
+                ? `Nenhum texto disponível na Unit ${unit} ainda.`
+                : fixedLevel
                 ? `Nenhum texto disponível no nível ${fixedLevel} ainda.`
                 : bstMode
                   ? "Nenhum texto disponível neste produto ainda."

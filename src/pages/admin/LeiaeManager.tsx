@@ -24,6 +24,7 @@ interface LeiaeText {
   course_id: string | null;
   bst_product_id: string | null;
   display_order: number;
+  unit: number | null;
 }
 interface Course { id: string; title: string; }
 interface BstProduct { id: string; title: string; }
@@ -37,8 +38,8 @@ export default function LeiaeManager() {
 
   const [dialog, setDialog] = useState(false);
   const [editing, setEditing] = useState<LeiaeText | null>(null);
-  const [form, setForm] = useState<{ title: string; content: string; level: Level; course_id: string; bst_product_id: string; display_order: number; }>({
-    title: "", content: "", level: "A1", course_id: "none", bst_product_id: "none", display_order: 0,
+  const [form, setForm] = useState<{ title: string; content: string; level: Level; course_id: string; bst_product_id: string; display_order: number; unit: string; }>({
+    title: "", content: "", level: "A1", course_id: "none", bst_product_id: "none", display_order: 0, unit: "none",
   });
 
   const load = async () => {
@@ -57,7 +58,7 @@ export default function LeiaeManager() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", content: "", level: "A1", course_id: "none", bst_product_id: "none", display_order: items.length });
+    setForm({ title: "", content: "", level: "A1", course_id: "none", bst_product_id: "none", display_order: items.length, unit: "none" });
     setDialog(true);
   };
   const openEdit = (x: LeiaeText) => {
@@ -65,6 +66,7 @@ export default function LeiaeManager() {
     setForm({
       title: x.title, content: x.content, level: x.level,
       course_id: x.course_id ?? "none", bst_product_id: x.bst_product_id ?? "none", display_order: x.display_order,
+      unit: x.unit ? String(x.unit) : "none",
     });
     setDialog(true);
   };
@@ -77,6 +79,7 @@ export default function LeiaeManager() {
       course_id: form.course_id === "none" ? null : form.course_id,
       bst_product_id: form.bst_product_id === "none" ? null : form.bst_product_id,
       display_order: form.display_order,
+      unit: form.unit === "none" ? null : parseInt(form.unit, 10),
     };
     const { error } = editing
       ? await supabase.from("leiae_texts").update(payload).eq("id", editing.id)
@@ -146,6 +149,7 @@ export default function LeiaeManager() {
               <TableRow>
                 <TableHead>Título</TableHead>
                 <TableHead className="w-20">Nível</TableHead>
+                <TableHead className="w-20">Unidade</TableHead>
                 <TableHead>Trecho</TableHead>
                 <TableHead>Curso</TableHead>
                 <TableHead className="w-24 text-right">Ações</TableHead>
@@ -158,6 +162,7 @@ export default function LeiaeManager() {
                   <TableRow key={x.id}>
                     <TableCell className="font-medium">{x.title}</TableCell>
                     <TableCell><Badge variant="outline">{x.level}</Badge></TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{x.unit ? `Unit ${x.unit}` : "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-md truncate">{x.content.slice(0, 120)}…</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{course?.title ?? "—"}</TableCell>
                     <TableCell className="text-right">
@@ -220,6 +225,18 @@ export default function LeiaeManager() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div>
+              <Label>Unidade (produtos BST com Unit 1–12)</Label>
+              <Select value={form.unit} onValueChange={(v) => setForm({ ...form, unit: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((u) => (
+                    <SelectItem key={u} value={String(u)}>Unit {u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Texto em inglês (baseado num PDF, e-mail, guia…)</Label>

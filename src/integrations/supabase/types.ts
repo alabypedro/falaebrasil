@@ -259,6 +259,47 @@ export type Database = {
           },
         ]
       }
+      bst_product_pdfs: {
+        Row: {
+          bst_product_id: string
+          created_at: string
+          id: string
+          level: string
+          pdf_url: string | null
+          title: string | null
+          unit: number
+          updated_at: string
+        }
+        Insert: {
+          bst_product_id: string
+          created_at?: string
+          id?: string
+          level: string
+          pdf_url?: string | null
+          title?: string | null
+          unit: number
+          updated_at?: string
+        }
+        Update: {
+          bst_product_id?: string
+          created_at?: string
+          id?: string
+          level?: string
+          pdf_url?: string | null
+          title?: string | null
+          unit?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bst_product_pdfs_bst_product_id_fkey"
+            columns: ["bst_product_id"]
+            isOneToOne: false
+            referencedRelation: "bst_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bst_products: {
         Row: {
           active: boolean
@@ -895,6 +936,7 @@ export type Database = {
           id: string
           level: string
           title: string
+          unit: number | null
           updated_at: string
         }
         Insert: {
@@ -906,6 +948,7 @@ export type Database = {
           id?: string
           level?: string
           title: string
+          unit?: number | null
           updated_at?: string
         }
         Update: {
@@ -917,6 +960,7 @@ export type Database = {
           id?: string
           level?: string
           title?: string
+          unit?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1680,6 +1724,7 @@ export type Database = {
           level: string
           passing_score: number
           title: string
+          unit: number | null
           updated_at: string
         }
         Insert: {
@@ -1691,6 +1736,7 @@ export type Database = {
           level?: string
           passing_score?: number
           title: string
+          unit?: number | null
           updated_at?: string
         }
         Update: {
@@ -1702,6 +1748,7 @@ export type Database = {
           level?: string
           passing_score?: number
           title?: string
+          unit?: number | null
           updated_at?: string
         }
         Relationships: [

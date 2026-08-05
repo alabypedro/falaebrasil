@@ -12,9 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Mic, Users, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Mic, Users, Loader2, FileText } from "lucide-react";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+const UNITS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 interface BstProduct {
   id: string;
@@ -99,6 +100,58 @@ export default function LibraryManager() {
   const [accessRows, setAccessRows] = useState<(AccessRow & { email?: string | null })[]>([]);
   const [grantEmail, setGrantEmail] = useState("");
   const [granting, setGranting] = useState(false);
+
+  // PDFs por unidade (nível A1–C2 x Unit 1–12)
+  const [unitsProduct, setUnitsProduct] = useState<BstProduct | null>(null);
+  const [unitsLevel, setUnitsLevel] = useState<string>("A1");
+  const [unitRows, setUnitRows] = useState<Record<number, { title: string; pdf_url: string }>>({});
+  const [unitUploading, setUnitUploading] = useState<number | null>(null);
+
+  const loadUnitPdfs = async (p: BstProduct, lv: string) => {
+    const { data } = await supabase
+      .from("bst_product_pdfs")
+      .select("unit,title,pdf_url")
+      .eq("bst_product_id", p.id)
+      .eq("level", lv);
+    const map: Record<number, { title: string; pdf_url: string }> = {};
+    UNITS.forEach((u) => { map[u] = { title: "", pdf_url: "" }; });
+    ((data as any[]) || []).forEach((r) => {
+      map[r.unit] = { title: r.title ?? "", pdf_url: r.pdf_url ?? "" };
+    });
+    setUnitRows(map);
+  };
+
+  const openUnits = async (p: BstProduct) => {
+    setUnitsProduct(p);
+    setUnitsLevel("A1");
+    await loadUnitPdfs(p, "A1");
+  };
+
+  const saveUnitPdf = async (u: number, values: { title: string; pdf_url: string }) => {
+    if (!unitsProduct) return;
+    const { error } = await supabase.from("bst_product_pdfs").upsert({
+      bst_product_id: unitsProduct.id,
+      level: unitsLevel,
+      unit: u,
+      title: values.title.trim() || null,
+      pdf_url: values.pdf_url.trim() || null,
+    }, { onConflict: "bst_product_id,level,unit" });
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Unit ${u} salva`);
+  };
+
+  const uploadUnitPdf = async (u: number, file: File) => {
+    setUnitUploading(u);
+    const safe = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `bst/units/${Date.now()}_${safe}`;
+    const { error } = await supabase.storage.from("lesson-files").upload(path, file);
+    if (error) { toast.error("Erro no upload: " + error.message); setUnitUploading(null); return; }
+    const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
+    const next = { title: unitRows[u]?.title ?? "", pdf_url: data.publicUrl };
+    setUnitRows((r) => ({ ...r, [u]: next }));
+    await saveUnitPdf(u, next);
+    setUnitUploading(null);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -337,6 +390,9 @@ export default function LibraryManager() {
                     <Button variant="ghost" size="icon" title="Liberar acesso a alunos" onClick={() => openAccess(p)}>
                       <Users className="h-4 w-4" />
                     </Button>
+                    <Button variant="ghost" size="icon" title="PDFs por unidade (A1–C2 · Unit 1–12)" onClick={() => openUnits(p)}>
+                      <FileText className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -512,6 +568,65 @@ export default function LibraryManager() {
                   <Button variant="ghost" size="icon" onClick={() => revoke(r.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                 </div>
               ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* PDFs por unidade */}
+      <Dialog open={!!unitsProduct} onOpenChange={(o) => !o && setUnitsProduct(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>PDFs por unidade — {unitsProduct?.title}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nível</Label>
+              <Select
+                value={unitsLevel}
+                onValueChange={async (v) => { setUnitsLevel(v); if (unitsProduct) await loadUnitPdfs(unitsProduct, v); }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{LEVELS.map((lv) => <SelectItem key={lv} value={lv}>{lv}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="rounded-md border divide-y">
+              {UNITS.map((u) => {
+                const row = unitRows[u] ?? { title: "", pdf_url: "" };
+                return (
+                  <div key={u} className="p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold w-16 shrink-0">Unit {u}</span>
+                      <Input
+                        placeholder="Título (opcional)"
+                        value={row.title}
+                        onChange={(e) => setUnitRows((r) => ({ ...r, [u]: { ...row, title: e.target.value } }))}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="URL do PDF"
+                        value={row.pdf_url}
+                        onChange={(e) => setUnitRows((r) => ({ ...r, [u]: { ...row, pdf_url: e.target.value } }))}
+                      />
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        id={`unit-pdf-${u}`}
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadUnitPdf(u, f); }}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={unitUploading === u}
+                        onClick={() => document.getElementById(`unit-pdf-${u}`)?.click()}
+                      >
+                        {unitUploading === u ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload"}
+                      </Button>
+                      <Button size="sm" onClick={() => saveUnitPdf(u, row)}>Salvar</Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </DialogContent>
