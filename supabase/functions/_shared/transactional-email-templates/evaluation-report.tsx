@@ -3,6 +3,7 @@
 import * as React from 'npm:react@18.3.1'
 import {
   Body,
+  Button,
   Container,
   Column,
   Head,
@@ -35,6 +36,7 @@ interface Props {
   metrics?: Metric[]
   transcription?: string
   sections?: EvaluationSection[]
+  pdfUrl?: string
 }
 
 function scoreColor(score: number) {
@@ -52,6 +54,7 @@ const EvaluationReportEmail = ({
   metrics = [],
   transcription,
   sections = [],
+  pdfUrl,
 }: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
@@ -115,6 +118,19 @@ const EvaluationReportEmail = ({
             ))}
           </Section>
         ))}
+
+        {pdfUrl && (
+          <Section style={pdfBox}>
+            <Text style={cardTitle}>Avaliação completa em PDF</Text>
+            <Text style={{ ...text, margin: '0 0 14px' }}>
+              Geramos um documento com o relatório completo desta prática para
+              você guardar, imprimir ou compartilhar com seu professor.
+            </Text>
+            <Button href={pdfUrl} style={pdfButton}>
+              Baixar avaliação em PDF
+            </Button>
+          </Section>
+        )}
 
         <Hr style={hr} />
         <Text style={text}>
