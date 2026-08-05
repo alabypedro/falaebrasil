@@ -21,7 +21,10 @@ interface LeiaeText {
   display_order: number;
 }
 
-export default function Leiae({ bstProductId }: { bstProductId?: string } = {}) {
+export default function Leiae({
+  bstProductId,
+  fixedLevel,
+}: { bstProductId?: string; fixedLevel?: Level } = {}) {
   const bstMode = !!bstProductId;
   const { t } = useLanguage();
   const [text, setText] = useState("");
@@ -43,10 +46,10 @@ export default function Leiae({ bstProductId }: { bstProductId?: string } = {}) 
     })();
   }, [bstProductId]);
 
-  const levelItems = useMemo(
-    () => (bstMode ? items : items.filter((x) => x.level === level)),
-    [items, level, bstMode]
-  );
+  const levelItems = useMemo(() => {
+    if (fixedLevel) return items.filter((x) => x.level === fixedLevel);
+    return bstMode ? items : items.filter((x) => x.level === level);
+  }, [items, level, bstMode, fixedLevel]);
 
   const handleOpen = () => {
     const content = text.trim();
@@ -101,7 +104,7 @@ export default function Leiae({ bstProductId }: { bstProductId?: string } = {}) 
           <CardTitle className="text-base">{t("leiae.textsByLevel")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!bstMode && (
+          {!bstMode && !fixedLevel && (
           <div className="flex justify-center gap-2 flex-wrap">
             {LEVELS.map((lv) => (
               <Button
@@ -121,7 +124,11 @@ export default function Leiae({ bstProductId }: { bstProductId?: string } = {}) 
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
           ) : levelItems.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-6">
-              {bstMode ? "Nenhum texto disponível neste produto ainda." : `Nenhum texto disponível no nível ${level} ainda.`}
+              {fixedLevel
+                ? `Nenhum texto disponível no nível ${fixedLevel} ainda.`
+                : bstMode
+                  ? "Nenhum texto disponível neste produto ainda."
+                  : `Nenhum texto disponível no nível ${level} ainda.`}
             </p>
           ) : (
             <div className="grid gap-2">
