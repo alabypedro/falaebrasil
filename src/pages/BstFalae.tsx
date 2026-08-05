@@ -28,6 +28,7 @@ export default function BstFalae({ bstProductId }: { bstProductId: string }) {
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzedId, setAnalyzedId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const { isRecording, elapsed, recordings, startRecording, stopRecording } = useAudioRecorder();
 
@@ -58,6 +59,7 @@ export default function BstFalae({ bstProductId }: { bstProductId: string }) {
       if (!active) return;
       setIsAnalyzing(true);
       setFeedback(null);
+      setSuggestions([]);
       try {
         const fd = new FormData();
         fd.append("audio", blob, blob.type.includes("wav") ? "recording.wav" : "recording.webm");
@@ -89,6 +91,30 @@ export default function BstFalae({ bstProductId }: { bstProductId: string }) {
           await awardAiXp("falae", xp, `bst-falae:${active.id}:${crypto.randomUUID()}`);
           toast.success(`+${xp} XP`);
         }
+
+        // Sugestões de melhoria geradas por IA (mesma lógica do IA Falaê normal)
+        try {
+          const { data: feedbackData } = await supabase.functions.invoke("pronunciation-feedback", {
+            body: {
+              scores: {
+                pronunciation: scores.pronunciation,
+                fluency: scores.fluency,
+                grammar: scores.grammar,
+                vocabulary: scores.vocabulary,
+              },
+              transcription: scores.transcription || "",
+              referenceText: active.script_text,
+              mode: "scripted",
+            },
+          });
+          if (feedbackData?.suggestions?.length) {
+            setSuggestions(feedbackData.suggestions);
+          } else {
+            setSuggestions(["Não foi possível gerar feedback detalhado. Tente novamente."]);
+          }
+        } catch {
+          setSuggestions(["Erro ao gerar sugestões. Tente gravar novamente."]);
+        }
       } catch (e: any) {
         toast.error(e.message || "Erro na análise.");
       } finally {
@@ -112,7 +138,7 @@ export default function BstFalae({ bstProductId }: { bstProductId: string }) {
   if (active) {
     return (
       <div className="space-y-4 max-w-2xl">
-        <Button variant="ghost" size="sm" onClick={() => { setActive(null); setFeedback(null); }}>
+        <Button variant="ghost" size="sm" onClick={() => { setActive(null); setFeedback(null); setSuggestions([]); }}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Voltar aos scripts
         </Button>
         <Card>
@@ -146,7 +172,11 @@ export default function BstFalae({ bstProductId }: { bstProductId: string }) {
             <p className="text-sm text-muted-foreground">Analisando pronúncia…</p>
           </div>
         )}
-        <FeedbackCard scores={feedback} />
+        <FeedbackCard
+          scores={feedback}
+          suggestions={suggestions.length > 0 ? suggestions : undefined}
+          toolLabel="IA Falaê BST"
+        />
       </div>
     );
   }
@@ -166,7 +196,7 @@ export default function BstFalae({ bstProductId }: { bstProductId: string }) {
           {scripts.map((s) => (
             <button
               key={s.id}
-              onClick={() => { setActive(s); setFeedback(null); }}
+              onClick={() => { setActive(s); setFeedback(null); setSuggestions([]); }}
               className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left hover:border-primary hover:bg-muted/40 transition"
             >
               <div className="flex-1 min-w-0">
