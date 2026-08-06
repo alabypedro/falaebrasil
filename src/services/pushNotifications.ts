@@ -72,12 +72,19 @@ export async function registerPushNotification() {
   }
 }
 
+let lastActivityPing = 0;
+
 export async function updateLastActivity() {
+  // Throttle: no more than one write every 5 minutes.
+  const now = Date.now();
+  if (now - lastActivityPing < 5 * 60 * 1000) return;
+  lastActivityPing = now;
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
   await supabase
     .from("profiles")
     .update({ last_activity: new Date().toISOString() })
-    .eq("id", user.id);
+    .eq("user_id", user.id);
 }

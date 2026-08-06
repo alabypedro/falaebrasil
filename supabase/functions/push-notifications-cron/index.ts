@@ -13,23 +13,28 @@ serve(async (req) => {
   }
 
   try {
-    // Auth guard: only the service role (via cron) or an admin may invoke this.
+    const serviceKeyEarly = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const cronSecret = Deno.env.get('CRON_SECRET') ?? ''
+    const providedCronSecret = req.headers.get('x-cron-secret') ?? ''
+    const isCron = !!cronSecret && providedCronSecret === cronSecret
+
+    // Auth guard: the cron secret, the service role, or an admin may invoke this.
     const authHeader = req.headers.get('Authorization') ?? ''
-    if (!authHeader.startsWith('Bearer ')) {
+    if (!isCron && !authHeader.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
     const token = authHeader.replace('Bearer ', '')
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const serviceKey = serviceKeyEarly
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       serviceKey
     )
 
-    if (token !== serviceKey) {
+    if (!isCron && token !== serviceKey) {
       const { data: userData } = await supabase.auth.getUser(token)
       if (!userData?.user?.id) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -62,7 +67,7 @@ serve(async (req) => {
 
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
-      .select('id, last_activity, last_notification_sent')
+      .select('id, user_id, last_activity, last_notification_sent')
       .lt('last_activity', yesterday)
 
     if (profileError) throw profileError
@@ -79,12 +84,12 @@ serve(async (req) => {
       const { data: subscriptions } = await supabase
         .from('push_subscriptions')
         .select('subscription_data')
-        .eq('user_id', profile.id)
+        .eq('user_id', profile.user_id)
 
       if (subscriptions && subscriptions.length > 0) {
         for (const sub of subscriptions) {
           try {
-            console.log(`Sending notification to user ${profile.id} (device: ${sub.subscription_data.endpoint})`);
+            console.log(`Sending notification to user ${profile.user_id}`);
             await webpush.sendNotification(
               sub.subscription_data,
               JSON.stringify({
@@ -94,7 +99,7 @@ serve(async (req) => {
               })
             )
           } catch (e) {
-            console.error(`Error sending push to user ${profile.id}:`, e)
+            console.error(`Error sending push to user ${profile.user_id}:`, e)
           }
         }
 
@@ -103,7 +108,7 @@ serve(async (req) => {
           .update({ last_notification_sent: new Date().toISOString() })
           .eq('id', profile.id)
         
-        results.push({ userId: profile.id, status: 'sent' })
+        results.push({ userId: profile.user_id, status: 'sent' })
       }
     }
 
