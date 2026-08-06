@@ -4,7 +4,7 @@ import {
   BookOpen, Layers, FileText, HelpCircle,
   Brain, BookText, Mic, MessageSquare, Headphones,
   PlayCircle, Smartphone,
-  ShieldCheck, UserPlus, Mail,
+  ShieldCheck,
   CreditCard, Webhook, Link2,
 } from "lucide-react";
 
@@ -95,12 +95,10 @@ export function TutorialsHub() {
 export function AdminsHub() {
   return (
     <HubGrid
-      title="Admins & Alunos"
-      subtitle="Gerenciar administradores e onboarding de alunos."
+      title="Admins"
+      subtitle="Gerenciar administradores da plataforma."
       items={[
         { to: "/admin/admins", label: "Admins", description: "Gerenciar administradores", icon: ShieldCheck },
-        { to: "/admin/create-student", label: "Criar Aluno", description: "Cadastro manual com senha temporária", icon: UserPlus },
-        { to: "/admin/welcome-email", label: "Email Boas-vindas", description: "Reenviar email de criação de senha", icon: Mail },
       ]}
     />
   );
