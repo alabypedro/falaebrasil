@@ -142,6 +142,31 @@ Deno.serve(async (req) => {
 
     if (grant) {
       await applyGrantsToUser(admin, foundId, courseIds, bstProductIds, planTier);
+    } else {
+      // Revoke: remove the selected course / BST grants.
+      if (courseIds.length > 0) {
+        const { error } = await admin
+          .from("user_course_access")
+          .delete()
+          .eq("user_id", foundId)
+          .in("course_id", courseIds);
+        if (error) throw error;
+        const { count } = await admin
+          .from("user_course_access")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", foundId);
+        if ((count ?? 0) === 0) {
+          await admin.from("profiles").update({ has_course_access: false }).eq("user_id", foundId);
+        }
+      }
+      if (bstProductIds.length > 0) {
+        const { error } = await admin
+          .from("bst_product_access")
+          .delete()
+          .eq("user_id", foundId)
+          .in("product_id", bstProductIds);
+        if (error) throw error;
+      }
     }
 
     return jsonResponse({
@@ -149,6 +174,8 @@ Deno.serve(async (req) => {
       applied: updates,
       courses_granted: grant ? courseIds.length : 0,
       bst_products_granted: grant ? bstProductIds.length : 0,
+      courses_revoked: grant ? 0 : courseIds.length,
+      bst_products_revoked: grant ? 0 : bstProductIds.length,
     });
   } catch (e) {
     console.error("grant-access-admin error", e);
