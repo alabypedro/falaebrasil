@@ -68,11 +68,11 @@ Deno.serve(async (req) => {
           .maybeSingle(),
         admin
           .from("user_course_access")
-          .select("granted_at,source,courses(title,level,required_tier)")
+          .select("course_id,granted_at,source,courses(title,level,required_tier)")
           .eq("user_id", foundId),
         admin
           .from("bst_product_access")
-          .select("granted_at,source,bst_products(title)")
+          .select("product_id,granted_at,source,bst_products(title)")
           .eq("user_id", foundId),
         admin.from("student_categories").select("code").eq("user_id", foundId),
       ]);
@@ -87,12 +87,14 @@ Deno.serve(async (req) => {
       has_course_access: profile?.has_course_access ?? false,
       categories: (cats ?? []).map((c: { code: string }) => c.code),
       courses: (courseRows ?? []).map((r: Record<string, unknown>) => ({
+        course_id: r.course_id,
         title: (r.courses as { title?: string } | null)?.title ?? "—",
         level: (r.courses as { level?: string } | null)?.level ?? null,
         source: r.source,
         granted_at: r.granted_at,
       })),
       bst_products: (bstRows ?? []).map((r: Record<string, unknown>) => ({
+        product_id: r.product_id,
         title: (r.bst_products as { title?: string } | null)?.title ?? "—",
         source: r.source,
         granted_at: r.granted_at,

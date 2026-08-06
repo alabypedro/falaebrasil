@@ -41,7 +41,7 @@ function genPwd(): string {
   return p.split("").sort(() => Math.random() - 0.5).join("");
 }
 
-export default function CreateStudent() {
+export default function CreateStudent({ onCreated }: { onCreated?: () => void } = {}) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState(genPwd());
@@ -112,6 +112,7 @@ export default function CreateStudent() {
       if ((data as any)?.error) throw new Error((data as any).error);
       setResult({ email: data.email, password: data.password, created: data.created });
       toast.success(data.created ? "Aluno criado!" : "Aluno atualizado com nova senha!");
+      onCreated?.();
     } catch (err: any) {
       toast.error(err.message || "Erro ao criar aluno.");
     } finally {
