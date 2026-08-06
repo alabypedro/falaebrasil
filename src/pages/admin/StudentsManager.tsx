@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import StudentAccessDialog from "@/components/admin/StudentAccessDialog";
 import CreateStudent from "@/pages/admin/CreateStudent";
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
-import { toast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 12;
 
