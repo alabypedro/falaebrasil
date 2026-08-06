@@ -6,9 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Trash2, ShieldCheck, UserPlus, KeyRound, Users } from "lucide-react";
+import { Loader2, Trash2, ShieldCheck, UserPlus, KeyRound, Users, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type AdminEntry = { user_id: string; email: string | null };
+
+interface LookupResult {
+  email: string;
+  display_name: string | null;
+  plan_tier: string | null;
+  subscription_status: string | null;
+  has_course_access: boolean;
+  categories: string[];
+  courses: { title: string; level: string | null; source: string; granted_at: string }[];
+  bst_products: { title: string; source: string; granted_at: string }[];
+}
 
 interface CourseRow {
   id: string;
@@ -43,6 +55,9 @@ export default function AdminsManager() {
   const [bulkCourses, setBulkCourses] = useState<Record<string, boolean>>({});
   const [bulkBst, setBulkBst] = useState<Record<string, boolean>>({});
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [lookupBusy, setLookupBusy] = useState(false);
+  const [lookup, setLookup] = useState<LookupResult | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -88,6 +103,25 @@ export default function AdminsManager() {
 
   const idsOf = (rec: Record<string, boolean>) =>
     Object.keys(rec).filter((k) => rec[k]);
+
+  const handleLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!lookupEmail.trim()) return;
+    setLookupBusy(true);
+    setLookup(null);
+    const { data, error } = await supabase.functions.invoke("lookup-access-admin", {
+      body: { email: lookupEmail.trim() },
+    });
+    setLookupBusy(false);
+    if (error || data?.error) {
+      toast.error(data?.error ?? "Erro ao consultar acessos");
+      return;
+    }
+    setLookup(data as LookupResult);
+  };
+
+  const fmtDate = (d: string) =>
+    d ? new Date(d).toLocaleDateString("pt-BR") : "—";
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
