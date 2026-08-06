@@ -12,7 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Loader2, Search, Settings2 } from "lucide-react";
+import { Loader2, Search, Settings2, UserPlus, Mail } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import StudentAccessDialog from "@/components/admin/StudentAccessDialog";
+import CreateStudent from "@/pages/admin/CreateStudent";
+import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
 import { toast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 12;
@@ -53,6 +57,9 @@ export default function StudentsManager() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [accessTarget, setAccessTarget] = useState<StudentRow | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -170,18 +177,56 @@ export default function StudentsManager() {
         </p>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setPage(1);
-          }}
-          placeholder="Pesquisar por nome ou email..."
-          className="pl-9"
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Pesquisar por nome ou email..."
+            className="pl-9"
+          />
+        </div>
+        <Button onClick={() => setCreateOpen(true)}>
+          <UserPlus className="h-4 w-4 mr-1.5" /> Criar aluno
+        </Button>
+        <Button variant="outline" onClick={() => setWelcomeOpen(true)}>
+          <Mail className="h-4 w-4 mr-1.5" /> Envio manual
+        </Button>
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">Criar aluno</DialogTitle>
+          </DialogHeader>
+          <CreateStudent onCreated={load} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={welcomeOpen} onOpenChange={setWelcomeOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="text-base">Reenviar email de boas-vindas</DialogTitle>
+          </DialogHeader>
+          <WelcomeEmailSender />
+        </DialogContent>
+      </Dialog>
+
+      {accessTarget && (
+        <StudentAccessDialog
+          open={!!accessTarget}
+          onOpenChange={(v) => !v && setAccessTarget(null)}
+          email={accessTarget.email ?? ""}
+          userId={accessTarget.user_id}
+          displayName={accessTarget.display_name}
+          categoryDefs={defs}
+          onChanged={load}
+        />
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -200,12 +245,17 @@ export default function StudentsManager() {
                 const active = isActive(s, defs);
                 return (
                   <div key={s.user_id} className="flex flex-wrap items-center gap-3 p-4">
-                    <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => s.email && setAccessTarget(s)}
+                      disabled={!s.email}
+                      className="min-w-0 flex-1 text-left rounded-md px-2 py-1 -mx-2 hover:bg-muted/50 transition-colors disabled:opacity-60 disabled:hover:bg-transparent"
+                    >
                       <div className="text-sm font-medium text-foreground truncate">
                         {s.display_name || "(sem nome)"}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">{s.email || "—"}</div>
-                    </div>
+                    </button>
 
                     <div className="flex flex-wrap items-center gap-1.5">
                       {s.codes.length === 0 ? (
