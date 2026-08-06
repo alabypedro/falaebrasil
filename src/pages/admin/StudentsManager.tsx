@@ -48,7 +48,6 @@ export default function StudentsManager() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [busy, setBusy] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [accessTarget, setAccessTarget] = useState<StudentRow | null>(null);
@@ -101,63 +100,6 @@ export default function StudentsManager() {
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const toggleCategory = async (student: StudentRow, def: CategoryDef, checked: boolean) => {
-    setBusy(student.user_id + def.code);
-    try {
-      if (checked) {
-        const { error } = await supabase
-          .from("student_categories")
-          .insert({ user_id: student.user_id, code: def.code, source: "admin" });
-        if (error && error.code !== "23505") throw error;
-        // OPEN libera tudo e não coexiste com categorias BST.
-        if (def.kind === "open") {
-          // Regra: aluno OPEN tem acesso a TUDO (cursos inclusos).
-          if (student.email) {
-            await supabase.functions.invoke("grant-access-admin", {
-              body: {
-                email: student.email,
-                accesses: ["has_course_access"],
-                plan_tier: ["pro", "vip"].includes((student.plan_tier ?? "").toLowerCase())
-                  ? student.plan_tier
-                  : "open",
-                grant: true,
-              },
-            });
-          }
-          const bstCodes = defs.filter((d) => d.kind === "bst").map((d) => d.code);
-          if (bstCodes.length) {
-            await supabase
-              .from("student_categories")
-              .delete()
-              .eq("user_id", student.user_id)
-              .in("code", bstCodes);
-          }
-        } else {
-          const openCodes = defs.filter((d) => d.kind === "open").map((d) => d.code);
-          if (openCodes.length) {
-            await supabase
-              .from("student_categories")
-              .delete()
-              .eq("user_id", student.user_id)
-              .in("code", openCodes);
-          }
-        }
-      } else {
-        const { error } = await supabase
-          .from("student_categories")
-          .delete()
-          .eq("user_id", student.user_id)
-          .eq("code", def.code);
-        if (error) throw error;
-      }
-      await load();
-      toast({ title: "Categorias atualizadas" });
-    } catch (e: any) {
-      toast({ title: "Erro ao atualizar", description: e.message, variant: "destructive" });
-    } finally {
-      setBusy(null);
-    }
-  };
 
   return (
     <div className="space-y-5">
