@@ -391,6 +391,94 @@ export default function AdminsManager() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
+            <Search className="h-4 w-4" /> Consultar acessos por email
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLookup} className="flex flex-col sm:flex-row gap-2">
+            <Input
+              type="email"
+              placeholder="email@exemplo.com"
+              value={lookupEmail}
+              onChange={(e) => setLookupEmail(e.target.value)}
+              required
+            />
+            <Button type="submit" disabled={lookupBusy}>
+              {lookupBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
+            </Button>
+          </form>
+
+          {lookup && (
+            <div className="mt-4 space-y-4">
+              <div className="rounded-lg border border-border p-3 space-y-1">
+                <p className="text-sm font-medium break-all">
+                  {lookup.display_name ? `${lookup.display_name} — ` : ""}
+                  {lookup.email}
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Badge variant="secondary">Plano: {lookup.plan_tier ?? "—"}</Badge>
+                  <Badge variant="secondary">
+                    Assinatura: {lookup.subscription_status ?? "—"}
+                  </Badge>
+                  {lookup.categories.length > 0 &&
+                    lookup.categories.map((c) => (
+                      <Badge key={c} variant="outline">
+                        Categoria: {c}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase text-muted-foreground">
+                  Cursos liberados ({lookup.courses.length})
+                </span>
+                {lookup.courses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum curso liberado.</p>
+                ) : (
+                  <ul className="divide-y rounded-md border border-border">
+                    {lookup.courses.map((c, i) => (
+                      <li key={i} className="flex items-center justify-between gap-2 px-3 py-2">
+                        <span className="text-sm">
+                          {c.title}
+                          {c.level ? ` (${c.level})` : ""}
+                        </span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {c.source} · {fmtDate(c.granted_at)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-semibold uppercase text-muted-foreground">
+                  Produtos BST liberados ({lookup.bst_products.length})
+                </span>
+                {lookup.bst_products.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum produto BST liberado.</p>
+                ) : (
+                  <ul className="divide-y rounded-md border border-border">
+                    {lookup.bst_products.map((p, i) => (
+                      <li key={i} className="flex items-center justify-between gap-2 px-3 py-2">
+                        <span className="text-sm">{p.title}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {p.source} · {fmtDate(p.granted_at)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
             <ShieldCheck className="h-4 w-4" /> Administradores atuais
           </CardTitle>
         </CardHeader>
