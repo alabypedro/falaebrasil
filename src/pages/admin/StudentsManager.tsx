@@ -4,15 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Loader2, Search, Settings2, UserPlus, Mail } from "lucide-react";
+import { Loader2, Search, UserPlus, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StudentAccessDialog from "@/components/admin/StudentAccessDialog";
 import CreateStudent from "@/pages/admin/CreateStudent";
@@ -281,34 +273,6 @@ export default function StudentsManager() {
                       {active ? "Aluno ativo" : "Inativo por inadimplência"}
                     </Badge>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="shrink-0">
-                          <Settings2 className="h-4 w-4 mr-1.5" />
-                          Categorias
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-64">
-                        <DropdownMenuLabel>Categorias do aluno</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <div className="p-2 space-y-2">
-                          {defs.map((d) => (
-                            <label
-                              key={d.code}
-                              className="flex items-center gap-2 text-sm cursor-pointer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Checkbox
-                                checked={s.codes.includes(d.code)}
-                                disabled={busy === s.user_id + d.code}
-                                onCheckedChange={(v) => toggleCategory(s, d, !!v)}
-                              />
-                              <span className="truncate">{d.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 );
               })}
