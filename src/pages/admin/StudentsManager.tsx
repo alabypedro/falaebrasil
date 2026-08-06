@@ -4,20 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Loader2, Search, Settings2, UserPlus, Mail } from "lucide-react";
+import { Loader2, Search, UserPlus, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StudentAccessDialog from "@/components/admin/StudentAccessDialog";
 import CreateStudent from "@/pages/admin/CreateStudent";
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
-import { toast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 12;
 
@@ -56,7 +47,6 @@ export default function StudentsManager() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [busy, setBusy] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [accessTarget, setAccessTarget] = useState<StudentRow | null>(null);
@@ -109,63 +99,6 @@ export default function StudentsManager() {
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const toggleCategory = async (student: StudentRow, def: CategoryDef, checked: boolean) => {
-    setBusy(student.user_id + def.code);
-    try {
-      if (checked) {
-        const { error } = await supabase
-          .from("student_categories")
-          .insert({ user_id: student.user_id, code: def.code, source: "admin" });
-        if (error && error.code !== "23505") throw error;
-        // OPEN libera tudo e não coexiste com categorias BST.
-        if (def.kind === "open") {
-          // Regra: aluno OPEN tem acesso a TUDO (cursos inclusos).
-          if (student.email) {
-            await supabase.functions.invoke("grant-access-admin", {
-              body: {
-                email: student.email,
-                accesses: ["has_course_access"],
-                plan_tier: ["pro", "vip"].includes((student.plan_tier ?? "").toLowerCase())
-                  ? student.plan_tier
-                  : "open",
-                grant: true,
-              },
-            });
-          }
-          const bstCodes = defs.filter((d) => d.kind === "bst").map((d) => d.code);
-          if (bstCodes.length) {
-            await supabase
-              .from("student_categories")
-              .delete()
-              .eq("user_id", student.user_id)
-              .in("code", bstCodes);
-          }
-        } else {
-          const openCodes = defs.filter((d) => d.kind === "open").map((d) => d.code);
-          if (openCodes.length) {
-            await supabase
-              .from("student_categories")
-              .delete()
-              .eq("user_id", student.user_id)
-              .in("code", openCodes);
-          }
-        }
-      } else {
-        const { error } = await supabase
-          .from("student_categories")
-          .delete()
-          .eq("user_id", student.user_id)
-          .eq("code", def.code);
-        if (error) throw error;
-      }
-      await load();
-      toast({ title: "Categorias atualizadas" });
-    } catch (e: any) {
-      toast({ title: "Erro ao atualizar", description: e.message, variant: "destructive" });
-    } finally {
-      setBusy(null);
-    }
-  };
 
   return (
     <div className="space-y-5">
@@ -281,34 +214,6 @@ export default function StudentsManager() {
                       {active ? "Aluno ativo" : "Inativo por inadimplência"}
                     </Badge>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="shrink-0">
-                          <Settings2 className="h-4 w-4 mr-1.5" />
-                          Categorias
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-64">
-                        <DropdownMenuLabel>Categorias do aluno</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <div className="p-2 space-y-2">
-                          {defs.map((d) => (
-                            <label
-                              key={d.code}
-                              className="flex items-center gap-2 text-sm cursor-pointer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Checkbox
-                                checked={s.codes.includes(d.code)}
-                                disabled={busy === s.user_id + d.code}
-                                onCheckedChange={(v) => toggleCategory(s, d, !!v)}
-                              />
-                              <span className="truncate">{d.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 );
               })}
