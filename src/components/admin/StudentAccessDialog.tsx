@@ -242,6 +242,7 @@ export default function StudentAccessDialog({
     }
     setBusy("cat");
     try {
+      const allCourseIds = courses.map((c) => c.id);
       if (checked) {
         const { error } = await supabase
           .from("student_categories")
@@ -252,6 +253,7 @@ export default function StudentAccessDialog({
             body: {
               email,
               accesses: ["has_course_access"],
+              course_ids: allCourseIds,
               plan_tier: ["pro", "vip"].includes((lookup?.plan_tier ?? "").toLowerCase())
                 ? lookup?.plan_tier
                 : "open",
@@ -281,6 +283,20 @@ export default function StudentAccessDialog({
           .eq("user_id", userId)
           .eq("code", def.code);
         if (error) throw error;
+        // Ao desmarcar "Aluno OPEN", remove todos os cursos liberados.
+        if (def.kind === "open") {
+          const idsToRevoke = [...activeCourseIds];
+          if (idsToRevoke.length) {
+            await supabase.functions.invoke("grant-access-admin", {
+              body: {
+                email,
+                accesses: ["has_course_access"],
+                course_ids: idsToRevoke,
+                grant: false,
+              },
+            });
+          }
+        }
       }
       toast.success("Categorias atualizadas");
       await refresh();
