@@ -339,6 +339,36 @@ export default function BstProduct() {
         </>
       )}
 
+      {levelMode && module0View && hasAccess && (
+        <>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{MODULE0_TITLE}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tutorial em PDF com o método de estudo para provas e exames.
+            </p>
+          </div>
+          <Card className="max-w-sm">
+            <CardContent className="p-5 space-y-3 text-center">
+              <FileText className="h-7 w-7 mx-auto text-primary" />
+              <div className="text-sm font-semibold">{module0?.title || "PDF do tutorial"}</div>
+              <Button
+                size="sm"
+                className="w-full"
+                disabled={!module0?.pdf_url}
+                onClick={() => {
+                  if (!module0?.pdf_url) return;
+                  setPdfUrl(module0.pdf_url);
+                  setPdfTitle(MODULE0_TITLE);
+                  setReadingPdf(true);
+                }}
+              >
+                {module0?.pdf_url ? "Abrir e baixar" : "Indisponível"}
+              </Button>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
       {view === "primary" && hasAccess && (
         levelMode && module0View ? null :
         product.primary_tool === "quiz" || levelMode
