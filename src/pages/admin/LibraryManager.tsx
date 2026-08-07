@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Mic, Users, Loader2, FileText } from "lucide-react";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+const MODULE0_LEVEL = "M0";
 const UNITS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 interface BstProduct {
@@ -114,7 +115,7 @@ export default function LibraryManager() {
       .eq("bst_product_id", p.id)
       .eq("level", lv);
     const map: Record<number, { title: string; pdf_url: string }> = {};
-    UNITS.forEach((u) => { map[u] = { title: "", pdf_url: "" }; });
+    (lv === MODULE0_LEVEL ? [0] : UNITS).forEach((u) => { map[u] = { title: "", pdf_url: "" }; });
     ((data as any[]) || []).forEach((r) => {
       map[r.unit] = { title: r.title ?? "", pdf_url: r.pdf_url ?? "" };
     });
@@ -585,16 +586,21 @@ export default function LibraryManager() {
                 onValueChange={async (v) => { setUnitsLevel(v); if (unitsProduct) await loadUnitPdfs(unitsProduct, v); }}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{LEVELS.map((lv) => <SelectItem key={lv} value={lv}>{lv}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  <SelectItem value={MODULE0_LEVEL}>Módulo 0 — Tutorial</SelectItem>
+                  {LEVELS.map((lv) => <SelectItem key={lv} value={lv}>{lv}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
             <div className="rounded-md border divide-y">
-              {UNITS.map((u) => {
+              {(unitsLevel === MODULE0_LEVEL ? [0] : UNITS).map((u) => {
                 const row = unitRows[u] ?? { title: "", pdf_url: "" };
                 return (
                   <div key={u} className="p-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold w-16 shrink-0">Unit {u}</span>
+                      <span className="text-sm font-semibold w-16 shrink-0">
+                        {unitsLevel === MODULE0_LEVEL ? "Tutorial" : `Unit ${u}`}
+                      </span>
                       <Input
                         placeholder="Título (opcional)"
                         value={row.title}
