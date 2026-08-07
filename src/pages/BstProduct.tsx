@@ -340,6 +340,7 @@ export default function BstProduct() {
       )}
 
       {view === "primary" && hasAccess && (
+        levelMode && module0View ? null :
         product.primary_tool === "quiz" || levelMode
           ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
           : <Memorizae bstProductId={product.id} />
