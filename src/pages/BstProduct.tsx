@@ -37,6 +37,8 @@ const LEVELS = [
 ] as const;
 type LevelCode = typeof LEVELS[number]["code"];
 const UNITS = Array.from({ length: 12 }, (_, i) => i + 1);
+const MODULE0_LEVEL = "M0";
+const MODULE0_TITLE = "Módulo 0 - Tutorial: Como Estudar para Provas";
 
 interface UnitPdf { unit: number; title: string | null; pdf_url: string | null; }
 
@@ -54,6 +56,8 @@ export default function BstProduct() {
   const [levelTool, setLevelTool] = useState<LevelTool | null>(null);
   const [unit, setUnit] = useState<number | null>(null);
   const [unitPdfs, setUnitPdfs] = useState<UnitPdf[]>([]);
+  const [module0, setModule0] = useState<UnitPdf | null>(null);
+  const [module0View, setModule0View] = useState(false);
   const { isBstOnly, slug: ownedSlug, loading: bstLoading } = useBstOnly();
 
   useEffect(() => {
@@ -89,6 +93,19 @@ export default function BstProduct() {
     })();
   }, [product?.id, levelMode, level]);
 
+  useEffect(() => {
+    if (!product || !levelMode) { setModule0(null); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("bst_product_pdfs")
+        .select("unit,title,pdf_url")
+        .eq("bst_product_id", product.id)
+        .eq("level", MODULE0_LEVEL)
+        .maybeSingle();
+      setModule0((data as UnitPdf) || null);
+    })();
+  }, [product?.id, levelMode]);
+
   if (loading || bstLoading) {
     return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   }
@@ -113,6 +130,7 @@ export default function BstProduct() {
 
   const back = () => {
     if (levelMode) {
+      if (module0View) { setModule0View(false); return; }
       if (unit) { setUnit(null); setView("home"); return; }
       if (levelTool) return setLevelTool(null);
       if (level) return setLevel(null);
@@ -124,7 +142,9 @@ export default function BstProduct() {
   };
 
   const backLabel = levelMode
-    ? unit
+    ? module0View
+      ? product.title
+      : unit
       ? `Unidades — ${toolLabel[levelTool!]}`
       : levelTool
         ? `${level} - ${LEVELS.find((l) => l.code === level)?.label}`
@@ -148,7 +168,7 @@ export default function BstProduct() {
     setView(levelTool === "quiz" ? "primary" : "tool");
   };
 
-  const showLevelHome = levelMode && view === "home" && !unit;
+  const showLevelHome = levelMode && view === "home" && !unit && !module0View;
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
@@ -187,7 +207,16 @@ export default function BstProduct() {
               </CardContent>
             </Card>
           ) : levelMode && !level ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-3">
+              <button
+                onClick={() => setModule0View(true)}
+                className="w-full flex items-center gap-3 rounded-lg border bg-card p-5 text-left hover:border-primary hover:bg-muted/40 transition"
+              >
+                <FileText className="h-5 w-5 text-primary shrink-0" />
+                <span className="flex-1 text-sm font-semibold text-foreground">{MODULE0_TITLE}</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {LEVELS.map((lv) => (
                 <button
                   key={lv.code}
@@ -198,6 +227,7 @@ export default function BstProduct() {
                   <span className="block text-sm font-semibold text-foreground">{lv.label}</span>
                 </button>
               ))}
+              </div>
             </div>
           ) : levelMode && !levelTool ? (
             <div className="grid gap-4 sm:grid-cols-3">
@@ -309,7 +339,38 @@ export default function BstProduct() {
         </>
       )}
 
+      {levelMode && module0View && hasAccess && (
+        <>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{MODULE0_TITLE}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Tutorial em PDF com o método de estudo para provas e exames.
+            </p>
+          </div>
+          <Card className="max-w-sm">
+            <CardContent className="p-5 space-y-3 text-center">
+              <FileText className="h-7 w-7 mx-auto text-primary" />
+              <div className="text-sm font-semibold">{module0?.title || "PDF do tutorial"}</div>
+              <Button
+                size="sm"
+                className="w-full"
+                disabled={!module0?.pdf_url}
+                onClick={() => {
+                  if (!module0?.pdf_url) return;
+                  setPdfUrl(module0.pdf_url);
+                  setPdfTitle(MODULE0_TITLE);
+                  setReadingPdf(true);
+                }}
+              >
+                {module0?.pdf_url ? "Abrir e baixar" : "Indisponível"}
+              </Button>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
       {view === "primary" && hasAccess && (
+        levelMode && module0View ? null :
         product.primary_tool === "quiz" || levelMode
           ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
           : <Memorizae bstProductId={product.id} />
