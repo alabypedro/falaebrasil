@@ -24,7 +24,7 @@ interface BstProduct {
 }
 
 type View = "home" | "primary" | "tool";
-type LevelTool = "pdf" | "leiae" | "quiz";
+type LevelTool = "leiae" | "quiz";
 
 const LEVEL_SLUG = "bst-cartilha-de-ingles-instrumental-do-zero-a1-ao-c2-avancado";
 const LEVELS = [
@@ -55,7 +55,7 @@ export default function BstProduct() {
   const [level, setLevel] = useState<LevelCode | null>(null);
   const [levelTool, setLevelTool] = useState<LevelTool | null>(null);
   const [unit, setUnit] = useState<number | null>(null);
-  const [unitPdfs, setUnitPdfs] = useState<UnitPdf[]>([]);
+  const [levelPdf, setLevelPdf] = useState<UnitPdf | null>(null);
   const [module0, setModule0] = useState<UnitPdf | null>(null);
   const [module0View, setModule0View] = useState(false);
   const { isBstOnly, slug: ownedSlug, loading: bstLoading } = useBstOnly();
@@ -81,15 +81,16 @@ export default function BstProduct() {
   const levelMode = product?.slug === LEVEL_SLUG;
 
   useEffect(() => {
-    if (!product || !levelMode || !level) { setUnitPdfs([]); return; }
+    if (!product || !levelMode || !level) { setLevelPdf(null); return; }
     (async () => {
       const { data } = await supabase
         .from("bst_product_pdfs")
         .select("unit,title,pdf_url")
         .eq("bst_product_id", product.id)
         .eq("level", level)
-        .order("unit");
-      setUnitPdfs((data as UnitPdf[]) || []);
+        .eq("unit", 0)
+        .maybeSingle();
+      setLevelPdf((data as UnitPdf) || null);
     })();
   }, [product?.id, levelMode, level]);
 
@@ -126,7 +127,7 @@ export default function BstProduct() {
     );
   }
 
-  const toolLabel: Record<LevelTool, string> = { pdf: "PDF do produto", leiae: "IA Leiaê", quiz: "Quiz" };
+  const toolLabel: Record<LevelTool, string> = { leiae: "IA Leiaê", quiz: "Quiz" };
 
   const back = () => {
     if (levelMode) {
@@ -157,14 +158,6 @@ export default function BstProduct() {
 
   const openUnit = (u: number) => {
     setUnit(u);
-    if (levelTool === "pdf") {
-      const row = unitPdfs.find((x) => x.unit === u);
-      if (!row?.pdf_url) return;
-      setPdfUrl(row.pdf_url);
-      setPdfTitle(`${product.title} — ${level} · Unit ${u}`);
-      setReadingPdf(true);
-      return;
-    }
     setView(levelTool === "quiz" ? "primary" : "tool");
   };
 
@@ -235,7 +228,19 @@ export default function BstProduct() {
                 <CardContent className="p-5 space-y-3 text-center">
                   <FileText className="h-7 w-7 mx-auto text-primary" />
                   <div className="text-sm font-semibold">PDF do produto</div>
-                  <Button size="sm" className="w-full" onClick={() => setLevelTool("pdf")}>Abrir unidades</Button>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    disabled={!levelPdf?.pdf_url}
+                    onClick={() => {
+                      if (!levelPdf?.pdf_url) return;
+                      setPdfUrl(levelPdf.pdf_url);
+                      setPdfTitle(`${product.title} — ${level}`);
+                      setReadingPdf(true);
+                    }}
+                  >
+                    {levelPdf?.pdf_url ? "Abrir e baixar" : "Indisponível"}
+                  </Button>
                 </CardContent>
               </Card>
               <Card className="hover:shadow-md transition-shadow">
@@ -260,22 +265,14 @@ export default function BstProduct() {
           ) : levelMode ? (
             <ol className="space-y-2">
               {UNITS.map((u) => {
-                const row = unitPdfs.find((x) => x.unit === u);
-                const missingPdf = levelTool === "pdf" && !row?.pdf_url;
                 return (
                   <li key={u}>
                     <button
                       onClick={() => openUnit(u)}
-                      disabled={missingPdf}
                       className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card"
                     >
                       <span className="flex-1 min-w-0">
                         <span className="block text-sm font-semibold text-foreground">Unit {u}</span>
-                        {levelTool === "pdf" && (
-                          <span className="block text-xs text-muted-foreground">
-                            {row?.pdf_url ? row.title ?? "PDF disponível" : "PDF indisponível"}
-                          </span>
-                        )}
                       </span>
                       <Badge variant="outline" className="shrink-0">{level}</Badge>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
