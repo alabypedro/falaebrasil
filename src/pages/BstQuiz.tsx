@@ -12,19 +12,21 @@ interface BstQuizRow {
   level: string;
   passing_score: number;
   display_order: number;
+  unit: number | null;
 }
 
 export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: string; level?: string; unit?: number }) {
   const [quizzes, setQuizzes] = useState<BstQuizRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<BstQuizRow | null>(null);
+  const [ctx, setCtx] = useState<{ title: string; content: string } | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       let query = supabase
         .from("quizzes")
-        .select("id,title,level,passing_score,display_order")
+        .select("id,title,level,passing_score,display_order,unit")
         .eq("bst_product_id", bstProductId);
       if (level) query = query.eq("level", level);
       if (unit) query = query.eq("unit", unit);
@@ -35,6 +37,31 @@ export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: s
       setLoading(false);
     })();
   }, [bstProductId, level, unit]);
+
+  // Texto do IA Leiaê vinculado ao mesmo produto/nível/unidade do quiz ativo
+  useEffect(() => {
+    if (!active) {
+      setCtx(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      let q = supabase
+        .from("leiae_texts")
+        .select("title,content,display_order")
+        .eq("bst_product_id", bstProductId)
+        .eq("level", active.level);
+      if (active.unit) q = q.eq("unit", active.unit);
+      const { data } = await q.order("display_order").limit(1);
+      const row = ((data as any[]) ?? [])[0];
+      if (!cancelled) {
+        setCtx(row ? { title: row.title, content: row.content } : null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [active, bstProductId]);
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -48,7 +75,13 @@ export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: s
         <Button variant="ghost" size="sm" className="-ml-2 text-muted-foreground hover:text-foreground" onClick={() => setActive(null)}>
           <ArrowLeft className="h-4 w-4 mr-1" /> Todos os quizzes
         </Button>
-        <InlineQuiz quizId={active.id} hasNext={!!next} onNext={() => setActive(next ?? null)} />
+        <InlineQuiz
+          quizId={active.id}
+          hasNext={!!next}
+          onNext={() => setActive(next ?? null)}
+          contextText={ctx?.content ?? null}
+          contextTitle={ctx?.title ?? null}
+        />
       </div>
     );
   }
