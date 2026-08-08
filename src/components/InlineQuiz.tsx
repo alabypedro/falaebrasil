@@ -16,7 +16,20 @@ interface Question {
   display_order: number;
 }
 
-export default function InlineQuiz({ quizId, onNext, hasNext }: { quizId: string; onNext?: () => void; hasNext?: boolean }) {
+export default function InlineQuiz({
+  quizId,
+  onNext,
+  hasNext,
+  contextText,
+  contextTitle,
+}: {
+  quizId: string;
+  onNext?: () => void;
+  hasNext?: boolean;
+  /** Texto de apoio (IA Leiaê) exibido entre o título e a pergunta */
+  contextText?: string | null;
+  contextTitle?: string | null;
+}) {
   const { user } = useAuth();
   const [quiz, setQuiz] = useState<{ id: string; title: string; passing_score: number } | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -188,6 +201,11 @@ export default function InlineQuiz({ quizId, onNext, hasNext }: { quizId: string
 
   const q = questions[current];
 
+  const ctx = (contextText ?? "").trim();
+  // Altura do bloco de texto proporcional ao tamanho do conteúdo
+  const ctxMaxHeight =
+    ctx.length === 0 ? 0 : Math.min(420, Math.max(96, Math.round(ctx.length / 3.2)));
+
   return (
     <Card className="border-primary/20">
       <CardHeader className="pb-3">
@@ -198,6 +216,21 @@ export default function InlineQuiz({ quizId, onNext, hasNext }: { quizId: string
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {ctx && (
+          <div className="rounded-lg border border-primary/20 bg-muted/40 p-3">
+            {contextTitle && (
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                {contextTitle}
+              </p>
+            )}
+            <div
+              className="overflow-y-auto pr-1 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap"
+              style={{ maxHeight: ctxMaxHeight }}
+            >
+              {ctx}
+            </div>
+          </div>
+        )}
         <p className="text-sm font-medium">{q.question_text}</p>
         <RadioGroup key={current} value={answers[current] !== undefined ? answers[current].toString() : ""} onValueChange={handleAnswer} className="space-y-2">
           {q.options.map((opt, i) => (
