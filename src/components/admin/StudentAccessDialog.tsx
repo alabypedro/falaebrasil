@@ -243,6 +243,7 @@ export default function StudentAccessDialog({
     setBusy("cat");
     try {
       const allCourseIds = courses.map((c) => c.id);
+      const allBstIds = bstProducts.map((p) => p.id);
       if (checked) {
         const { error } = await supabase
           .from("student_categories")
@@ -254,6 +255,7 @@ export default function StudentAccessDialog({
               email,
               accesses: ["has_course_access"],
               course_ids: allCourseIds,
+              bst_product_ids: allBstIds,
               plan_tier: ["pro", "vip"].includes((lookup?.plan_tier ?? "").toLowerCase())
                 ? lookup?.plan_tier
                 : "open",
@@ -283,15 +285,17 @@ export default function StudentAccessDialog({
           .eq("user_id", userId)
           .eq("code", def.code);
         if (error) throw error;
-        // Ao desmarcar "Aluno OPEN", remove todos os cursos liberados.
+        // Ao desmarcar "Aluno OPEN", remove todos os cursos e produtos BST liberados.
         if (def.kind === "open") {
           const idsToRevoke = [...activeCourseIds];
-          if (idsToRevoke.length) {
+          const bstToRevoke = [...activeBstIds];
+          if (idsToRevoke.length || bstToRevoke.length) {
             await supabase.functions.invoke("grant-access-admin", {
               body: {
                 email,
                 accesses: ["has_course_access"],
                 course_ids: idsToRevoke,
+                bst_product_ids: bstToRevoke,
                 grant: false,
               },
             });
