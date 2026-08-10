@@ -15,7 +15,7 @@ export interface StudentCategory {
  * à Biblioteca BST, Tutoriais e Instalar App.
  */
 export function useStudentCategories() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [categories, setCategories] = useState<StudentCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,15 +56,29 @@ export function useStudentCategories() {
     return () => window.removeEventListener("focus", onFocus);
   }, [load]);
 
-  const hasOpen = categories.some((c) => c.kind === "open");
+  const hasOpenCategory = categories.some((c) => c.kind === "open");
   const bstCategories = categories.filter((c) => c.kind === "bst");
+
+  // Assinatura em dia? Alunos sem assinatura registrada (liberação manual)
+  // continuam considerados em dia.
+  const status = (profile?.subscription_status ?? "").toLowerCase();
+  const graceOk =
+    !!profile?.subscription_grace_until &&
+    new Date(profile.subscription_grace_until) > new Date();
+  const subscriptionCurrent =
+    ["", "none", "active", "trialing", "authorized"].includes(status) || graceOk;
+
+  /** OPEN efetivo: categoria OPEN + assinatura em dia (inadimplente perde acesso). */
+  const hasOpen = hasOpenCategory && subscriptionCurrent;
 
   return {
     categories,
     hasOpen,
+    hasOpenCategory,
+    subscriptionCurrent,
     bstCategories,
     /** Tem categoria BST e não tem OPEN -> restrito. */
-    isBstRestricted: !hasOpen && bstCategories.length > 0,
+    isBstRestricted: !hasOpenCategory && bstCategories.length > 0,
     loading,
     refresh: load,
   };
