@@ -24,7 +24,10 @@ export const RecoveryEmail = ({
   confirmationUrl,
 }: RecoveryEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
-    <Head />
+    <Head>
+      <meta name="color-scheme" content="light only" />
+      <meta name="supported-color-schemes" content="light only" />
+    </Head>
     <Preview>Redefina sua senha no Falaê Brasil!</Preview>
     <Body style={main}>
       <Container style={container}>
@@ -41,9 +44,26 @@ export const RecoveryEmail = ({
           <strong> Falaê Brasil!</strong> Clique no botão abaixo para criar
           uma nova senha.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Redefinir minha senha
-        </Button>
+        <table role="presentation" cellPadding="0" cellSpacing="0" border={0}>
+          <tbody>
+            <tr>
+              <td style={buttonCell} bgcolor="#172c4f">
+                <Button style={button} href={confirmationUrl}>
+                  Redefinir minha senha
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <Text style={fallbackText}>
+          Se o botão não aparecer ou não funcionar, copie e cole este link no
+          navegador:
+        </Text>
+        <Text style={fallbackLink}>
+          <a href={confirmationUrl} style={link}>
+            {confirmationUrl}
+          </a>
+        </Text>
         <Text style={footer}>
           Se você não solicitou a redefinição, pode ignorar este e-mail com
           tranquilidade — sua senha continuará a mesma.
@@ -73,13 +93,33 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
+const buttonCell = {
+  backgroundColor: '#172c4f',
+  borderRadius: '8px',
+  border: '1px solid #172c4f',
+}
 const button = {
-  backgroundColor: 'hsl(222, 65%, 18%)',
+  backgroundColor: '#172c4f',
   color: '#ffffff',
+  WebkitTextFillColor: '#ffffff',
   fontSize: '15px',
   fontWeight: 'bold' as const,
-  borderRadius: '14px',
-  padding: '12px 20px',
+  borderRadius: '8px',
+  padding: '13px 22px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
+const fallbackText = {
+  fontSize: '12px',
+  color: '#55575d',
+  lineHeight: '1.5',
+  margin: '20px 0 4px',
+}
+const fallbackLink = {
+  fontSize: '12px',
+  lineHeight: '1.5',
+  margin: '0',
+  wordBreak: 'break-all' as const,
+}
+const link = { color: '#174ea6', textDecoration: 'underline' }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
