@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useStudentCategories } from "@/hooks/useStudentCategories";
 
 const WHATSAPP_URL = "https://wa.me/5511981612800";
+// Assinatura OPEN com desconto, exclusiva para quem já comprou um produto BST.
+const OPEN_UPGRADE_CHECKOUT = "https://www.asaas.com/c/7k2tdifhriu4etxs";
 
 const PLANS = [
   {
@@ -36,6 +38,7 @@ export default function UpgradeButton() {
   const [open, setOpen] = useState(false);
 
   const planTier = (profile?.plan_tier as string) ?? "open";
+  const isBstStudent = !loading && !hasOpen && bstCategories.length > 0;
   // A categoria cadastrada no painel admin manda no rótulo do plano.
   const currentLabel = (() => {
     if (!loading && categories.length > 0) {
@@ -91,14 +94,21 @@ export default function UpgradeButton() {
                     <h3 className="font-bold text-foreground">{p.name}</h3>
                   </div>
                   <p className="text-sm text-muted-foreground flex-1">{p.description}</p>
+                  {p.key === "open" && isBstStudent && (
+                    <p className="text-xs font-medium text-primary mt-2">
+                      Oferta exclusiva para aluno BST: R$ 36/mês (em vez de R$ 48) com acesso
+                      liberado a TUDO na plataforma.
+                    </p>
+                  )}
                   <Button asChild className="w-full mt-4">
                     <a
-                      href={WHATSAPP_URL}
+                      href={p.key === "open" && isBstStudent ? OPEN_UPGRADE_CHECKOUT : WHATSAPP_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setOpen(false)}
                     >
-                      Quero Upgrade <ExternalLink className="ml-1.5 h-4 w-4" />
+                      {p.key === "open" && isBstStudent ? "Assinar por R$ 36/mês" : "Quero Upgrade"}
+                      <ExternalLink className="ml-1.5 h-4 w-4" />
                     </a>
                   </Button>
                 </div>

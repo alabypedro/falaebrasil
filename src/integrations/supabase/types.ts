@@ -2442,6 +2442,7 @@ export type Database = {
       }
       has_course_access: { Args: { _course_id: string }; Returns: boolean }
       has_open_category: { Args: { _user_id: string }; Returns: boolean }
+      has_open_category_raw: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2477,6 +2478,7 @@ export type Database = {
         Returns: Json
       }
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
+      subscription_is_current: { Args: { _user_id: string }; Returns: boolean }
       tier_rank: { Args: { _tier: string }; Returns: number }
       uncomplete_video: { Args: { _video_id: string }; Returns: Json }
       update_best_score: {

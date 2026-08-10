@@ -119,6 +119,30 @@ Deno.serve(async (req) => {
               }
             }
 
+            // Fallback 2: same person subscribing with a different email.
+            // Match the CPF/CNPJ already stored from a previous purchase so the
+            // BST -> OPEN upgrade never creates a duplicate login.
+            if (!userId && cpfCnpj) {
+              const { data: byCpf } = await admin
+                .from("asaas_customers")
+                .select("user_id")
+                .eq("cpf_cnpj", cpfCnpj)
+                .limit(1)
+                .maybeSingle();
+              if (byCpf?.user_id) userId = byCpf.user_id;
+            }
+
+            // Fallback 3: match by phone number on the profile.
+            if (!userId && phone && phone.length >= 10) {
+              const { data: byPhone } = await admin
+                .from("profiles")
+                .select("user_id")
+                .ilike("phone", `%${phone.slice(-9)}%`)
+                .limit(1)
+                .maybeSingle();
+              if (byPhone?.user_id) userId = byPhone.user_id;
+            }
+
             // Still no match → create a new auth user so we can grant access
             // and send the welcome email. Marks `from_hubla: true` so the
             // auth-email-hook uses the branded welcome_purchase template.
