@@ -198,6 +198,14 @@ const App = () => {
                             </TeacherRoute>
                           }
                         />
+                        <Route
+                          path="/professor/alunos"
+                          element={
+                            <TeacherRoute>
+                              <TeacherArea />
+                            </TeacherRoute>
+                          }
+                        />
                         
                         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                         <Route path="/success" element={<Success />} />

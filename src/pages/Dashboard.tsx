@@ -129,11 +129,11 @@ export default function Dashboard() {
       {isTeacher && (
         <div className="animate-fade-up">
           <Button
-            onClick={() => navigate("/professor")}
+            onClick={() => navigate("/professor/alunos")}
             className="w-full sm:w-auto min-h-[44px] font-semibold"
           >
             <Presentation className="h-4 w-4 mr-2" />
-            Área do Professor
+            Meus Alunos
           </Button>
         </div>
       )}
