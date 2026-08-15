@@ -14,7 +14,7 @@ import {
   Brain,
   BookText,
   Lock,
-  Presentation,
+  GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -147,15 +147,15 @@ export default function AppSidebar() {
                   className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
                   style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
                 >
-                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Área do Professor" : undefined}>
+                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Meus Alunos" : undefined}>
                     <NavLink
-                      to="/professor"
+                      to="/professor/alunos"
                       onClick={handleNavClick}
                       className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
                     >
-                      <Presentation className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
-                      {!collapsed && <span className="text-sm truncate">Área do Professor</span>}
+                      <GraduationCap className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                      {!collapsed && <span className="text-sm truncate">Meus Alunos</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
