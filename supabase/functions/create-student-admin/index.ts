@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
       (x: unknown) => String(x),
     );
     const planTier = body.plan_tier ? String(body.plan_tier) : null;
+    const role = String(body.role ?? "student").toLowerCase() === "teacher" ? "teacher" : "student";
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return json({ error: "Email inválido" }, 400);
@@ -173,12 +174,21 @@ Deno.serve(async (req) => {
 
     if (effectiveTier === "bst") await applyBstOnlyTier(admin, foundId);
 
+    // Papel do usuário: professor recebe a role `teacher` automaticamente.
+    if (role === "teacher") {
+      const { error: rErr } = await admin
+        .from("user_roles")
+        .upsert({ user_id: foundId, role: "teacher" }, { onConflict: "user_id,role" });
+      if (rErr) throw rErr;
+    }
+
     return json({
       ok: true,
       created,
       user_id: foundId,
       email,
       password,
+      role,
       applied: updates,
       courses_granted: courseIds.length,
       bst_products_granted: bstProductIds.length,
