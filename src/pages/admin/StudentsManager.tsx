@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Search, UserPlus, Mail, Presentation } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 import StudentAccessDialog from "@/components/admin/StudentAccessDialog";
 import CreateStudent from "@/pages/admin/CreateStudent";
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
@@ -30,6 +38,13 @@ interface StudentRow {
   codes: string[];
 }
 
+interface TeacherOption {
+  user_id: string;
+  name: string;
+}
+
+const NO_TEACHER = "__none__";
+
 /** Aluno inativo por inadimplência: só se depender de assinatura (categoria OPEN). */
 function isActive(s: StudentRow, defs: CategoryDef[]) {
   const kinds = s.codes.map((c) => defs.find((d) => d.code === c)?.kind);
@@ -52,21 +67,33 @@ export default function StudentsManager() {
   const [createOpen, setCreateOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [accessTarget, setAccessTarget] = useState<StudentRow | null>(null);
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
+  const [teachersLoading, setTeachersLoading] = useState(true);
+  const [links, setLinks] = useState<Record<string, string>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [teacherFilter, setTeacherFilter] = useState<string>("all");
 
   const load = async () => {
     setLoading(true);
-    const [{ data: defRows }, { data: profileRows }, { data: catRows }] = await Promise.all([
+    const [{ data: defRows }, { data: profileRows }, { data: catRows }, { data: linkRows }] = await Promise.all([
       supabase.from("student_category_defs").select("code, label, kind, display_order"),
       supabase
         .from("profiles")
         .select("user_id, display_name, email, plan_tier, subscription_status, subscription_grace_until"),
       supabase.from("student_categories").select("user_id, code"),
+      supabase.from("teacher_students").select("teacher_id, student_id"),
     ]);
 
     const catsByUser = new Map<string, string[]>();
     ((catRows as any[]) ?? []).forEach((r) => {
       catsByUser.set(r.user_id, [...(catsByUser.get(r.user_id) ?? []), r.code]);
     });
+
+    const linkMap: Record<string, string> = {};
+    ((linkRows as any[]) ?? []).forEach((r) => {
+      linkMap[r.student_id] = r.teacher_id;
+    });
+    setLinks(linkMap);
 
     setDefs(
       (((defRows as any[]) ?? []) as CategoryDef[]).sort(
@@ -83,19 +110,95 @@ export default function StudentsManager() {
     setLoading(false);
   };
 
+  const loadTeachers = async () => {
+    setTeachersLoading(true);
+    const { data: roleRows } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "teacher" as any);
+    const ids = ((roleRows as any[]) ?? []).map((r) => r.user_id);
+    if (ids.length === 0) {
+      setTeachers([]);
+      setTeachersLoading(false);
+      return;
+    }
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, email")
+      .in("user_id", ids);
+    setTeachers(
+      ((profs as any[]) ?? [])
+        .map((p) => ({ user_id: p.user_id, name: p.display_name || p.email || "(sem nome)" }))
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+    );
+    setTeachersLoading(false);
+  };
+
+  const assignTeacher = async (student: StudentRow, value: string) => {
+    const previous = links[student.user_id];
+    const next = value === NO_TEACHER ? undefined : value;
+    if (previous === next) return;
+    setSavingId(student.user_id);
+    setLinks((m) => {
+      const copy = { ...m };
+      if (next) copy[student.user_id] = next;
+      else delete copy[student.user_id];
+      return copy;
+    });
+
+    const { error: delError } = await supabase
+      .from("teacher_students")
+      .delete()
+      .eq("student_id", student.user_id);
+    let error = delError;
+    if (!error && next) {
+      const { data: me } = await supabase.auth.getUser();
+      const res = await supabase.from("teacher_students").insert({
+        teacher_id: next,
+        student_id: student.user_id,
+        created_by: me.user?.id ?? null,
+      });
+      error = res.error;
+    }
+    setSavingId(null);
+    if (error) {
+      setLinks((m) => {
+        const copy = { ...m };
+        if (previous) copy[student.user_id] = previous;
+        else delete copy[student.user_id];
+        return copy;
+      });
+      toast.error("Não foi possível atualizar o professor. Tente novamente.");
+      return;
+    }
+    toast.success(next ? "Professor vinculado com sucesso." : "Vínculo removido.");
+  };
+
   useEffect(() => {
     load();
+    loadTeachers();
   }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return students;
-    return students.filter(
-      (s) =>
-        (s.display_name ?? "").toLowerCase().includes(q) ||
-        (s.email ?? "").toLowerCase().includes(q)
-    );
-  }, [students, query]);
+    return students.filter((s) => {
+      if (
+        q &&
+        !(s.display_name ?? "").toLowerCase().includes(q) &&
+        !(s.email ?? "").toLowerCase().includes(q)
+      )
+        return false;
+      if (teacherFilter === "none" && links[s.user_id]) return false;
+      if (teacherFilter !== "all" && teacherFilter !== "none" && links[s.user_id] !== teacherFilter)
+        return false;
+      return true;
+    });
+  }, [students, query, teacherFilter, links]);
+
+  const withoutTeacherCount = useMemo(
+    () => students.filter((s) => !links[s.user_id]).length,
+    [students, links]
+  );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -134,7 +237,36 @@ export default function StudentsManager() {
         <Button variant="outline" onClick={() => setWelcomeOpen(true)}>
           <Mail className="h-4 w-4 mr-1.5" /> Envio manual
         </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Professor:</span>
+          <Select
+            value={teacherFilter}
+            onValueChange={(v) => {
+              setTeacherFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[200px]" aria-label="Filtrar por professor">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="none">Sem professor</SelectItem>
+              {teachers.map((t) => (
+                <SelectItem key={t.user_id} value={t.user_id}>
+                  {t.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {!loading && (
+        <p className="text-xs text-muted-foreground">
+          {withoutTeacherCount} aluno(s) sem professor vinculado
+        </p>
+      )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -218,6 +350,45 @@ export default function StudentsManager() {
                     >
                       {active ? "Aluno ativo" : "Inativo por inadimplência"}
                     </Badge>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground hidden sm:inline">Professor:</span>
+                      {teachersLoading ? (
+                        <span className="text-xs text-muted-foreground">Carregando professores...</span>
+                      ) : teachers.length === 0 ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate("/admin/teachers")}
+                        >
+                          Nenhum professor cadastrado
+                        </Button>
+                      ) : (
+                        <Select
+                          value={links[s.user_id] ?? NO_TEACHER}
+                          disabled={!active || savingId === s.user_id}
+                          onValueChange={(v) => assignTeacher(s, v)}
+                        >
+                          <SelectTrigger
+                            className="h-9 w-[200px]"
+                            aria-label={`Professor de ${s.display_name || s.email || "aluno"}`}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NO_TEACHER}>Sem professor</SelectItem>
+                            {teachers.map((t) => (
+                              <SelectItem key={t.user_id} value={t.user_id}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {savingId === s.user_id && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
 
                   </div>
                 );
