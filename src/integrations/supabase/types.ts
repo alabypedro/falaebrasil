@@ -1910,6 +1910,30 @@ export type Database = {
         }
         Relationships: []
       }
+      teacher_students: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          student_id: string
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          student_id: string
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          student_id?: string
+          teacher_id?: string
+        }
+        Relationships: []
+      }
       token_recharge_log: {
         Row: {
           id: string
@@ -2413,6 +2437,20 @@ export type Database = {
           title: string
         }[]
       }
+      get_my_students: {
+        Args: { _search?: string }
+        Returns: {
+          display_name: string
+          email: string
+          last_activity: string
+          level: string
+          linked_at: string
+          plan_tier: string
+          student_id: string
+          xp: number
+        }[]
+      }
+      get_student_performance: { Args: { _student_id: string }; Returns: Json }
       grade_listening_lesson: {
         Args: { _answers: Json; _lesson_id: string }
         Returns: Json
@@ -2452,6 +2490,7 @@ export type Database = {
       }
       has_tier: { Args: { _required: string }; Returns: boolean }
       is_bst_restricted: { Args: { _user_id: string }; Returns: boolean }
+      is_my_student: { Args: { _student_id: string }; Returns: boolean }
       level_rank: { Args: { _level: string }; Returns: number }
       move_to_dlq: {
         Args: {
@@ -2487,7 +2526,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "teacher"
       payment_billing_cycle:
         | "MONTHLY"
         | "YEARLY"
@@ -2622,7 +2661,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "teacher"],
       payment_billing_cycle: [
         "MONTHLY",
         "YEARLY",

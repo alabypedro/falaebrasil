@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, UserPlus, Mail } from "lucide-react";
+import { Loader2, Search, UserPlus, Mail, Presentation } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StudentAccessDialog from "@/components/admin/StudentAccessDialog";
 import CreateStudent from "@/pages/admin/CreateStudent";
@@ -42,6 +43,7 @@ function isActive(s: StudentRow, defs: CategoryDef[]) {
 }
 
 export default function StudentsManager() {
+  const navigate = useNavigate();
   const [defs, setDefs] = useState<CategoryDef[]>([]);
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,6 +127,9 @@ export default function StudentsManager() {
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <UserPlus className="h-4 w-4 mr-1.5" /> Criar aluno
+        </Button>
+        <Button variant="secondary" onClick={() => navigate("/admin/teachers")}>
+          <Presentation className="h-4 w-4 mr-1.5" /> Criar professor
         </Button>
         <Button variant="outline" onClick={() => setWelcomeOpen(true)}>
           <Mail className="h-4 w-4 mr-1.5" /> Envio manual

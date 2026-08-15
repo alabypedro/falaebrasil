@@ -14,10 +14,12 @@ import {
   Brain,
   BookText,
   Lock,
+  Presentation,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useRoles } from "@/hooks/useRoles";
 import { useBstOnly } from "@/hooks/useBstOnly";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
@@ -57,6 +59,7 @@ export default function AppSidebar() {
   const collapsed = state === "collapsed";
   const { profile } = useAuth();
   const { isAdmin } = useAdmin();
+  const { isTeacher } = useRoles();
   const { t } = useLanguage();
   const { isBstOnly } = useBstOnly();
   const items = navItems.map((item) => ({
@@ -138,6 +141,25 @@ export default function AppSidebar() {
                   )}
                 </SidebarMenuItem>
               ))}
+
+              {isTeacher && (
+                <SidebarMenuItem
+                  className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
+                  style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
+                >
+                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Área do Professor" : undefined}>
+                    <NavLink
+                      to="/professor"
+                      onClick={handleNavClick}
+                      className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                    >
+                      <Presentation className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                      {!collapsed && <span className="text-sm truncate">Área do Professor</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
 
               {isAdmin && (
                 <SidebarMenuItem

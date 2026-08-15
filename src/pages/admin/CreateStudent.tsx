@@ -41,7 +41,11 @@ function genPwd(): string {
   return p.split("").sort(() => Math.random() - 0.5).join("");
 }
 
-export default function CreateStudent({ onCreated }: { onCreated?: () => void } = {}) {
+export default function CreateStudent({
+  onCreated,
+  role = "student",
+}: { onCreated?: () => void; role?: "student" | "teacher" } = {}) {
+  const isTeacher = role === "teacher";
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState(genPwd());
@@ -106,12 +110,17 @@ export default function CreateStudent({ onCreated }: { onCreated?: () => void } 
           course_ids: courseIds,
           bst_product_ids: bstIds,
           plan_tier: tier,
+          role,
         },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       setResult({ email: data.email, password: data.password, created: data.created });
-      toast.success(data.created ? "Aluno criado!" : "Aluno atualizado com nova senha!");
+      toast.success(
+        data.created
+          ? isTeacher ? "Professor criado!" : "Aluno criado!"
+          : isTeacher ? "Professor atualizado com nova senha!" : "Aluno atualizado com nova senha!",
+      );
       onCreated?.();
     } catch (err: any) {
       toast.error(err.message || "Erro ao criar aluno.");
@@ -130,10 +139,14 @@ export default function CreateStudent({ onCreated }: { onCreated?: () => void } 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Criar Aluno com Senha Temporária</h2>
+        <h2 className="text-lg font-semibold">
+          {isTeacher ? "Criar Professor com Senha Temporária" : "Criar Aluno com Senha Temporária"}
+        </h2>
         <p className="text-sm text-muted-foreground">
           Cria a conta já ativada (sem precisar confirmar email) e libera os acessos escolhidos.
-          O aluno faz o 1º login com email + senha temporária.
+          {isTeacher
+            ? " O professor faz o 1º login com email + senha temporária e recebe automaticamente o papel de professor."
+            : " O aluno faz o 1º login com email + senha temporária."}
         </p>
       </div>
 
@@ -164,7 +177,7 @@ export default function CreateStudent({ onCreated }: { onCreated?: () => void } 
                 <Label htmlFor="name">Nome</Label>
                 <Input
                   id="name"
-                  placeholder="Nome do aluno"
+                  placeholder={isTeacher ? "Nome do professor" : "Nome do aluno"}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -286,7 +299,11 @@ export default function CreateStudent({ onCreated }: { onCreated?: () => void } 
 
             <Button type="submit" disabled={loading || !email.trim() || password.length < 8}>
               <UserPlus className="h-4 w-4" />
-              {loading ? "Criando..." : "Criar aluno e liberar acesso"}
+              {loading
+                ? "Criando..."
+                : isTeacher
+                  ? "Criar professor e liberar acesso"
+                  : "Criar aluno e liberar acesso"}
             </Button>
           </form>
         </CardContent>

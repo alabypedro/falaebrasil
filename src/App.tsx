@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useRoles } from "@/hooks/useRoles";
 import { useBstOnly } from "@/hooks/useBstOnly";
 import { useLocation } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
@@ -52,6 +53,8 @@ import LinkPayment from "@/pages/admin/LinkPayment";
 import StudentsManager from "@/pages/admin/StudentsManager";
 import { CoursesHub, AIHub, TutorialsHub, AdminsHub, AsaasHub } from "@/pages/admin/hubs/AdminHubs";
 import Contratos from "@/pages/Contratos";
+import TeacherArea from "@/pages/TeacherArea";
+import TeachersManager from "@/pages/admin/TeachersManager";
 import Success from "@/pages/Success";
 import Promo from "@/pages/Promo";
 
@@ -83,6 +86,20 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     );
   }
   if (!isAdmin) return <Navigate to="/courses" replace />;
+  return <>{children}</>;
+}
+
+/** Área do Professor: apenas role `teacher` (admins entram para gestão/testes). */
+function TeacherRoute({ children }: { children: React.ReactNode }) {
+  const { isTeacher, isAdmin, loading } = useRoles();
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+  if (!isTeacher && !isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -173,6 +190,14 @@ const App = () => {
                         <Route path="/contratos" element={<Contratos />} />
                         <Route path="/memorizae" element={<Memorizae />} />
                         <Route path="/leiae" element={<Leiae />} />
+                        <Route
+                          path="/professor"
+                          element={
+                            <TeacherRoute>
+                              <TeacherArea />
+                            </TeacherRoute>
+                          }
+                        />
                         
                         <Route path="/quiz/:quizId" element={<QuizPlayer />} />
                         <Route path="/success" element={<Success />} />
@@ -203,6 +228,7 @@ const App = () => {
                           <Route path="contracts" element={<ContractsManager />} />
                           <Route path="admins" element={<AdminsManager />} />
                           <Route path="students" element={<StudentsManager />} />
+                          <Route path="teachers" element={<TeachersManager />} />
                           <Route path="payments" element={<PaymentsManager />} />
                           <Route path="webhook-logs" element={<WebhookLogsManager />} />
                         <Route path="link-payment" element={<LinkPayment />} />

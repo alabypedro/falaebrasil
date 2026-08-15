@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon } from "lucide-react";
+import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchAiXpBreakdown, AI_LABELS, type AiSource } from "@/lib/aiXp";
+import { useRoles } from "@/hooks/useRoles";
 
 interface CourseProgress {
   name: string;
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { t } = useLanguage();
+  const { isTeacher } = useRoles();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
   const [aiXp, setAiXp] = useState<Record<AiSource, number> & { total: number }>({
@@ -124,6 +126,17 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 max-w-6xl page-transition">
       <OnboardingTutorialModal />
+      {isTeacher && (
+        <div className="animate-fade-up">
+          <Button
+            onClick={() => navigate("/professor")}
+            className="w-full sm:w-auto min-h-[44px] font-semibold"
+          >
+            <Presentation className="h-4 w-4 mr-2" />
+            Área do Professor
+          </Button>
+        </div>
+      )}
       <div className="animate-fade-up">
         <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground tracking-tight">
           {t("dashboard.title")}
