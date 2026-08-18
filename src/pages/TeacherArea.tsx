@@ -35,16 +35,22 @@ interface Performance {
     display_name: string | null;
     level: string | null;
     xp: number | null;
+    ai_xp?: number | null;
+    total_xp?: number | null;
     started_at: string | null;
     last_activity: string | null;
   };
   videos: { done: number; total: number; percent: number };
+  completed_lessons?: number | null;
   best_score: { score: number; quiz_title: string | null; level: string | null; created_at: string } | null;
   score: number | null;
   score_parts: Record<string, number | null>;
   courses: CoursePerf[];
+  progress?: { code: string; percent: number; videos_done: number; videos_total: number }[];
   recent: { type: string; title: string | null; at: string; score: number | null }[];
 }
+
+const PROGRESS_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
 
 const LEVEL_LABELS: Record<string, string> = {
   A1: "A1 — Básico",
