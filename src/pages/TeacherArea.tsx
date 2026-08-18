@@ -243,23 +243,60 @@ export default function TeacherArea() {
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <p className="text-2xl font-display font-extrabold tabular-nums">
-                    {(perf.student.xp ?? 0).toLocaleString("pt-BR")}
+                    {(perf.student.total_xp ?? perf.student.xp ?? 0).toLocaleString("pt-BR")}
                   </p>
-                  <p className="text-xs text-muted-foreground">Gamificação (XP)</p>
+                  <p className="text-xs text-muted-foreground">XP Total (aulas + IAs)</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
+                    <BookOpen className="h-3.5 w-3.5" /> Aulas concluídas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-1">
+                  <p className="text-2xl font-display font-extrabold tabular-nums">
+                    {perf.completed_lessons ?? perf.videos.done}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Vídeos/aulas finalizadas</p>
                 </CardContent>
               </Card>
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase text-muted-foreground">Melhores notas</h2>
+              <h2 className="text-sm font-semibold uppercase text-muted-foreground">Desempenho mensal</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <GradeCard title="IA Falaê" subtitle="Scripted" value={perf.score_parts.best_scripted} />
-                <GradeCard title="IA Falaê" subtitle="Unscripted" value={perf.score_parts.best_unscripted} />
-                <GradeCard title="IA Escutaê" value={perf.score_parts.best_listening} />
-                <GradeCard title="IA Escreveaê" value={perf.score_parts.best_writing} />
-                <GradeCard title="Quiz" value={perf.best_score ? perf.best_score.score : null} />
+                <GradeCard title="Média dos Quizzes" value={perf.score_parts.quiz_avg} />
+                <GradeCard title="Maior nota de voz" subtitle="com script" value={perf.score_parts.best_scripted} />
+                <GradeCard title="Maior nota de voz" subtitle="sem script" value={perf.score_parts.best_unscripted} />
+                <GradeCard title="Maior nota da IA Escutaê" value={perf.score_parts.best_listening} />
+                <GradeCard title="Maior nota da IA Escreveaê" value={perf.score_parts.best_writing} />
               </div>
+              <p className="text-xs text-muted-foreground">A média é calculada a partir destes cinco pilares.</p>
             </div>
+
+            {(perf.progress ?? []).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Progresso por Curso</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[...(perf.progress ?? [])]
+                    .filter((p) => PROGRESS_ORDER.includes(p.code))
+                    .sort((a, b) => PROGRESS_ORDER.indexOf(a.code) - PROGRESS_ORDER.indexOf(b.code))
+                    .map((p) => (
+                      <div key={p.code} className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold text-foreground">{p.code}</span>
+                          <span className="text-xs text-muted-foreground tabular-nums">{p.percent}%</span>
+                        </div>
+                        <Progress value={p.percent} className="h-2" />
+                      </div>
+                    ))}
+                </CardContent>
+              </Card>
+            )}
 
             {perf.courses.length > 0 && (
               <Card>
