@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Lock, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ChevronRight, Lock, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
@@ -20,6 +21,7 @@ export default function Library() {
   const [products, setProducts] = useState<BstProduct[]>([]);
   const [accessIds, setAccessIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [locked, setLocked] = useState<BstProduct | null>(null);
   const navigate = useNavigate();
   const { isBstOnly } = useBstOnly();
 
@@ -46,7 +48,9 @@ export default function Library() {
     })();
   }, []);
 
-  const visibleProducts = isBstOnly ? products.filter((p) => accessIds.has(p.id)) : products;
+  // Todos os produtos ficam visíveis para todos; o acesso continua restrito
+  // a quem comprou (ou aos alunos OPEN/PRO/VIP).
+  const visibleProducts = products;
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
@@ -70,7 +74,7 @@ export default function Library() {
             return (
               <li key={p.id}>
                 <button
-                  onClick={() => navigate(`/library/${p.slug}`)}
+                  onClick={() => (unlocked ? navigate(`/library/${p.slug}`) : setLocked(p))}
                   className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
                 >
                   <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
@@ -94,6 +98,35 @@ export default function Library() {
           })}
         </ol>
       )}
+
+      <Dialog open={!!locked} onOpenChange={(o) => !o && setLocked(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">Produto bloqueado</DialogTitle>
+            <DialogDescription className="text-center">
+              {locked?.title} ainda não está liberado na sua conta. Adquira o produto para desbloquear o
+              ambiente completo.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
+            {locked?.checkout_url ? (
+              <Button asChild className="w-full">
+                <a href={locked.checkout_url} target="_blank" rel="noopener noreferrer">
+                  Comprar agora <ExternalLink className="ml-1.5 h-4 w-4" />
+                </a>
+              </Button>
+            ) : (
+              <Button className="w-full" disabled>Checkout indisponível</Button>
+            )}
+            <Button variant="outline" className="w-full" onClick={() => setLocked(null)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
