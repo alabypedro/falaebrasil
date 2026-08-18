@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Search, ArrowLeft, PlayCircle, Trophy, GraduationCap, Clock, Sparkles } from "lucide-react";
+import { Loader2, Search, ArrowLeft, PlayCircle, Trophy, GraduationCap, Clock, Sparkles, BookOpen } from "lucide-react";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface StudentRow {
