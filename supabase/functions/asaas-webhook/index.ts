@@ -90,21 +90,18 @@ Deno.serve(async (req) => {
     const customerId = payment?.customer ?? subscription?.customer;
     let userId: string | null = null;
     if (customerId) {
-      const { data: customerRow } = await admin
-        .from("asaas_customers")
-        .select("user_id")
-        .eq("asaas_customer_id", customerId)
-        .maybeSingle();
-      userId = customerRow?.user_id ?? null;
-
-      // Fallback: customer created directly on ASAAS (static payment link).
-      // Fetch customer from ASAAS and match by email to an existing auth user.
-      if (!userId) {
+      // The buyer's email is the source of truth: ASAAS reuses the same customer
+      // record for a repeat buyer (same CPF/phone) even when they check out with a
+      // different email, so trusting the stored customer→user mapping would grant
+      // access to the wrong account and skip the welcome email.
+      let customerEmail = "";
+      {
         try {
           const custResp = await fetchAsaas(`/customers/${customerId}`);
           if (custResp.ok) {
             const cust = await custResp.json();
             const email = (cust.email ?? "").toLowerCase().trim();
+            customerEmail = email;
             const cpfCnpj = (cust.cpfCnpj ?? "").replace(/\D/g, "");
             const phone = (cust.mobilePhone ?? cust.phone ?? "").replace(/\D/g, "");
 
@@ -119,10 +116,20 @@ Deno.serve(async (req) => {
               }
             }
 
-            // Fallback 2: same person subscribing with a different email.
-            // Match the CPF/CNPJ already stored from a previous purchase so the
-            // BST -> OPEN upgrade never creates a duplicate login.
-            if (!userId && cpfCnpj) {
+            // Fallbacks below only apply when ASAAS gave us no email at all.
+            // With an email present we must NEVER match by CPF/phone, otherwise a
+            // second purchase from the same person on a different email would be
+            // attached to the first account.
+            if (!userId && !email) {
+              const { data: customerRow } = await admin
+                .from("asaas_customers")
+                .select("user_id")
+                .eq("asaas_customer_id", customerId)
+                .maybeSingle();
+              userId = customerRow?.user_id ?? null;
+            }
+
+            if (!userId && !email && cpfCnpj) {
               const { data: byCpf } = await admin
                 .from("asaas_customers")
                 .select("user_id")
@@ -132,8 +139,7 @@ Deno.serve(async (req) => {
               if (byCpf?.user_id) userId = byCpf.user_id;
             }
 
-            // Fallback 3: match by phone number on the profile.
-            if (!userId && phone && phone.length >= 10) {
+            if (!userId && !email && phone && phone.length >= 10) {
               const { data: byPhone } = await admin
                 .from("profiles")
                 .select("user_id")
@@ -172,29 +178,46 @@ Deno.serve(async (req) => {
             }
 
             if (userId) {
-              await admin.from("asaas_customers").upsert(
-                {
-                  user_id: userId,
-                  asaas_customer_id: customerId,
-                  cpf_cnpj: cpfCnpj || null,
-                  phone: phone || null,
-                },
-                { onConflict: "user_id" },
-              );
-              await admin
-                .from("profiles")
-                .update({ asaas_customer_id: customerId })
-                .eq("user_id", userId);
+              // asaas_customer_id is unique: only (re)bind it when it is free or
+              // already owned by this user, so a shared ASAAS customer record does
+              // not steal the mapping from another student.
+              const { data: ownerRow } = await admin
+                .from("asaas_customers")
+                .select("user_id")
+                .eq("asaas_customer_id", customerId)
+                .maybeSingle();
+              if (!ownerRow || ownerRow.user_id === userId) {
+                await admin.from("asaas_customers").upsert(
+                  {
+                    user_id: userId,
+                    asaas_customer_id: customerId,
+                    cpf_cnpj: cpfCnpj || null,
+                    phone: phone || null,
+                  },
+                  { onConflict: "user_id" },
+                );
+                await admin
+                  .from("profiles")
+                  .update({ asaas_customer_id: customerId })
+                  .eq("user_id", userId);
+              }
             } else {
               console.warn(`No user matched for ASAAS customer ${customerId} (email=${email})`);
             }
           } else {
             console.warn(`Failed to fetch ASAAS customer ${customerId}: ${custResp.status}`);
+            const { data: customerRow } = await admin
+              .from("asaas_customers")
+              .select("user_id")
+              .eq("asaas_customer_id", customerId)
+              .maybeSingle();
+            userId = customerRow?.user_id ?? null;
           }
         } catch (err) {
           console.error("Fallback customer lookup failed", err);
         }
       }
+      void customerEmail;
     }
 
     // Normalize payment/subscription payload into our tables
