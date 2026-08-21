@@ -356,6 +356,32 @@ export default function CourseDetail() {
     );
   }
 
+  // Hierarquia de segmentos: Kids só acessa Kids; Teens acessa Teens + Kids; Adultos acessa tudo.
+  const userTier = (profile?.plan_tier ?? "open").toLowerCase();
+  const courseTier = ((course as any).required_tier ?? "open").toLowerCase();
+  const segmentAllowed =
+    isAdmin ||
+    (userTier === "kids"
+      ? courseTier === "kids"
+      : userTier === "teens"
+      ? ["teens", "kids"].includes(courseTier)
+      : true);
+
+  if (!segmentAllowed) {
+    return (
+      <div className="max-w-md mx-auto py-12 text-center space-y-4">
+        <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <Lock className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="text-2xl font-bold">Conteúdo indisponível</h1>
+        <p className="text-muted-foreground">
+          Este curso não faz parte do seu segmento de estudos.
+        </p>
+        <Button onClick={() => navigate("/courses")}>Ver meus cursos</Button>
+      </div>
+    );
+  }
+
   // Gating: bloqueia conteúdo se usuário não comprou o Essential Pro A1 (admins veem tudo)
   // Regra: categoria OPEN libera todos os cursos.
   if (!isAdmin && !hasOpen && !profile?.has_course_access && !hasIndividualGrant) {
@@ -372,6 +398,7 @@ export default function CourseDetail() {
       </div>
     );
   }
+
 
   const activeVideo = lessonVideos[activeVideoIdx] ?? null;
   const embedUrl = activeVideo?.video_url ? getEmbedUrl(activeVideo.video_url) : null;
