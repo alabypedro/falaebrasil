@@ -683,7 +683,22 @@ export default function VoiceLab() {
             </Card>
           )}
 
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            {LEVEL_LIST.map((level) => (
+              <Button
+                key={level}
+                variant={selectedLevel === level ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedLevel(level)}
+                className="w-10 h-10 rounded-full font-bold text-xs shrink-0"
+              >
+                {level}
+              </Button>
+            ))}
+          </div>
+
           <Card className="bg-accent/5 border-accent/20">
+
             <CardContent className="p-6 text-center space-y-3">
               <p className="text-xs text-accent font-semibold uppercase tracking-wide">{tr("voice.suggestedTopic")}</p>
               {topicLoading ? (
