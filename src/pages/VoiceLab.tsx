@@ -17,6 +17,7 @@ import BackToLessonButton from "@/components/BackToLessonButton";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import { LEVEL_LIST } from "@/lib/levels";
 
 type NormalizedAzureResponse = {
   status?: string;
@@ -126,11 +127,11 @@ export default function VoiceLab() {
         .from("courses")
         .select("id, title, level, published, display_order")
         .order("display_order");
-      const desiredOrder = ["A1","A2","B1","B2","T1","T2","T3","T4","K1","K2","K3","K4"];
+      const desiredOrder = [...LEVEL_LIST];
       const extractCode = (title: string, level?: string | null) => {
         const fromLevel = (level || "").toUpperCase();
         if (desiredOrder.includes(fromLevel)) return fromLevel;
-        const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2)\b/i);
+        const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2|C1|C2)\b/i);
         return m ? m[1].toUpperCase() : "";
       };
       const list = ((data as any[]) || [])
