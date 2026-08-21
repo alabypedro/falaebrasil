@@ -113,34 +113,51 @@ Deno.serve(async (req) => {
     }
 
     let recent: string[] = [];
+    let requestedLevel: string | null = null;
     try {
       const body = await req.json();
       if (Array.isArray(body?.recent)) {
         recent = body.recent.filter((s: unknown): s is string => typeof s === "string").slice(0, 8);
       }
+      // Whitelist validation to prevent prompt injection via the `level` field
+      if (typeof body?.level === "string" && ALLOWED_LEVELS.includes(body.level)) {
+        requestedLevel = body.level;
+      }
     } catch (_) {
       // no body is fine
     }
 
+    const { data: profile } = await userClient
+      .from("profiles")
+      .select("level")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+
+    const userLevel = requestedLevel || (profile?.level as string | undefined) || "A1";
+    const levelFallbacks = FALLBACK_TOPICS[userLevel] || FALLBACK_TOPICS["A1"];
+    const pickFallback = () => levelFallbacks[Math.floor(Math.random() * levelFallbacks.length)];
+
     if (!LOVABLE_API_KEY) {
-      const fallback = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
-      return new Response(JSON.stringify({ topic: fallback, source: "fallback" }), {
+      return new Response(JSON.stringify({ topic: pickFallback(), source: "fallback" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const systemPrompt = `Você gera UM tema de prática de conversação livre em inglês para alunos brasileiros nível A1/A2.
+    const systemPrompt = `Você gera UM tema de prática de conversação livre em inglês para alunos brasileiros.
+Nível do aluno: ${userLevel} (${LEVEL_GUIDE[userLevel] ?? "adulto iniciante"}).
 REGRAS:
 - Responda SEMPRE em PORTUGUÊS do Brasil (apenas o enunciado do tema).
-- O tema deve ser sobre a VIDA COTIDIANA / dia a dia: rotina, trabalho, estudos, família, amigos, comida, casa, transporte, compras, lazer simples, saúde, hobbies, clima, tecnologia do dia a dia, finais de semana, planos simples.
+- O tema deve ser adequado à IDADE e ao NÍVEL ${userLevel}: níveis K são crianças, T são adolescentes, A/B/C são adultos.
+- Temas do cotidiano apropriados ao público: rotina, escola/trabalho, família, amigos, comida, casa, transporte, compras, lazer, hobbies, clima, tecnologia, planos.
 - Frase curta (máx. 18 palavras), começa com um verbo no imperativo (Descreva, Conte, Fale sobre, Explique, Compare).
-- Termina com "em inglês." OU peça implicitamente para falar em inglês.
+- Termina com "em inglês.".
 - NÃO use aspas, emojis, listas, markdown ou explicações. Só o enunciado.
 - Evite repetir temas recentes.`;
 
     const userPrompt = recent.length
-      ? `Gere um novo tema diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
-      : `Gere um tema de prática de conversação cotidiana.`;
+      ? `Gere um novo tema de nível ${userLevel} diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
+      : `Gere um tema de prática de conversação cotidiana para o nível ${userLevel}.`;
+
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
