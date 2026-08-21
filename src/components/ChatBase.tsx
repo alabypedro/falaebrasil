@@ -15,6 +15,7 @@ import BackToLessonButton from "@/components/BackToLessonButton";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import EmailResultButton from "@/components/EmailResultButton";
+import { LEVEL_LIST, type Level } from "@/lib/levels";
 
 function parseFeedbackForEmail(content: string) {
   const clean = content.replace(/\*\*/g, "").replace(/__/g, "");

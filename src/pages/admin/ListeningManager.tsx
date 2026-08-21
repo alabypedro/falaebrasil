@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { LEVEL_LIST } from "@/lib/levels";
 
 interface ListeningLesson {
   id: string;

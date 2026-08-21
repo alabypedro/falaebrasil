@@ -20,6 +20,7 @@ interface ListeningLesson {
 }
 
 import { useAuth } from "@/contexts/AuthContext";
+import { LEVEL_LIST } from "@/lib/levels";
 
 export default function ListeningLab() {
   const { user } = useAuth();
