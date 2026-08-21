@@ -189,8 +189,7 @@ REGRAS:
     if (!aiResp.ok) {
       const t = await aiResp.text();
       console.error("AI gateway error:", aiResp.status, t);
-      const fallback = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
-      return new Response(JSON.stringify({ topic: fallback, source: "fallback" }), {
+      return new Response(JSON.stringify({ topic: pickFallback(), source: "fallback" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -199,17 +198,18 @@ REGRAS:
     let topic: string = data?.choices?.[0]?.message?.content ?? "";
     topic = topic.trim().replace(/^["']|["']$/g, "").replace(/\n+/g, " ").trim();
     if (!topic || topic.length > 220) {
-      topic = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
+      topic = pickFallback();
     }
 
-    return new Response(JSON.stringify({ topic, source: "ai" }), {
+    return new Response(JSON.stringify({ topic, source: "ai", level: userLevel }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("generate-unscripted-topic error", e);
-    const fallback = FALLBACK_TOPICS[Math.floor(Math.random() * FALLBACK_TOPICS.length)];
-    return new Response(JSON.stringify({ topic: fallback, source: "fallback-error" }), {
+    const fb = FALLBACK_TOPICS["A1"];
+    return new Response(JSON.stringify({ topic: fb[Math.floor(Math.random() * fb.length)], source: "fallback-error" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
 });
