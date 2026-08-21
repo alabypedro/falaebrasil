@@ -392,6 +392,21 @@ export default function Courses() {
         productName={coursePrice?.display_name ?? "Plano OPEN"}
         description="Para acessar o conteúdo do curso Falaê Brasil! você precisa adquirir o curso."
       />
+
+      <Dialog open={showSegmentBlock} onOpenChange={setShowSegmentBlock}>
+        <DialogContent className="max-w-sm text-center">
+          <DialogHeader>
+            <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <Lock className="h-7 w-7 text-primary" />
+            </div>
+            <DialogTitle>Curso bloqueado</DialogTitle>
+            <DialogDescription>
+              Este curso pertence a outro segmento de estudos e não está disponível no seu plano
+              atual. Fale com a equipe Falaê Brasil! para liberar o acesso.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
