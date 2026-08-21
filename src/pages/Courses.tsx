@@ -306,22 +306,25 @@ export default function Courses() {
   // Regra: aluno com categoria OPEN tem acesso total a todos os cursos.
   const isLocked = !isAdmin && !hasOpen && !profile?.has_course_access && grantedCourseIds.size === 0;
 
+  // Hierarquia de segmentos: Kids < Teens < Adultos.
+  // Kids => só Kids | Teens => Teens + Kids | Adultos (open/pro/vip) => tudo.
   const userTier = (profile?.plan_tier ?? "open").toLowerCase();
-  const isTeens = userTier === "teens";
-  const isKids = userTier === "kids";
 
-  const allowedTiers: string[] = isAdmin
-    ? ["open", "pro", "vip", "teens", "kids"]
-    : isTeens
-    ? ["teens"]
-    : isKids
-    ? ["kids"]
-    : ["open", "pro", "vip", "teens", "kids"];
+  const allowedTiers: string[] =
+    !isAdmin && userTier === "kids"
+      ? ["kids"]
+      : !isAdmin && userTier === "teens"
+      ? ["teens", "kids"]
+      : ["open", "pro", "vip", "teens", "kids"];
 
-  const visibleCourses = courses.filter((c) =>
-    allowedTiers.includes((c.required_tier ?? "open").toLowerCase()) ||
-    grantedCourseIds.has(c.id)
-  );
+  const segmentRestricted = !isAdmin && (userTier === "kids" || userTier === "teens");
+
+  const visibleCourses = courses.filter((c) => {
+    const tier = (c.required_tier ?? "open").toLowerCase();
+    if (segmentRestricted) return allowedTiers.includes(tier);
+    return allowedTiers.includes(tier) || grantedCourseIds.has(c.id);
+  });
+
 
    const groups: { key: string; title: string; tiers: string[] }[] = [
      { key: "adults", title: t("courses.group.adults"), tiers: ["open", "pro", "vip"] },
