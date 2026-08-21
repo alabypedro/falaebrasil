@@ -465,13 +465,15 @@ export default function VoiceLab() {
     }
   };
 
-  const fetchUnscriptedTopic = useCallback(async () => {
+  const fetchUnscriptedTopic = useCallback(async (levelOverride?: string) => {
     setTopicLoading(true);
+    const levelToUse = levelOverride || selectedLevel;
     try {
       const { data, error } = await supabase.functions.invoke("generate-unscripted-topic", {
-        body: { recent: recentTopics.slice(0, 6) },
+        body: { recent: recentTopics.slice(0, 6), level: levelToUse },
       });
       if (error) throw error;
+
       const topic = (data as any)?.topic as string | undefined;
       if (topic) {
         setCurrentTopic(topic);
