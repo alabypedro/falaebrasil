@@ -6,16 +6,90 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const FALLBACK_TOPICS = [
-  "Descreva como foi seu café da manhã hoje.",
-  "Conte sobre o trajeto que você faz para o trabalho ou escola.",
-  "Fale sobre o que você costuma fazer aos finais de semana.",
-  "Descreva sua refeição favorita do dia a dia.",
-  "Conte como foi seu último encontro com um amigo.",
-  "Fale sobre seus aplicativos favoritos no celular.",
-  "Descreva como você organiza sua casa durante a semana.",
-  "Conte sobre uma compra recente no supermercado.",
-];
+const ALLOWED_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
+
+const FALLBACK_TOPICS: Record<string, string[]> = {
+  A1: [
+    "Descreva como foi seu café da manhã hoje, em inglês.",
+    "Fale sobre sua família usando frases simples, em inglês.",
+    "Conte o que você faz toda manhã, em inglês.",
+  ],
+  A2: [
+    "Conte sobre o trajeto que você faz para o trabalho ou escola, em inglês.",
+    "Fale sobre o que você costuma fazer aos finais de semana, em inglês.",
+    "Descreva sua refeição favorita do dia a dia, em inglês.",
+  ],
+  B1: [
+    "Conte como foi seu último encontro com um amigo e o que vocês fizeram, em inglês.",
+    "Explique um problema que você resolveu no trabalho recentemente, em inglês.",
+    "Fale sobre seus planos para os próximos meses, em inglês.",
+  ],
+  B2: [
+    "Compare morar em uma cidade grande e em uma cidade pequena, em inglês.",
+    "Fale sobre as vantagens e desvantagens do trabalho remoto, em inglês.",
+    "Explique sua opinião sobre o uso de tecnologia no dia a dia, em inglês.",
+  ],
+  C1: [
+    "Analise o impacto das redes sociais nas relações pessoais, em inglês.",
+    "Defenda uma posição sobre sustentabilidade nas empresas, em inglês.",
+    "Explique um tema complexo da sua área para alguém leigo, em inglês.",
+  ],
+  C2: [
+    "Avalie criticamente uma tendência cultural atual com argumentos sofisticados, em inglês.",
+    "Discuta um dilema ético contemporâneo apresentando pontos de vista opostos, em inglês.",
+    "Apresente uma reflexão filosófica sobre o conceito de sucesso, em inglês.",
+  ],
+  T1: [
+    "Fale sobre você e sua escola com frases simples, em inglês.",
+    "Descreva seu jogo ou série favorita, em inglês.",
+  ],
+  T2: [
+    "Conte o que você fez no último fim de semana, em inglês.",
+    "Descreva sua rotina na escola, em inglês.",
+  ],
+  T3: [
+    "Dê sua opinião sobre redes sociais para adolescentes, em inglês.",
+    "Conte uma experiência marcante e o que você aprendeu, em inglês.",
+  ],
+  T4: [
+    "Defenda uma opinião sobre esportes na escola, em inglês.",
+    "Fale sobre um projeto que você gostaria de criar com seus amigos, em inglês.",
+  ],
+  K1: [
+    "Fale suas cores favoritas e uma coisa dessa cor, em inglês.",
+    "Diga o nome de cinco animais e um som que eles fazem, em inglês.",
+  ],
+  K2: [
+    "Fale sobre sua família com frases curtas, em inglês.",
+    "Descreva seu brinquedo favorito, em inglês.",
+  ],
+  K3: [
+    "Conte o que você faz depois da escola, em inglês.",
+    "Fale sobre seu dia favorito da semana, em inglês.",
+  ],
+  K4: [
+    "Conte como foram suas últimas férias, em inglês.",
+    "Descreva seu melhor amigo e o que vocês gostam de fazer, em inglês.",
+  ],
+};
+
+const LEVEL_GUIDE: Record<string, string> = {
+  A1: "adulto iniciante: vocabulário básico, presente simple, frases muito curtas",
+  A2: "adulto básico: rotina, passado simples, frases curtas do cotidiano",
+  B1: "adulto intermediário: narrar experiências, opiniões simples, planos",
+  B2: "adulto intermediário-avançado: comparar, argumentar, temas sociais e de trabalho",
+  C1: "adulto avançado: análise, abstração, vocabulário sofisticado",
+  C2: "adulto proficiente: temas complexos, nuance, argumentação refinada",
+  T1: "adolescente iniciante: escola, amigos, jogos, frases simples",
+  T2: "adolescente básico: rotina escolar, fim de semana, hobbies",
+  T3: "adolescente intermediário: opinião sobre temas juvenis, experiências",
+  T4: "adolescente avançado: argumentação sobre temas escolares e sociais juvenis",
+  K1: "criança iniciante: cores, animais, números, frases de 3-4 palavras",
+  K2: "criança básica: família, brinquedos, casa, frases curtas",
+  K3: "criança intermediária: escola, rotina do dia, comidas favoritas",
+  K4: "criança avançada: contar histórias curtas sobre férias e amigos",
+};
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
