@@ -141,6 +141,7 @@ export default function Courses() {
   const [courses, setCourses] = useState<CourseWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [showSegmentBlock, setShowSegmentBlock] = useState(false);
   const [coursePrice, setCoursePrice] = useState<{ display_name: string; checkout_url: string | null } | null>(null);
   const [grantedCourseIds, setGrantedCourseIds] = useState<Set<string>>(new Set());
   const { user, profile } = useAuth();
