@@ -98,6 +98,8 @@ export default function VoiceLab() {
   const [currentTopic, setCurrentTopic] = useState(unscriptedTopics[0]);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [topicLoading, setTopicLoading] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<string>("A1");
+
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
@@ -463,13 +465,15 @@ export default function VoiceLab() {
     }
   };
 
-  const fetchUnscriptedTopic = useCallback(async () => {
+  const fetchUnscriptedTopic = useCallback(async (levelOverride?: string) => {
     setTopicLoading(true);
+    const levelToUse = levelOverride || selectedLevel;
     try {
       const { data, error } = await supabase.functions.invoke("generate-unscripted-topic", {
-        body: { recent: recentTopics.slice(0, 6) },
+        body: { recent: recentTopics.slice(0, 6), level: levelToUse },
       });
       if (error) throw error;
+
       const topic = (data as any)?.topic as string | undefined;
       if (topic) {
         setCurrentTopic(topic);
@@ -483,7 +487,13 @@ export default function VoiceLab() {
     } finally {
       setTopicLoading(false);
     }
-  }, [recentTopics]);
+  }, [recentTopics, selectedLevel]);
+
+  // Default the level pill to the student's profile level
+  useEffect(() => {
+    const lvl = (profile?.level || "").toUpperCase();
+    if (lvl && LEVEL_LIST.includes(lvl)) setSelectedLevel(lvl);
+  }, [profile?.level]);
 
   // Auto-fetch a fresh AI topic the first time the user enters Unscripted
   useEffect(() => {
@@ -492,6 +502,13 @@ export default function VoiceLab() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
+
+  // Refetch the topic whenever the level changes (while in Unscripted)
+  useEffect(() => {
+    if (mode === "unscripted") void fetchUnscriptedTopic(selectedLevel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLevel]);
+
 
   // (Texto vem da Lição via Admin — sem aleatoriedade nem upload de arquivos)
 
@@ -666,7 +683,22 @@ export default function VoiceLab() {
             </Card>
           )}
 
+          <div className="flex flex-wrap gap-1.5 justify-center">
+            {LEVEL_LIST.map((level) => (
+              <Button
+                key={level}
+                variant={selectedLevel === level ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedLevel(level)}
+                className="w-10 h-10 rounded-full font-bold text-xs shrink-0"
+              >
+                {level}
+              </Button>
+            ))}
+          </div>
+
           <Card className="bg-accent/5 border-accent/20">
+
             <CardContent className="p-6 text-center space-y-3">
               <p className="text-xs text-accent font-semibold uppercase tracking-wide">{tr("voice.suggestedTopic")}</p>
               {topicLoading ? (
