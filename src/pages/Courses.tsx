@@ -56,20 +56,21 @@ const courseTitleLabels: Record<string, string> = {
 function CourseCard({
   course,
   index,
-  locked,
+  lockReason,
   onLockedClick,
 }: {
   course: CourseWithProgress;
   index: number;
-  locked: boolean;
-  onLockedClick: () => void;
+  lockReason: null | "purchase" | "segment";
+  onLockedClick: (reason: "purchase" | "segment") => void;
 }) {
   const navigate = useNavigate();
+  const locked = lockReason !== null;
   return (
     <Card
       className="relative overflow-hidden hover-lift cursor-pointer animate-fade-up"
       style={{ "--delay": `${80 * (index + 1)}ms` } as React.CSSProperties}
-      onClick={() => (locked ? onLockedClick() : navigate(`/courses/${course.id}`))}
+      onClick={() => (lockReason ? onLockedClick(lockReason) : navigate(`/courses/${course.id}`))}
     >
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between">
@@ -100,7 +101,11 @@ function CourseCard({
             <CheckCircle className="h-5 w-5 text-success flex-shrink-0 animate-xp-pop" />
           ) : null}
         </div>
-          {locked ? (
+        {lockReason === "segment" ? (
+          <Badge variant="secondary" className="w-full justify-center py-1.5 gap-1.5">
+            <Lock className="h-3 w-3" /> Bloqueado para o seu segmento
+          </Badge>
+        ) : lockReason === "purchase" ? (
           <Badge variant="default" className="w-full justify-center py-1.5 gap-1.5">
             <Lock className="h-3 w-3" /> Comprar Falaê Brasil!
           </Badge>
@@ -128,6 +133,7 @@ function CourseCard({
     </Card>
   );
 }
+
 
 export default function Courses() {
   const [courses, setCourses] = useState<CourseWithProgress[]>([]);
