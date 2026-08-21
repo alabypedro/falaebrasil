@@ -103,6 +103,7 @@ export default function CourseDetail() {
   const [allCourseVideos, setAllCourseVideos] = useState<{ id: string; lesson_id: string }[]>([]);
   const [completedCourseVideos, setCompletedCourseVideos] = useState<Set<string>>(new Set());
   const [hasIndividualGrant, setHasIndividualGrant] = useState(false);
+  const [grantedTiers, setGrantedTiers] = useState<(string | null)[]>([]);
   const [readingPdf, setReadingPdf] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = async () => {
