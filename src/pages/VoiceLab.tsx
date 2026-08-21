@@ -98,6 +98,8 @@ export default function VoiceLab() {
   const [currentTopic, setCurrentTopic] = useState(unscriptedTopics[0]);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [topicLoading, setTopicLoading] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<string>("A1");
+
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [transcription, setTranscription] = useState<string | null>(null);
