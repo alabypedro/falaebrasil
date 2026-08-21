@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { LEVEL_LIST } from "@/lib/levels";
 
 interface ListeningLesson {
   id: string;
@@ -217,7 +218,7 @@ export default function ListeningManager() {
     }));
   };
 
-  const levelCounts = ["A1", "A2", "B1", "B2", "C1", "C2"].reduce((acc, lvl) => {
+  const levelCounts = LEVEL_LIST.reduce((acc, lvl) => {
     acc[lvl] = lessons.filter(l => l.level === lvl).length;
     return acc;
   }, {} as Record<string, number>);
@@ -241,7 +242,7 @@ export default function ListeningManager() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {["A1", "A2", "B1", "B2", "C1", "C2"].map(lvl => (
+        {LEVEL_LIST.map(lvl => (
           <Card key={lvl} className={cn(
             "cursor-pointer transition-all hover:border-primary/50",
             filterLevel === lvl ? "border-primary bg-primary/5" : ""
@@ -282,7 +283,7 @@ export default function ListeningManager() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os níveis</SelectItem>
-              {["A1", "A2", "B1", "B2", "C1", "C2"].map(l => (
+              {LEVEL_LIST.map(l => (
                 <SelectItem key={l} value={l}>{l}</SelectItem>
               ))}
             </SelectContent>
@@ -343,7 +344,7 @@ export default function ListeningManager() {
                 <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {["A1", "A2", "B1", "B2", "C1", "C2"].map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                    {LEVEL_LIST.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

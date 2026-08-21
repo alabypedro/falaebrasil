@@ -15,6 +15,7 @@ import BackToLessonButton from "@/components/BackToLessonButton";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import EmailResultButton from "@/components/EmailResultButton";
+import { LEVEL_LIST, type Level } from "@/lib/levels";
 
 function parseFeedbackForEmail(content: string) {
   const clean = content.replace(/\*\*/g, "").replace(/__/g, "");
@@ -165,24 +166,21 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [currentTopic, setCurrentTopic] = useState<string | null>(null);
   const [topicLoading, setTopicLoading] = useState(false);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
-  const [selectedLevel, setSelectedLevel] = useState<'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>('A1');
+  const [selectedLevel, setSelectedLevel] = useState<Level>('A1');
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const lvl = searchParams.get('level');
-    if (lvl && ['A1','A2','B1','B2','C1','C2'].includes(lvl)) {
+    if (lvl && LEVEL_LIST.includes(lvl)) {
       setSelectedLevel(lvl as any);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const levels = {
-    'A1': 100,
-    'A2': 150,
-    'B1': 200,
-    'B2': 250,
-    'C1': 300,
-    'C2': 350
+  const levels: Record<Level, number> = {
+    'A1': 100, 'A2': 150, 'B1': 200, 'B2': 250, 'C1': 300, 'C2': 350,
+    'T1': 100, 'T2': 150, 'T3': 200, 'T4': 250,
+    'K1': 60, 'K2': 80, 'K3': 100, 'K4': 120,
   };
 
   const { isRecording, startRecording, stopRecording, recordings } = useAudioRecorder();
@@ -244,7 +242,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
     initSession();
   }, [user, mode]);
 
-  const fetchWritingTopic = useCallback(async (levelOverride?: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2') => {
+  const fetchWritingTopic = useCallback(async (levelOverride?: Level) => {
     if (mode !== 'writing') return;
     setTopicLoading(true);
     const levelToUse = levelOverride || selectedLevel;

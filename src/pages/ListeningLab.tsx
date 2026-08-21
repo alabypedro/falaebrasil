@@ -20,6 +20,7 @@ interface ListeningLesson {
 }
 
 import { useAuth } from "@/contexts/AuthContext";
+import { LEVEL_LIST } from "@/lib/levels";
 
 export default function ListeningLab() {
   const { user } = useAuth();
@@ -70,7 +71,7 @@ export default function ListeningLab() {
   // Apply level filter from URL
   useEffect(() => {
     const lvl = searchParams.get('level');
-    if (lvl && ['A1','A2','B1','B2','C1','C2'].includes(lvl)) {
+    if (lvl && LEVEL_LIST.includes(lvl)) {
       setFilterLevel(lvl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -258,7 +259,7 @@ export default function ListeningLab() {
   }
 
   if (!selectedLesson) {
-    const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const levels = LEVEL_LIST;
     const filteredLessons = (filterLevel === "all" 
       ? lessons 
       : lessons.filter(l => l.level === filterLevel))

@@ -38,8 +38,7 @@ interface ReviewRow {
   ease_factor: number;
 }
 
-const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-type Level = typeof LEVELS[number];
+import { LEVELS, type Level } from "@/lib/levels";
 
 const NEW_PER_DAY = 20;
 
