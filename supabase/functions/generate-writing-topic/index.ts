@@ -37,6 +37,38 @@ const FALLBACK_TOPICS: Record<string, string[]> = {
     "Escreva uma proposta formal para uma mudança de estratégia corporativa, em inglês.",
     "Discuta o impacto da tecnologia nas relações humanas usando conceitos abstratos, em inglês.",
   ],
+  'T1': [
+    "Escreva três frases sobre você e sua escola, em inglês.",
+    "Descreva seu jogo ou série favorita com frases simples, em inglês.",
+  ],
+  'T2': [
+    "Conte o que você fez no último fim de semana, em inglês.",
+    "Descreva sua rotina na escola e um plano para as férias, em inglês.",
+  ],
+  'T3': [
+    "Escreva sua opinião sobre redes sociais para adolescentes, em inglês.",
+    "Conte uma experiência marcante e o que você aprendeu, em inglês.",
+  ],
+  'T4': [
+    "Escreva um texto curto defendendo uma opinião sobre esportes na escola, em inglês.",
+    "Descreva um projeto que você gostaria de criar com seus amigos, em inglês.",
+  ],
+  'K1': [
+    "Escreva três frases curtas sobre suas cores favoritas, em inglês.",
+    "Escreva os nomes de cinco animais e uma frase sobre cada, em inglês.",
+  ],
+  'K2': [
+    "Escreva quatro frases sobre sua família, em inglês.",
+    "Descreva seu brinquedo favorito com frases curtas, em inglês.",
+  ],
+  'K3': [
+    "Conte o que você faz depois da escola, em inglês.",
+    "Escreva sobre seu dia favorito da semana, em inglês.",
+  ],
+  'K4': [
+    "Escreva um pequeno parágrafo sobre suas férias, em inglês.",
+    "Descreva seu melhor amigo e o que vocês gostam de fazer, em inglês.",
+  ],
   'C2': [
     "Escreva um ensaio magistralmente estruturado resumindo pontos de vista contrastantes sobre um tópico filosófico, em inglês.",
     "Produza um relatório altamente técnico sobre um assunto especializado de sua escolha, em inglês.",
@@ -73,7 +105,7 @@ Deno.serve(async (req) => {
         recent = body.recent.filter((s: unknown): s is string => typeof s === "string").slice(0, 8);
       }
       // Whitelist validation to prevent prompt injection via the `level` field
-      const ALLOWED_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+      const ALLOWED_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
       if (typeof body?.level === "string" && ALLOWED_LEVELS.includes(body.level)) {
         requestedLevel = body.level;
       }

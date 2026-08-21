@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     const { messages, type: rawType, level: rawLevel, user_id } = await req.json();
 
     // Whitelist validation to prevent prompt injection via user-controlled fields
-    const ALLOWED_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+    const ALLOWED_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"] as const;
     const ALLOWED_TYPES = ["writing", "listening"] as const;
     const level = ALLOWED_LEVELS.includes(rawLevel) ? rawLevel : "A1";
     const type = ALLOWED_TYPES.includes(rawType) ? rawType : "writing";
@@ -85,8 +85,16 @@ Deno.serve(async (req) => {
       'B1': 'Foque em present perfect, condicionais (tipo 1), orações relativas e expressão de opiniões e ambições.',
       'B2': 'Foque em voz passiva, todos os condicionais, modais no passado e argumentação ou explicação de pontos de vista detalhados.',
       'C1': 'Foque em inversão, condicionais mistos, phrasal verbs avançados e nuances sutis em contextos formais e informais.',
-      'C2': 'Foque no domínio de estruturas complexas, expressões idiomáticas e capacidade de resumir informações de diferentes fontes de forma coerente.'
-    };
+      'C2': 'Foque no domínio de estruturas complexas, expressões idiomáticas e capacidade de resumir informações de diferentes fontes de forma coerente.',
+      'T1': 'Turma Teens iniciante: vocabulário básico, verbo "to be", present simple e temas do dia a dia adolescente.',
+      'T2': 'Turma Teens: past simple, futuro com "going to", comparativos e rotinas escolares.',
+      'T3': 'Turma Teens intermediária: present perfect, condicionais tipo 1 e expressão de opiniões.',
+      'T4': 'Turma Teens avançada: voz passiva, modais no passado e argumentação simples.',
+      'K1': 'Turma Kids inicial: palavras isoladas, cores, números e frases muito curtas.',
+      'K2': 'Turma Kids: frases curtas com present simple, animais, família e escola.',
+      'K3': 'Turma Kids intermediária: frases simples no presente e passado sobre brincadeiras e rotina.',
+      'K4': 'Turma Kids avançada: pequenos parágrafos simples com conectores básicos.'
+    } as Record<string, string>;
 
     const systemPrompt = type === 'listening' 
       ? `You are a TOEIC examiner focusing on listening comprehension. Your goal is to simulate a TOEIC Part 1 or Part 2 task at the ${level} CEFR level. \n\n` +
