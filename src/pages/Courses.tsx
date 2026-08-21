@@ -314,38 +314,35 @@ export default function Courses() {
 
   // Hierarquia de segmentos: Kids < Teens < Adultos.
   // Kids => só Kids | Teens => Teens + Kids | Adultos (open/pro/vip) => tudo.
-  const userTier = (profile?.plan_tier ?? "open").toLowerCase();
-
-  const allowedTiers: string[] =
-    !isAdmin && userTier === "kids"
-      ? ["kids"]
-      : !isAdmin && userTier === "teens"
-      ? ["teens", "kids"]
-      : ["open", "pro", "vip", "teens", "kids"];
-
-  const segmentRestricted = !isAdmin && (userTier === "kids" || userTier === "teens");
-
-  const visibleCourses = courses.filter((c) => {
-    const tier = (c.required_tier ?? "open").toLowerCase();
-    if (segmentRestricted) return allowedTiers.includes(tier);
-    return allowedTiers.includes(tier) || grantedCourseIds.has(c.id);
+  const grantedTiers = courses.filter((c) => grantedCourseIds.has(c.id)).map((c) => c.required_tier);
+  const mySegment = userSegment({
+    isAdmin,
+    hasOpen,
+    planTier: profile?.plan_tier,
+    grantedTiers,
   });
 
-
-   const groups: { key: string; title: string; tiers: string[] }[] = [
-     { key: "adults", title: t("courses.group.adults"), tiers: ["open", "pro", "vip"] },
-     { key: "teens", title: t("courses.group.teens"), tiers: ["teens"] },
-     { key: "kids", title: t("courses.group.kids"), tiers: ["kids"] },
-   ];
+  const groups: { key: string; title: string; tiers: string[] }[] = [
+    { key: "adults", title: t("courses.group.adults"), tiers: ["open", "pro", "vip"] },
+    { key: "teens", title: t("courses.group.teens"), tiers: ["teens"] },
+    { key: "kids", title: t("courses.group.kids"), tiers: ["kids"] },
+  ];
 
   const visibleGroups = groups
     .map((g) => ({
       ...g,
-      courses: visibleCourses.filter((c) =>
+      courses: courses.filter((c) =>
         g.tiers.includes((c.required_tier ?? "open").toLowerCase())
       ),
     }))
     .filter((g) => g.courses.length > 0);
+
+  const lockReasonFor = (course: CourseWithProgress): null | "purchase" | "segment" => {
+    if (isAdmin) return null;
+    if (!segmentAllows(mySegment, courseSegment(course.required_tier))) return "segment";
+    if (isLocked) return "purchase";
+    return null;
+  };
 
   return (
     <div className="space-y-6 max-w-6xl page-transition">
@@ -370,13 +367,16 @@ export default function Courses() {
                   key={course.id}
                   course={course}
                   index={i}
-                  locked={isLocked}
-                  onLockedClick={() => setShowUpsell(true)}
+                  lockReason={lockReasonFor(course)}
+                  onLockedClick={(reason) =>
+                    reason === "segment" ? setShowSegmentBlock(true) : setShowUpsell(true)
+                  }
                 />
               ))}
             </div>
           </section>
         ))}
+
         {visibleGroups.length === 0 && (
           <p className="text-center text-muted-foreground py-8 animate-fade-in">{t("courses.empty")}</p>
         )}
