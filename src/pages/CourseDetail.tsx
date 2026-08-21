@@ -359,15 +359,14 @@ export default function CourseDetail() {
   }
 
   // Hierarquia de segmentos: Kids só acessa Kids; Teens acessa Teens + Kids; Adultos acessa tudo.
-  const userTier = (profile?.plan_tier ?? "open").toLowerCase();
-  const courseTier = ((course as any).required_tier ?? "open").toLowerCase();
+  const mySegment = userSegment({
+    isAdmin,
+    hasOpen,
+    planTier: profile?.plan_tier,
+    grantedTiers,
+  });
   const segmentAllowed =
-    isAdmin ||
-    (userTier === "kids"
-      ? courseTier === "kids"
-      : userTier === "teens"
-      ? ["teens", "kids"].includes(courseTier)
-      : true);
+    isAdmin || segmentAllows(mySegment, courseSegment((course as any).required_tier));
 
   if (!segmentAllowed) {
     return (
@@ -375,14 +374,15 @@ export default function CourseDetail() {
         <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
           <Lock className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold">Conteúdo indisponível</h1>
+        <h1 className="text-2xl font-bold">Curso bloqueado</h1>
         <p className="text-muted-foreground">
-          Este curso não faz parte do seu segmento de estudos.
+          Este curso pertence a outro segmento de estudos e não está disponível no seu plano atual.
         </p>
         <Button onClick={() => navigate("/courses")}>Ver meus cursos</Button>
       </div>
     );
   }
+
 
   // Gating: bloqueia conteúdo se usuário não comprou o Essential Pro A1 (admins veem tudo)
   // Regra: categoria OPEN libera todos os cursos.
