@@ -317,11 +317,14 @@ export default function Courses() {
       ? ["teens", "kids"]
       : ["open", "pro", "vip", "teens", "kids"];
 
+  const segmentRestricted = !isAdmin && (userTier === "kids" || userTier === "teens");
 
-  const visibleCourses = courses.filter((c) =>
-    allowedTiers.includes((c.required_tier ?? "open").toLowerCase()) ||
-    grantedCourseIds.has(c.id)
-  );
+  const visibleCourses = courses.filter((c) => {
+    const tier = (c.required_tier ?? "open").toLowerCase();
+    if (segmentRestricted) return allowedTiers.includes(tier);
+    return allowedTiers.includes(tier) || grantedCourseIds.has(c.id);
+  });
+
 
    const groups: { key: string; title: string; tiers: string[] }[] = [
      { key: "adults", title: t("courses.group.adults"), tiers: ["open", "pro", "vip"] },
