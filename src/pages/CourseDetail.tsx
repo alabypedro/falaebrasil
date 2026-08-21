@@ -114,14 +114,15 @@ export default function CourseDetail() {
       supabase.from("user_progress").select("lesson_id").eq("user_id", user.id),
     ]);
 
-    // Check if user has an individual grant for this course (via Hubla purchase)
-    const { data: grantRow } = await supabase
+    // Cursos liberados individualmente (define o segmento efetivo do aluno)
+    const { data: grantRows } = await supabase
       .from("user_course_access")
-      .select("course_id")
-      .eq("user_id", user.id)
-      .eq("course_id", courseId)
-      .maybeSingle();
-    setHasIndividualGrant(!!grantRow);
+      .select("course_id, courses(required_tier)")
+      .eq("user_id", user.id);
+    const grants = (grantRows as any[]) ?? [];
+    setHasIndividualGrant(grants.some((g) => g.course_id === courseId));
+    setGrantedTiers(grants.map((g) => g.courses?.required_tier ?? null));
+
 
     if (courseData) setCourse(courseData);
     if (modulesData) {
