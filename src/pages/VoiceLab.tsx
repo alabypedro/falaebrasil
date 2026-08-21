@@ -487,7 +487,13 @@ export default function VoiceLab() {
     } finally {
       setTopicLoading(false);
     }
-  }, [recentTopics]);
+  }, [recentTopics, selectedLevel]);
+
+  // Default the level pill to the student's profile level
+  useEffect(() => {
+    const lvl = (profile?.level || "").toUpperCase();
+    if (lvl && LEVEL_LIST.includes(lvl)) setSelectedLevel(lvl);
+  }, [profile?.level]);
 
   // Auto-fetch a fresh AI topic the first time the user enters Unscripted
   useEffect(() => {
@@ -496,6 +502,13 @@ export default function VoiceLab() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
+
+  // Refetch the topic whenever the level changes (while in Unscripted)
+  useEffect(() => {
+    if (mode === "unscripted") void fetchUnscriptedTopic(selectedLevel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLevel]);
+
 
   // (Texto vem da Lição via Admin — sem aleatoriedade nem upload de arquivos)
 
