@@ -445,8 +445,21 @@ export default function LessonsManager() {
               <div className="flex gap-2 items-center">
                 <Input type="file" accept="application/pdf" onChange={(e) => handleFileUpload(e, "pdf")} disabled={uploadingPdf} />
                 {form.pdf_url && <Badge variant="outline">PDF ok</Badge>}
+                {form.pdf_url && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    title="Remover PDF"
+                    onClick={() => { setForm((prev) => ({ ...prev, pdf_url: "" })); toast.success("PDF removido — salve para confirmar"); }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
               </div>
             </div>
+
             <div className="space-y-2">
               <Label>Texto para Prática de Voz</Label>
               <Textarea value={form.practice_text} onChange={(e) => setForm({ ...form, practice_text: e.target.value })} rows={3} />
