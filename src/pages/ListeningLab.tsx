@@ -433,17 +433,20 @@ export default function ListeningLab() {
                     </div>
                     <div className="flex-1 space-y-3">
                       <p className="font-bold text-lg leading-tight">{idx + 1}. {q.question}</p>
-                      <div className="space-y-1 text-sm">
-                        <p className={cn(
-                          "flex items-center gap-2",
-                          isCorrect ? "text-green-500/90" : "text-red-500/90"
-                        )}>
-                          <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
-                        </p>
-                        <p className="text-muted-foreground flex items-center gap-2">
-                          <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
-                        </p>
-                      </div>
+                      {/* Nas questões 1 a 4, só exibe a resposta escrita quando o aluno erra */}
+                      {(idx >= 4 || !isCorrect) && (
+                        <div className="space-y-1 text-sm">
+                          <p className={cn(
+                            "flex items-center gap-2",
+                            isCorrect ? "text-green-500/90" : "text-red-500/90"
+                          )}>
+                            <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
+                          </p>
+                          <p className="text-muted-foreground flex items-center gap-2">
+                            <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
