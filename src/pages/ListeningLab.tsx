@@ -433,8 +433,8 @@ export default function ListeningLab() {
                     </div>
                     <div className="flex-1 space-y-3">
                       <p className="font-bold text-lg leading-tight">{idx + 1}. {q.question}</p>
-                      {/* Nas questões 1 a 4, só exibe a resposta escrita quando o aluno erra */}
-                      {(idx >= 4 || !isCorrect) && (
+                      {/* Questões 1 a 4: mostra SÓ a resposta correta quando erra; quando acerta, não mostra resposta. Questões 5 a 10: mostra sempre. */}
+                      {idx >= 4 ? (
                         <div className="space-y-1 text-sm">
                           <p className={cn(
                             "flex items-center gap-2",
@@ -446,7 +446,13 @@ export default function ListeningLab() {
                             <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
                           </p>
                         </div>
-                      )}
+                      ) : !isCorrect ? (
+                        <div className="space-y-1 text-sm">
+                          <p className="text-muted-foreground flex items-center gap-2">
+                            <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>
