@@ -148,6 +148,16 @@ export default function Dashboard() {
 
       {/* AI quick-access + Courses */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 animate-fade-up">
+        <button
+          onClick={() => navigate("/courses")}
+          className="group flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card p-3 text-center hover:border-primary hover:bg-primary/5 transition"
+        >
+          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+            <GradIcon className="h-4 w-4 text-primary" />
+          </div>
+          <span className="text-[11px] font-semibold text-foreground leading-tight">Cursos FB!</span>
+          <span className="text-[10px] text-muted-foreground tabular-nums">Acessar</span>
+        </button>
         {aiButtons.map(({ source, icon: Icon, path }) => (
           <button
             key={source}
@@ -161,16 +171,6 @@ export default function Dashboard() {
             <span className="text-[10px] text-muted-foreground tabular-nums">{aiXp[source]} XP</span>
           </button>
         ))}
-        <button
-          onClick={() => navigate("/courses")}
-          className="group flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card p-3 text-center hover:border-primary hover:bg-primary/5 transition"
-        >
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-            <GradIcon className="h-4 w-4 text-primary" />
-          </div>
-          <span className="text-[11px] font-semibold text-foreground leading-tight">Cursos FB!</span>
-          <span className="text-[10px] text-muted-foreground tabular-nums">Acessar</span>
-        </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
