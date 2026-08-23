@@ -350,7 +350,7 @@ export default function ListeningLab() {
         options: content.part1.options.map((o: any) => `${t("listening.alternative")} ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
       },
       ...content.part2.map((q: any, i: number) => ({
-        question: `${t("listening.title.qa")} ${i + 1}`,
+        question: q.question_script || `${t("listening.title.qa")} ${i + 1}`,
         userAnswer: answers[`2-${i}`],
         correctAnswer: correctMap[`2-${i}`],
         options: q.options.map((o: any, idx: number) => `${t("listening.answer")} ${String.fromCharCode(65 + idx)}`)
@@ -414,6 +414,7 @@ export default function ListeningLab() {
           <div className="grid gap-4">
             {questionsList.map((q, idx) => {
               const isCorrect = q.userAnswer === q.correctAnswer;
+              const isIntroQuestion = idx < 4;
               return (
                 <div 
                   key={idx} 
@@ -433,17 +434,21 @@ export default function ListeningLab() {
                     </div>
                     <div className="flex-1 space-y-3">
                       <p className="font-bold text-lg leading-tight">{idx + 1}. {q.question}</p>
-                      <div className="space-y-1 text-sm">
-                        <p className={cn(
-                          "flex items-center gap-2",
-                          isCorrect ? "text-green-500/90" : "text-red-500/90"
-                        )}>
-                          <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
-                        </p>
-                        <p className="text-muted-foreground flex items-center gap-2">
-                          <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
-                        </p>
-                      </div>
+                      {(!isIntroQuestion || !isCorrect) && (
+                        <div className="space-y-1 text-sm">
+                          {!isIntroQuestion && (
+                            <p className={cn(
+                              "flex items-center gap-2",
+                              isCorrect ? "text-green-500/90" : "text-red-500/90"
+                            )}>
+                              <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
+                            </p>
+                          )}
+                          <p className="text-muted-foreground flex items-center gap-2">
+                            <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
