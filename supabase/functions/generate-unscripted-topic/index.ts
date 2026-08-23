@@ -257,7 +257,7 @@ REGRAS:
       topic = pickFallback();
     }
 
-    return new Response(JSON.stringify({ topic, source: "ai", level: userLevel }), {
+    return new Response(JSON.stringify({ topic, source: "ai", level: userLevel, unit: chosen?.unit ?? null, unitTheme: chosen?.module ?? null }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
