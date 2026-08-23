@@ -453,11 +453,13 @@ export default function ListeningLab() {
                               "flex items-center gap-2",
                               isCorrect ? "text-green-500/90" : "text-red-500/90"
                             )}>
-                              <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
+                              <span className="font-semibold">{t("listening.yours")}</span>
+                              {q.options[q.userAnswer] ? `${q.options[q.userAnswer].label} — ${q.options[q.userAnswer].text}` : t("listening.notAnswered")}
                             </p>
                           )}
                           <p className="text-muted-foreground flex items-center gap-2">
-                            <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
+                            <span className="font-semibold">{t("listening.correctLabel")}</span>
+                            {q.options[q.correctAnswer] ? `${q.options[q.correctAnswer].label} — ${q.options[q.correctAnswer].text}` : "—"}
                           </p>
                         </div>
                       )}
