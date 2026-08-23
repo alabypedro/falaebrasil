@@ -347,25 +347,37 @@ export default function ListeningLab() {
         question: t("listening.title.photo"),
         userAnswer: answers['1-0'],
         correctAnswer: correctMap['1-0'],
-        options: content.part1.options.map((o: any) => `${t("listening.alternative")} ${String.fromCharCode(65 + content.part1.options.indexOf(o))}`)
+        options: content.part1.options.map((o: any, idx: number) => ({
+          label: `${t("listening.alternative")} ${String.fromCharCode(65 + idx)}`,
+          text: o.script || o.text || o
+        }))
       },
       ...content.part2.map((q: any, i: number) => ({
         question: q.question_script || `${t("listening.title.qa")} ${i + 1}`,
         userAnswer: answers[`2-${i}`],
         correctAnswer: correctMap[`2-${i}`],
-        options: q.options.map((o: any, idx: number) => `${t("listening.answer")} ${String.fromCharCode(65 + idx)}`)
+        options: q.options.map((o: any, idx: number) => ({
+          label: `${t("listening.answer")} ${String.fromCharCode(65 + idx)}`,
+          text: o.script || o.text || o
+        }))
       })),
       ...content.part3.questions.map((q: any, i: number) => ({
         question: q.enunciado,
         userAnswer: answers[`3-${i}`],
         correctAnswer: correctMap[`3-${i}`],
-        options: q.options
+        options: q.options.map((o: any, idx: number) => ({
+          label: `${t("listening.answer")} ${String.fromCharCode(65 + idx)}`,
+          text: typeof o === 'string' ? o : (o.text || o.script || '')
+        }))
       })),
       ...content.part4.questions.map((q: any, i: number) => ({
         question: q.enunciado,
         userAnswer: answers[`4-${i}`],
         correctAnswer: correctMap[`4-${i}`],
-        options: q.options
+        options: q.options.map((o: any, idx: number) => ({
+          label: `${t("listening.answer")} ${String.fromCharCode(65 + idx)}`,
+          text: typeof o === 'string' ? o : (o.text || o.script || '')
+        }))
       }))
     ];
 
