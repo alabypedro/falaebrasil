@@ -143,20 +143,76 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ---- Load the FB course content (units) for this level ----
+    // Uses the service role so tightened RLS on courses/modules/lessons doesn't
+    // hide content the topic generator needs.
+    const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(SUPABASE_URL, SERVICE);
+
+    type UnitCtx = { unit: string; module: string; description: string; practice: string };
+    let units: UnitCtx[] = [];
+    try {
+      const { data: courses } = await admin
+        .from("courses")
+        .select("id")
+        .eq("level", userLevel);
+      const courseIds = (courses ?? []).map((c: any) => c.id);
+      if (courseIds.length) {
+        const { data: mods } = await admin
+          .from("modules")
+          .select("id, title, display_order, course_id")
+          .in("course_id", courseIds)
+          .order("display_order");
+        const modIds = (mods ?? []).map((m: any) => m.id);
+        if (modIds.length) {
+          const { data: lessons } = await admin
+            .from("lessons")
+            .select("id, title, description, practice_text, display_order, module_id")
+            .in("module_id", modIds)
+            .order("display_order");
+          const modById = new Map((mods ?? []).map((m: any) => [m.id, m]));
+          units = (lessons ?? [])
+            .map((l: any) => ({
+              unit: String(l.title ?? "").trim(),
+              module: String(modById.get(l.module_id)?.title ?? "").trim(),
+              description: String(l.description ?? "").trim(),
+              practice: String(l.practice_text ?? "").trim().slice(0, 700),
+            }))
+            // Only units that actually have content published
+            .filter((u) => u.description.length > 20 || u.practice.length > 40);
+        }
+      }
+    } catch (e) {
+      console.error("unit content load failed", e);
+    }
+
+    // Pick one unit at random so the student rotates through published units
+    const chosen = units.length ? units[Math.floor(Math.random() * units.length)] : null;
+
+    const unitBlock = chosen
+      ? `CONTEÚDO DA UNIT DO CURSO FB (nível ${userLevel}):
+- Unit: ${chosen.unit}
+- Módulo/Tema: ${chosen.module}
+- Conteúdo estrutural e temático: ${chosen.description}
+${chosen.practice ? `- Texto de prática: ${chosen.practice}` : ""}`
+      : "";
+
     const systemPrompt = `Você gera UM tema de prática de conversação livre em inglês para alunos brasileiros.
 Nível do aluno: ${userLevel} (${LEVEL_GUIDE[userLevel] ?? "adulto iniciante"}).
+${chosen ? `O tema DEVE ser baseado no conteúdo estrutural (gramática/estruturas) e temático (contexto/situação/vocabulário) da unit abaixo, do curso FB desse nível.\n\n${unitBlock}\n` : "Não há conteúdo de unit disponível: use temas do cotidiano adequados ao nível."}
 REGRAS:
 - Responda SEMPRE em PORTUGUÊS do Brasil (apenas o enunciado do tema).
 - O tema deve ser adequado à IDADE e ao NÍVEL ${userLevel}: níveis K são crianças, T são adolescentes, A/B/C são adultos.
-- Temas do cotidiano apropriados ao público: rotina, escola/trabalho, família, amigos, comida, casa, transporte, compras, lazer, hobbies, clima, tecnologia, planos.
-- Frase curta (máx. 18 palavras), começa com um verbo no imperativo (Descreva, Conte, Fale sobre, Explique, Compare).
+- Deve praticar a estrutura gramatical e o contexto temático da unit, de forma falada e natural.
+- Frase curta (máx. 22 palavras), começa com um verbo no imperativo (Descreva, Conte, Fale sobre, Explique, Compare, Simule).
 - Termina com "em inglês.".
-- NÃO use aspas, emojis, listas, markdown ou explicações. Só o enunciado.
+- NÃO cite "Unit", "módulo", nomes de gramática em inglês técnico, aspas, emojis, listas ou markdown. Só o enunciado.
 - Evite repetir temas recentes.`;
 
     const userPrompt = recent.length
-      ? `Gere um novo tema de nível ${userLevel} diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
-      : `Gere um tema de prática de conversação cotidiana para o nível ${userLevel}.`;
+      ? `Gere um novo tema de nível ${userLevel}${chosen ? ` baseado na ${chosen.unit}` : ""} diferente destes recentes: ${recent.map((r) => `"${r}"`).join(", ")}`
+      : `Gere um tema de prática falada para o nível ${userLevel}${chosen ? ` baseado na ${chosen.unit}` : ""}.`;
+
 
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -201,7 +257,7 @@ REGRAS:
       topic = pickFallback();
     }
 
-    return new Response(JSON.stringify({ topic, source: "ai", level: userLevel }), {
+    return new Response(JSON.stringify({ topic, source: "ai", level: userLevel, unit: chosen?.unit ?? null, unitTheme: chosen?.module ?? null }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
