@@ -433,26 +433,17 @@ export default function ListeningLab() {
                     </div>
                     <div className="flex-1 space-y-3">
                       <p className="font-bold text-lg leading-tight">{idx + 1}. {q.question}</p>
-                      {/* Questões 1 a 4: mostra SÓ a resposta correta quando erra; quando acerta, não mostra resposta. Questões 5 a 10: mostra sempre. */}
-                      {idx >= 4 ? (
-                        <div className="space-y-1 text-sm">
-                          <p className={cn(
-                            "flex items-center gap-2",
-                            isCorrect ? "text-green-500/90" : "text-red-500/90"
-                          )}>
-                            <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
-                          </p>
-                          <p className="text-muted-foreground flex items-center gap-2">
-                            <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
-                          </p>
-                        </div>
-                      ) : !isCorrect ? (
-                        <div className="space-y-1 text-sm">
-                          <p className="text-muted-foreground flex items-center gap-2">
-                            <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
-                          </p>
-                        </div>
-                      ) : null}
+                      <div className="space-y-1 text-sm">
+                        <p className={cn(
+                          "flex items-center gap-2",
+                          isCorrect ? "text-green-500/90" : "text-red-500/90"
+                        )}>
+                          <span className="font-semibold">{t("listening.yours")}</span> {q.options[q.userAnswer] || t("listening.notAnswered")}
+                        </p>
+                        <p className="text-muted-foreground flex items-center gap-2">
+                          <span className="font-semibold">{t("listening.correctLabel")}</span> {q.options[q.correctAnswer] ?? "—"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
