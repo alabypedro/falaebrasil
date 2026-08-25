@@ -111,6 +111,24 @@ export default function QuizzesManager() {
     setQuestions(questions.filter((_, i) => i !== idx));
   };
 
+  const addOption = (qIdx: number) => {
+    const updated = [...questions];
+    updated[qIdx] = { ...updated[qIdx], options: [...updated[qIdx].options, ""] };
+    setQuestions(updated);
+  };
+
+  const removeOption = (qIdx: number, oIdx: number) => {
+    const updated = [...questions];
+    const q = updated[qIdx];
+    if (q.options.length <= 2) { toast.error("Mínimo de 2 alternativas"); return; }
+    const options = q.options.filter((_, i) => i !== oIdx);
+    let correct = q.correct_option_index;
+    if (correct === oIdx) correct = 0;
+    else if (correct > oIdx) correct -= 1;
+    updated[qIdx] = { ...q, options, correct_option_index: correct };
+    setQuestions(updated);
+  };
+
   const save = async () => {
     const isBst = form.owner === "bst";
     if (!form.title.trim() || (isBst ? !form.bst_product_id : !form.lesson_id)) {
