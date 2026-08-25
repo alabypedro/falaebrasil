@@ -182,7 +182,7 @@ export default function QuizzesManager() {
             <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar por lição" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as lições</SelectItem>
-              {lessonsForFilter.map((l) => <SelectItem key={l.id} value={l.id}>{l.module_title} › {l.title}</SelectItem>)}
+              {lessonsForFilter.map((l) => <SelectItem key={l.id} value={l.id}>{l.course_title} › {l.module_title} › {l.title}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Novo Quiz</Button>
@@ -253,7 +253,7 @@ export default function QuizzesManager() {
                 <Label>Lição</Label>
                 <Select value={form.lesson_id} onValueChange={(v) => setForm({ ...form, lesson_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{lessons.map((l) => <SelectItem key={l.id} value={l.id}>{l.module_title} › {l.title}</SelectItem>)}</SelectContent>
+                  <SelectContent>{lessons.map((l) => <SelectItem key={l.id} value={l.id}>{l.course_title} › {l.module_title} › {l.title}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             ) : (
