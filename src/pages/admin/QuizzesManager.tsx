@@ -52,7 +52,7 @@ export default function QuizzesManager() {
       supabase.from("bst_products").select("id, title").order("display_order"),
     ]);
     if (qz) setQuizzes(qz);
-    if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_id: l.module_id, module_title: l.modules?.title ?? "" })));
+    if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_id: l.module_id, module_title: l.modules?.title ?? "", course_title: l.modules?.courses?.title ?? "" })));
     if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
     if (bst) setBstProducts(bst as BstOption[]);
   };
