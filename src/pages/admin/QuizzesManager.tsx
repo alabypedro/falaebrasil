@@ -46,9 +46,9 @@ export default function QuizzesManager() {
 
   const load = async () => {
     const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }] = await Promise.all([
-      supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title))").order("created_at"),
-      supabase.from("lessons").select("id, title, module_id, modules(title)").order("display_order"),
-      supabase.from("modules").select("id, title, courses(title)").order("display_order"),
+      supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title, course_id, courses(title)))").order("created_at"),
+      supabase.from("lessons").select("id, title, module_id, modules(title, course_id, courses(title))").order("display_order"),
+      supabase.from("modules").select("id, title, course_id, courses(title)").order("display_order"),
       supabase.from("bst_products").select("id, title").order("display_order"),
     ]);
     if (qz) setQuizzes(qz);
