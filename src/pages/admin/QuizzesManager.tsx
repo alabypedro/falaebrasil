@@ -337,10 +337,25 @@ export default function QuizzesManager() {
                             onChange={() => updateQuestion(qIdx, "correct_option_index", oIdx)}
                             className="accent-primary"
                           />
-                          <Input value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} placeholder={`Opção ${oIdx + 1}`} className="flex-1" />
+                           <Input value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} placeholder={`Opção ${oIdx + 1}`} className="flex-1" />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            disabled={q.options.length <= 2}
+                            onClick={() => removeOption(qIdx, oIdx)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
                         </div>
                       ))}
-                      <p className="text-[10px] text-muted-foreground">Selecione o rádio da alternativa correta.</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] text-muted-foreground">Selecione o rádio da alternativa correta.</p>
+                        <Button type="button" variant="outline" size="sm" onClick={() => addOption(qIdx)}>
+                          <Plus className="h-3 w-3 mr-1" />Alternativa
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
