@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
-interface LessonOption { id: string; title: string; module_id: string; module_title: string; }
+interface LessonOption { id: string; title: string; module_id: string; module_title: string; course_title: string; }
 interface ModuleOption { id: string; title: string; course_title: string; }
 interface BstOption { id: string; title: string }
 
