@@ -111,6 +111,24 @@ export default function QuizzesManager() {
     setQuestions(questions.filter((_, i) => i !== idx));
   };
 
+  const addOption = (qIdx: number) => {
+    const updated = [...questions];
+    updated[qIdx] = { ...updated[qIdx], options: [...updated[qIdx].options, ""] };
+    setQuestions(updated);
+  };
+
+  const removeOption = (qIdx: number, oIdx: number) => {
+    const updated = [...questions];
+    const q = updated[qIdx];
+    if (q.options.length <= 2) { toast.error("Mínimo de 2 alternativas"); return; }
+    const options = q.options.filter((_, i) => i !== oIdx);
+    let correct = q.correct_option_index;
+    if (correct === oIdx) correct = 0;
+    else if (correct > oIdx) correct -= 1;
+    updated[qIdx] = { ...q, options, correct_option_index: correct };
+    setQuestions(updated);
+  };
+
   const save = async () => {
     const isBst = form.owner === "bst";
     if (!form.title.trim() || (isBst ? !form.bst_product_id : !form.lesson_id)) {
@@ -319,10 +337,25 @@ export default function QuizzesManager() {
                             onChange={() => updateQuestion(qIdx, "correct_option_index", oIdx)}
                             className="accent-primary"
                           />
-                          <Input value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} placeholder={`Opção ${oIdx + 1}`} className="flex-1" />
+                           <Input value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} placeholder={`Opção ${oIdx + 1}`} className="flex-1" />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            disabled={q.options.length <= 2}
+                            onClick={() => removeOption(qIdx, oIdx)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
                         </div>
                       ))}
-                      <p className="text-[10px] text-muted-foreground">Selecione o rádio da alternativa correta.</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] text-muted-foreground">Selecione o rádio da alternativa correta.</p>
+                        <Button type="button" variant="outline" size="sm" onClick={() => addOption(qIdx)}>
+                          <Plus className="h-3 w-3 mr-1" />Alternativa
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
