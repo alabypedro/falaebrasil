@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
-interface LessonOption { id: string; title: string; module_id: string; module_title: string; }
+interface LessonOption { id: string; title: string; module_id: string; module_title: string; course_title: string; }
 interface ModuleOption { id: string; title: string; course_title: string; }
 interface BstOption { id: string; title: string }
 
@@ -46,13 +46,13 @@ export default function QuizzesManager() {
 
   const load = async () => {
     const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }] = await Promise.all([
-      supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title))").order("created_at"),
-      supabase.from("lessons").select("id, title, module_id, modules(title)").order("display_order"),
-      supabase.from("modules").select("id, title, courses(title)").order("display_order"),
+      supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title, course_id, courses(title)))").order("created_at"),
+      supabase.from("lessons").select("id, title, module_id, modules(title, course_id, courses(title))").order("display_order"),
+      supabase.from("modules").select("id, title, course_id, courses(title)").order("display_order"),
       supabase.from("bst_products").select("id, title").order("display_order"),
     ]);
     if (qz) setQuizzes(qz);
-    if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_id: l.module_id, module_title: l.modules?.title ?? "" })));
+    if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_id: l.module_id, module_title: l.modules?.title ?? "", course_title: l.modules?.courses?.title ?? "" })));
     if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
     if (bst) setBstProducts(bst as BstOption[]);
   };
@@ -182,7 +182,7 @@ export default function QuizzesManager() {
             <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar por lição" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as lições</SelectItem>
-              {lessonsForFilter.map((l) => <SelectItem key={l.id} value={l.id}>{l.module_title} › {l.title}</SelectItem>)}
+              {lessonsForFilter.map((l) => <SelectItem key={l.id} value={l.id}>{l.course_title} › {l.module_title} › {l.title}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Novo Quiz</Button>
@@ -253,7 +253,7 @@ export default function QuizzesManager() {
                 <Label>Lição</Label>
                 <Select value={form.lesson_id} onValueChange={(v) => setForm({ ...form, lesson_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{lessons.map((l) => <SelectItem key={l.id} value={l.id}>{l.module_title} › {l.title}</SelectItem>)}</SelectContent>
+                  <SelectContent>{lessons.map((l) => <SelectItem key={l.id} value={l.id}>{l.course_title} › {l.module_title} › {l.title}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             ) : (
