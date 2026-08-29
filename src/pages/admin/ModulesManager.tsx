@@ -13,6 +13,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableRow } from "@/components/admin/SortableRow";
+import { SearchableSelect } from "@/components/admin/SearchableSelect";
+import { compareCourses, courseLabel, segmentGroupOf, sortCourses, SEGMENT_GROUP_ORDER } from "@/lib/courseOrder";
 
 interface Module {
   id: string;
@@ -20,10 +22,10 @@ interface Module {
   title: string;
   description: string | null;
   display_order: number;
-  courses?: { title: string } | null;
+  courses?: { title: string; level?: string | null } | null;
 }
 
-interface Course { id: string; title: string; }
+interface Course { id: string; title: string; level?: string | null }
 
 const emptyForm = { course_id: "", title: "", description: "", display_order: 0 };
 
@@ -44,23 +46,40 @@ export default function ModulesManager() {
 
   const load = async () => {
     const [{ data: mods }, { data: crs }] = await Promise.all([
-      supabase.from("modules").select("*, courses(title)").order("display_order"),
-      supabase.from("courses").select("id, title").order("display_order"),
+      supabase.from("modules").select("*, courses(title, level)").order("display_order"),
+      supabase.from("courses").select("id, title, level").order("display_order"),
     ]);
-    if (mods) setModules(mods);
-    if (crs) setCourses(crs);
+    if (mods) setModules(mods as any);
+    if (crs) setCourses(sortCourses(crs as Course[]));
   };
 
   useEffect(() => { load(); }, []);
 
+  const courseOptions = useMemo(
+    () => courses.map((c) => ({ value: c.id, label: courseLabel(c), group: segmentGroupOf(c), keywords: `${c.title} ${c.level ?? ""}` })),
+    [courses]
+  );
+
+  const courseById = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
+
   const filtered = useMemo(() => {
-    return modules.filter((m) => {
-      const matchesCourse = filterCourse === "all" || m.course_id === filterCourse;
-      const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           ((m.courses as any)?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-      return matchesCourse && matchesSearch;
-    });
-  }, [modules, filterCourse, searchQuery]);
+    const q = searchQuery.toLowerCase();
+    return modules
+      .filter((m) => {
+        const matchesCourse = filterCourse === "all" || m.course_id === filterCourse;
+        const matchesSearch = m.title.toLowerCase().includes(q) ||
+                             ((m.courses as any)?.title?.toLowerCase().includes(q) ?? false);
+        return matchesCourse && matchesSearch;
+      })
+      .sort((a, b) => {
+        const ca = courseById.get(a.course_id) ?? { id: a.course_id, title: (a.courses as any)?.title ?? "", level: (a.courses as any)?.level };
+        const cb = courseById.get(b.course_id) ?? { id: b.course_id, title: (b.courses as any)?.title ?? "", level: (b.courses as any)?.level };
+        const c = compareCourses(ca, cb);
+        if (c !== 0) return c;
+        if (a.display_order !== b.display_order) return a.display_order - b.display_order;
+        return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+      });
+  }, [modules, filterCourse, searchQuery, courseById]);
 
   const openNew = () => { setEditing(null); setForm({ ...emptyForm, course_id: filterCourse !== "all" ? filterCourse : courses[0]?.id ?? "" }); setOpen(true); };
 
@@ -133,16 +152,16 @@ export default function ModulesManager() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Select value={filterCourse} onValueChange={setFilterCourse}>
-          <SelectTrigger className="w-48 h-9">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Filtrar por curso" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os cursos</SelectItem>
-            {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="w-56">
+          <SearchableSelect
+            className="h-9"
+            value={filterCourse}
+            onChange={setFilterCourse}
+            groupOrder={SEGMENT_GROUP_ORDER}
+            searchPlaceholder="Buscar curso..."
+            options={[{ value: "all", label: "Todos os cursos" }, ...courseOptions]}
+          />
+        </div>
       </div>
 
       <div className="rounded-md border bg-card">
@@ -169,7 +188,11 @@ export default function ModulesManager() {
                         <p className="text-[10px] text-muted-foreground font-mono">Order: {m.display_order}</p>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{(m.courses as any)?.title ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {(m.courses as any)?.title
+                        ? courseLabel({ id: m.course_id, title: (m.courses as any).title, level: (m.courses as any).level })
+                        : "—"}
+                    </TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(m)}><Pencil className="h-4 w-4" /></Button>
                       <AlertDialog>
@@ -194,10 +217,14 @@ export default function ModulesManager() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Curso</Label>
-              <Select value={form.course_id} onValueChange={(v) => setForm({ ...form, course_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione um curso" /></SelectTrigger>
-                <SelectContent>{courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}</SelectContent>
-              </Select>
+              <SearchableSelect
+                value={form.course_id}
+                onChange={(v) => setForm({ ...form, course_id: v })}
+                placeholder="Selecione um curso"
+                searchPlaceholder="Buscar curso..."
+                groupOrder={SEGMENT_GROUP_ORDER}
+                options={courseOptions}
+              />
             </div>
             <div className="space-y-2">
               <Label>Título</Label>

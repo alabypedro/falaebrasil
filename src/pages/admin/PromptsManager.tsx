@@ -12,8 +12,10 @@ import { toast } from "sonner";
 import { Loader2, Pencil, Mic, Trash2, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/admin/SearchableSelect";
+import { courseLabel, segmentGroupOf, sortCourses, SEGMENT_GROUP_ORDER } from "@/lib/courseOrder";
 
-interface Course { id: string; title: string; }
+interface Course { id: string; title: string; level?: string | null }
 
 interface LessonRow {
   id: string;
@@ -72,7 +74,7 @@ export default function PromptsManager() {
   const load = async () => {
     setLoading(true);
     const [{ data: cs }, { data: ls }] = await Promise.all([
-      supabase.from("courses").select("id, title").order("display_order"),
+      supabase.from("courses").select("id, title, level").order("display_order"),
       supabase
         .from("lessons")
         .select("id, title, practice_text, display_order, module_id, modules(id, title, display_order, course_id, courses(id, title))")
@@ -206,17 +208,22 @@ export default function PromptsManager() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Curso ativo</span>
-          <Select value={activeCourseId} onValueChange={setActiveCourseId}>
-            <SelectTrigger className="w-72">
-              <SelectValue placeholder="Selecione um curso" />
-            </SelectTrigger>
-            <SelectContent>
-              {courses.length === 0 && <SelectItem value="none" disabled>Nenhum curso cadastrado</SelectItem>}
-              {courses.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-72">
+            <SearchableSelect
+              value={activeCourseId}
+              onChange={setActiveCourseId}
+              placeholder="Selecione um curso"
+              searchPlaceholder="Buscar curso..."
+              groupOrder={SEGMENT_GROUP_ORDER}
+              emptyText="Nenhum curso cadastrado"
+              options={sortCourses(courses as any).map((c: any) => ({
+                value: c.id,
+                label: courseLabel(c),
+                group: segmentGroupOf(c),
+                keywords: `${c.title} ${c.level ?? ""}`,
+              }))}
+            />
+          </div>
         </div>
 
         {activeCourse && (

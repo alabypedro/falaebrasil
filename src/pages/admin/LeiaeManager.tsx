@@ -14,6 +14,9 @@ import { BookText, Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { LEVELS, type Level } from "@/lib/levels";
+import { SearchableSelect } from "@/components/admin/SearchableSelect";
+import { compareCourses, courseLabel, segmentGroupOf, sortCourses, SEGMENT_GROUP_ORDER } from "@/lib/courseOrder";
+import { Search } from "lucide-react";
 
 interface LeiaeText {
   id: string;
@@ -25,7 +28,7 @@ interface LeiaeText {
   display_order: number;
   unit: number | null;
 }
-interface Course { id: string; title: string; }
+interface Course { id: string; title: string; level?: string | null }
 interface BstProduct { id: string; title: string; }
 
 export default function LeiaeManager() {
@@ -34,6 +37,8 @@ export default function LeiaeManager() {
   const [bstProducts, setBstProducts] = useState<BstProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Level | "all">("all");
+  const [courseFilter, setCourseFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
 
   const [dialog, setDialog] = useState(false);
   const [editing, setEditing] = useState<LeiaeText | null>(null);
@@ -45,11 +50,11 @@ export default function LeiaeManager() {
     setLoading(true);
     const [{ data: xs }, { data: cs }, { data: bp }] = await Promise.all([
       supabase.from("leiae_texts").select("*").order("level").order("display_order"),
-      supabase.from("courses").select("id,title").order("display_order"),
+      supabase.from("courses").select("id,title,level").order("display_order"),
       supabase.from("bst_products").select("id,title").order("display_order"),
     ]);
     setItems((xs as LeiaeText[]) || []);
-    setCourses((cs as Course[]) || []);
+    setCourses(sortCourses(((cs as Course[]) || [])));
     setBstProducts((bp as BstProduct[]) || []);
     setLoading(false);
   };
@@ -95,7 +100,37 @@ export default function LeiaeManager() {
     load();
   };
 
-  const filtered = filter === "all" ? items : items.filter((x) => x.level === filter);
+  const courseOptions = courses.map((c) => ({
+    value: c.id,
+    label: courseLabel(c),
+    group: segmentGroupOf(c),
+    keywords: `${c.title} ${c.level ?? ""}`,
+  }));
+
+  const courseById = new Map(courses.map((c) => [c.id, c]));
+
+  const filtered = items
+    .filter((x) => (filter === "all" ? true : x.level === filter))
+    .filter((x) => (courseFilter === "all" ? true : courseFilter === "none" ? !x.course_id : x.course_id === courseFilter))
+    .filter((x) => {
+      const q = search.toLowerCase().trim();
+      if (!q) return true;
+      const course = x.course_id ? courseById.get(x.course_id) : undefined;
+      return x.title.toLowerCase().includes(q) || x.content.toLowerCase().includes(q) || (course?.title ?? "").toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      const ca = a.course_id ? courseById.get(a.course_id) : undefined;
+      const cb = b.course_id ? courseById.get(b.course_id) : undefined;
+      if (ca && cb) {
+        const c = compareCourses(ca, cb);
+        if (c !== 0) return c;
+      } else if (ca || cb) {
+        return ca ? -1 : 1;
+      }
+      if ((a.unit ?? 0) !== (b.unit ?? 0)) return (a.unit ?? 0) - (b.unit ?? 0);
+      if (a.display_order !== b.display_order) return a.display_order - b.display_order;
+      return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+    });
 
   return (
     <div className="space-y-4">
@@ -114,8 +149,30 @@ export default function LeiaeManager() {
         </CardContent>
       </Card>
 
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar por título, curso ou texto..." className="pl-9 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <div className="w-56">
+          <SearchableSelect
+            className="h-9"
+            value={courseFilter}
+            onChange={setCourseFilter}
+            groupOrder={SEGMENT_GROUP_ORDER}
+            searchPlaceholder="Buscar curso..."
+            options={[
+              { value: "all", label: "Todos os cursos" },
+              { value: "none", label: "Sem curso (global)" },
+              ...courseOptions,
+            ]}
+          />
+        </div>
+        <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Novo texto</Button>
+      </div>
+
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-wrap">
           <Button
             size="sm"
             variant={filter === "all" ? "default" : "outline"}
@@ -134,7 +191,7 @@ export default function LeiaeManager() {
             </Button>
           ))}
         </div>
-        <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Novo texto</Button>
+        <span className="text-xs text-muted-foreground">{filtered.length} de {items.length} textos</span>
       </div>
 
       {loading ? (
@@ -163,7 +220,7 @@ export default function LeiaeManager() {
                     <TableCell><Badge variant="outline">{x.level}</Badge></TableCell>
                     <TableCell className="text-xs text-muted-foreground">{x.unit ? `Unit ${x.unit}` : "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground max-w-md truncate">{x.content.slice(0, 120)}…</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{course?.title ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{course ? courseLabel(course) : "—"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="icon" onClick={() => openEdit(x)}>
@@ -216,13 +273,13 @@ export default function LeiaeManager() {
               </div>
               <div>
                 <Label>Curso vinculado (opcional)</Label>
-                <Select value={form.course_id} onValueChange={(v) => setForm({ ...form, course_id: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum (global)</SelectItem>
-                    {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.course_id}
+                  onChange={(v) => setForm({ ...form, course_id: v })}
+                  searchPlaceholder="Buscar curso..."
+                  groupOrder={SEGMENT_GROUP_ORDER}
+                  options={[{ value: "none", label: "Nenhum (global)" }, ...courseOptions]}
+                />
               </div>
             </div>
             <div>

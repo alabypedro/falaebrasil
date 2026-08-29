@@ -11,9 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { SearchableSelect } from "@/components/admin/SearchableSelect";
+import { compareCourses, courseLabel, segmentGroupOf, sortCourses, SEGMENT_GROUP_ORDER, SegmentGroup } from "@/lib/courseOrder";
+import { Search } from "lucide-react";
 import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X, Video, RotateCcw, Sparkles, Link as LinkIcon } from "lucide-react";
 
-interface Course { id: string; title: string; }
+interface Course { id: string; title: string; level?: string | null }
 interface BstProduct { id: string; title: string; }
 interface Deck {
   id: string;
@@ -84,16 +87,40 @@ export default function MemorizaeManager() {
 
   // Course filter (pill buttons on deck list)
   const [courseFilter, setCourseFilter] = useState<string>("all");
+  const [deckSearch, setDeckSearch] = useState("");
+
+  const groupedCourses = useMemo(() => {
+    const order: SegmentGroup[] = SEGMENT_GROUP_ORDER;
+    return order
+      .map((group) => ({ group, items: courses.filter((c) => segmentGroupOf(c) === group) }))
+      .filter((g) => g.items.length > 0);
+  }, [courses]);
+
+  const sortedDecks = useMemo(() => {
+    const byId = new Map(courses.map((c) => [c.id, c]));
+    return [...decks].sort((a, b) => {
+      const ca = a.course_id ? byId.get(a.course_id) : undefined;
+      const cb = b.course_id ? byId.get(b.course_id) : undefined;
+      if (!ca && cb) return 1;
+      if (ca && !cb) return -1;
+      if (ca && cb) {
+        const c = compareCourses(ca, cb);
+        if (c !== 0) return c;
+      }
+      if ((a.display_order ?? 0) !== (b.display_order ?? 0)) return (a.display_order ?? 0) - (b.display_order ?? 0);
+      return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+    });
+  }, [decks, courses]);
 
   const load = async () => {
     setLoading(true);
     const [{ data: cs }, { data: ds }, { data: cd }, { data: bp }] = await Promise.all([
-      supabase.from("courses").select("id,title").order("display_order"),
+      supabase.from("courses").select("id,title,level").order("display_order"),
       supabase.from("memorize_decks").select("*").order("display_order"),
       supabase.from("memorize_cards").select("*").order("display_order"),
       supabase.from("bst_products").select("id,title").order("display_order"),
     ]);
-    setCourses((cs as Course[]) || []);
+    setCourses(sortCourses(((cs as Course[]) || [])));
     setBstProducts((bp as BstProduct[]) || []);
     setDecks((ds as Deck[]) || []);
     setCards((cd as CardRow[]) || []);
@@ -672,13 +699,24 @@ export default function MemorizaeManager() {
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum deck ainda. Crie o primeiro.</CardContent></Card>
       ) : (
         <>
-        <div className="flex gap-1 flex-wrap">
-          <Button size="sm" variant={courseFilter === "all" ? "default" : "outline"} onClick={() => setCourseFilter("all")}>Todos</Button>
-          <Button size="sm" variant={courseFilter === "none" ? "default" : "outline"} onClick={() => setCourseFilter("none")}>Global</Button>
-          {courses.map((c) => (
-            <Button key={c.id} size="sm" variant={courseFilter === c.id ? "default" : "outline"} onClick={() => setCourseFilter(c.id)}>
-              {c.title}
-            </Button>
+        <div className="space-y-2">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar deck..." className="pl-9 h-9" value={deckSearch} onChange={(e) => setDeckSearch(e.target.value)} />
+          </div>
+          <div className="flex gap-1 flex-wrap items-center">
+            <Button size="sm" variant={courseFilter === "all" ? "default" : "outline"} onClick={() => setCourseFilter("all")}>Todos</Button>
+            <Button size="sm" variant={courseFilter === "none" ? "default" : "outline"} onClick={() => setCourseFilter("none")}>Global</Button>
+          </div>
+          {groupedCourses.map(({ group, items }) => (
+            <div key={group} className="flex gap-1 flex-wrap items-center">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-16">{group}</span>
+              {items.map((c) => (
+                <Button key={c.id} size="sm" variant={courseFilter === c.id ? "default" : "outline"} onClick={() => setCourseFilter(c.id)}>
+                  {courseLabel(c)}
+                </Button>
+              ))}
+            </div>
           ))}
         </div>
         <div className="rounded-lg border overflow-auto">
@@ -692,12 +730,18 @@ export default function MemorizaeManager() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {decks
+              {sortedDecks
                 .filter((d) =>
                   courseFilter === "all" ? true :
                   courseFilter === "none" ? d.course_id === null :
                   d.course_id === courseFilter
                 )
+                .filter((d) => {
+                  const q = deckSearch.toLowerCase();
+                  if (!q) return true;
+                  const course = courses.find((c) => c.id === d.course_id);
+                  return d.title.toLowerCase().includes(q) || (course?.title ?? "").toLowerCase().includes(q);
+                })
                 .map((d) => {
                 const count = cards.filter((c) => c.deck_id === d.id).length;
                 const course = courses.find((c) => c.id === d.course_id);
@@ -709,7 +753,7 @@ export default function MemorizaeManager() {
                       </button>
                       {d.description && <div className="text-[11px] text-muted-foreground">{d.description}</div>}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{course?.title ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{course ? courseLabel(course) : "—"}</TableCell>
                     <TableCell><Badge variant="secondary">{count}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
@@ -762,7 +806,7 @@ export default function MemorizaeManager() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhum (global)</SelectItem>
-                  {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                  {courses.map((c) => <SelectItem key={c.id} value={c.id}>{courseLabel(c)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
