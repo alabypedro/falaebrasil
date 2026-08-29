@@ -9,16 +9,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, HelpCircle, X } from "lucide-react";
+import { Plus, Pencil, Trash2, HelpCircle, X, Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
-interface LessonOption { id: string; title: string; module_id: string; module_title: string; course_title: string; }
-interface ModuleOption { id: string; title: string; course_title: string; }
+interface LessonOption { id: string; title: string; module_id: string; module_order: number; module_title: string; course_id: string; course_title: string; course_level: string; display_order: number; }
+interface ModuleOption { id: string; title: string; display_order: number; course_id: string; course_title: string; course_level: string; }
 interface BstOption { id: string; title: string }
 
 import { LEVELS } from "@/lib/levels";
+import { SearchableSelect, type SearchableOption } from "@/components/admin/SearchableSelect";
+import { compareCourses, courseLabel, segmentGroupOf, SEGMENT_GROUP_ORDER } from "@/lib/courseOrder";
+import { useMemo } from "react";
 
 const emptyQuizForm = {
   owner: "lesson" as "lesson" | "bst",
@@ -36,6 +39,8 @@ export default function QuizzesManager() {
   const [lessons, setLessons] = useState<LessonOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [bstProducts, setBstProducts] = useState<BstOption[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCourse, setFilterCourse] = useState<string>("all");
   const [filterModule, setFilterModule] = useState<string>("all");
   const [filterLesson, setFilterLesson] = useState<string>("all");
   const [open, setOpen] = useState(false);
@@ -47,25 +52,93 @@ export default function QuizzesManager() {
   const load = async () => {
     const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }] = await Promise.all([
       supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title, course_id, courses(title)))").order("created_at"),
-      supabase.from("lessons").select("id, title, module_id, modules(title, course_id, courses(title))").order("display_order"),
-      supabase.from("modules").select("id, title, course_id, courses(title)").order("display_order"),
+      supabase.from("lessons").select("id, title, display_order, module_id, modules(title, display_order, course_id, courses(title, level))").order("display_order"),
+      supabase.from("modules").select("id, title, display_order, course_id, courses(title, level)").order("display_order"),
       supabase.from("bst_products").select("id, title").order("display_order"),
     ]);
     if (qz) setQuizzes(qz);
-    if (lsn) setLessons(lsn.map((l: any) => ({ id: l.id, title: l.title, module_id: l.module_id, module_title: l.modules?.title ?? "", course_title: l.modules?.courses?.title ?? "" })));
-    if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
+    if (lsn) setLessons(lsn.map((l: any) => ({
+      id: l.id, title: l.title, display_order: l.display_order ?? 0, module_id: l.module_id,
+      module_order: l.modules?.display_order ?? 0, module_title: l.modules?.title ?? "",
+      course_id: l.modules?.course_id ?? "", course_title: l.modules?.courses?.title ?? "", course_level: l.modules?.courses?.level ?? "",
+    })));
+    if (mods) setModules(mods.map((m: any) => ({
+      id: m.id, title: m.title, display_order: m.display_order ?? 0, course_id: m.course_id ?? "",
+      course_title: m.courses?.title ?? "", course_level: m.courses?.level ?? "",
+    })));
     if (bst) setBstProducts(bst as BstOption[]);
   };
 
   useEffect(() => { load(); }, []);
 
-  const lessonsForFilter = filterModule === "all" ? lessons : lessons.filter((l) => l.module_id === filterModule);
-
-  const filtered = quizzes.filter((q) => {
-    if (filterLesson !== "all") return q.lesson_id === filterLesson;
-    if (filterModule !== "all") return (q.lessons as any)?.modules?.id === filterModule || (q.lessons as any)?.module_id === filterModule;
-    return true;
+  const courseOf = (x: { course_id?: string; course_title?: string; course_level?: string }) => ({
+    id: x.course_id ?? "", title: x.course_title ?? "", level: x.course_level ?? "",
   });
+
+  const courseOptions: SearchableOption[] = useMemo(() => {
+    const map = new Map<string, { id: string; title: string; level: string }>();
+    modules.forEach((m) => { if (m.course_id && !map.has(m.course_id)) map.set(m.course_id, courseOf(m)); });
+    return [...map.values()]
+      .sort(compareCourses)
+      .map((c) => ({ value: c.id, label: courseLabel(c), group: segmentGroupOf(c), keywords: `${c.title} ${c.level}` }));
+  }, [modules]);
+
+  const sortedModules = useMemo(
+    () => [...modules].sort((a, b) => compareCourses(courseOf(a), courseOf(b)) || a.display_order - b.display_order || a.title.localeCompare(b.title, "pt-BR", { numeric: true })),
+    [modules]
+  );
+
+  const sortedLessons = useMemo(
+    () => [...lessons].sort((a, b) =>
+      compareCourses(courseOf(a), courseOf(b)) || a.module_order - b.module_order || a.display_order - b.display_order ||
+      a.title.localeCompare(b.title, "pt-BR", { numeric: true })),
+    [lessons]
+  );
+
+  const moduleOptions: SearchableOption[] = useMemo(
+    () => sortedModules
+      .filter((m) => filterCourse === "all" || m.course_id === filterCourse)
+      .map((m) => ({ value: m.id, label: `${courseLabel(courseOf(m))} › ${m.title}`, group: segmentGroupOf(courseOf(m)), keywords: `${m.course_title} ${m.course_level} ${m.title}` })),
+    [sortedModules, filterCourse]
+  );
+
+  const lessonOptionsFor = (mods: string, course: string): SearchableOption[] =>
+    sortedLessons
+      .filter((l) => (course === "all" || l.course_id === course) && (mods === "all" || l.module_id === mods))
+      .map((l) => ({
+        value: l.id,
+        label: `${courseLabel(courseOf(l))} › ${l.module_title} › ${l.title}`,
+        group: segmentGroupOf(courseOf(l)),
+        keywords: `${l.course_title} ${l.course_level} ${l.module_title} ${l.title}`,
+      }));
+
+  const lessonById = useMemo(() => new Map(lessons.map((l) => [l.id, l])), [lessons]);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return quizzes
+      .filter((qz) => {
+        const l = qz.lesson_id ? lessonById.get(qz.lesson_id) : undefined;
+        if (q && !(qz.title.toLowerCase().includes(q) || (l?.title ?? "").toLowerCase().includes(q) || (l?.course_title ?? "").toLowerCase().includes(q))) return false;
+        if (filterLesson !== "all") return qz.lesson_id === filterLesson;
+        if (filterModule !== "all") return (qz.lessons as any)?.modules?.id === filterModule || (qz.lessons as any)?.module_id === filterModule;
+        if (filterCourse !== "all") return l?.course_id === filterCourse;
+        return true;
+      })
+      .sort((a, b) => {
+        const la = a.lesson_id ? lessonById.get(a.lesson_id) : undefined;
+        const lb = b.lesson_id ? lessonById.get(b.lesson_id) : undefined;
+        if (!la && lb) return 1;
+        if (la && !lb) return -1;
+        if (la && lb) {
+          const c = compareCourses(courseOf(la), courseOf(lb));
+          if (c !== 0) return c;
+          if (la.module_order !== lb.module_order) return la.module_order - lb.module_order;
+          if (la.display_order !== lb.display_order) return la.display_order - lb.display_order;
+        }
+        return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+      });
+  }, [quizzes, searchQuery, filterCourse, filterModule, filterLesson, lessonById]);
 
   const openNew = () => {
     setEditing(null);
@@ -188,21 +261,38 @@ export default function QuizzesManager() {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-semibold">Quizzes</h2>
-        <div className="flex gap-2 flex-wrap">
-          <Select value={filterModule} onValueChange={(v) => { setFilterModule(v); setFilterLesson("all"); }}>
-            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar por módulo" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os módulos</SelectItem>
-              {modules.map((m) => <SelectItem key={m.id} value={m.id}>{m.course_title} › {m.title}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterLesson} onValueChange={setFilterLesson}>
-            <SelectTrigger className="w-56"><SelectValue placeholder="Filtrar por lição" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as lições</SelectItem>
-              {lessonsForFilter.map((l) => <SelectItem key={l.id} value={l.id}>{l.course_title} › {l.module_title} › {l.title}</SelectItem>)}
-            </SelectContent>
-          </Select>
+        <div className="flex gap-2 flex-wrap items-center">
+          <div className="relative w-48">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar quiz..." className="pl-9 h-10" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          </div>
+          <div className="w-48">
+            <SearchableSelect
+              value={filterCourse}
+              onChange={(v) => { setFilterCourse(v); setFilterModule("all"); setFilterLesson("all"); }}
+              groupOrder={SEGMENT_GROUP_ORDER}
+              searchPlaceholder="Buscar curso..."
+              options={[{ value: "all", label: "Todos os cursos" }, ...courseOptions]}
+            />
+          </div>
+          <div className="w-56">
+            <SearchableSelect
+              value={filterModule}
+              onChange={(v) => { setFilterModule(v); setFilterLesson("all"); }}
+              groupOrder={SEGMENT_GROUP_ORDER}
+              searchPlaceholder="Buscar módulo..."
+              options={[{ value: "all", label: "Todos os módulos" }, ...moduleOptions]}
+            />
+          </div>
+          <div className="w-56">
+            <SearchableSelect
+              value={filterLesson}
+              onChange={setFilterLesson}
+              groupOrder={SEGMENT_GROUP_ORDER}
+              searchPlaceholder="Buscar lição..."
+              options={[{ value: "all", label: "Todas as lições" }, ...lessonOptionsFor(filterModule, filterCourse)]}
+            />
+          </div>
           <Button onClick={openNew} size="sm"><Plus className="h-4 w-4 mr-1" />Novo Quiz</Button>
         </div>
       </div>
@@ -269,10 +359,14 @@ export default function QuizzesManager() {
             {form.owner === "lesson" ? (
               <div className="space-y-2">
                 <Label>Lição</Label>
-                <Select value={form.lesson_id} onValueChange={(v) => setForm({ ...form, lesson_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{lessons.map((l) => <SelectItem key={l.id} value={l.id}>{l.course_title} › {l.module_title} › {l.title}</SelectItem>)}</SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.lesson_id}
+                  onChange={(v) => setForm({ ...form, lesson_id: v })}
+                  placeholder="Selecione curso › módulo › lição"
+                  searchPlaceholder="Buscar por curso, módulo ou lição..."
+                  groupOrder={SEGMENT_GROUP_ORDER}
+                  options={lessonOptionsFor("all", "all")}
+                />
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-4">
