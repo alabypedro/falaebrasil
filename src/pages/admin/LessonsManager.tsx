@@ -112,12 +112,19 @@ export default function LessonsManager() {
 
   const load = async () => {
     const [{ data: lsn }, { data: mods }, { data: vids }] = await Promise.all([
-      supabase.from("lessons").select("*, modules(title, courses(title))").order("display_order"),
-      supabase.from("modules").select("id, title, courses(title)").order("display_order"),
+      supabase.from("lessons").select("*, modules(title, display_order, courses(id, title, level))").order("display_order"),
+      supabase.from("modules").select("id, title, display_order, course_id, courses(title, level)").order("display_order"),
       supabase.from("lesson_videos").select("lesson_id"),
     ]);
-    if (lsn) setLessons(lsn);
-    if (mods) setModules(mods.map((m: any) => ({ id: m.id, title: m.title, course_title: m.courses?.title ?? "" })));
+    if (lsn) setLessons(lsn as any);
+    if (mods) setModules(mods.map((m: any) => ({
+      id: m.id,
+      title: m.title,
+      display_order: m.display_order ?? 0,
+      course_id: m.course_id ?? null,
+      course_title: m.courses?.title ?? "",
+      course_level: m.courses?.level ?? "",
+    })));
     if (vids) {
       const counts: Record<string, number> = {};
       vids.forEach((v: any) => { counts[v.lesson_id] = (counts[v.lesson_id] ?? 0) + 1; });
@@ -127,16 +134,78 @@ export default function LessonsManager() {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = useMemo(() => {
-    return lessons.filter((l) => {
-      const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesModule = filterModule === "all" || l.module_id === filterModule;
-      const matchesContent = contentFilter === "all" ? true :
-                             contentFilter === "has_video" ? (videoCounts[l.id] ?? (l.video_url ? 1 : 0)) > 0 :
-                             contentFilter === "has_pdf" ? !!l.pdf_url : true;
-      return matchesSearch && matchesModule && matchesContent;
+  /** Cursos derivados dos módulos, na ordem canônica (Adultos → Teens → Kids). */
+  const courseOptions = useMemo(() => {
+    const map = new Map<string, { id: string; title: string; level: string }>();
+    modules.forEach((m) => {
+      if (m.course_id && !map.has(m.course_id)) {
+        map.set(m.course_id, { id: m.course_id, title: m.course_title, level: m.course_level });
+      }
     });
-  }, [lessons, searchQuery, filterModule, contentFilter, videoCounts]);
+    return sortCourses([...map.values()]);
+  }, [modules]);
+
+  const sortedModules = useMemo(() => {
+    return [...modules].sort((a, b) => {
+      const c = compareCourses(
+        { id: a.course_id ?? "", title: a.course_title, level: a.course_level },
+        { id: b.course_id ?? "", title: b.course_title, level: b.course_level }
+      );
+      if (c !== 0) return c;
+      if (a.display_order !== b.display_order) return a.display_order - b.display_order;
+      return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+    });
+  }, [modules]);
+
+  const moduleOptions: SearchableOption[] = useMemo(
+    () =>
+      sortedModules
+        .filter((m) => filterCourse === "all" || m.course_id === filterCourse)
+        .map((m) => {
+          const course = { id: m.course_id ?? "", title: m.course_title, level: m.course_level };
+          return {
+            value: m.id,
+            label: `${courseLabel(course)} › ${m.title}`,
+            group: segmentGroupOf(course),
+            keywords: `${m.course_title} ${m.course_level} ${m.title}`,
+          };
+        }),
+    [sortedModules, filterCourse]
+  );
+
+  const moduleById = useMemo(() => new Map(modules.map((m) => [m.id, m])), [modules]);
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return lessons
+      .filter((l) => {
+        const mod = moduleById.get(l.module_id);
+        const matchesSearch =
+          l.title.toLowerCase().includes(q) ||
+          (mod?.title ?? "").toLowerCase().includes(q) ||
+          (mod?.course_title ?? "").toLowerCase().includes(q);
+        const matchesCourse = filterCourse === "all" || mod?.course_id === filterCourse;
+        const matchesModule = filterModule === "all" || l.module_id === filterModule;
+        const matchesContent = contentFilter === "all" ? true :
+                               contentFilter === "has_video" ? (videoCounts[l.id] ?? (l.video_url ? 1 : 0)) > 0 :
+                               contentFilter === "has_pdf" ? !!l.pdf_url : true;
+        return matchesSearch && matchesCourse && matchesModule && matchesContent;
+      })
+      .sort((a, b) => {
+        const ma = moduleById.get(a.module_id);
+        const mb = moduleById.get(b.module_id);
+        const c = compareCourses(
+          { id: ma?.course_id ?? "", title: ma?.course_title ?? "", level: ma?.course_level },
+          { id: mb?.course_id ?? "", title: mb?.course_title ?? "", level: mb?.course_level }
+        );
+        if (c !== 0) return c;
+        const mo = (ma?.display_order ?? 0) - (mb?.display_order ?? 0);
+        if (mo !== 0) return mo;
+        if (a.display_order !== b.display_order) return a.display_order - b.display_order;
+        return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+      });
+  }, [lessons, searchQuery, filterCourse, filterModule, contentFilter, videoCounts, moduleById]);
+
 
   const openNew = () => {
     setEditing(null);
