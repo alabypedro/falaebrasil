@@ -27,10 +27,18 @@ interface Lesson {
   pdf_url: string | null;
   practice_text: string | null;
   display_order: number;
-  modules?: { title: string; courses?: { title: string } | null } | null;
+  modules?: { title: string; display_order?: number; courses?: { id?: string; title: string; level?: string | null } | null } | null;
 }
 
-interface ModuleOption { id: string; title: string; course_title: string; }
+interface ModuleOption {
+  id: string;
+  title: string;
+  display_order: number;
+  course_id: string | null;
+  course_title: string;
+  course_level: string;
+}
+
 
 interface LessonVideo {
   id?: string;
