@@ -17,6 +17,8 @@ import { BulkActions } from "@/components/admin/BulkActions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { LessonPreview } from "@/components/admin/LessonPreview";
+import { SearchableSelect, type SearchableOption } from "@/components/admin/SearchableSelect";
+import { compareCourses, courseLabel, segmentGroupOf, sortCourses, SEGMENT_GROUP_ORDER } from "@/lib/courseOrder";
 
 interface Lesson {
   id: string;
@@ -95,6 +97,7 @@ export default function LessonsManager() {
   
   // Search and Filters
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterCourse, setFilterCourse] = useState<string>("all");
   const [filterModule, setFilterModule] = useState<string>("all");
   const [contentFilter, setContentFilter] = useState<"all" | "has_video" | "has_pdf">("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -353,13 +356,29 @@ export default function LessonsManager() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Select value={filterModule} onValueChange={setFilterModule}>
-          <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Módulo" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os módulos</SelectItem>
-            {modules.map((m) => <SelectItem key={m.id} value={m.id}>{m.course_title} › {m.title}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="w-[220px]">
+          <SearchableSelect
+            className="h-9"
+            value={filterCourse}
+            onChange={(v) => { setFilterCourse(v); setFilterModule("all"); }}
+            groupOrder={SEGMENT_GROUP_ORDER}
+            searchPlaceholder="Buscar curso..."
+            options={[
+              { value: "all", label: "Todos os cursos" },
+              ...courseOptions.map((c) => ({ value: c.id, label: courseLabel(c), group: segmentGroupOf(c), keywords: `${c.title} ${c.level}` })),
+            ]}
+          />
+        </div>
+        <div className="w-[240px]">
+          <SearchableSelect
+            className="h-9"
+            value={filterModule}
+            onChange={setFilterModule}
+            groupOrder={SEGMENT_GROUP_ORDER}
+            searchPlaceholder="Buscar módulo..."
+            options={[{ value: "all", label: "Todos os módulos" }, ...moduleOptions]}
+          />
+        </div>
         <Select value={contentFilter} onValueChange={(v: any) => setContentFilter(v)}>
           <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Conteúdo" /></SelectTrigger>
           <SelectContent>
@@ -451,10 +470,17 @@ export default function LessonsManager() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Módulo</Label>
-              <Select value={form.module_id} onValueChange={(v) => setForm({ ...form, module_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>{modules.map((m) => <SelectItem key={m.id} value={m.id}>{m.course_title} › {m.title}</SelectItem>)}</SelectContent>
-              </Select>
+              <SearchableSelect
+                value={form.module_id}
+                onChange={(v) => setForm({ ...form, module_id: v })}
+                placeholder="Selecione o curso › módulo"
+                searchPlaceholder="Buscar por curso ou módulo..."
+                groupOrder={SEGMENT_GROUP_ORDER}
+                options={sortedModules.map((m) => {
+                  const course = { id: m.course_id ?? "", title: m.course_title, level: m.course_level };
+                  return { value: m.id, label: `${courseLabel(course)} › ${m.title}`, group: segmentGroupOf(course), keywords: `${m.course_title} ${m.course_level} ${m.title}` };
+                })}
+              />
             </div>
             <div className="space-y-2">
               <Label>Título</Label>
