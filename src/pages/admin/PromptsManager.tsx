@@ -12,8 +12,10 @@ import { toast } from "sonner";
 import { Loader2, Pencil, Mic, Trash2, Coins } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchableSelect } from "@/components/admin/SearchableSelect";
+import { courseLabel, segmentGroupOf, sortCourses, SEGMENT_GROUP_ORDER } from "@/lib/courseOrder";
 
-interface Course { id: string; title: string; }
+interface Course { id: string; title: string; level?: string | null }
 
 interface LessonRow {
   id: string;
