@@ -87,6 +87,30 @@ export default function MemorizaeManager() {
 
   // Course filter (pill buttons on deck list)
   const [courseFilter, setCourseFilter] = useState<string>("all");
+  const [deckSearch, setDeckSearch] = useState("");
+
+  const groupedCourses = useMemo(() => {
+    const order: SegmentGroup[] = SEGMENT_GROUP_ORDER;
+    return order
+      .map((group) => ({ group, items: courses.filter((c) => segmentGroupOf(c) === group) }))
+      .filter((g) => g.items.length > 0);
+  }, [courses]);
+
+  const sortedDecks = useMemo(() => {
+    const byId = new Map(courses.map((c) => [c.id, c]));
+    return [...decks].sort((a, b) => {
+      const ca = a.course_id ? byId.get(a.course_id) : undefined;
+      const cb = b.course_id ? byId.get(b.course_id) : undefined;
+      if (!ca && cb) return 1;
+      if (ca && !cb) return -1;
+      if (ca && cb) {
+        const c = compareCourses(ca, cb);
+        if (c !== 0) return c;
+      }
+      if ((a.display_order ?? 0) !== (b.display_order ?? 0)) return (a.display_order ?? 0) - (b.display_order ?? 0);
+      return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+    });
+  }, [decks, courses]);
 
   const load = async () => {
     setLoading(true);
@@ -96,7 +120,7 @@ export default function MemorizaeManager() {
       supabase.from("memorize_cards").select("*").order("display_order"),
       supabase.from("bst_products").select("id,title").order("display_order"),
     ]);
-    setCourses((cs as Course[]) || []);
+    setCourses(sortCourses(((cs as Course[]) || [])));
     setBstProducts((bp as BstProduct[]) || []);
     setDecks((ds as Deck[]) || []);
     setCards((cd as CardRow[]) || []);
