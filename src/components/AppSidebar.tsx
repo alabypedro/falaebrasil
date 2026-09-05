@@ -158,6 +158,48 @@ export default function AppSidebar() {
                 </SidebarMenuItem>
               ))}
 
+              {/* Biblioteca group */}
+              <SidebarGroupLabel className={`mt-2 mb-1 ${collapsed ? "sr-only" : ""}`}>
+                {t("nav.library")}
+              </SidebarGroupLabel>
+              {libItems.map((item, i) => (
+                <SidebarMenuItem
+                  key={item.key}
+                  className="animate-slide-in-left"
+                  style={{ "--delay": `${(items.length + i) * 50}ms` } as React.CSSProperties}
+                >
+                  {item.locked ? (
+                    <SidebarMenuButton
+                      className="h-10 rounded-lg opacity-50 cursor-not-allowed hover:bg-transparent"
+                      tooltip={collapsed ? t(item.key) : undefined}
+                      aria-disabled
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <item.icon className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                      {!collapsed && (
+                        <>
+                          <span className="text-sm truncate">{t(item.key)}</span>
+                          <Lock className="h-3.5 w-3.5 shrink-0 ml-auto" />
+                        </>
+                      )}
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t(item.key) : undefined}>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        onClick={handleNavClick}
+                        className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                      >
+                        <item.icon className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                        {!collapsed && <span className="text-sm truncate">{t(item.key)}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              ))}
+
               {isTeacher && (
                 <SidebarMenuItem
                   className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
