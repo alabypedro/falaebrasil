@@ -522,17 +522,35 @@ export default function MusicLabManager() {
                         {media.media_type === "youtube" ? "YouTube (vídeo)" : "Spotify (áudio)"}
                       </Badge>
                       <span className="text-muted-foreground font-mono">{media.media_id}</span>
-                      {media.media_type === "youtube" && !form.cover_url.trim() && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setForm((f) => ({ ...f, cover_url: youtubeThumb(media.media_id) }))
-                          }
-                        >
-                          Usar capa do vídeo
-                        </Button>
+                      {media.media_type === "youtube" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={fetchYoutubeMeta}
+                            disabled={ytLoading}
+                          >
+                            {ytLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                            ) : (
+                              <Search className="h-3.5 w-3.5 mr-1" />
+                            )}
+                            Buscar dados e capa no YouTube
+                          </Button>
+                          {!form.cover_url.trim() && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setForm((f) => ({ ...f, cover_url: youtubeThumb(media.media_id) }))
+                              }
+                            >
+                              Usar capa padrão
+                            </Button>
+                          )}
+                        </>
                       )}
+
                     </div>
                     {media.media_type === "youtube" ? (
                       <div className="aspect-video w-full max-w-sm">
