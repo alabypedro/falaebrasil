@@ -81,8 +81,6 @@ export default function AppSidebar() {
     locked: isBstOnly && !bstAllowedUrls.includes(item.url),
   }));
 
-  const isLibraryActive = pathname.startsWith("/library") || pathname.startsWith("/books");
-
   const handleNavClick = () => {
     if (isMobile) {
       setOpenMobile(false);
