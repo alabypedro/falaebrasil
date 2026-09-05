@@ -96,6 +96,68 @@ export default function BooksManager() {
   const [glossary, setGlossary] = useState<Glossary[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
 
+  // ---- Internet Archive / LibriVox ----
+  const [lvOpen, setLvOpen] = useState(false);
+  const [lvMode, setLvMode] = useState<"bulk" | "chapter">("bulk");
+  const [lvQuery, setLvQuery] = useState("");
+  const [lvLoading, setLvLoading] = useState(false);
+  const [lvResults, setLvResults] = useState<LibrivoxWork[]>([]);
+  const [lvWork, setLvWork] = useState<LibrivoxWork | null>(null);
+  const [lvTracks, setLvTracks] = useState<LibrivoxTrack[]>([]);
+
+  const openLibrivox = (mode: "bulk" | "chapter") => {
+    setLvMode(mode);
+    setLvWork(null);
+    setLvTracks([]);
+    setLvOpen(true);
+    const seed = mode === "chapter" ? chapterForm.title : `${selectedBook?.title ?? ""} ${selectedBook?.author ?? ""}`;
+    setLvQuery((q) => q || seed.trim());
+  };
+
+  const runLibrivoxSearch = async () => {
+    setLvLoading(true);
+    setLvWork(null);
+    setLvTracks([]);
+    try {
+      setLvResults(await searchLibrivoxWorks(lvQuery));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha na busca.");
+    } finally {
+      setLvLoading(false);
+    }
+  };
+
+  const selectLibrivoxWork = async (w: LibrivoxWork) => {
+    setLvWork(w);
+    setLvLoading(true);
+    try {
+      const tracks = await fetchLibrivoxTracks(w.identifier);
+      setLvTracks(tracks);
+      if (tracks.length === 0) toast.error("Nenhum arquivo .mp3 encontrado nesta obra.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao carregar os áudios.");
+    } finally {
+      setLvLoading(false);
+    }
+  };
+
+  /** Aplica as faixas em sequência aos capítulos já cadastrados. */
+  const applyTracksToChapters = async () => {
+    if (!selectedBook || lvTracks.length === 0) return;
+    const ordered = [...chapters].sort((a, b) => a.chapter_index - b.chapter_index);
+    if (ordered.length === 0) { toast.error("Cadastre os capítulos antes de vincular o áudio."); return; }
+    setSaving(true);
+    let applied = 0;
+    for (let i = 0; i < ordered.length && i < lvTracks.length; i++) {
+      const { error } = await tbl("book_chapters").update({ audio_url: lvTracks[i].url }).eq("id", ordered[i].id);
+      if (!error) applied++;
+    }
+    setSaving(false);
+    toast.success(`Áudio vinculado a ${applied} capítulo(s).`);
+    setLvOpen(false);
+    loadChapters(selectedBook.id);
+  };
+
   const loadBooks = async () => {
     const { data } = await tbl("books").select("*").order("display_order");
     setBooks((data as Book[]) ?? []);
