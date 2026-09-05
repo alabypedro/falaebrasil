@@ -32,12 +32,56 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const url: string = (body?.url ?? "").toString().trim();
-    const title: string = (body?.title ?? "").toString().trim();
-    const artist: string = (body?.artist ?? "").toString().trim();
+    let title: string = (body?.title ?? "").toString().trim();
+    let artist: string = (body?.artist ?? "").toString().trim();
     const level: string = (body?.level ?? "A1").toString().trim();
     if (!url && !(title && artist)) {
       return json({ error: "Informe o link da música ou título + artista" }, 400);
     }
+
+    // Enriquece título/artista/capa com a YouTube Data API v3 quando o link é do YouTube.
+    let coverUrl = "";
+    const YT_KEY = Deno.env.get("YOUTUBE_API_KEY");
+    const ytMatch = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([A-Za-z0-9_-]{6,})/);
+    const ytId = ytMatch?.[1] ?? null;
+    if (YT_KEY && ytId) {
+      try {
+        const ytRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${ytId}&key=${YT_KEY}`,
+        );
+        if (ytRes.ok) {
+          const ytData = await ytRes.json();
+          const s = ytData?.items?.[0]?.snippet;
+          if (s) {
+            const rawTitle: string = (s.title ?? "").toString();
+            const dash = rawTitle.split(/\s+[-–—]\s+/);
+            const clean = (v: string) =>
+              v
+                .replace(
+                  /\s*[\(\[][^\)\]]*(official|video|audio|lyrics|hd|4k|remaster)[^\)\]]*[\)\]]/gi,
+                  "",
+                )
+                .trim();
+            artist =
+              artist ||
+              (dash.length > 1
+                ? clean(dash[0])
+                : (s.channelTitle ?? "").toString().replace(/\s*-\s*Topic$/i, ""));
+            title = title || (dash.length > 1 ? clean(dash.slice(1).join(" - ")) : clean(rawTitle));
+            const t = s.thumbnails ?? {};
+            coverUrl =
+              t.maxres?.url ??
+              t.standard?.url ??
+              t.high?.url ??
+              t.medium?.url ??
+              `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+          }
+        }
+      } catch {
+        // segue sem os metadados do YouTube
+      }
+    }
+
 
     const KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!KEY) return json({ error: "LOVABLE_API_KEY ausente" }, 500);
