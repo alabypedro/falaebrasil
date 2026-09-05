@@ -21,10 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, BookMarked, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, BookMarked, Headphones, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { LEVELS } from "@/lib/levels";
 import { BOOK_CATEGORIES } from "@/pages/Books";
+import {
+  fetchLibrivoxTracks,
+  formatTrackDuration,
+  searchLibrivoxWorks,
+  type LibrivoxTrack,
+  type LibrivoxWork,
+} from "@/lib/librivox";
 
 interface Book {
   id: string;
