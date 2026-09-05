@@ -85,11 +85,81 @@ export default function MusicLabManager() {
   const [vocab, setVocab] = useState<Vocab[]>([]);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [ytQuery, setYtQuery] = useState("");
+  const [ytLoading, setYtLoading] = useState(false);
+  const [ytResults, setYtResults] = useState<
+    { media_id: string; title: string; channel: string; cover_url: string; url: string }[]
+  >([]);
 
   const media = useMemo(
     () => detectMedia(form.youtube_url.trim()) ?? detectMedia(form.spotify_url.trim()),
     [form.youtube_url, form.spotify_url],
   );
+
+  /** Busca metadados oficiais do vídeo (YouTube Data API v3, via Edge Function). */
+  const fetchYoutubeMeta = async () => {
+    const link = form.youtube_url.trim();
+    if (!link) {
+      toast.error("Cole o link do YouTube primeiro.");
+      return;
+    }
+    setYtLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("youtube-lookup", {
+        body: { action: "video", url: link },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      const v = data as { title: string; artist: string; cover_url: string; url: string };
+      setForm((f) => ({
+        ...f,
+        title: v.title || f.title,
+        artist: v.artist || f.artist,
+        cover_url: v.cover_url || f.cover_url,
+        youtube_url: v.url || f.youtube_url,
+      }));
+      toast.success("Dados e capa do vídeo carregados do YouTube.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setYtLoading(false);
+    }
+  };
+
+  /** Pesquisa músicas no YouTube (Edge Function com a YOUTUBE_API_KEY). */
+  const searchYoutube = async () => {
+    const q = ytQuery.trim();
+    if (!q) return;
+    setYtLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("youtube-lookup", {
+        body: { action: "search", query: q, limit: 8 },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      const items = (data as { items: typeof ytResults }).items ?? [];
+      setYtResults(items);
+      if (!items.length) toast.info("Nenhum vídeo encontrado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setYtLoading(false);
+    }
+  };
+
+  const pickYoutube = (v: { title: string; channel: string; cover_url: string; url: string }) => {
+    setForm((f) => ({
+      ...f,
+      youtube_url: v.url,
+      title: f.title.trim() || v.title,
+      artist: f.artist.trim() || v.channel.replace(/\s*-\s*Topic$/i, ""),
+      cover_url: v.cover_url,
+    }));
+    setYtResults([]);
+    setYtQuery("");
+    toast.success("Vídeo selecionado.");
+  };
+
 
   const autofill = async () => {
     const link = form.youtube_url.trim() || form.spotify_url.trim();
