@@ -573,6 +573,120 @@ export default function BooksManager() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Internet Archive / LibriVox */}
+        <Dialog open={lvOpen} onOpenChange={setLvOpen}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Narração de domínio público (Internet Archive / LibriVox)</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  value={lvQuery}
+                  onChange={(e) => setLvQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") runLibrivoxSearch(); }}
+                  placeholder="Título ou autor da obra em inglês"
+                />
+                <Button onClick={runLibrivoxSearch} disabled={lvLoading}>
+                  <Search className="h-4 w-4 mr-1.5" /> Buscar
+                </Button>
+              </div>
+
+              {lvLoading && <p className="text-sm text-muted-foreground">Consultando o Internet Archive…</p>}
+
+              {!lvWork && !lvLoading && lvResults.length > 0 && (
+                <div className="space-y-2">
+                  {lvResults.map((w) => (
+                    <button
+                      key={w.identifier}
+                      onClick={() => selectLibrivoxWork(w)}
+                      className="w-full text-left flex items-center gap-3 rounded-lg border border-border p-2 hover:border-primary transition"
+                    >
+                      <img src={w.coverUrl} alt={`Capa de ${w.title}`} loading="lazy" className="h-12 w-9 object-cover rounded bg-muted" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{w.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {w.creator ?? "Autor desconhecido"} {w.year ? `• ${w.year}` : ""}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {lvWork && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{lvWork.title}</p>
+                      <a
+                        href={lvWork.pageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary underline"
+                      >
+                        ver no archive.org
+                      </a>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => { setLvWork(null); setLvTracks([]); }}>
+                      Trocar obra
+                    </Button>
+                  </div>
+
+                  {lvMode === "bulk" && lvTracks.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button size="sm" onClick={applyTracksToChapters} disabled={saving}>
+                        Vincular faixas aos {chapters.length} capítulo(s) em sequência
+                      </Button>
+                      {lvWork.coverUrl && !selectedBook?.cover_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            await tbl("books").update({ cover_url: lvWork.coverUrl }).eq("id", selectedBook!.id);
+                            toast.success("Capa atualizada.");
+                            loadBooks();
+                          }}
+                        >
+                          Usar capa da obra
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    {lvTracks.map((t) => (
+                      <div key={t.name} className="flex items-center gap-2 rounded-lg border border-border p-2">
+                        <Badge variant="secondary">{t.track}</Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm truncate">{t.title}</p>
+                          <p className="text-[11px] text-muted-foreground">{formatTrackDuration(t.durationSeconds)}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setChapterForm((f) => ({ ...f, audio_url: t.url }));
+                            setLvOpen(false);
+                            if (lvMode === "bulk") toast.info("Cole em um capítulo pelo botão Editar para salvar.");
+                          }}
+                        >
+                          Usar
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setLvOpen(false)}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
