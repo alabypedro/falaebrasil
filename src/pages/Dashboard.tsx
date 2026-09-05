@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation, Music, BookMarked } from "lucide-react";
+import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation, Music, BookMarked, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
   const [practiceOpen, setPracticeOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [aiXp, setAiXp] = useState<Record<AiSource, number> & { total: number }>({
     memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, musiclab: 0, books: 0, total: 0,
   });
@@ -51,6 +52,11 @@ export default function Dashboard() {
     { source: "escutae", icon: Headphones, path: "/listening-lab" },
     { source: "escreveae", icon: MessageSquare, path: "/writing-lab" },
     { source: "leiae", icon: BookText, path: "/leiae" },
+  ];
+
+  const libraryButtons: { label: string; icon: any; path: string; xpKey?: keyof typeof aiXp }[] = [
+    { label: "Biblioteca BST", icon: Library, path: "/library" },
+    { label: "Livros e audio-livros", icon: BookMarked, path: "/books", xpKey: "books" },
   ];
 
   useEffect(() => {
@@ -200,16 +206,45 @@ export default function Dashboard() {
           </DialogContent>
         </Dialog>
 
-        <button
-          onClick={() => navigate("/books")}
-          className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition"
-        >
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-            <BookMarked className="h-5 w-5 text-primary" />
-          </div>
-          <span className="text-sm font-semibold text-foreground leading-tight">Livros e audio-livros</span>
-          <span className="text-[11px] text-muted-foreground tabular-nums">{aiXp.books} XP</span>
-        </button>
+        <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+          <DialogTrigger asChild>
+            <button className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <Library className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-sm font-semibold text-foreground leading-tight">Biblioteca</span>
+              <span className="text-[11px] text-muted-foreground tabular-nums">Acessar</span>
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
+            <DialogHeader className="p-5 pb-3">
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Library className="h-5 w-5 text-primary" />
+                Biblioteca
+              </DialogTitle>
+            </DialogHeader>
+            <div className="p-5 pt-0 space-y-2">
+              {libraryButtons.map(({ label, icon: Icon, path, xpKey }) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    setLibraryOpen(false);
+                    navigate(path);
+                  }}
+                  className="w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 text-left hover:border-primary hover:bg-primary/5 transition"
+                >
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{label}</p>
+                    {xpKey && <p className="text-[11px] text-muted-foreground tabular-nums">{aiXp[xpKey]} XP</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <button
           onClick={() => navigate("/music-lab")}

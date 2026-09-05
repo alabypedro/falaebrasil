@@ -3,7 +3,6 @@ import {
   BookOpen,
   Mic,
   Library,
-  Zap,
   Shield,
   HelpCircle,
   Download,
@@ -24,13 +23,13 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useRoles } from "@/hooks/useRoles";
 import { useBstOnly } from "@/hooks/useBstOnly";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Progress } from "@/components/ui/progress";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -47,12 +46,15 @@ const navItems = [
   { key: "nav.writing", url: "/writing-lab", icon: MessageSquareText },
   { key: "nav.leiae", url: "/leiae", icon: BookText },
   { key: "nav.musiclab", url: "/music-lab", icon: Music },
-  { key: "nav.books", url: "/books", icon: BookMarked },
-  { key: "nav.library", url: "/library", icon: Library },
   { key: "nav.communities", url: "/communities", icon: Users },
   { key: "nav.tutorials", url: "/tutoriais", icon: HelpCircle },
   { key: "nav.contracts", url: "/contratos", icon: FileText },
   { key: "nav.install", url: "/install", icon: Download },
+];
+
+const libraryItems = [
+  { key: "nav.library.bst", url: "/library", icon: Library },
+  { key: "nav.library.books", url: "/books", icon: BookMarked },
 ];
 
 /** Rotas liberadas para alunos BST (as outras aparecem bloqueadas). */
@@ -66,7 +68,13 @@ export default function AppSidebar() {
   const { isTeacher } = useRoles();
   const { t } = useLanguage();
   const { isBstOnly } = useBstOnly();
+
   const items = navItems.map((item) => ({
+    ...item,
+    locked: isBstOnly && !bstAllowedUrls.includes(item.url),
+  }));
+
+  const libItems = libraryItems.map((item) => ({
     ...item,
     locked: isBstOnly && !bstAllowedUrls.includes(item.url),
   }));
@@ -146,10 +154,52 @@ export default function AppSidebar() {
                 </SidebarMenuItem>
               ))}
 
+              {/* Biblioteca group */}
+              <SidebarGroupLabel className={`mt-2 mb-1 ${collapsed ? "sr-only" : ""}`}>
+                {t("nav.library")}
+              </SidebarGroupLabel>
+              {libItems.map((item, i) => (
+                <SidebarMenuItem
+                  key={item.key}
+                  className="animate-slide-in-left"
+                  style={{ "--delay": `${(items.length + i) * 50}ms` } as React.CSSProperties}
+                >
+                  {item.locked ? (
+                    <SidebarMenuButton
+                      className="h-10 rounded-lg opacity-50 cursor-not-allowed hover:bg-transparent"
+                      tooltip={collapsed ? t(item.key) : undefined}
+                      aria-disabled
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <item.icon className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                      {!collapsed && (
+                        <>
+                          <span className="text-sm truncate">{t(item.key)}</span>
+                          <Lock className="h-3.5 w-3.5 shrink-0 ml-auto" />
+                        </>
+                      )}
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t(item.key) : undefined}>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        onClick={handleNavClick}
+                        className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                      >
+                        <item.icon className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                        {!collapsed && <span className="text-sm truncate">{t(item.key)}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              ))}
+
               {isTeacher && (
                 <SidebarMenuItem
                   className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
-                  style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
+                  style={{ "--delay": `${(items.length + libItems.length) * 50}ms` } as React.CSSProperties}
                 >
                   <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Meus Alunos" : undefined}>
                     <NavLink
@@ -168,7 +218,7 @@ export default function AppSidebar() {
               {isAdmin && (
                 <SidebarMenuItem
                   className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
-                  style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
+                  style={{ "--delay": `${(items.length + libItems.length) * 50}ms` } as React.CSSProperties}
                 >
                   <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t("nav.admin") : undefined}>
                     <NavLink
