@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, KeyRound, ShieldOff, RefreshCw } from "lucide-react";
+import { Loader2, KeyRound, ShieldOff, RefreshCw, Music } from "lucide-react";
 
 interface CourseRow {
   id: string;
@@ -78,6 +78,40 @@ export default function StudentAccessDialog({
   const [busy, setBusy] = useState<"grant" | "revoke" | "cat" | null>(null);
   const [selCourses, setSelCourses] = useState<Record<string, boolean>>({});
   const [selBst, setSelBst] = useState<Record<string, boolean>>({});
+  const [musicLab, setMusicLab] = useState(false);
+  const [musicBusy, setMusicBusy] = useState(false);
+
+  const loadMusicLab = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("music_lab_access")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setMusicLab(!!data);
+  }, [userId]);
+
+  useEffect(() => {
+    if (open) loadMusicLab();
+  }, [open, loadMusicLab]);
+
+  const toggleMusicLab = async (value: boolean) => {
+    if (!userId) {
+      toast.error("Aluno sem conta vinculada.");
+      return;
+    }
+    setMusicBusy(true);
+    const { error } = value
+      ? await supabase
+          .from("music_lab_access")
+          .upsert({ user_id: userId, source: "admin" }, { onConflict: "user_id" })
+      : await supabase.from("music_lab_access").delete().eq("user_id", userId);
+    setMusicBusy(false);
+    if (error) return toast.error(error.message);
+    setMusicLab(value);
+    toast.success(value ? "Music Lab liberado" : "Music Lab bloqueado");
+    onChanged?.();
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -362,6 +396,18 @@ export default function StudentAccessDialog({
                 )}
               </div>
             )}
+
+            <div className="rounded-lg border border-border p-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={musicLab}
+                  disabled={musicBusy || !userId}
+                  onCheckedChange={(v) => toggleMusicLab(!!v)}
+                />
+                <Music className="h-4 w-4 text-primary" />
+                <span>Liberar Music Lab</span>
+              </label>
+            </div>
 
             <div className="space-y-4">
               {grouped.map((g) => (
