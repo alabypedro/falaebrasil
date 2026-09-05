@@ -332,12 +332,9 @@ export default function Books() {
         </div>
 
         {chapter.audio_url && (
-          <Card>
-            <CardContent className="p-3 space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Audiolivro — ouça enquanto lê</p>
-              <audio src={chapter.audio_url} controls preload="none" className="w-full" />
-            </CardContent>
-          </Card>
+          <div className="sticky top-2 z-20">
+            <ChapterAudioPlayer src={chapter.audio_url} label={`Narração — ${chapter.title}`} />
+          </div>
         )}
 
         <div className="space-y-1">
