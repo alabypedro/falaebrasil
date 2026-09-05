@@ -3,7 +3,6 @@ import {
   BookOpen,
   Mic,
   Library,
-  Zap,
   Shield,
   HelpCircle,
   Download,
@@ -24,7 +23,6 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useRoles } from "@/hooks/useRoles";
 import { useBstOnly } from "@/hooks/useBstOnly";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Progress } from "@/components/ui/progress";
 import falaeLogo from "@/assets/falae-brasil-logo.png";
 import {
   Sidebar,
