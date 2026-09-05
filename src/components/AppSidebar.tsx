@@ -68,7 +68,6 @@ export default function AppSidebar() {
   const { isTeacher } = useRoles();
   const { t } = useLanguage();
   const { isBstOnly } = useBstOnly();
-  const { pathname } = useLocation();
 
   const items = navItems.map((item) => ({
     ...item,
