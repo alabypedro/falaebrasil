@@ -10,6 +10,10 @@ import { toast } from "sonner";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { LEVELS } from "@/lib/levels";
 import { awardAiXp } from "@/lib/aiXp";
+import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, type MediaType } from "@/lib/musicMedia";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PartyPopper } from "lucide-react";
 
 interface Song {
   id: string;
@@ -20,6 +24,8 @@ interface Song {
   spotify_url: string | null;
   cover_url: string | null;
   description: string | null;
+  media_type: string | null;
+  media_id: string | null;
 }
 
 interface Blank {
@@ -49,16 +55,6 @@ export const VOCAB_KINDS: { value: string; label: string }[] = [
 
 const kindLabel = (k: string) => VOCAB_KINDS.find((v) => v.value === k)?.label ?? k;
 
-function youtubeId(url: string) {
-  const m = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
-  return m ? m[1] : null;
-}
-
-function spotifyEmbed(url: string) {
-  const m = url.match(/spotify\.com\/(track|album|playlist|episode)\/([A-Za-z0-9]+)/);
-  return m ? `https://open.spotify.com/embed/${m[1]}/${m[2]}` : null;
-}
-
 const normalize = (s: string) =>
   s.trim().toLowerCase().replace(/[.,!?;:"'’]/g, "").replace(/\s+/g, " ");
 
@@ -75,6 +71,8 @@ export default function MusicLab() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [mediaTab, setMediaTab] = useState<MediaType>("youtube");
+  const [congrats, setCongrats] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -84,7 +82,7 @@ export default function MusicLab() {
         }),
         supabase
           .from("music_lab_songs")
-          .select("id,title,artist,level,youtube_url,spotify_url,cover_url,description")
+          .select("id,title,artist,level,youtube_url,spotify_url,cover_url,description,media_type,media_id")
           .eq("active", true),
       ]);
       setHasAccess(access !== false);
@@ -101,6 +99,14 @@ export default function MusicLab() {
 
   const openSong = async (song: Song) => {
     setSelected(song);
+    setMediaTab(
+      (song.media_type as MediaType) === "spotify" && detectMedia(song.spotify_url ?? "")
+        ? "spotify"
+        : detectMedia(song.youtube_url ?? "")
+          ? "youtube"
+          : "spotify",
+    );
+    setCongrats(false);
     setAnswers({});
     setChecked(false);
     setDetailLoading(true);
@@ -136,6 +142,7 @@ export default function MusicLab() {
   const handleCheck = async () => {
     if (blanks.length === 0) return;
     setChecked(true);
+    if (correctCount === blanks.length) setCongrats(true);
     const points = correctCount * 5;
     if (points > 0 && selected) {
       const res = await awardAiXp("musiclab", points, `musiclab:${selected.id}:${correctCount}`);
@@ -172,8 +179,20 @@ export default function MusicLab() {
   }
 
   if (selected) {
-    const yt = selected.youtube_url ? youtubeId(selected.youtube_url) : null;
-    const sp = selected.spotify_url ? spotifyEmbed(selected.spotify_url) : null;
+    const ytId =
+      detectMedia(selected.youtube_url ?? "")?.media_type === "youtube"
+        ? detectMedia(selected.youtube_url ?? "")!.media_id
+        : selected.media_type === "youtube"
+          ? selected.media_id
+          : null;
+    const spId =
+      detectMedia(selected.spotify_url ?? "")?.media_type === "spotify"
+        ? detectMedia(selected.spotify_url ?? "")!.media_id
+        : selected.media_type === "spotify"
+          ? selected.media_id
+          : null;
+    const cover = selected.cover_url ?? (ytId ? youtubeThumb(ytId) : null);
+    const activeMedia: MediaType = mediaTab === "spotify" && spId ? "spotify" : ytId ? "youtube" : "spotify";
 
     return (
       <div className="max-w-4xl space-y-6 page-transition">
@@ -181,53 +200,76 @@ export default function MusicLab() {
           <ArrowLeft className="h-4 w-4 mr-2" /> Todas as músicas
         </Button>
 
-        <header className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Music className="h-5 w-5 text-primary" />
-            <Badge variant="secondary">{selected.level}</Badge>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground">
-            {selected.title}
-          </h1>
-          <p className="text-sm text-muted-foreground">{selected.artist}</p>
-          {selected.description && (
-            <p className="text-sm text-muted-foreground">{selected.description}</p>
+        <header className="flex flex-wrap items-start gap-4">
+          {cover && (
+            <img
+              src={cover}
+              alt={`Capa de ${selected.title} — ${selected.artist}`}
+              className="h-24 w-24 rounded-xl object-cover border border-border/60"
+              loading="lazy"
+            />
           )}
+          <div className="space-y-2 min-w-0">
+            <div className="flex items-center gap-2">
+              <Music className="h-5 w-5 text-primary" />
+              <Badge className="bg-primary/15 text-primary border border-primary/30 font-semibold">
+                CEFR {selected.level}
+              </Badge>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground">
+              {selected.title}
+            </h1>
+            <p className="text-sm text-muted-foreground">{selected.artist}</p>
+            {selected.description && (
+              <p className="text-sm text-muted-foreground">{selected.description}</p>
+            )}
+          </div>
         </header>
 
-        {(yt || sp) && (
-          <Card className="overflow-hidden border-border/60">
-            <CardContent className="p-0">
-              {yt ? (
-                <div className="aspect-video w-full">
+        {(ytId || spId) && (
+          <div className="space-y-3">
+            {ytId && spId && (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant={activeMedia === "youtube" ? "default" : "outline"}
+                  onClick={() => setMediaTab("youtube")}
+                >
+                  Vídeo (YouTube)
+                </Button>
+                <Button
+                  size="sm"
+                  variant={activeMedia === "spotify" ? "default" : "outline"}
+                  onClick={() => setMediaTab("spotify")}
+                >
+                  Áudio (Spotify)
+                </Button>
+              </div>
+            )}
+            <Card className="overflow-hidden border-border/60">
+              <CardContent className="p-0">
+                {activeMedia === "youtube" && ytId ? (
+                  <div className="aspect-video w-full">
+                    <iframe
+                      className="h-full w-full"
+                      src={youtubeEmbed(ytId)}
+                      title={selected.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : spId ? (
                   <iframe
-                    className="h-full w-full"
-                    src={`https://www.youtube.com/embed/${yt}`}
+                    className="w-full"
+                    height={152}
+                    src={spotifyEmbed(spId)}
                     title={selected.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-                    allowFullScreen
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                   />
-                </div>
-              ) : (
-                <iframe
-                  className="w-full"
-                  height={152}
-                  src={sp as string}
-                  title={selected.title}
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                />
-              )}
-            </CardContent>
-          </Card>
-        )}
-        {yt && sp && (
-          <iframe
-            className="w-full rounded-xl"
-            height={152}
-            src={sp}
-            title={`${selected.title} — Spotify`}
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          />
+                ) : null}
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {detailLoading ? (
@@ -328,26 +370,46 @@ export default function MusicLab() {
                       Nenhum vocabulário cadastrado para esta música.
                     </p>
                   ) : (
-                    vocab.map((v) => (
-                      <div key={v.id} className="rounded-lg border border-border/60 p-3 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground">{v.term}</span>
-                          <Badge variant="outline" className="text-[10px]">
-                            {kindLabel(v.kind)}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{v.explanation}</p>
-                        {v.example && (
-                          <p className="text-xs italic text-muted-foreground">“{v.example}”</p>
-                        )}
-                      </div>
-                    ))
+                    <Accordion type="multiple" className="w-full">
+                      {vocab.map((v) => (
+                        <AccordionItem key={v.id} value={v.id}>
+                          <AccordionTrigger className="text-sm">
+                            <span className="flex items-center gap-2 text-left">
+                              <span className="font-semibold text-foreground">{v.term}</span>
+                              <Badge variant="outline" className="text-[10px]">
+                                {kindLabel(v.kind)}
+                              </Badge>
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="space-y-1">
+                            <p className="text-sm text-muted-foreground">{v.explanation}</p>
+                            {v.example && (
+                              <p className="text-xs italic text-muted-foreground">“{v.example}”</p>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
         )}
+
+        <Dialog open={congrats} onOpenChange={setCongrats}>
+          <DialogContent className="max-w-sm text-center">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-center gap-2">
+                <PartyPopper className="h-5 w-5 text-primary" /> Parabéns!
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              Você acertou 100% das lacunas de “{selected.title}” e ganhou XP no Music Lab.
+            </p>
+            <Button onClick={() => setCongrats(false)}>Continuar</Button>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
