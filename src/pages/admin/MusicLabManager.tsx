@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Music, Search, Loader2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Music, Search, Loader2, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { LEVELS } from "@/lib/levels";
 import { VOCAB_KINDS } from "@/pages/MusicLab";
@@ -81,6 +81,66 @@ export default function MusicLabManager() {
   const [blanks, setBlanks] = useState<Blank[]>([]);
   const [vocab, setVocab] = useState<Vocab[]>([]);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const autofill = async () => {
+    const link = form.youtube_url.trim() || form.spotify_url.trim();
+    if (!link && !(form.title.trim() && form.artist.trim())) {
+      toast.error("Cole o link da música (ou informe título e artista).");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("music-lab-autofill", {
+        body: {
+          url: link,
+          title: form.title.trim(),
+          artist: form.artist.trim(),
+          level: form.level,
+        },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      const res = data as {
+        title?: string;
+        artist?: string;
+        description?: string;
+        blanks?: { text_before: string; answer: string; text_after: string; hint: string }[];
+        vocab?: { term: string; kind: string; explanation: string; example: string }[];
+      };
+      setForm((f) => ({
+        ...f,
+        title: f.title.trim() || res.title || "",
+        artist: f.artist.trim() || res.artist || "",
+        description: f.description.trim() || res.description || "",
+      }));
+      setBlanks(
+        (res.blanks ?? []).map((b, i) => ({
+          line_index: i,
+          text_before: b.text_before ?? "",
+          answer: b.answer ?? "",
+          text_after: b.text_after ?? "",
+          hint: b.hint || null,
+        })),
+      );
+      setVocab(
+        (res.vocab ?? []).map((v, i) => ({
+          term: v.term,
+          kind: v.kind,
+          explanation: v.explanation,
+          example: v.example || null,
+          display_order: i,
+        })),
+      );
+      toast.success(
+        `Gerado: ${(res.blanks ?? []).length} lacunas e ${(res.vocab ?? []).length} termos. Revise e salve.`,
+      );
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -370,6 +430,20 @@ export default function MusicLabManager() {
                   onChange={(e) => setForm((f) => ({ ...f, spotify_url: e.target.value }))}
                   placeholder="https://open.spotify.com/track/..."
                 />
+              </div>
+              <div className="sm:col-span-2 rounded-lg border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Cole o link da música acima e gere automaticamente as lacunas da letra e o
+                  vocabulário. Você pode revisar tudo antes de salvar.
+                </p>
+                <Button onClick={autofill} disabled={generating}>
+                  {generating ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-1" />
+                  )}
+                  Gerar automaticamente
+                </Button>
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <Label>Capa (URL da imagem)</Label>
