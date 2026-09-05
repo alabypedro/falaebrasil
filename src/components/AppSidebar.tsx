@@ -31,12 +31,14 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useLocation } from "react-router-dom";
 
 const navItems = [
   { key: "nav.dashboard", url: "/", icon: LayoutDashboard },
@@ -47,12 +49,15 @@ const navItems = [
   { key: "nav.writing", url: "/writing-lab", icon: MessageSquareText },
   { key: "nav.leiae", url: "/leiae", icon: BookText },
   { key: "nav.musiclab", url: "/music-lab", icon: Music },
-  { key: "nav.books", url: "/books", icon: BookMarked },
-  { key: "nav.library", url: "/library", icon: Library },
   { key: "nav.communities", url: "/communities", icon: Users },
   { key: "nav.tutorials", url: "/tutoriais", icon: HelpCircle },
   { key: "nav.contracts", url: "/contratos", icon: FileText },
   { key: "nav.install", url: "/install", icon: Download },
+];
+
+const libraryItems = [
+  { key: "nav.library.bst", url: "/library", icon: Library },
+  { key: "nav.library.books", url: "/books", icon: BookMarked },
 ];
 
 /** Rotas liberadas para alunos BST (as outras aparecem bloqueadas). */
@@ -66,10 +71,19 @@ export default function AppSidebar() {
   const { isTeacher } = useRoles();
   const { t } = useLanguage();
   const { isBstOnly } = useBstOnly();
+  const { pathname } = useLocation();
+
   const items = navItems.map((item) => ({
     ...item,
     locked: isBstOnly && !bstAllowedUrls.includes(item.url),
   }));
+
+  const libItems = libraryItems.map((item) => ({
+    ...item,
+    locked: isBstOnly && !bstAllowedUrls.includes(item.url),
+  }));
+
+  const isLibraryActive = pathname.startsWith("/library") || pathname.startsWith("/books");
 
   const handleNavClick = () => {
     if (isMobile) {
