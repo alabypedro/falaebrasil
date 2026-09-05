@@ -343,9 +343,14 @@ export default function BooksManager() {
           <Button variant="ghost" size="sm" onClick={() => setSelectedBook(null)}>
             <ArrowLeft className="h-4 w-4 mr-1.5" /> Livros
           </Button>
-          <Button size="sm" onClick={() => openChapterDialog()}>
-            <Plus className="h-4 w-4 mr-1.5" /> Novo capítulo
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => openLibrivox("bulk")}>
+              <Headphones className="h-4 w-4 mr-1.5" /> Buscar narração (LibriVox)
+            </Button>
+            <Button size="sm" onClick={() => openChapterDialog()}>
+              <Plus className="h-4 w-4 mr-1.5" /> Novo capítulo
+            </Button>
+          </div>
         </div>
 
         <div>
