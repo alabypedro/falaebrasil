@@ -195,7 +195,7 @@ export default function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="relative" defaultOpen>
+        <SidebarGroup className="relative">
           <SidebarGroupLabel className={`${collapsed ? "sr-only" : ""}`}>
             {t("nav.library")}
           </SidebarGroupLabel>
