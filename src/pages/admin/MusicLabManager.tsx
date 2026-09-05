@@ -431,6 +431,20 @@ export default function MusicLabManager() {
                   placeholder="https://open.spotify.com/track/..."
                 />
               </div>
+              <div className="sm:col-span-2 rounded-lg border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Cole o link da música acima e gere automaticamente as lacunas da letra e o
+                  vocabulário. Você pode revisar tudo antes de salvar.
+                </p>
+                <Button onClick={autofill} disabled={generating}>
+                  {generating ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-1" />
+                  )}
+                  Gerar automaticamente
+                </Button>
+              </div>
               <div className="space-y-1 sm:col-span-2">
                 <Label>Capa (URL da imagem)</Label>
                 <Input
