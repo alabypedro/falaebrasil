@@ -34,6 +34,7 @@ export default function Dashboard() {
   const { isTeacher } = useRoles();
   const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
+  const [practiceOpen, setPracticeOpen] = useState(false);
   const [aiXp, setAiXp] = useState<Record<AiSource, number> & { total: number }>({
     memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, total: 0,
   });
