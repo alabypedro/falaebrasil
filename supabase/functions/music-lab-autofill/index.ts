@@ -156,11 +156,15 @@ Responda SOMENTE com JSON válido no formato:
     }
 
     return json({
-      title: (parsed.title ?? "").toString().trim(),
-      artist: (parsed.artist ?? "").toString().trim(),
+      title: title || (parsed.title ?? "").toString().trim(),
+      artist: artist || (parsed.artist ?? "").toString().trim(),
       description: (parsed.description ?? "").toString().trim(),
+      cover_url: coverUrl,
+      media_type: ytId ? "youtube" : undefined,
+      media_id: ytId ?? undefined,
       blanks,
       vocab,
+
     });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
