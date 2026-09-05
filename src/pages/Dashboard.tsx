@@ -54,6 +54,11 @@ export default function Dashboard() {
     { source: "leiae", icon: BookText, path: "/leiae" },
   ];
 
+  const libraryButtons: { label: string; icon: any; path: string; xpKey?: keyof typeof aiXp }[] = [
+    { label: "Biblioteca BST", icon: Library, path: "/library" },
+    { label: "Livros e audio-livros", icon: BookMarked, path: "/books", xpKey: "books" },
+  ];
+
   useEffect(() => {
     if (!user) return;
     const load = async () => {
