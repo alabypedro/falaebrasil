@@ -154,10 +154,53 @@ export default function AppSidebar() {
                 </SidebarMenuItem>
               ))}
 
-              {/* Biblioteca group */}
-              <SidebarGroupLabel className={`mt-2 mb-1 ${collapsed ? "sr-only" : ""}`}>
-                {t("nav.library")}
-              </SidebarGroupLabel>
+              {isTeacher && (
+                <SidebarMenuItem
+                  className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
+                  style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
+                >
+                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Meus Alunos" : undefined}>
+                    <NavLink
+                      to="/professor/alunos"
+                      onClick={handleNavClick}
+                      className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                    >
+                      <GraduationCap className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                      {!collapsed && <span className="text-sm truncate">Meus Alunos</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {isAdmin && (
+                <SidebarMenuItem
+                  className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
+                  style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
+                >
+                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t("nav.admin") : undefined}>
+                    <NavLink
+                      to="/admin"
+                      onClick={handleNavClick}
+                      className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                    >
+                      <Shield className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
+                      {!collapsed && <span className="text-sm truncate">{t("nav.admin")}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="relative">
+          <SidebarGroupLabel className={`${collapsed ? "sr-only" : ""}`}>
+            {t("nav.library")}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className={`gap-1 py-2 ${collapsed ? "px-1" : "px-2"}`}>
               {libItems.map((item, i) => (
                 <SidebarMenuItem
                   key={item.key}
@@ -195,44 +238,6 @@ export default function AppSidebar() {
                   )}
                 </SidebarMenuItem>
               ))}
-
-              {isTeacher && (
-                <SidebarMenuItem
-                  className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
-                  style={{ "--delay": `${(items.length + libItems.length) * 50}ms` } as React.CSSProperties}
-                >
-                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? "Meus Alunos" : undefined}>
-                    <NavLink
-                      to="/professor/alunos"
-                      onClick={handleNavClick}
-                      className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
-                    >
-                      <GraduationCap className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
-                      {!collapsed && <span className="text-sm truncate">Meus Alunos</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-
-              {isAdmin && (
-                <SidebarMenuItem
-                  className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
-                  style={{ "--delay": `${(items.length + libItems.length) * 50}ms` } as React.CSSProperties}
-                >
-                  <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t("nav.admin") : undefined}>
-                    <NavLink
-                      to="/admin"
-                      onClick={handleNavClick}
-                      className={`hover:bg-sidebar-accent/60 hover:text-sidebar-primary transition-colors duration-200 ${collapsed ? "justify-center" : ""}`}
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
-                    >
-                      <Shield className={`h-4 w-4 shrink-0 ${collapsed ? "" : "mr-2.5"}`} />
-                      {!collapsed && <span className="text-sm truncate">{t("nav.admin")}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
