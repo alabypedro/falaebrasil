@@ -81,6 +81,66 @@ export default function MusicLabManager() {
   const [blanks, setBlanks] = useState<Blank[]>([]);
   const [vocab, setVocab] = useState<Vocab[]>([]);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const autofill = async () => {
+    const link = form.youtube_url.trim() || form.spotify_url.trim();
+    if (!link && !(form.title.trim() && form.artist.trim())) {
+      toast.error("Cole o link da música (ou informe título e artista).");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("music-lab-autofill", {
+        body: {
+          url: link,
+          title: form.title.trim(),
+          artist: form.artist.trim(),
+          level: form.level,
+        },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      const res = data as {
+        title?: string;
+        artist?: string;
+        description?: string;
+        blanks?: { text_before: string; answer: string; text_after: string; hint: string }[];
+        vocab?: { term: string; kind: string; explanation: string; example: string }[];
+      };
+      setForm((f) => ({
+        ...f,
+        title: f.title.trim() || res.title || "",
+        artist: f.artist.trim() || res.artist || "",
+        description: f.description.trim() || res.description || "",
+      }));
+      setBlanks(
+        (res.blanks ?? []).map((b, i) => ({
+          line_index: i,
+          text_before: b.text_before ?? "",
+          answer: b.answer ?? "",
+          text_after: b.text_after ?? "",
+          hint: b.hint || null,
+        })),
+      );
+      setVocab(
+        (res.vocab ?? []).map((v, i) => ({
+          term: v.term,
+          kind: v.kind,
+          explanation: v.explanation,
+          example: v.example || null,
+          display_order: i,
+        })),
+      );
+      toast.success(
+        `Gerado: ${(res.blanks ?? []).length} lacunas e ${(res.vocab ?? []).length} termos. Revise e salve.`,
+      );
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
