@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Music, Search, Loader2, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Music, Search, Loader2, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { LEVELS } from "@/lib/levels";
 import { VOCAB_KINDS } from "@/pages/MusicLab";
