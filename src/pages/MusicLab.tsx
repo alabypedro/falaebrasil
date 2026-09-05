@@ -226,175 +226,183 @@ export default function MusicLab() {
           </div>
         </header>
 
-        {(ytId || spId) && (
-          <div className="space-y-3">
-            {ytId && spId && (
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant={activeMedia === "youtube" ? "default" : "outline"}
-                  onClick={() => setMediaTab("youtube")}
-                >
-                  Vídeo (YouTube)
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeMedia === "spotify" ? "default" : "outline"}
-                  onClick={() => setMediaTab("spotify")}
-                >
-                  Áudio (Spotify)
-                </Button>
-              </div>
-            )}
-            <Card className="overflow-hidden border-border/60">
-              <CardContent className="p-0">
-                {activeMedia === "youtube" && ytId ? (
-                  <div className="aspect-video w-full">
-                    <iframe
-                      className="h-full w-full"
-                      src={youtubeEmbed(ytId)}
-                      title={selected.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                ) : spId ? (
-                  <iframe
-                    className="w-full"
-                    height={152}
-                    src={spotifyEmbed(spId)}
-                    title={selected.title}
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  />
-                ) : null}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         {detailLoading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <Tabs defaultValue="activity">
-            <TabsList>
-              <TabsTrigger value="activity">Preencher as lacunas</TabsTrigger>
-              <TabsTrigger value="vocab">Vocabulário &amp; Expressões</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="activity" className="mt-4">
-              <Card className="border-border/60">
-                <CardHeader>
-                  <CardTitle className="text-base font-display flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" /> Fill in the Blanks
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {blanks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Esta música ainda não tem lacunas cadastradas.
-                    </p>
-                  ) : (
-                    <>
-                      {blanks.map((b, i) => {
-                        const value = answers[b.id] ?? "";
-                        const ok = normalize(value) === normalize(b.answer);
-                        return (
-                          <div key={b.id} className="space-y-1">
-                            <div className="flex flex-wrap items-center gap-2 text-sm leading-relaxed">
-                              <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
-                              <span className="text-foreground">{b.text_before}</span>
-                              <Input
-                                value={value}
-                                onChange={(e) => setAnswers((a) => ({ ...a, [b.id]: e.target.value }))}
-                                placeholder="..."
-                                className={`h-9 w-40 ${
-                                  checked
-                                    ? ok
-                                      ? "border-success text-success"
-                                      : "border-destructive text-destructive"
-                                    : ""
-                                }`}
-                              />
-                              <span className="text-foreground">{b.text_after}</span>
-                              {checked &&
-                                (ok ? (
-                                  <CheckCircle2 className="h-4 w-4 text-success" />
-                                ) : (
-                                  <XCircle className="h-4 w-4 text-destructive" />
-                                ))}
-                            </div>
-                            {checked && !ok && (
-                              <p className="text-xs text-muted-foreground pl-6">
-                                Resposta correta: <span className="font-semibold">{b.answer}</span>
-                              </p>
-                            )}
-                            {!checked && b.hint && (
-                              <p className="text-xs text-muted-foreground pl-6">Dica: {b.hint}</p>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      <div className="flex flex-wrap items-center gap-3 pt-2">
-                        <Button onClick={handleCheck}>Verificar Respostas</Button>
-                        {checked && (
-                          <>
-                            <span className="text-sm text-muted-foreground tabular-nums">
-                              {correctCount} / {blanks.length} corretas
-                            </span>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setAnswers({});
-                                setChecked(false);
-                              }}
-                            >
-                              Tentar de novo
-                            </Button>
-                          </>
-                        )}
+          <div
+            className={`space-y-6 ${
+              (ytId || spId) ? "lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start lg:space-y-0" : ""
+            }`}
+          >
+            {(ytId || spId) && (
+              <div className="space-y-3 lg:sticky lg:top-4">
+                {ytId && spId && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={activeMedia === "youtube" ? "default" : "outline"}
+                      onClick={() => setMediaTab("youtube")}
+                    >
+                      Vídeo (YouTube)
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={activeMedia === "spotify" ? "default" : "outline"}
+                      onClick={() => setMediaTab("spotify")}
+                    >
+                      Áudio (Spotify)
+                    </Button>
+                  </div>
+                )}
+                <Card className="overflow-hidden border-border/60">
+                  <CardContent className="p-0">
+                    {activeMedia === "youtube" && ytId ? (
+                      <div className="aspect-video w-full">
+                        <iframe
+                          className="h-full w-full"
+                          src={youtubeEmbed(ytId)}
+                          title={selected.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                          allowFullScreen
+                          loading="lazy"
+                        />
                       </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                    ) : spId ? (
+                      <iframe
+                        className="w-full rounded-md"
+                        height={352}
+                        src={spotifyEmbed(spId)}
+                        title={selected.title}
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                      />
+                    ) : null}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
-            <TabsContent value="vocab" className="mt-4">
-              <Card className="border-border/60">
-                <CardContent className="p-5 space-y-3">
-                  {vocab.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Nenhum vocabulário cadastrado para esta música.
-                    </p>
-                  ) : (
-                    <Accordion type="multiple" className="w-full">
-                      {vocab.map((v) => (
-                        <AccordionItem key={v.id} value={v.id}>
-                          <AccordionTrigger className="text-sm">
-                            <span className="flex items-center gap-2 text-left">
-                              <span className="font-semibold text-foreground">{v.term}</span>
-                              <Badge variant="outline" className="text-[10px]">
-                                {kindLabel(v.kind)}
-                              </Badge>
-                            </span>
-                          </AccordionTrigger>
-                          <AccordionContent className="space-y-1">
-                            <p className="text-sm text-muted-foreground">{v.explanation}</p>
-                            {v.example && (
-                              <p className="text-xs italic text-muted-foreground">“{v.example}”</p>
-                            )}
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+            <Tabs defaultValue="activity">
+              <TabsList>
+                <TabsTrigger value="activity">Preencher as lacunas</TabsTrigger>
+                <TabsTrigger value="vocab">Vocabulário &amp; Expressões</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="activity" className="mt-4">
+                <Card className="border-border/60">
+                  <CardHeader>
+                    <CardTitle className="text-base font-display flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" /> Fill in the Blanks
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {blanks.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Esta música ainda não tem lacunas cadastradas.
+                      </p>
+                    ) : (
+                      <>
+                        {blanks.map((b, i) => {
+                          const value = answers[b.id] ?? "";
+                          const ok = normalize(value) === normalize(b.answer);
+                          return (
+                            <div key={b.id} className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-2 text-sm leading-relaxed">
+                                <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
+                                <span className="text-foreground">{b.text_before}</span>
+                                <Input
+                                  value={value}
+                                  onChange={(e) => setAnswers((a) => ({ ...a, [b.id]: e.target.value }))}
+                                  placeholder="..."
+                                  className={`h-9 w-40 ${
+                                    checked
+                                      ? ok
+                                        ? "border-success text-success"
+                                        : "border-destructive text-destructive"
+                                      : ""
+                                  }`}
+                                />
+                                <span className="text-foreground">{b.text_after}</span>
+                                {checked &&
+                                  (ok ? (
+                                    <CheckCircle2 className="h-4 w-4 text-success" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4 text-destructive" />
+                                  ))}
+                              </div>
+                              {checked && !ok && (
+                                <p className="text-xs text-muted-foreground pl-6">
+                                  Resposta correta: <span className="font-semibold">{b.answer}</span>
+                                </p>
+                              )}
+                              {!checked && b.hint && (
+                                <p className="text-xs text-muted-foreground pl-6">Dica: {b.hint}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        <div className="flex flex-wrap items-center gap-3 pt-2">
+                          <Button onClick={handleCheck}>Verificar Respostas</Button>
+                          {checked && (
+                            <>
+                              <span className="text-sm text-muted-foreground tabular-nums">
+                                {correctCount} / {blanks.length} corretas
+                              </span>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setAnswers({});
+                                  setChecked(false);
+                                }}
+                              >
+                                Tentar de novo
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="vocab" className="mt-4">
+                <Card className="border-border/60">
+                  <CardContent className="p-5 space-y-3">
+                    {vocab.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Nenhum vocabulário cadastrado para esta música.
+                      </p>
+                    ) : (
+                      <Accordion type="multiple" className="w-full">
+                        {vocab.map((v) => (
+                          <AccordionItem key={v.id} value={v.id}>
+                            <AccordionTrigger className="text-sm">
+                              <span className="flex items-center gap-2 text-left">
+                                <span className="font-semibold text-foreground">{v.term}</span>
+                                <Badge variant="outline" className="text-[10px]">
+                                  {kindLabel(v.kind)}
+                                </Badge>
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent className="space-y-1">
+                              <p className="text-sm text-muted-foreground">{v.explanation}</p>
+                              {v.example && (
+                                <p className="text-xs italic text-muted-foreground">“{v.example}”</p>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         )}
 
         <Dialog open={congrats} onOpenChange={setCongrats}>

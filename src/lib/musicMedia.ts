@@ -28,7 +28,8 @@ export function detectMedia(url: string): { media_type: MediaType; media_id: str
 export const youtubeEmbed = (id: string) =>
   `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
 
-export const spotifyEmbed = (id: string) => `https://open.spotify.com/embed/track/${id}`;
+export const spotifyEmbed = (id: string) =>
+  `https://open.spotify.com/embed/track/${id}?utm_source=generator&theme=0`;
 
 /** Capa oficial do vídeo do YouTube (não requer chave de API). */
 export const youtubeThumb = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
