@@ -147,30 +147,57 @@ export default function Dashboard() {
       </div>
 
       {/* AI quick-access + Courses */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 animate-fade-up">
+      <div className="grid grid-cols-2 gap-3 animate-fade-up">
         <button
           onClick={() => navigate("/courses")}
-          className="group flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card p-3 text-center hover:border-primary hover:bg-primary/5 transition"
+          className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition"
         >
-          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-            <GradIcon className="h-4 w-4 text-primary" />
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+            <GradIcon className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-[11px] font-semibold text-foreground leading-tight">Cursos FB!</span>
-          <span className="text-[10px] text-muted-foreground tabular-nums">Acessar</span>
+          <span className="text-sm font-semibold text-foreground leading-tight">Cursos FB!</span>
+          <span className="text-[11px] text-muted-foreground tabular-nums">Acessar</span>
         </button>
-        {aiButtons.map(({ source, icon: Icon, path }) => (
-          <button
-            key={source}
-            onClick={() => navigate(path)}
-            className="group flex flex-col items-center gap-1.5 rounded-xl border border-border/60 bg-card p-3 text-center hover:border-primary hover:bg-primary/5 transition"
-          >
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-              <Icon className="h-4 w-4 text-primary" />
+
+        <Dialog open={practiceOpen} onOpenChange={setPracticeOpen}>
+          <DialogTrigger asChild>
+            <button className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-sm font-semibold text-foreground leading-tight">Praticaê (IAs)</span>
+              <span className="text-[11px] text-muted-foreground tabular-nums">Treinar</span>
+            </button>
+          </DialogTrigger>
+          <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
+            <DialogHeader className="p-5 pb-3">
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <Brain className="h-5 w-5 text-primary" />
+                Praticaê (IAs)
+              </DialogTitle>
+            </DialogHeader>
+            <div className="p-5 pt-0 space-y-2">
+              {aiButtons.map(({ source, icon: Icon, path }) => (
+                <button
+                  key={source}
+                  onClick={() => {
+                    setPracticeOpen(false);
+                    navigate(path);
+                  }}
+                  className="w-full flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3 text-left hover:border-primary hover:bg-primary/5 transition"
+                >
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{AI_LABELS[source]}</p>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">{aiXp[source]} XP</p>
+                  </div>
+                </button>
+              ))}
             </div>
-            <span className="text-[11px] font-semibold text-foreground leading-tight">{AI_LABELS[source]}</span>
-            <span className="text-[10px] text-muted-foreground tabular-nums">{aiXp[source]} XP</span>
-          </button>
-        ))}
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
