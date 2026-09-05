@@ -2686,6 +2686,10 @@ export type Database = {
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
       subscription_is_current: { Args: { _user_id: string }; Returns: boolean }
       tier_rank: { Args: { _tier: string }; Returns: number }
+      tier_satisfies: {
+        Args: { _required: string; _user_tier: string }
+        Returns: boolean
+      }
       uncomplete_video: { Args: { _video_id: string }; Returns: Json }
       update_best_score: {
         Args: { _kind: string; _value: number }
