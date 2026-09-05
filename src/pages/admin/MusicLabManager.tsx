@@ -25,6 +25,7 @@ import { Plus, Pencil, Trash2, Music, Search, Loader2, X, Sparkles } from "lucid
 import { toast } from "sonner";
 import { LEVELS } from "@/lib/levels";
 import { VOCAB_KINDS } from "@/pages/MusicLab";
+import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb } from "@/lib/musicMedia";
 
 interface Song {
   id: string;
@@ -35,6 +36,8 @@ interface Song {
   spotify_url: string | null;
   cover_url: string | null;
   description: string | null;
+  media_type: string;
+  media_id: string | null;
   active: boolean;
   display_order: number;
 }
@@ -82,6 +85,11 @@ export default function MusicLabManager() {
   const [vocab, setVocab] = useState<Vocab[]>([]);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+
+  const media = useMemo(
+    () => detectMedia(form.youtube_url.trim()) ?? detectMedia(form.spotify_url.trim()),
+    [form.youtube_url, form.spotify_url],
+  );
 
   const autofill = async () => {
     const link = form.youtube_url.trim() || form.spotify_url.trim();
@@ -223,6 +231,8 @@ export default function MusicLabManager() {
         description: form.description.trim() || null,
         active: form.active,
         display_order: form.display_order,
+        media_type: media?.media_type ?? "youtube",
+        media_id: media?.media_id ?? null,
       };
 
       let songId = editing?.id;
@@ -430,6 +440,52 @@ export default function MusicLabManager() {
                   onChange={(e) => setForm((f) => ({ ...f, spotify_url: e.target.value }))}
                   placeholder="https://open.spotify.com/track/..."
                 />
+              </div>
+              <div className="sm:col-span-2 rounded-lg border border-border p-3 space-y-2">
+                {media ? (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <Badge variant="secondary">
+                        {media.media_type === "youtube" ? "YouTube (vídeo)" : "Spotify (áudio)"}
+                      </Badge>
+                      <span className="text-muted-foreground font-mono">{media.media_id}</span>
+                      {media.media_type === "youtube" && !form.cover_url.trim() && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setForm((f) => ({ ...f, cover_url: youtubeThumb(media.media_id) }))
+                          }
+                        >
+                          Usar capa do vídeo
+                        </Button>
+                      )}
+                    </div>
+                    {media.media_type === "youtube" ? (
+                      <div className="aspect-video w-full max-w-sm">
+                        <iframe
+                          className="h-full w-full rounded-lg"
+                          src={youtubeEmbed(media.media_id)}
+                          title="Prévia do player"
+                          allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    ) : (
+                      <iframe
+                        className="w-full max-w-sm rounded-lg"
+                        height={80}
+                        src={spotifyEmbed(media.media_id)}
+                        title="Prévia do player"
+                        allow="autoplay; clipboard-write; encrypted-media"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Cole um link do YouTube ou do Spotify para detectar a mídia automaticamente.
+                  </p>
+                )}
               </div>
               <div className="sm:col-span-2 rounded-lg border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground max-w-md">
