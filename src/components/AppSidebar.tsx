@@ -222,7 +222,7 @@ export default function AppSidebar() {
               {isAdmin && (
                 <SidebarMenuItem
                   className="animate-slide-in-left mt-2 pt-2 border-t border-sidebar-border/30"
-                  style={{ "--delay": `${items.length * 50}ms` } as React.CSSProperties}
+                  style={{ "--delay": `${(items.length + libItems.length) * 50}ms` } as React.CSSProperties}
                 >
                   <SidebarMenuButton asChild className="h-10 rounded-lg" tooltip={collapsed ? t("nav.admin") : undefined}>
                     <NavLink
