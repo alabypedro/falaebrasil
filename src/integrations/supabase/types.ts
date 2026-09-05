@@ -1342,6 +1342,8 @@ export type Database = {
           display_order: number
           id: string
           level: string
+          media_id: string | null
+          media_type: string
           spotify_url: string | null
           title: string
           updated_at: string
@@ -1356,6 +1358,8 @@ export type Database = {
           display_order?: number
           id?: string
           level?: string
+          media_id?: string | null
+          media_type?: string
           spotify_url?: string | null
           title: string
           updated_at?: string
@@ -1370,6 +1374,8 @@ export type Database = {
           display_order?: number
           id?: string
           level?: string
+          media_id?: string | null
+          media_type?: string
           spotify_url?: string | null
           title?: string
           updated_at?: string
