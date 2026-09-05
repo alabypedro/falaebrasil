@@ -29,6 +29,7 @@ import Tutoriais from "@/pages/Tutoriais";
 import Communities from "@/pages/Communities";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
+import MusicLab from "@/pages/MusicLab";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import CoursesManager from "@/pages/admin/CoursesManager";
@@ -48,6 +49,7 @@ import CreateStudent from "@/pages/admin/CreateStudent";
 import ContractsManager from "@/pages/admin/ContractsManager";
 import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import LeiaeManager from "@/pages/admin/LeiaeManager";
+import MusicLabManager from "@/pages/admin/MusicLabManager";
 import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
 import StudentsManager from "@/pages/admin/StudentsManager";
@@ -190,6 +192,7 @@ const App = () => {
                         <Route path="/contratos" element={<Contratos />} />
                         <Route path="/memorizae" element={<Memorizae />} />
                         <Route path="/leiae" element={<Leiae />} />
+                        <Route path="/music-lab" element={<MusicLab />} />
                         <Route
                           path="/professor"
                           element={
@@ -244,6 +247,7 @@ const App = () => {
                           <Route path="create-student" element={<CreateStudent />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />
                           <Route path="leiae" element={<LeiaeManager />} />
+                          <Route path="music-lab" element={<MusicLabManager />} />
                         </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>

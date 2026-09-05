@@ -1261,6 +1261,166 @@ export type Database = {
           },
         ]
       }
+      music_lab_access: {
+        Row: {
+          created_at: string
+          granted_at: string
+          id: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_at?: string
+          id?: string
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_at?: string
+          id?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      music_lab_blanks: {
+        Row: {
+          answer: string
+          created_at: string
+          hint: string | null
+          id: string
+          line_index: number
+          song_id: string
+          text_after: string
+          text_before: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          hint?: string | null
+          id?: string
+          line_index?: number
+          song_id: string
+          text_after?: string
+          text_before?: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          hint?: string | null
+          id?: string
+          line_index?: number
+          song_id?: string
+          text_after?: string
+          text_before?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_lab_blanks_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "music_lab_songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      music_lab_songs: {
+        Row: {
+          active: boolean
+          artist: string
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          level: string
+          spotify_url: string | null
+          title: string
+          updated_at: string
+          youtube_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          artist: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          level?: string
+          spotify_url?: string | null
+          title: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          artist?: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          level?: string
+          spotify_url?: string | null
+          title?: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      music_lab_vocabulary: {
+        Row: {
+          created_at: string
+          display_order: number
+          example: string | null
+          explanation: string
+          id: string
+          kind: string
+          song_id: string
+          term: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          example?: string | null
+          explanation: string
+          id?: string
+          kind?: string
+          song_id: string
+          term: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          example?: string | null
+          explanation?: string
+          id?: string
+          kind?: string
+          song_id?: string
+          term?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_lab_vocabulary_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "music_lab_songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_product_bundles: {
         Row: {
           created_at: string
@@ -2479,6 +2639,7 @@ export type Database = {
         Returns: boolean
       }
       has_course_access: { Args: { _course_id: string }; Returns: boolean }
+      has_music_lab_access: { Args: { _user_id: string }; Returns: boolean }
       has_open_category: { Args: { _user_id: string }; Returns: boolean }
       has_open_category_raw: { Args: { _user_id: string }; Returns: boolean }
       has_role: {

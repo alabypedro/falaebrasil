@@ -15,6 +15,7 @@ import {
   BookText,
   Lock,
   GraduationCap,
+  Music,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,6 +45,7 @@ const navItems = [
   { key: "nav.listening", url: "/listening-lab", icon: Headphones },
   { key: "nav.writing", url: "/writing-lab", icon: MessageSquareText },
   { key: "nav.leiae", url: "/leiae", icon: BookText },
+  { key: "nav.musiclab", url: "/music-lab", icon: Music },
   { key: "nav.library", url: "/library", icon: Library },
   { key: "nav.communities", url: "/communities", icon: Users },
   { key: "nav.tutorials", url: "/tutoriais", icon: HelpCircle },
