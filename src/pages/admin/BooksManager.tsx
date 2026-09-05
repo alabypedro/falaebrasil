@@ -21,10 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, BookMarked, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, BookMarked, Headphones, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { LEVELS } from "@/lib/levels";
 import { BOOK_CATEGORIES } from "@/pages/Books";
+import {
+  fetchLibrivoxTracks,
+  formatTrackDuration,
+  searchLibrivoxWorks,
+  type LibrivoxTrack,
+  type LibrivoxWork,
+} from "@/lib/librivox";
 
 interface Book {
   id: string;
@@ -95,6 +102,68 @@ export default function BooksManager() {
   const [chapterForm, setChapterForm] = useState({ title: "", chapter_index: 1, content: "", audio_url: "" });
   const [glossary, setGlossary] = useState<Glossary[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
+
+  // ---- Internet Archive / LibriVox ----
+  const [lvOpen, setLvOpen] = useState(false);
+  const [lvMode, setLvMode] = useState<"bulk" | "chapter">("bulk");
+  const [lvQuery, setLvQuery] = useState("");
+  const [lvLoading, setLvLoading] = useState(false);
+  const [lvResults, setLvResults] = useState<LibrivoxWork[]>([]);
+  const [lvWork, setLvWork] = useState<LibrivoxWork | null>(null);
+  const [lvTracks, setLvTracks] = useState<LibrivoxTrack[]>([]);
+
+  const openLibrivox = (mode: "bulk" | "chapter") => {
+    setLvMode(mode);
+    setLvWork(null);
+    setLvTracks([]);
+    setLvOpen(true);
+    const seed = mode === "chapter" ? chapterForm.title : `${selectedBook?.title ?? ""} ${selectedBook?.author ?? ""}`;
+    setLvQuery((q) => q || seed.trim());
+  };
+
+  const runLibrivoxSearch = async () => {
+    setLvLoading(true);
+    setLvWork(null);
+    setLvTracks([]);
+    try {
+      setLvResults(await searchLibrivoxWorks(lvQuery));
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha na busca.");
+    } finally {
+      setLvLoading(false);
+    }
+  };
+
+  const selectLibrivoxWork = async (w: LibrivoxWork) => {
+    setLvWork(w);
+    setLvLoading(true);
+    try {
+      const tracks = await fetchLibrivoxTracks(w.identifier);
+      setLvTracks(tracks);
+      if (tracks.length === 0) toast.error("Nenhum arquivo .mp3 encontrado nesta obra.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao carregar os áudios.");
+    } finally {
+      setLvLoading(false);
+    }
+  };
+
+  /** Aplica as faixas em sequência aos capítulos já cadastrados. */
+  const applyTracksToChapters = async () => {
+    if (!selectedBook || lvTracks.length === 0) return;
+    const ordered = [...chapters].sort((a, b) => a.chapter_index - b.chapter_index);
+    if (ordered.length === 0) { toast.error("Cadastre os capítulos antes de vincular o áudio."); return; }
+    setSaving(true);
+    let applied = 0;
+    for (let i = 0; i < ordered.length && i < lvTracks.length; i++) {
+      const { error } = await tbl("book_chapters").update({ audio_url: lvTracks[i].url }).eq("id", ordered[i].id);
+      if (!error) applied++;
+    }
+    setSaving(false);
+    toast.success(`Áudio vinculado a ${applied} capítulo(s).`);
+    setLvOpen(false);
+    loadChapters(selectedBook.id);
+  };
 
   const loadBooks = async () => {
     const { data } = await tbl("books").select("*").order("display_order");
@@ -274,9 +343,14 @@ export default function BooksManager() {
           <Button variant="ghost" size="sm" onClick={() => setSelectedBook(null)}>
             <ArrowLeft className="h-4 w-4 mr-1.5" /> Livros
           </Button>
-          <Button size="sm" onClick={() => openChapterDialog()}>
-            <Plus className="h-4 w-4 mr-1.5" /> Novo capítulo
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => openLibrivox("bulk")}>
+              <Headphones className="h-4 w-4 mr-1.5" /> Buscar narração (LibriVox)
+            </Button>
+            <Button size="sm" onClick={() => openChapterDialog()}>
+              <Plus className="h-4 w-4 mr-1.5" /> Novo capítulo
+            </Button>
+          </div>
         </div>
 
         <div>
@@ -336,11 +410,19 @@ export default function BooksManager() {
 
               <div className="space-y-1.5">
                 <Label>Áudio da narração (URL mp3)</Label>
-                <Input
-                  value={chapterForm.audio_url}
-                  onChange={(e) => setChapterForm((f) => ({ ...f, audio_url: e.target.value }))}
-                  placeholder="https://..."
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={chapterForm.audio_url}
+                    onChange={(e) => setChapterForm((f) => ({ ...f, audio_url: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                  <Button type="button" variant="outline" onClick={() => openLibrivox("chapter")}>
+                    <Headphones className="h-4 w-4 mr-1.5" /> LibriVox
+                  </Button>
+                </div>
+                {chapterForm.audio_url && (
+                  <audio src={chapterForm.audio_url} controls preload="none" className="w-full mt-1" />
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -488,6 +570,120 @@ export default function BooksManager() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setChapterOpen(false)}>Cancelar</Button>
               <Button onClick={saveChapter} disabled={saving}>Salvar capítulo</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Internet Archive / LibriVox */}
+        <Dialog open={lvOpen} onOpenChange={setLvOpen}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Narração de domínio público (Internet Archive / LibriVox)</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Input
+                  value={lvQuery}
+                  onChange={(e) => setLvQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") runLibrivoxSearch(); }}
+                  placeholder="Título ou autor da obra em inglês"
+                />
+                <Button onClick={runLibrivoxSearch} disabled={lvLoading}>
+                  <Search className="h-4 w-4 mr-1.5" /> Buscar
+                </Button>
+              </div>
+
+              {lvLoading && <p className="text-sm text-muted-foreground">Consultando o Internet Archive…</p>}
+
+              {!lvWork && !lvLoading && lvResults.length > 0 && (
+                <div className="space-y-2">
+                  {lvResults.map((w) => (
+                    <button
+                      key={w.identifier}
+                      onClick={() => selectLibrivoxWork(w)}
+                      className="w-full text-left flex items-center gap-3 rounded-lg border border-border p-2 hover:border-primary transition"
+                    >
+                      <img src={w.coverUrl} alt={`Capa de ${w.title}`} loading="lazy" className="h-12 w-9 object-cover rounded bg-muted" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{w.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {w.creator ?? "Autor desconhecido"} {w.year ? `• ${w.year}` : ""}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {lvWork && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{lvWork.title}</p>
+                      <a
+                        href={lvWork.pageUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary underline"
+                      >
+                        ver no archive.org
+                      </a>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => { setLvWork(null); setLvTracks([]); }}>
+                      Trocar obra
+                    </Button>
+                  </div>
+
+                  {lvMode === "bulk" && lvTracks.length > 0 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button size="sm" onClick={applyTracksToChapters} disabled={saving}>
+                        Vincular faixas aos {chapters.length} capítulo(s) em sequência
+                      </Button>
+                      {lvWork.coverUrl && !selectedBook?.cover_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            await tbl("books").update({ cover_url: lvWork.coverUrl }).eq("id", selectedBook!.id);
+                            toast.success("Capa atualizada.");
+                            loadBooks();
+                          }}
+                        >
+                          Usar capa da obra
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    {lvTracks.map((t) => (
+                      <div key={t.name} className="flex items-center gap-2 rounded-lg border border-border p-2">
+                        <Badge variant="secondary">{t.track}</Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm truncate">{t.title}</p>
+                          <p className="text-[11px] text-muted-foreground">{formatTrackDuration(t.durationSeconds)}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setChapterForm((f) => ({ ...f, audio_url: t.url }));
+                            setLvOpen(false);
+                            if (lvMode === "bulk") toast.info("Cole em um capítulo pelo botão Editar para salvar.");
+                          }}
+                        >
+                          Usar
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setLvOpen(false)}>Fechar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
