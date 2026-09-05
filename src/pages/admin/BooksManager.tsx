@@ -405,11 +405,19 @@ export default function BooksManager() {
 
               <div className="space-y-1.5">
                 <Label>Áudio da narração (URL mp3)</Label>
-                <Input
-                  value={chapterForm.audio_url}
-                  onChange={(e) => setChapterForm((f) => ({ ...f, audio_url: e.target.value }))}
-                  placeholder="https://..."
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={chapterForm.audio_url}
+                    onChange={(e) => setChapterForm((f) => ({ ...f, audio_url: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                  <Button type="button" variant="outline" onClick={() => openLibrivox("chapter")}>
+                    <Headphones className="h-4 w-4 mr-1.5" /> LibriVox
+                  </Button>
+                </div>
+                {chapterForm.audio_url && (
+                  <audio src={chapterForm.audio_url} controls preload="none" className="w-full mt-1" />
+                )}
               </div>
 
               <div className="space-y-1.5">
