@@ -468,9 +468,14 @@ export default function MusicLab() {
               onClick={() => openSong(s)}
               className="text-left rounded-xl border border-border/60 bg-card overflow-hidden hover:border-primary hover:bg-primary/5 transition"
             >
-              {s.cover_url && (
-                <img src={s.cover_url} alt={`Capa de ${s.title}`} className="h-32 w-full object-cover" loading="lazy" />
-              )}
+              {(() => {
+                const ytc = detectMedia(s.youtube_url ?? "");
+                const cover =
+                  s.cover_url ?? (ytc?.media_type === "youtube" ? youtubeThumb(ytc.media_id) : null);
+                return cover ? (
+                  <img src={cover} alt={`Capa de ${s.title}`} className="h-32 w-full object-cover" loading="lazy" />
+                ) : null;
+              })()}
               <div className="p-4 space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold uppercase text-muted-foreground truncate">
