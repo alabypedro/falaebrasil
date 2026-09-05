@@ -578,6 +578,57 @@ export default function MusicLabManager() {
                   </p>
                 )}
               </div>
+              <div className="sm:col-span-2 rounded-lg border border-border p-3 space-y-2">
+                <Label className="text-xs uppercase text-muted-foreground">
+                  Buscar música no YouTube
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={ytQuery}
+                    onChange={(e) => setYtQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        searchYoutube();
+                      }
+                    }}
+                    placeholder="Ex: Imagine Dragons Believer"
+                  />
+                  <Button variant="outline" onClick={searchYoutube} disabled={ytLoading}>
+                    {ytLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {ytResults.length > 0 && (
+                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                    {ytResults.map((v) => (
+                      <button
+                        key={v.media_id}
+                        type="button"
+                        onClick={() => pickYoutube(v)}
+                        className="flex w-full items-center gap-3 rounded-lg border border-border/60 p-2 text-left hover:border-primary hover:bg-primary/5 transition"
+                      >
+                        <img
+                          src={v.cover_url}
+                          alt={`Capa de ${v.title}`}
+                          className="h-12 w-20 rounded object-cover"
+                          loading="lazy"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium truncate">{v.title}</span>
+                          <span className="block text-xs text-muted-foreground truncate">
+                            {v.channel}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="sm:col-span-2 rounded-lg border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground max-w-md">
                   Cole o link da música acima e gere automaticamente as lacunas da letra e o
