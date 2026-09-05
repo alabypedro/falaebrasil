@@ -36,7 +36,6 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useLocation } from "react-router-dom";
 
 const navItems = [
   { key: "nav.dashboard", url: "/", icon: LayoutDashboard },
