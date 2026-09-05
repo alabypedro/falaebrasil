@@ -221,6 +221,168 @@ export type Database = {
         }
         Relationships: []
       }
+      book_chapters: {
+        Row: {
+          audio_url: string | null
+          book_id: string
+          chapter_index: number
+          content: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          book_id: string
+          chapter_index?: number
+          content?: string
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          book_id?: string
+          chapter_index?: number
+          content?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_chapters_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_glossary: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          definition: string
+          example: string | null
+          id: string
+          term: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          definition: string
+          example?: string | null
+          id?: string
+          term: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          definition?: string
+          example?: string | null
+          id?: string
+          term?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_glossary_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "book_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_quizzes: {
+        Row: {
+          chapter_id: string
+          correct_option_index: number
+          created_at: string
+          display_order: number
+          id: string
+          options: Json
+          question_text: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_id: string
+          correct_option_index?: number
+          created_at?: string
+          display_order?: number
+          id?: string
+          options?: Json
+          question_text: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_id?: string
+          correct_option_index?: number
+          created_at?: string
+          display_order?: number
+          id?: string
+          options?: Json
+          question_text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_quizzes_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "book_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      books: {
+        Row: {
+          author: string | null
+          category: string
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          level: string
+          published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          level?: string
+          published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          category?: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          level?: string
+          published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bst_product_access: {
         Row: {
           created_at: string
@@ -2280,6 +2442,60 @@ export type Database = {
           },
         ]
       }
+      user_reading_progress: {
+        Row: {
+          book_id: string
+          chapter_id: string
+          completed: boolean
+          created_at: string
+          id: string
+          last_read_at: string
+          progress_percent: number
+          quiz_score: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          chapter_id: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          progress_percent?: number
+          quiz_score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          book_id?: string
+          chapter_id?: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          progress_percent?: number
+          quiz_score?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reading_progress_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_reading_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "book_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -2591,6 +2807,15 @@ export type Database = {
         Returns: number
       }
       expire_overdue_subscriptions: { Args: never; Returns: Json }
+      get_book_quiz: {
+        Args: { _chapter_id: string }
+        Returns: {
+          display_order: number
+          id: string
+          options: Json
+          question_text: string
+        }[]
+      }
       get_latest_quiz_attempt: { Args: { _quiz_id: string }; Returns: Json }
       get_listening_lessons_public: {
         Args: never
@@ -2679,6 +2904,10 @@ export type Database = {
       recharge_monthly_tokens: { Args: never; Returns: undefined }
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
+      submit_book_quiz: {
+        Args: { _answers: Json; _chapter_id: string }
+        Returns: Json
+      }
       submit_card_review: {
         Args: { _card_id: string; _rating: number }
         Returns: Json
@@ -2686,6 +2915,10 @@ export type Database = {
       submit_quiz: { Args: { _answers: Json; _quiz_id: string }; Returns: Json }
       subscription_is_current: { Args: { _user_id: string }; Returns: boolean }
       tier_rank: { Args: { _tier: string }; Returns: number }
+      tier_satisfies: {
+        Args: { _required: string; _user_tier: string }
+        Returns: boolean
+      }
       uncomplete_video: { Args: { _video_id: string }; Returns: Json }
       update_best_score: {
         Args: { _kind: string; _value: number }

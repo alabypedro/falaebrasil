@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AiSource = "memorizae" | "leiae" | "falae" | "escutae" | "escreveae" | "musiclab";
+export type AiSource = "memorizae" | "leiae" | "falae" | "escutae" | "escreveae" | "musiclab" | "books";
 
 export const AI_LABELS: Record<AiSource, string> = {
   memorizae: "IA Memorizaê",
@@ -9,6 +9,7 @@ export const AI_LABELS: Record<AiSource, string> = {
   escreveae: "IA Escreveaê",
   leiae: "IA Leiaê",
   musiclab: "Music Lab",
+  books: "Livros e audio-livros",
 };
 
 export async function awardAiXp(source: AiSource, points: number, key?: string) {
@@ -27,7 +28,7 @@ export async function awardAiXp(source: AiSource, points: number, key?: string) 
 }
 
 export async function fetchAiXpBreakdown(userId: string): Promise<Record<AiSource, number> & { total: number }> {
-  const empty = { memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, musiclab: 0, total: 0 };
+  const empty = { memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, musiclab: 0, books: 0, total: 0 };
   const { data, error } = await supabase
     .from("ai_xp_events" as any)
     .select("source, points")

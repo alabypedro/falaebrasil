@@ -30,6 +30,7 @@ import Communities from "@/pages/Communities";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
 import MusicLab from "@/pages/MusicLab";
+import Books from "@/pages/Books";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import CoursesManager from "@/pages/admin/CoursesManager";
@@ -50,6 +51,7 @@ import ContractsManager from "@/pages/admin/ContractsManager";
 import MemorizaeManager from "@/pages/admin/MemorizaeManager";
 import LeiaeManager from "@/pages/admin/LeiaeManager";
 import MusicLabManager from "@/pages/admin/MusicLabManager";
+import BooksManager from "@/pages/admin/BooksManager";
 import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
 import StudentsManager from "@/pages/admin/StudentsManager";
@@ -193,6 +195,7 @@ const App = () => {
                         <Route path="/memorizae" element={<Memorizae />} />
                         <Route path="/leiae" element={<Leiae />} />
                         <Route path="/music-lab" element={<MusicLab />} />
+                        <Route path="/books" element={<Books />} />
                         <Route
                           path="/professor"
                           element={
@@ -248,6 +251,7 @@ const App = () => {
                           <Route path="memorizae" element={<MemorizaeManager />} />
                           <Route path="leiae" element={<LeiaeManager />} />
                           <Route path="music-lab" element={<MusicLabManager />} />
+                          <Route path="books" element={<BooksManager />} />
                         </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>
