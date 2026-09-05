@@ -85,11 +85,81 @@ export default function MusicLabManager() {
   const [vocab, setVocab] = useState<Vocab[]>([]);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [ytQuery, setYtQuery] = useState("");
+  const [ytLoading, setYtLoading] = useState(false);
+  const [ytResults, setYtResults] = useState<
+    { media_id: string; title: string; channel: string; cover_url: string; url: string }[]
+  >([]);
 
   const media = useMemo(
     () => detectMedia(form.youtube_url.trim()) ?? detectMedia(form.spotify_url.trim()),
     [form.youtube_url, form.spotify_url],
   );
+
+  /** Busca metadados oficiais do vídeo (YouTube Data API v3, via Edge Function). */
+  const fetchYoutubeMeta = async () => {
+    const link = form.youtube_url.trim();
+    if (!link) {
+      toast.error("Cole o link do YouTube primeiro.");
+      return;
+    }
+    setYtLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("youtube-lookup", {
+        body: { action: "video", url: link },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      const v = data as { title: string; artist: string; cover_url: string; url: string };
+      setForm((f) => ({
+        ...f,
+        title: v.title || f.title,
+        artist: v.artist || f.artist,
+        cover_url: v.cover_url || f.cover_url,
+        youtube_url: v.url || f.youtube_url,
+      }));
+      toast.success("Dados e capa do vídeo carregados do YouTube.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setYtLoading(false);
+    }
+  };
+
+  /** Pesquisa músicas no YouTube (Edge Function com a YOUTUBE_API_KEY). */
+  const searchYoutube = async () => {
+    const q = ytQuery.trim();
+    if (!q) return;
+    setYtLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("youtube-lookup", {
+        body: { action: "search", query: q, limit: 8 },
+      });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      const items = (data as { items: typeof ytResults }).items ?? [];
+      setYtResults(items);
+      if (!items.length) toast.info("Nenhum vídeo encontrado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setYtLoading(false);
+    }
+  };
+
+  const pickYoutube = (v: { title: string; channel: string; cover_url: string; url: string }) => {
+    setForm((f) => ({
+      ...f,
+      youtube_url: v.url,
+      title: f.title.trim() || v.title,
+      artist: f.artist.trim() || v.channel.replace(/\s*-\s*Topic$/i, ""),
+      cover_url: v.cover_url,
+    }));
+    setYtResults([]);
+    setYtQuery("");
+    toast.success("Vídeo selecionado.");
+  };
+
 
   const autofill = async () => {
     const link = form.youtube_url.trim() || form.spotify_url.trim();
@@ -113,6 +183,7 @@ export default function MusicLabManager() {
         title?: string;
         artist?: string;
         description?: string;
+        cover_url?: string;
         blanks?: { text_before: string; answer: string; text_after: string; hint: string }[];
         vocab?: { term: string; kind: string; explanation: string; example: string }[];
       };
@@ -121,7 +192,9 @@ export default function MusicLabManager() {
         title: f.title.trim() || res.title || "",
         artist: f.artist.trim() || res.artist || "",
         description: f.description.trim() || res.description || "",
+        cover_url: f.cover_url.trim() || res.cover_url || "",
       }));
+
       setBlanks(
         (res.blanks ?? []).map((b, i) => ({
           line_index: i,
@@ -449,17 +522,35 @@ export default function MusicLabManager() {
                         {media.media_type === "youtube" ? "YouTube (vídeo)" : "Spotify (áudio)"}
                       </Badge>
                       <span className="text-muted-foreground font-mono">{media.media_id}</span>
-                      {media.media_type === "youtube" && !form.cover_url.trim() && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setForm((f) => ({ ...f, cover_url: youtubeThumb(media.media_id) }))
-                          }
-                        >
-                          Usar capa do vídeo
-                        </Button>
+                      {media.media_type === "youtube" && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={fetchYoutubeMeta}
+                            disabled={ytLoading}
+                          >
+                            {ytLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                            ) : (
+                              <Search className="h-3.5 w-3.5 mr-1" />
+                            )}
+                            Buscar dados e capa no YouTube
+                          </Button>
+                          {!form.cover_url.trim() && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setForm((f) => ({ ...f, cover_url: youtubeThumb(media.media_id) }))
+                              }
+                            >
+                              Usar capa padrão
+                            </Button>
+                          )}
+                        </>
                       )}
+
                     </div>
                     {media.media_type === "youtube" ? (
                       <div className="aspect-video w-full max-w-sm">
@@ -487,6 +578,57 @@ export default function MusicLabManager() {
                   </p>
                 )}
               </div>
+              <div className="sm:col-span-2 rounded-lg border border-border p-3 space-y-2">
+                <Label className="text-xs uppercase text-muted-foreground">
+                  Buscar música no YouTube
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={ytQuery}
+                    onChange={(e) => setYtQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        searchYoutube();
+                      }
+                    }}
+                    placeholder="Ex: Imagine Dragons Believer"
+                  />
+                  <Button variant="outline" onClick={searchYoutube} disabled={ytLoading}>
+                    {ytLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                {ytResults.length > 0 && (
+                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                    {ytResults.map((v) => (
+                      <button
+                        key={v.media_id}
+                        type="button"
+                        onClick={() => pickYoutube(v)}
+                        className="flex w-full items-center gap-3 rounded-lg border border-border/60 p-2 text-left hover:border-primary hover:bg-primary/5 transition"
+                      >
+                        <img
+                          src={v.cover_url}
+                          alt={`Capa de ${v.title}`}
+                          className="h-12 w-20 rounded object-cover"
+                          loading="lazy"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium truncate">{v.title}</span>
+                          <span className="block text-xs text-muted-foreground truncate">
+                            {v.channel}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="sm:col-span-2 rounded-lg border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground max-w-md">
                   Cole o link da música acima e gere automaticamente as lacunas da letra e o
