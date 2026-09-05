@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation } from "lucide-react";
+import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,7 +36,7 @@ export default function Dashboard() {
   const [completedCount, setCompletedCount] = useState(0);
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [aiXp, setAiXp] = useState<Record<AiSource, number> & { total: number }>({
-    memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, total: 0,
+    memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, musiclab: 0, total: 0,
   });
   const gpaData = useGPA(user?.id);
 
@@ -148,7 +148,7 @@ export default function Dashboard() {
       </div>
 
       {/* AI quick-access + Courses */}
-      <div className="grid grid-cols-2 gap-3 animate-fade-up">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 animate-fade-up">
         <button
           onClick={() => navigate("/courses")}
           className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition"
@@ -199,6 +199,17 @@ export default function Dashboard() {
             </div>
           </DialogContent>
         </Dialog>
+
+        <button
+          onClick={() => navigate("/music-lab")}
+          className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition"
+        >
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+            <Music className="h-5 w-5 text-primary" />
+          </div>
+          <span className="text-sm font-semibold text-foreground leading-tight">Music Lab</span>
+          <span className="text-[11px] text-muted-foreground tabular-nums">{aiXp.musiclab} XP</span>
+        </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
