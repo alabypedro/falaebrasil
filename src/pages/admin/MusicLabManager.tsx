@@ -113,6 +113,7 @@ export default function MusicLabManager() {
         title?: string;
         artist?: string;
         description?: string;
+        cover_url?: string;
         blanks?: { text_before: string; answer: string; text_after: string; hint: string }[];
         vocab?: { term: string; kind: string; explanation: string; example: string }[];
       };
@@ -121,7 +122,9 @@ export default function MusicLabManager() {
         title: f.title.trim() || res.title || "",
         artist: f.artist.trim() || res.artist || "",
         description: f.description.trim() || res.description || "",
+        cover_url: f.cover_url.trim() || res.cover_url || "",
       }));
+
       setBlanks(
         (res.blanks ?? []).map((b, i) => ({
           line_index: i,
