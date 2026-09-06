@@ -341,6 +341,42 @@ export type Database = {
           },
         ]
       }
+      book_texts: {
+        Row: {
+          audio_url: string | null
+          author: string | null
+          content: string
+          created_at: string
+          display_order: number
+          id: string
+          level: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          author?: string | null
+          content: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          level?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          author?: string | null
+          content?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          level?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       books: {
         Row: {
           author: string | null

@@ -1,827 +1,236 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowLeft, BookMarked, Headphones, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { BookText, Plus, Pencil, Trash2, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
-import { LEVELS } from "@/lib/levels";
-import { BOOK_CATEGORIES } from "@/pages/Books";
-import {
-  fetchLibrivoxTracks,
-  formatTrackDuration,
-  searchLibrivoxWorks,
-  type LibrivoxTrack,
-  type LibrivoxWork,
-} from "@/lib/librivox";
+import { LEVELS, type Level } from "@/lib/levels";
 
-interface Book {
+interface BookText {
   id: string;
   title: string;
   author: string | null;
-  description: string | null;
-  level: string;
-  category: string;
-  cover_url: string | null;
-  published: boolean;
-  display_order: number;
-}
-
-interface Chapter {
-  id: string;
-  book_id: string;
-  title: string;
-  chapter_index: number;
   content: string;
   audio_url: string | null;
-}
-
-interface Glossary {
-  id?: string;
-  term: string;
-  definition: string;
-  example: string;
-}
-
-interface Question {
-  id?: string;
-  question_text: string;
-  options: string[];
-  correct_option_index: number;
+  level: Level;
   display_order: number;
 }
 
-const emptyBook = {
-  title: "",
-  author: "",
-  description: "",
-  level: "A1",
-  category: BOOK_CATEGORIES[0],
-  cover_url: "",
-  published: true,
-  display_order: 0,
-};
-
-const tbl = (name: string) => supabase.from(name as any) as any;
-
 export default function BooksManager() {
-  const [books, setBooks] = useState<Book[]>([]);
+  const [items, setItems] = useState<BookText[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Level | "all">("all");
   const [search, setSearch] = useState("");
-  const [levelFilter, setLevelFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const [bookOpen, setBookOpen] = useState(false);
-  const [editingBook, setEditingBook] = useState<Book | null>(null);
-  const [form, setForm] = useState({ ...emptyBook });
-  const [saving, setSaving] = useState(false);
+  const [dialog, setDialog] = useState(false);
+  const [editing, setEditing] = useState<BookText | null>(null);
+  const [form, setForm] = useState<{ title: string; author: string; content: string; audio_url: string; level: Level; display_order: number }>({
+    title: "", author: "", content: "", audio_url: "", level: "A1", display_order: 0,
+  });
 
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-
-  const [chapterOpen, setChapterOpen] = useState(false);
-  const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
-  const [chapterForm, setChapterForm] = useState({ title: "", chapter_index: 1, content: "", audio_url: "" });
-  const [glossary, setGlossary] = useState<Glossary[]>([]);
-  const [questions, setQuestions] = useState<Question[]>([]);
-
-  // ---- Internet Archive / LibriVox ----
-  const [lvOpen, setLvOpen] = useState(false);
-  const [lvMode, setLvMode] = useState<"bulk" | "chapter">("bulk");
-  const [lvQuery, setLvQuery] = useState("");
-  const [lvLoading, setLvLoading] = useState(false);
-  const [lvResults, setLvResults] = useState<LibrivoxWork[]>([]);
-  const [lvWork, setLvWork] = useState<LibrivoxWork | null>(null);
-  const [lvTracks, setLvTracks] = useState<LibrivoxTrack[]>([]);
-
-  const openLibrivox = (mode: "bulk" | "chapter") => {
-    setLvMode(mode);
-    setLvWork(null);
-    setLvTracks([]);
-    setLvOpen(true);
-    const seed = mode === "chapter" ? chapterForm.title : `${selectedBook?.title ?? ""} ${selectedBook?.author ?? ""}`;
-    setLvQuery((q) => q || seed.trim());
-  };
-
-  const runLibrivoxSearch = async () => {
-    setLvLoading(true);
-    setLvWork(null);
-    setLvTracks([]);
-    try {
-      setLvResults(await searchLibrivoxWorks(lvQuery));
-    } catch (e: any) {
-      toast.error(e?.message ?? "Falha na busca.");
-    } finally {
-      setLvLoading(false);
-    }
-  };
-
-  const selectLibrivoxWork = async (w: LibrivoxWork) => {
-    setLvWork(w);
-    setLvLoading(true);
-    try {
-      const tracks = await fetchLibrivoxTracks(w.identifier);
-      setLvTracks(tracks);
-      if (tracks.length === 0) toast.error("Nenhum arquivo .mp3 encontrado nesta obra.");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Falha ao carregar os áudios.");
-    } finally {
-      setLvLoading(false);
-    }
-  };
-
-  /** Aplica as faixas em sequência aos capítulos já cadastrados. */
-  const applyTracksToChapters = async () => {
-    if (!selectedBook || lvTracks.length === 0) return;
-    const ordered = [...chapters].sort((a, b) => a.chapter_index - b.chapter_index);
-    if (ordered.length === 0) { toast.error("Cadastre os capítulos antes de vincular o áudio."); return; }
-    setSaving(true);
-    let applied = 0;
-    for (let i = 0; i < ordered.length && i < lvTracks.length; i++) {
-      const { error } = await tbl("book_chapters").update({ audio_url: lvTracks[i].url }).eq("id", ordered[i].id);
-      if (!error) applied++;
-    }
-    setSaving(false);
-    toast.success(`Áudio vinculado a ${applied} capítulo(s).`);
-    setLvOpen(false);
-    loadChapters(selectedBook.id);
-  };
-
-  const loadBooks = async () => {
-    const { data } = await tbl("books").select("*").order("display_order");
-    setBooks((data as Book[]) ?? []);
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase.from("book_texts" as any).select("*").order("level").order("display_order");
+    setItems((data as unknown as BookText[]) || []);
     setLoading(false);
   };
+  useEffect(() => { load(); }, []);
 
-  useEffect(() => { loadBooks(); }, []);
-
-  const loadChapters = async (bookId: string) => {
-    const { data } = await tbl("book_chapters").select("*").eq("book_id", bookId).order("chapter_index");
-    setChapters((data as Chapter[]) ?? []);
+  const openNew = () => {
+    setEditing(null);
+    setForm({ title: "", author: "", content: "", audio_url: "", level: "A1", display_order: items.length });
+    setDialog(true);
+  };
+  const openEdit = (x: BookText) => {
+    setEditing(x);
+    setForm({
+      title: x.title, author: x.author ?? "", content: x.content,
+      audio_url: x.audio_url ?? "", level: x.level, display_order: x.display_order,
+    });
+    setDialog(true);
   };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return books
-      .filter((b) => levelFilter === "all" || b.level === levelFilter)
-      .filter((b) => categoryFilter === "all" || b.category === categoryFilter)
-      .filter((b) => !q || b.title.toLowerCase().includes(q) || (b.author ?? "").toLowerCase().includes(q));
-  }, [books, search, levelFilter, categoryFilter]);
-
-  const openBookDialog = (b?: Book) => {
-    setEditingBook(b ?? null);
-    setForm(
-      b
-        ? {
-            title: b.title,
-            author: b.author ?? "",
-            description: b.description ?? "",
-            level: b.level,
-            category: b.category,
-            cover_url: b.cover_url ?? "",
-            published: b.published,
-            display_order: b.display_order,
-          }
-        : { ...emptyBook, display_order: books.length },
-    );
-    setBookOpen(true);
-  };
-
-  const saveBook = async () => {
-    if (!form.title.trim()) { toast.error("Informe o título."); return; }
-    setSaving(true);
+  const save = async () => {
+    if (!form.title.trim() || !form.content.trim()) { toast.error("Título e texto são obrigatórios"); return; }
     const payload = {
       title: form.title.trim(),
       author: form.author.trim() || null,
-      description: form.description.trim() || null,
+      content: form.content.trim(),
+      audio_url: form.audio_url.trim() || null,
       level: form.level,
-      category: form.category,
-      cover_url: form.cover_url.trim() || null,
-      published: form.published,
-      display_order: Number(form.display_order) || 0,
+      display_order: form.display_order,
     };
-    const { error } = editingBook
-      ? await tbl("books").update(payload).eq("id", editingBook.id)
-      : await tbl("books").insert(payload);
-    setSaving(false);
+    const { error } = editing
+      ? await supabase.from("book_texts" as any).update(payload).eq("id", editing.id)
+      : await supabase.from("book_texts" as any).insert(payload);
     if (error) { toast.error(error.message); return; }
-    toast.success("Livro salvo.");
-    setBookOpen(false);
-    loadBooks();
+    toast.success(editing ? "Livro atualizado" : "Livro criado");
+    setDialog(false);
+    load();
   };
 
-  const deleteBook = async (b: Book) => {
-    if (!confirm(`Excluir "${b.title}" e seus capítulos?`)) return;
-    const { error } = await tbl("books").delete().eq("id", b.id);
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("book_texts" as any).delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Livro excluído.");
-    if (selectedBook?.id === b.id) setSelectedBook(null);
-    loadBooks();
+    toast.success("Livro removido");
+    load();
   };
 
-  const openChapterDialog = async (c?: Chapter) => {
-    setEditingChapter(c ?? null);
-    setChapterForm(
-      c
-        ? { title: c.title, chapter_index: c.chapter_index, content: c.content, audio_url: c.audio_url ?? "" }
-        : { title: "", chapter_index: chapters.length + 1, content: "", audio_url: "" },
-    );
-    if (c) {
-      const [{ data: g }, { data: q }] = await Promise.all([
-        tbl("book_glossary").select("*").eq("chapter_id", c.id),
-        tbl("book_quizzes").select("*").eq("chapter_id", c.id).order("display_order"),
-      ]);
-      setGlossary(
-        ((g as any[]) ?? []).map((r) => ({ id: r.id, term: r.term, definition: r.definition, example: r.example ?? "" })),
-      );
-      setQuestions(
-        ((q as any[]) ?? []).map((r) => ({
-          id: r.id,
-          question_text: r.question_text,
-          options: Array.isArray(r.options) ? r.options : ["", "", ""],
-          correct_option_index: r.correct_option_index,
-          display_order: r.display_order,
-        })),
-      );
-    } else {
-      setGlossary([]);
-      setQuestions([]);
-    }
-    setChapterOpen(true);
-  };
+  const filtered = items
+    .filter((x) => (filter === "all" ? true : x.level === filter))
+    .filter((x) => {
+      const q = search.toLowerCase().trim();
+      if (!q) return true;
+      return x.title.toLowerCase().includes(q) || (x.author ?? "").toLowerCase().includes(q) || x.content.toLowerCase().includes(q);
+    })
+    .sort((a, b) => {
+      if (a.display_order !== b.display_order) return a.display_order - b.display_order;
+      return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
+    });
 
-  const saveChapter = async () => {
-    if (!selectedBook) return;
-    if (!chapterForm.title.trim()) { toast.error("Informe o título do capítulo."); return; }
-    setSaving(true);
-    const payload = {
-      book_id: selectedBook.id,
-      title: chapterForm.title.trim(),
-      chapter_index: Number(chapterForm.chapter_index) || 1,
-      content: chapterForm.content,
-      audio_url: chapterForm.audio_url.trim() || null,
-    };
-    let chapterId = editingChapter?.id;
-    if (editingChapter) {
-      const { error } = await tbl("book_chapters").update(payload).eq("id", editingChapter.id);
-      if (error) { setSaving(false); toast.error(error.message); return; }
-    } else {
-      const { data, error } = await tbl("book_chapters").insert(payload).select("id").single();
-      if (error) { setSaving(false); toast.error(error.message); return; }
-      chapterId = (data as { id: string }).id;
-    }
-
-    // Reescreve glossário e perguntas do capítulo.
-    await tbl("book_glossary").delete().eq("chapter_id", chapterId);
-    const gRows = glossary
-      .filter((g) => g.term.trim() && g.definition.trim())
-      .map((g) => ({
-        chapter_id: chapterId,
-        term: g.term.trim(),
-        definition: g.definition.trim(),
-        example: g.example.trim() || null,
-      }));
-    if (gRows.length) await tbl("book_glossary").insert(gRows);
-
-    await tbl("book_quizzes").delete().eq("chapter_id", chapterId);
-    const qRows = questions
-      .filter((q) => q.question_text.trim() && q.options.filter((o) => o.trim()).length >= 2)
-      .map((q, i) => ({
-        chapter_id: chapterId,
-        question_text: q.question_text.trim(),
-        options: q.options.map((o) => o.trim()).filter(Boolean),
-        correct_option_index: q.correct_option_index,
-        display_order: i,
-      }));
-    if (qRows.length) await tbl("book_quizzes").insert(qRows);
-
-    setSaving(false);
-    toast.success("Capítulo salvo.");
-    setChapterOpen(false);
-    loadChapters(selectedBook.id);
-  };
-
-  const deleteChapter = async (c: Chapter) => {
-    if (!confirm(`Excluir o capítulo "${c.title}"?`)) return;
-    const { error } = await tbl("book_chapters").delete().eq("id", c.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Capítulo excluído.");
-    if (selectedBook) loadChapters(selectedBook.id);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  // ------- CHAPTERS OF A BOOK -------
-  if (selectedBook) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <Button variant="ghost" size="sm" onClick={() => setSelectedBook(null)}>
-            <ArrowLeft className="h-4 w-4 mr-1.5" /> Livros
-          </Button>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => openLibrivox("bulk")}>
-              <Headphones className="h-4 w-4 mr-1.5" /> Buscar narração (LibriVox)
-            </Button>
-            <Button size="sm" onClick={() => openChapterDialog()}>
-              <Plus className="h-4 w-4 mr-1.5" /> Novo capítulo
-            </Button>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-lg font-bold">{selectedBook.title}</h2>
-          <p className="text-sm text-muted-foreground">
-            {selectedBook.level} • {selectedBook.category}
-          </p>
-        </div>
-
-        {chapters.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum capítulo cadastrado.</p>
-        ) : (
-          <div className="space-y-2">
-            {chapters.map((c) => (
-              <Card key={c.id}>
-                <CardContent className="p-4 flex items-center gap-3">
-                  <Badge variant="secondary">{c.chapter_index}</Badge>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{c.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {c.content.length} caracteres {c.audio_url ? "• com áudio" : "• sem áudio"}
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => openChapterDialog(c)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteChapter(c)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <Dialog open={chapterOpen} onOpenChange={setChapterOpen}>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingChapter ? "Editar capítulo" : "Novo capítulo"}</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
-                <div className="space-y-1.5">
-                  <Label>Título</Label>
-                  <Input value={chapterForm.title} onChange={(e) => setChapterForm((f) => ({ ...f, title: e.target.value }))} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Ordem</Label>
-                  <Input
-                    type="number"
-                    value={chapterForm.chapter_index}
-                    onChange={(e) => setChapterForm((f) => ({ ...f, chapter_index: Number(e.target.value) }))}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Áudio da narração (URL mp3)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={chapterForm.audio_url}
-                    onChange={(e) => setChapterForm((f) => ({ ...f, audio_url: e.target.value }))}
-                    placeholder="https://..."
-                  />
-                  <Button type="button" variant="outline" onClick={() => openLibrivox("chapter")}>
-                    <Headphones className="h-4 w-4 mr-1.5" /> LibriVox
-                  </Button>
-                </div>
-                {chapterForm.audio_url && (
-                  <audio src={chapterForm.audio_url} controls preload="none" className="w-full mt-1" />
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Texto do conto/capítulo</Label>
-                <Textarea
-                  rows={12}
-                  value={chapterForm.content}
-                  onChange={(e) => setChapterForm((f) => ({ ...f, content: e.target.value }))}
-                  placeholder="Cole o texto. Separe os parágrafos com uma linha em branco."
-                />
-              </div>
-
-              {/* Glossário (click-to-define) */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Palavras destacadas (Click-to-Define)</Label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setGlossary((g) => [...g, { term: "", definition: "", example: "" }])}
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Palavra
-                  </Button>
-                </div>
-                {glossary.map((g, i) => (
-                  <div key={i} className="grid gap-2 sm:grid-cols-[1fr_1.5fr_1.5fr_auto] items-start">
-                    <Input
-                      placeholder="Palavra"
-                      value={g.term}
-                      onChange={(e) => setGlossary((arr) => arr.map((x, j) => (j === i ? { ...x, term: e.target.value } : x)))}
-                    />
-                    <Input
-                      placeholder="Definição simples"
-                      value={g.definition}
-                      onChange={(e) => setGlossary((arr) => arr.map((x, j) => (j === i ? { ...x, definition: e.target.value } : x)))}
-                    />
-                    <Input
-                      placeholder="Exemplo de uso"
-                      value={g.example}
-                      onChange={(e) => setGlossary((arr) => arr.map((x, j) => (j === i ? { ...x, example: e.target.value } : x)))}
-                    />
-                    <Button variant="ghost" size="icon" onClick={() => setGlossary((arr) => arr.filter((_, j) => j !== i))}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Comprehension Quiz */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Comprehension Quiz (3 perguntas)</Label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setQuestions((q) => [
-                        ...q,
-                        { question_text: "", options: ["", "", ""], correct_option_index: 0, display_order: q.length },
-                      ])
-                    }
-                  >
-                    <Plus className="h-4 w-4 mr-1" /> Pergunta
-                  </Button>
-                </div>
-                {questions.map((q, qi) => (
-                  <Card key={qi}>
-                    <CardContent className="p-3 space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder={`Pergunta ${qi + 1}`}
-                          value={q.question_text}
-                          onChange={(e) =>
-                            setQuestions((arr) => arr.map((x, j) => (j === qi ? { ...x, question_text: e.target.value } : x)))
-                          }
-                        />
-                        <Button variant="ghost" size="icon" onClick={() => setQuestions((arr) => arr.filter((_, j) => j !== qi))}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                      {q.options.map((opt, oi) => (
-                        <div key={oi} className="flex items-center gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={q.correct_option_index === oi ? "default" : "outline"}
-                            onClick={() =>
-                              setQuestions((arr) => arr.map((x, j) => (j === qi ? { ...x, correct_option_index: oi } : x)))
-                            }
-                          >
-                            {String.fromCharCode(65 + oi)}
-                          </Button>
-                          <Input
-                            placeholder={`Alternativa ${String.fromCharCode(65 + oi)}`}
-                            value={opt}
-                            onChange={(e) =>
-                              setQuestions((arr) =>
-                                arr.map((x, j) =>
-                                  j === qi ? { ...x, options: x.options.map((o, k) => (k === oi ? e.target.value : o)) } : x,
-                                ),
-                              )
-                            }
-                          />
-                          {q.options.length > 2 && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                setQuestions((arr) =>
-                                  arr.map((x, j) =>
-                                    j === qi
-                                      ? {
-                                          ...x,
-                                          options: x.options.filter((_, k) => k !== oi),
-                                          correct_option_index: Math.min(x.correct_option_index, x.options.length - 2),
-                                        }
-                                      : x,
-                                  ),
-                                )
-                              }
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          setQuestions((arr) => arr.map((x, j) => (j === qi ? { ...x, options: [...x.options, ""] } : x)))
-                        }
-                      >
-                        <Plus className="h-4 w-4 mr-1" /> Alternativa
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setChapterOpen(false)}>Cancelar</Button>
-              <Button onClick={saveChapter} disabled={saving}>Salvar capítulo</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Internet Archive / LibriVox */}
-        <Dialog open={lvOpen} onOpenChange={setLvOpen}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Narração de domínio público (Internet Archive / LibriVox)</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  value={lvQuery}
-                  onChange={(e) => setLvQuery(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") runLibrivoxSearch(); }}
-                  placeholder="Título ou autor da obra em inglês"
-                />
-                <Button onClick={runLibrivoxSearch} disabled={lvLoading}>
-                  <Search className="h-4 w-4 mr-1.5" /> Buscar
-                </Button>
-              </div>
-
-              {lvLoading && <p className="text-sm text-muted-foreground">Consultando o Internet Archive…</p>}
-
-              {!lvWork && !lvLoading && lvResults.length > 0 && (
-                <div className="space-y-2">
-                  {lvResults.map((w) => (
-                    <button
-                      key={w.identifier}
-                      onClick={() => selectLibrivoxWork(w)}
-                      className="w-full text-left flex items-center gap-3 rounded-lg border border-border p-2 hover:border-primary transition"
-                    >
-                      <img src={w.coverUrl} alt={`Capa de ${w.title}`} loading="lazy" className="h-12 w-9 object-cover rounded bg-muted" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{w.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {w.creator ?? "Autor desconhecido"} {w.year ? `• ${w.year}` : ""}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {lvWork && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{lvWork.title}</p>
-                      <a
-                        href={lvWork.pageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary underline"
-                      >
-                        ver no archive.org
-                      </a>
-                    </div>
-                    <Button size="sm" variant="ghost" onClick={() => { setLvWork(null); setLvTracks([]); }}>
-                      Trocar obra
-                    </Button>
-                  </div>
-
-                  {lvMode === "bulk" && lvTracks.length > 0 && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Button size="sm" onClick={applyTracksToChapters} disabled={saving}>
-                        Vincular faixas aos {chapters.length} capítulo(s) em sequência
-                      </Button>
-                      {lvWork.coverUrl && !selectedBook?.cover_url && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={async () => {
-                            await tbl("books").update({ cover_url: lvWork.coverUrl }).eq("id", selectedBook!.id);
-                            toast.success("Capa atualizada.");
-                            loadBooks();
-                          }}
-                        >
-                          Usar capa da obra
-                        </Button>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="space-y-1.5">
-                    {lvTracks.map((t) => (
-                      <div key={t.name} className="flex items-center gap-2 rounded-lg border border-border p-2">
-                        <Badge variant="secondary">{t.track}</Badge>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm truncate">{t.title}</p>
-                          <p className="text-[11px] text-muted-foreground">{formatTrackDuration(t.durationSeconds)}</p>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setChapterForm((f) => ({ ...f, audio_url: t.url }));
-                            setLvOpen(false);
-                            if (lvMode === "bulk") toast.info("Cole em um capítulo pelo botão Editar para salvar.");
-                          }}
-                        >
-                          Usar
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setLvOpen(false)}>Fechar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
-  }
-
-  // ------- BOOKS LIST -------
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="text-lg font-bold flex items-center gap-2">
-          <BookMarked className="h-5 w-5 text-primary" /> Livros e audio-livros
-        </h2>
-        <Button size="sm" onClick={() => openBookDialog()}>
-          <Plus className="h-4 w-4 mr-1.5" /> Novo livro
-        </Button>
-      </div>
+      <Card className="bg-primary/5 border-primary/20">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BookText className="h-4 w-4 text-primary" /> Livros e audio-livros — Biblioteca de Textos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground">
+            Cadastre contos e capítulos em inglês para leitura interativa. Cada texto tem um nível de
+            dificuldade (A1 → C2, K1 → K4, T1 → T4) e pode ter um áudio (audiolivro) opcional.
+          </p>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-2 sm:grid-cols-3">
-        <div className="relative">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por título ou autor" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Buscar por título, autor ou texto..." className="pl-9 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger><SelectValue placeholder="Nível" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os níveis</SelectItem>
-            {LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as categorias</SelectItem>
-            {BOOK_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Novo livro</Button>
       </div>
 
-      {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum livro cadastrado.</p>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((b) => (
-            <Card key={b.id}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-14 w-11 rounded bg-muted overflow-hidden flex items-center justify-center shrink-0">
-                  {b.cover_url ? (
-                    <img src={b.cover_url} alt={`Capa de ${b.title}`} className="h-full w-full object-cover" />
-                  ) : (
-                    <BookMarked className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{b.level}</Badge>
-                    <span className="text-xs text-muted-foreground truncate">{b.category}</span>
-                    {!b.published && <Badge variant="outline">rascunho</Badge>}
-                  </div>
-                  <p className="font-medium truncate">{b.title}</p>
-                  {b.author && <p className="text-xs text-muted-foreground truncate">{b.author}</p>}
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => { setSelectedBook(b); loadChapters(b.id); }}
-                >
-                  Capítulos
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => openBookDialog(b)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => deleteBook(b)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </CardContent>
-            </Card>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex gap-1 flex-wrap">
+          <Button size="sm" variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>Todos</Button>
+          {LEVELS.map((lv) => (
+            <Button key={lv} size="sm" variant={filter === lv ? "default" : "outline"} onClick={() => setFilter(lv)}>{lv}</Button>
           ))}
+        </div>
+        <span className="text-xs text-muted-foreground">{filtered.length} de {items.length} livros</span>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : filtered.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum livro {filter !== "all" ? `no nível ${filter}` : "ainda"}.</CardContent></Card>
+      ) : (
+        <div className="rounded-lg border overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Título</TableHead>
+                <TableHead className="w-20">Nível</TableHead>
+                <TableHead>Autor</TableHead>
+                <TableHead>Trecho</TableHead>
+                <TableHead className="w-20">Áudio</TableHead>
+                <TableHead className="w-24 text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((x) => (
+                <TableRow key={x.id}>
+                  <TableCell className="font-medium">{x.title}</TableCell>
+                  <TableCell><Badge variant="outline">{x.level}</Badge></TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{x.author ?? "—"}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground max-w-md truncate">{x.content.slice(0, 120)}…</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{x.audio_url ? "Sim" : "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(x)}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover "{x.title}"?</AlertDialogTitle>
+                            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => remove(x.id)}>Remover</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
-      <Dialog open={bookOpen} onOpenChange={setBookOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog open={dialog} onOpenChange={setDialog}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingBook ? "Editar livro" : "Novo livro"}</DialogTitle>
+            <DialogTitle>{editing ? "Editar livro" : "Novo livro"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="space-y-1.5">
+            <div>
               <Label>Título</Label>
-              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex.: The Gift of the Magi" />
             </div>
-            <div className="space-y-1.5">
-              <Label>Autor</Label>
-              <Input value={form.author} onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))} />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Nível</Label>
-                <Select value={form.level} onValueChange={(v) => setForm((f) => ({ ...f, level: v }))}>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Nível de dificuldade</Label>
+                <Select value={form.level} onValueChange={(v: Level) => setForm({ ...form, level: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {LEVELS.map((lv) => <SelectItem key={lv} value={lv}>{lv}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Categoria</Label>
-                <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{BOOK_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                </Select>
+              <div>
+                <Label>Autor (opcional)</Label>
+                <Input value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} placeholder="Ex.: O. Henry" />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Capa (URL)</Label>
-              <Input value={form.cover_url} onChange={(e) => setForm((f) => ({ ...f, cover_url: e.target.value }))} />
+            <div>
+              <Label>Texto em inglês</Label>
+              <Textarea
+                rows={10}
+                value={form.content}
+                onChange={(e) => setForm({ ...form, content: e.target.value })}
+                placeholder="Cole aqui o conto ou capítulo…"
+                className="font-mono text-sm"
+              />
             </div>
-            <div className="space-y-1.5">
-              <Label>Descrição</Label>
-              <Textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            <div>
+              <Label>Áudio (URL .mp3, opcional)</Label>
+              <Input value={form.audio_url} onChange={(e) => setForm({ ...form, audio_url: e.target.value })} placeholder="https://archive.org/download/…" />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 items-end">
-              <div className="space-y-1.5">
-                <Label>Ordem</Label>
-                <Input
-                  type="number"
-                  value={form.display_order}
-                  onChange={(e) => setForm((f) => ({ ...f, display_order: Number(e.target.value) }))}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={form.published} onCheckedChange={(v) => setForm((f) => ({ ...f, published: v }))} />
-                <Label>Publicado</Label>
-              </div>
+            <div>
+              <Label>Ordem</Label>
+              <Input type="number" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: parseInt(e.target.value || "0", 10) })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBookOpen(false)}>Cancelar</Button>
-            <Button onClick={saveBook} disabled={saving}>Salvar</Button>
+            <Button variant="outline" onClick={() => setDialog(false)}>Cancelar</Button>
+            <Button onClick={save}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
