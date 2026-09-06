@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones } from "lucide-react";
 import { useLeiae } from "@/hooks/useLeiae";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BackToDashboardButton from "@/components/BackToDashboardButton";

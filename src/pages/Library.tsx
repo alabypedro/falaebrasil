@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useBstOnly } from "@/hooks/useBstOnly";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BstProduct {
   id: string;

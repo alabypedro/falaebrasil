@@ -54,9 +54,9 @@ export default function Dashboard() {
     { source: "leiae", icon: BookText, path: "/leiae" },
   ];
 
-  const libraryButtons: { label: string; icon: any; path: string; xpKey?: keyof typeof aiXp }[] = [
-    { label: "Biblioteca BST", icon: Library, path: "/library" },
-    { label: "Livros e audio-livros", icon: BookMarked, path: "/books", xpKey: "books" },
+  const libraryButtons: { labelKey: string; icon: any; path: string; xpKey?: keyof typeof aiXp }[] = [
+    { labelKey: "nav.library.bst", icon: Library, path: "/library" },
+    { labelKey: "nav.library.books", icon: BookMarked, path: "/books", xpKey: "books" },
   ];
 
   useEffect(() => {
