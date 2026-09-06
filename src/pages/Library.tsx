@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useBstOnly } from "@/hooks/useBstOnly";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BstProduct {
   id: string;
@@ -24,6 +25,7 @@ export default function Library() {
   const [locked, setLocked] = useState<BstProduct | null>(null);
   const navigate = useNavigate();
   const { isBstOnly } = useBstOnly();
+  const { t } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -56,7 +58,7 @@ export default function Library() {
     <div className="space-y-6 max-w-4xl page-transition">
       {!isBstOnly && <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Biblioteca BST</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("library.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Brasil Sem Trava: Guias, Cartilhas e Manuais - ferramentas de treinamento para uso prático em situações
           específicas.

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones } from "lucide-react";
 import { useLeiae } from "@/hooks/useLeiae";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
@@ -28,6 +29,7 @@ export default function Books() {
   const [items, setItems] = useState<BookText[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [audio, setAudio] = useState<BookText | null>(null);
+  const { t } = useLanguage();
   const { open, loading } = useLeiae("pt-BR");
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function Books() {
       <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-foreground">Livros e audio-livros</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("nav.library.books")}</h1>
           <Badge className="bg-primary/15 text-primary border-0">Leitura interativa</Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-1">

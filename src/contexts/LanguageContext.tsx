@@ -22,8 +22,8 @@ const dict: Dict = {
   "nav.leiae": { pt: "IA Leiaê", en: "AI Leiaê" },
   "nav.musiclab": { pt: "Music Lab", en: "Music Lab" },
   "nav.library": { pt: "Biblioteca", en: "Library" },
-  "nav.library.bst": { pt: "Biblioteca BST", en: "BST Library" },
-  "nav.library.books": { pt: "Livros e audio-livros", en: "Books & Audiobooks" },
+  "nav.library.bst": { pt: "Guias Brasil Sem Trava (BST)", en: "BST Guides" },
+  "nav.library.books": { pt: "Estórias Curtas (A1 até C2)", en: "Short Stories (A1 to C2)" },
   "nav.communities": { pt: "Comunidades FB", en: "FB Communities" },
   "nav.tutorials": { pt: "Tutoriais", en: "Tutorials" },
   "nav.contracts": { pt: "Contratos", en: "Contracts" },
@@ -147,7 +147,7 @@ const dict: Dict = {
   "chat.hint": { pt: "Enter envia • Shift+Enter quebra linha", en: "Enter sends • Shift+Enter new line" },
 
   // Library
-  "library.title": { pt: "Biblioteca BST", en: "BST Library" },
+  "library.title": { pt: "Guias Brasil Sem Trava (BST)", en: "BST Guides" },
   "library.subtitle": { pt: "Brasil Sem Trava: E-books e Audiobooks para complementar seu aprendizado.", en: "Brasil Sem Trava: E-books and Audiobooks to complement your learning." },
 
   // Communities
