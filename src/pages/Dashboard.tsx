@@ -224,9 +224,9 @@ export default function Dashboard() {
               </DialogTitle>
             </DialogHeader>
             <div className="p-5 pt-0 space-y-2">
-              {libraryButtons.map(({ label, icon: Icon, path, xpKey }) => (
+              {libraryButtons.map(({ labelKey, icon: Icon, path, xpKey }) => (
                 <button
-                  key={label}
+                  key={labelKey}
                   onClick={() => {
                     setLibraryOpen(false);
                     navigate(path);
@@ -237,7 +237,7 @@ export default function Dashboard() {
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{label}</p>
+                    <p className="text-sm font-semibold text-foreground">{t(labelKey)}</p>
                     {xpKey && <p className="text-[11px] text-muted-foreground tabular-nums">{aiXp[xpKey]} XP</p>}
                   </div>
                 </button>
