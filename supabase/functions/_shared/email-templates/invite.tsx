@@ -9,7 +9,6 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Link,
   Preview,
   Text,
@@ -26,33 +25,28 @@ export const InviteEmail = ({
   siteUrl,
   confirmationUrl,
 }: InviteEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>Você foi convidado para o Falaê Brasil!</Preview>
+  <Html lang="en" dir="ltr">
+    <Head>
+      <style>{darkModeCss}</style>
+    </Head>
+    <Preview>You've been invited to join {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img
-          src="https://teastozdtgoogrpghpzj.supabase.co/storage/v1/object/public/avatars/email-assets/falae-brasil-logo.png"
-          alt="Falaê Brasil!"
-          width="80"
-          height="80"
-          style={logo}
-        />
-        <Heading style={h1}>Você foi convidado 🎉</Heading>
+        <Heading style={h1}>You've been invited</Heading>
         <Text style={text}>
-          Você foi convidado para participar do{' '}
+          You've been invited to join{' '}
           <Link href={siteUrl} style={link}>
-            <strong>Falaê Brasil!</strong>
-          </Link>{' '}
-          — a plataforma para finalmente falar inglês de verdade. Clique no
-          botão abaixo para aceitar o convite e criar sua conta.
+            <strong>{siteName}</strong>
+          </Link>
+          . Click the button below to accept the invitation and create your
+          account.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Aceitar convite
+        <Button className="dm-btn" style={button} href={confirmationUrl}>
+          Accept Invitation
         </Button>
         <Text style={footer}>
-          Se você não esperava este convite, pode ignorar este e-mail com
-          tranquilidade.
+          If you weren't expecting this invitation, you can safely ignore this
+          email.
         </Text>
       </Container>
     </Body>
@@ -61,16 +55,12 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: 'Inter, -apple-system, "Segoe UI", Arial, sans-serif',
-}
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '20px 25px' }
-const logo = { margin: '0 0 20px', display: 'block' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: 'hsl(222, 65%, 18%)',
+  color: '#000000',
   margin: '0 0 20px',
 }
 const text = {
@@ -79,14 +69,22 @@ const text = {
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'hsl(185, 84%, 42%)', textDecoration: 'underline' }
+const link = { color: 'inherit', textDecoration: 'underline' }
 const button = {
-  backgroundColor: 'hsl(222, 65%, 18%)',
+  backgroundColor: '#000000',
   color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: 'bold' as const,
-  borderRadius: '14px',
+  fontSize: '14px',
+  border: '1px solid #000000',
+  borderRadius: '8px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
+const darkModeCss = `
+  @media (prefers-color-scheme: dark) {
+    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  }
+  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+`

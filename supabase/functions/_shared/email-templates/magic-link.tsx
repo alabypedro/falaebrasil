@@ -9,7 +9,6 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -23,29 +22,23 @@ export const MagicLinkEmail = ({
   siteName,
   confirmationUrl,
 }: MagicLinkEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
-    <Head />
-    <Preview>Seu link de acesso ao Falaê Brasil!</Preview>
+  <Html lang="en" dir="ltr">
+    <Head>
+      <style>{darkModeCss}</style>
+    </Head>
+    <Preview>Your login link for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img
-          src="https://teastozdtgoogrpghpzj.supabase.co/storage/v1/object/public/avatars/email-assets/falae-brasil-logo.png"
-          alt="Falaê Brasil!"
-          width="80"
-          height="80"
-          style={logo}
-        />
-        <Heading style={h1}>Seu link de acesso ✨</Heading>
+        <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
-          Clique no botão abaixo para entrar na sua conta no
-          <strong> Falaê Brasil!</strong> Este link expira em alguns minutos.
+          Click the button below to log in to {siteName}. This link will expire
+          shortly.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Entrar agora
+        <Button className="dm-btn" style={button} href={confirmationUrl}>
+          Log In
         </Button>
         <Text style={footer}>
-          Se você não solicitou este link, pode ignorar este e-mail com
-          tranquilidade.
+          If you didn't request this link, you can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -54,16 +47,12 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: 'Inter, -apple-system, "Segoe UI", Arial, sans-serif',
-}
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '20px 25px' }
-const logo = { margin: '0 0 20px', display: 'block' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: 'hsl(222, 65%, 18%)',
+  color: '#000000',
   margin: '0 0 20px',
 }
 const text = {
@@ -73,12 +62,20 @@ const text = {
   margin: '0 0 25px',
 }
 const button = {
-  backgroundColor: 'hsl(222, 65%, 18%)',
+  backgroundColor: '#000000',
   color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: 'bold' as const,
-  borderRadius: '14px',
+  fontSize: '14px',
+  border: '1px solid #000000',
+  borderRadius: '8px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
+const darkModeCss = `
+  @media (prefers-color-scheme: dark) {
+    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  }
+  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+`
