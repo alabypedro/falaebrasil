@@ -7,6 +7,32 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { WelcomePurchaseEmail } from '../_shared/email-templates/welcome-purchase.tsx'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+
+// True when the address belongs to an account created by a purchase webhook
+// that has never signed in — those users get the branded welcome email.
+async function isNewPurchaseStudent(email: string): Promise<boolean> {
+  try {
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+    const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+    const user = list?.users?.find(
+      (u: { email?: string | null }) => u.email?.toLowerCase() === email?.toLowerCase()
+    )
+    return (
+      (user as { user_metadata?: Record<string, unknown> } | undefined)?.user_metadata
+        ?.from_hubla === true &&
+      !(user as { last_sign_in_at?: string | null } | undefined)?.last_sign_in_at
+    )
+  } catch (error) {
+    console.error('Failed to check welcome-email eligibility', error)
+    return false
+  }
+}
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
