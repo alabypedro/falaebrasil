@@ -155,14 +155,30 @@ const handler = createAuthEmailHandler({
           confirmationUrl: data.url,
         }),
     },
-    recovery: {
-      subject: 'Reset your password',
-      render: (data) =>
-        React.createElement(RecoveryEmail, {
+    recovery: async (data) => {
+      // Students created by a purchase webhook receive a recovery link so they
+      // can set their first password. For those accounts we send the branded
+      // welcome email instead of the generic reset copy.
+      if (await isNewPurchaseStudent(data.email)) {
+        return {
+          subject: 'Bem-vindo ao Falaê Brasil! Crie sua conta',
+          element: React.createElement(WelcomePurchaseEmail, {
+            siteName: SITE_NAME,
+            siteUrl: SITE_URL,
+            recipient: data.email,
+            confirmationUrl: data.url,
+          }),
+        }
+      }
+      return {
+        subject: 'Reset your password',
+        element: React.createElement(RecoveryEmail, {
           siteName: SITE_NAME,
           confirmationUrl: data.url,
         }),
+      }
     },
+
     email_change: {
       subject: 'Confirm your new email',
       render: (data) =>
