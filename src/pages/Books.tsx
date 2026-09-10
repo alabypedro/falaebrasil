@@ -30,17 +30,21 @@ export default function Books() {
   const [items, setItems] = useState<BookText[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [audio, setAudio] = useState<BookText | null>(null);
+  const [quizByText, setQuizByText] = useState<Record<string, { id: string; title: string }>>({});
   const { t } = useLanguage();
   const { open, loading } = useLeiae("pt-BR");
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("book_texts" as any)
-        .select("*")
-        .order("level")
-        .order("display_order");
+      const [{ data }, { data: quizzes }] = await Promise.all([
+        supabase.from("book_texts" as any).select("*").order("level").order("display_order"),
+        supabase.from("quizzes" as any).select("id, title, book_text_id").not("book_text_id", "is", null),
+      ]);
       setItems((data as unknown as BookText[]) || []);
+      const map: Record<string, { id: string; title: string }> = {};
+      ((quizzes as any[]) || []).forEach((q) => { map[q.book_text_id] = { id: q.id, title: q.title }; });
+      setQuizByText(map);
       setLoadingItems(false);
     })();
   }, []);
