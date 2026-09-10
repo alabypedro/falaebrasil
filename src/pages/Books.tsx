@@ -141,6 +141,16 @@ export default function Books() {
                     <Button size="sm" onClick={() => openSaved(x)} className="shrink-0">
                       <Play className="h-4 w-4 mr-1" /> Ler
                     </Button>
+                    {quizByText[x.id] && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="shrink-0"
+                        onClick={() => navigate(`/quiz/${quizByText[x.id].id}`)}
+                      >
+                        <HelpCircle className="h-4 w-4 mr-1" /> Quiz
+                      </Button>
+                    )}
                   </div>
                   {audio?.id === x.id && x.audio_url && (
                     <div className="p-3 pt-0">
