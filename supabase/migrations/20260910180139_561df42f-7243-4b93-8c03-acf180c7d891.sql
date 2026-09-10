@@ -1,0 +1,2 @@
+ALTER TABLE public.quizzes DROP CONSTRAINT IF EXISTS quizzes_owner_check;
+ALTER TABLE public.quizzes ADD CONSTRAINT quizzes_owner_check CHECK (lesson_id IS NOT NULL OR bst_product_id IS NOT NULL OR book_text_id IS NOT NULL);
