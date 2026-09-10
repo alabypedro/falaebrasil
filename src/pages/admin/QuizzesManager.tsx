@@ -324,7 +324,9 @@ export default function QuizzesManager() {
               <TableRow key={q.id}>
                 <TableCell className="font-medium">{q.title}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">
-                  {q.bst_product_id
+                  {q.book_text_id
+                    ? `Estória Curta: ${bookTexts.find((b) => b.id === q.book_text_id)?.title ?? "—"}`
+                    : q.bst_product_id
                     ? `BST: ${bstProducts.find((b) => b.id === q.bst_product_id)?.title ?? "—"}`
                     : (q.lessons as any)?.title ?? "—"}
                 </TableCell>
@@ -352,11 +354,12 @@ export default function QuizzesManager() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Vínculo</Label>
-                <Select value={form.owner} onValueChange={(v: "lesson" | "bst") => setForm({ ...form, owner: v })}>
+                <Select value={form.owner} onValueChange={(v: "lesson" | "bst" | "book") => setForm({ ...form, owner: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="lesson">Lição de curso</SelectItem>
                     <SelectItem value="bst">Produto BST</SelectItem>
+                    <SelectItem value="book">Estórias Curtas (IA Leiaê)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
