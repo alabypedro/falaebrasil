@@ -223,8 +223,9 @@ export default function QuizzesManager() {
 
     let quizId = editing?.id;
     const payload: Record<string, any> = {
-      lesson_id: isBst ? null : form.lesson_id,
+      lesson_id: isBst || isBook ? null : form.lesson_id,
       bst_product_id: isBst ? form.bst_product_id : null,
+      book_text_id: isBook ? form.book_text_id : null,
       level: form.level,
       display_order: Number(form.display_order) || 0,
       unit: form.unit === "none" ? null : parseInt(form.unit, 10),
