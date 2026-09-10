@@ -2843,15 +2843,6 @@ export type Database = {
       complete_video: { Args: { _video_id: string }; Returns: Json }
       debit_scripted_seconds: { Args: { _seconds: number }; Returns: Json }
       debit_unscripted_seconds: { Args: { _seconds: number }; Returns: Json }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       expire_overdue_subscriptions: { Args: never; Returns: Json }
       get_book_quiz: {
         Args: { _chapter_id: string }
@@ -2930,23 +2921,6 @@ export type Database = {
       is_bst_restricted: { Args: { _user_id: string }; Returns: boolean }
       is_my_student: { Args: { _student_id: string }; Returns: boolean }
       level_rank: { Args: { _level: string }; Returns: number }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
       recharge_monthly_tokens: { Args: never; Returns: undefined }
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
