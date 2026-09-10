@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones } from "lucide-react";
+import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones, HelpCircle } from "lucide-react";
 import { useLeiae } from "@/hooks/useLeiae";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
@@ -29,17 +30,21 @@ export default function Books() {
   const [items, setItems] = useState<BookText[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [audio, setAudio] = useState<BookText | null>(null);
+  const [quizByText, setQuizByText] = useState<Record<string, { id: string; title: string }>>({});
   const { t } = useLanguage();
   const { open, loading } = useLeiae("pt-BR");
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("book_texts" as any)
-        .select("*")
-        .order("level")
-        .order("display_order");
+      const [{ data }, { data: quizzes }] = await Promise.all([
+        supabase.from("book_texts" as any).select("*").order("level").order("display_order"),
+        supabase.from("quizzes" as any).select("id, title, book_text_id").not("book_text_id", "is", null),
+      ]);
       setItems((data as unknown as BookText[]) || []);
+      const map: Record<string, { id: string; title: string }> = {};
+      ((quizzes as any[]) || []).forEach((q) => { map[q.book_text_id] = { id: q.id, title: q.title }; });
+      setQuizByText(map);
       setLoadingItems(false);
     })();
   }, []);
@@ -136,6 +141,16 @@ export default function Books() {
                     <Button size="sm" onClick={() => openSaved(x)} className="shrink-0">
                       <Play className="h-4 w-4 mr-1" /> Ler
                     </Button>
+                    {quizByText[x.id] && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="shrink-0"
+                        onClick={() => navigate(`/quiz/${quizByText[x.id].id}`)}
+                      >
+                        <HelpCircle className="h-4 w-4 mr-1" /> Quiz
+                      </Button>
+                    )}
                   </div>
                   {audio?.id === x.id && x.audio_url && (
                     <div className="p-3 pt-0">

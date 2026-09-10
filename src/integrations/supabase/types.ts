@@ -2080,6 +2080,7 @@ export type Database = {
       }
       quizzes: {
         Row: {
+          book_text_id: string | null
           bst_product_id: string | null
           created_at: string
           display_order: number
@@ -2092,6 +2093,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          book_text_id?: string | null
           bst_product_id?: string | null
           created_at?: string
           display_order?: number
@@ -2104,6 +2106,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          book_text_id?: string | null
           bst_product_id?: string | null
           created_at?: string
           display_order?: number
@@ -2116,6 +2119,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "quizzes_book_text_id_fkey"
+            columns: ["book_text_id"]
+            isOneToOne: false
+            referencedRelation: "book_texts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quizzes_bst_product_id_fkey"
             columns: ["bst_product_id"]

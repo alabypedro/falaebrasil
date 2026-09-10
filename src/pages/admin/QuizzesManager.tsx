@@ -12,11 +12,12 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, HelpCircle, X, Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
+interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; book_text_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
 interface LessonOption { id: string; title: string; module_id: string; module_order: number; module_title: string; course_id: string; course_title: string; course_level: string; display_order: number; }
 interface ModuleOption { id: string; title: string; display_order: number; course_id: string; course_title: string; course_level: string; }
 interface BstOption { id: string; title: string }
+interface BookTextOption { id: string; title: string; level: string; display_order: number }
 
 import { LEVELS } from "@/lib/levels";
 import { SearchableSelect, type SearchableOption } from "@/components/admin/SearchableSelect";
@@ -24,9 +25,10 @@ import { compareCourses, courseLabel, segmentGroupOf, SEGMENT_GROUP_ORDER } from
 import { useMemo } from "react";
 
 const emptyQuizForm = {
-  owner: "lesson" as "lesson" | "bst",
+  owner: "lesson" as "lesson" | "bst" | "book",
   lesson_id: "",
   bst_product_id: "",
+  book_text_id: "",
   level: "A1",
   display_order: 0,
   unit: "none",
@@ -39,6 +41,7 @@ export default function QuizzesManager() {
   const [lessons, setLessons] = useState<LessonOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [bstProducts, setBstProducts] = useState<BstOption[]>([]);
+  const [bookTexts, setBookTexts] = useState<BookTextOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCourse, setFilterCourse] = useState<string>("all");
   const [filterModule, setFilterModule] = useState<string>("all");
@@ -50,12 +53,14 @@ export default function QuizzesManager() {
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }] = await Promise.all([
+    const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }, { data: bks }] = await Promise.all([
       supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title, course_id, courses(title)))").order("created_at"),
       supabase.from("lessons").select("id, title, display_order, module_id, modules(title, display_order, course_id, courses(title, level))").order("display_order"),
       supabase.from("modules").select("id, title, display_order, course_id, courses(title, level)").order("display_order"),
       supabase.from("bst_products").select("id, title").order("display_order"),
+      supabase.from("book_texts" as any).select("id, title, level, display_order").order("level").order("display_order"),
     ]);
+    if (bks) setBookTexts(bks as unknown as BookTextOption[]);
     if (qz) setQuizzes(qz);
     if (lsn) setLessons(lsn.map((l: any) => ({
       id: l.id, title: l.title, display_order: l.display_order ?? 0, module_id: l.module_id,
@@ -142,7 +147,7 @@ export default function QuizzesManager() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ ...emptyQuizForm, lesson_id: lessons[0]?.id ?? "", bst_product_id: bstProducts[0]?.id ?? "" });
+    setForm({ ...emptyQuizForm, lesson_id: lessons[0]?.id ?? "", bst_product_id: bstProducts[0]?.id ?? "", book_text_id: "" });
     setQuestions([{ question_text: "", options: ["", "", "", ""], correct_option_index: 0, display_order: 0 }]);
     setOpen(true);
   };
@@ -150,9 +155,10 @@ export default function QuizzesManager() {
   const openEdit = async (q: Quiz) => {
     setEditing(q);
     setForm({
-      owner: q.bst_product_id ? "bst" : "lesson",
+      owner: q.book_text_id ? "book" : q.bst_product_id ? "bst" : "lesson",
       lesson_id: q.lesson_id ?? "",
       bst_product_id: q.bst_product_id ?? "",
+      book_text_id: q.book_text_id ?? "",
       level: q.level ?? "A1",
       display_order: q.display_order ?? 0,
       unit: q.unit ? String(q.unit) : "none",
@@ -204,8 +210,10 @@ export default function QuizzesManager() {
 
   const save = async () => {
     const isBst = form.owner === "bst";
-    if (!form.title.trim() || (isBst ? !form.bst_product_id : !form.lesson_id)) {
-      toast.error(isBst ? "Preencha título e produto BST" : "Preencha título e lição");
+    const isBook = form.owner === "book";
+    const missing = isBst ? !form.bst_product_id : isBook ? !form.book_text_id : !form.lesson_id;
+    if (!form.title.trim() || missing) {
+      toast.error(isBst ? "Preencha título e produto BST" : isBook ? "Preencha título e estória curta" : "Preencha título e lição");
       return;
     }
     if (questions.some((q) => !q.question_text.trim() || q.options.some((o) => !o.trim()))) {
@@ -215,8 +223,9 @@ export default function QuizzesManager() {
 
     let quizId = editing?.id;
     const payload: Record<string, any> = {
-      lesson_id: isBst ? null : form.lesson_id,
+      lesson_id: isBst || isBook ? null : form.lesson_id,
       bst_product_id: isBst ? form.bst_product_id : null,
+      book_text_id: isBook ? form.book_text_id : null,
       level: form.level,
       display_order: Number(form.display_order) || 0,
       unit: form.unit === "none" ? null : parseInt(form.unit, 10),
@@ -315,7 +324,9 @@ export default function QuizzesManager() {
               <TableRow key={q.id}>
                 <TableCell className="font-medium">{q.title}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">
-                  {q.bst_product_id
+                  {q.book_text_id
+                    ? `Estória Curta: ${bookTexts.find((b) => b.id === q.book_text_id)?.title ?? "—"}`
+                    : q.bst_product_id
                     ? `BST: ${bstProducts.find((b) => b.id === q.bst_product_id)?.title ?? "—"}`
                     : (q.lessons as any)?.title ?? "—"}
                 </TableCell>
@@ -343,11 +354,12 @@ export default function QuizzesManager() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Vínculo</Label>
-                <Select value={form.owner} onValueChange={(v: "lesson" | "bst") => setForm({ ...form, owner: v })}>
+                <Select value={form.owner} onValueChange={(v: "lesson" | "bst" | "book") => setForm({ ...form, owner: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="lesson">Lição de curso</SelectItem>
                     <SelectItem value="bst">Produto BST</SelectItem>
+                    <SelectItem value="book">Estórias Curtas (IA Leiaê)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -367,6 +379,28 @@ export default function QuizzesManager() {
                   groupOrder={SEGMENT_GROUP_ORDER}
                   options={lessonOptionsFor("all", "all")}
                 />
+              </div>
+            ) : form.owner === "book" ? (
+              <div className="space-y-2">
+                <Label>Estória Curta (IA Leiaê)</Label>
+                <SearchableSelect
+                  value={form.book_text_id}
+                  onChange={(v) => {
+                    const bt = bookTexts.find((b) => b.id === v);
+                    setForm({ ...form, book_text_id: v, level: bt?.level ?? form.level });
+                  }}
+                  placeholder="Selecione a estória curta"
+                  searchPlaceholder="Buscar por nível ou título..."
+                  options={bookTexts.map((b) => ({
+                    value: b.id,
+                    label: `${b.level} › ${b.title}`,
+                    group: b.level,
+                    keywords: `${b.level} ${b.title}`,
+                  }))}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  O quiz aparece para o aluno na página Estórias Curtas, junto do texto escolhido.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-4">
