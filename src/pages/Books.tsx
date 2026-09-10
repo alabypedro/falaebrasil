@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones } from "lucide-react";
+import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones, HelpCircle } from "lucide-react";
 import { useLeiae } from "@/hooks/useLeiae";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
