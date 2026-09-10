@@ -210,8 +210,10 @@ export default function QuizzesManager() {
 
   const save = async () => {
     const isBst = form.owner === "bst";
-    if (!form.title.trim() || (isBst ? !form.bst_product_id : !form.lesson_id)) {
-      toast.error(isBst ? "Preencha título e produto BST" : "Preencha título e lição");
+    const isBook = form.owner === "book";
+    const missing = isBst ? !form.bst_product_id : isBook ? !form.book_text_id : !form.lesson_id;
+    if (!form.title.trim() || missing) {
+      toast.error(isBst ? "Preencha título e produto BST" : isBook ? "Preencha título e estória curta" : "Preencha título e lição");
       return;
     }
     if (questions.some((q) => !q.question_text.trim() || q.options.some((o) => !o.trim()))) {
