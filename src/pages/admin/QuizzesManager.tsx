@@ -12,11 +12,12 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, HelpCircle, X, Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
+interface Quiz { id: string; lesson_id: string | null; bst_product_id?: string | null; book_text_id?: string | null; level?: string | null; display_order?: number | null; unit?: number | null; title: string; passing_score: number; lessons?: { title: string; module_id?: string; modules?: { id?: string; title: string } | null } | null; }
 interface Question { id?: string; quiz_id?: string; question_text: string; options: string[]; correct_option_index: number; display_order: number; }
 interface LessonOption { id: string; title: string; module_id: string; module_order: number; module_title: string; course_id: string; course_title: string; course_level: string; display_order: number; }
 interface ModuleOption { id: string; title: string; display_order: number; course_id: string; course_title: string; course_level: string; }
 interface BstOption { id: string; title: string }
+interface BookTextOption { id: string; title: string; level: string; display_order: number }
 
 import { LEVELS } from "@/lib/levels";
 import { SearchableSelect, type SearchableOption } from "@/components/admin/SearchableSelect";
@@ -24,9 +25,10 @@ import { compareCourses, courseLabel, segmentGroupOf, SEGMENT_GROUP_ORDER } from
 import { useMemo } from "react";
 
 const emptyQuizForm = {
-  owner: "lesson" as "lesson" | "bst",
+  owner: "lesson" as "lesson" | "bst" | "book",
   lesson_id: "",
   bst_product_id: "",
+  book_text_id: "",
   level: "A1",
   display_order: 0,
   unit: "none",
