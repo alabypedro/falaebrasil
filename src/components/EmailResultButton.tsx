@@ -57,19 +57,18 @@ export default function EmailResultButton({ variant = "button", className, ...pa
         console.error("Falha ao gerar/enviar o PDF da avaliação", pdfError);
       }
 
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const { error } = await supabase.functions.invoke("send-evaluation-report", {
         body: {
-          templateName: "evaluation-report",
-          recipientEmail: user.email,
-          idempotencyKey: `evaluation-report-${user.id}-${Date.now()}`,
           templateData: {
             studentName: profile?.display_name ?? undefined,
             dateLabel,
             pdfUrl,
+            idempotencyKey: `evaluation-report-${user.id}-${Date.now()}`,
             ...payload,
           },
         },
       });
+
       if (error) throw error;
       setSent(true);
       toast({
