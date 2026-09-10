@@ -147,7 +147,7 @@ export default function QuizzesManager() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ ...emptyQuizForm, lesson_id: lessons[0]?.id ?? "", bst_product_id: bstProducts[0]?.id ?? "" });
+    setForm({ ...emptyQuizForm, lesson_id: lessons[0]?.id ?? "", bst_product_id: bstProducts[0]?.id ?? "", book_text_id: "" });
     setQuestions([{ question_text: "", options: ["", "", "", ""], correct_option_index: 0, display_order: 0 }]);
     setOpen(true);
   };
@@ -155,9 +155,10 @@ export default function QuizzesManager() {
   const openEdit = async (q: Quiz) => {
     setEditing(q);
     setForm({
-      owner: q.bst_product_id ? "bst" : "lesson",
+      owner: q.book_text_id ? "book" : q.bst_product_id ? "bst" : "lesson",
       lesson_id: q.lesson_id ?? "",
       bst_product_id: q.bst_product_id ?? "",
+      book_text_id: q.book_text_id ?? "",
       level: q.level ?? "A1",
       display_order: q.display_order ?? 0,
       unit: q.unit ? String(q.unit) : "none",
