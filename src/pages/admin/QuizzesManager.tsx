@@ -41,6 +41,7 @@ export default function QuizzesManager() {
   const [lessons, setLessons] = useState<LessonOption[]>([]);
   const [modules, setModules] = useState<ModuleOption[]>([]);
   const [bstProducts, setBstProducts] = useState<BstOption[]>([]);
+  const [bookTexts, setBookTexts] = useState<BookTextOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCourse, setFilterCourse] = useState<string>("all");
   const [filterModule, setFilterModule] = useState<string>("all");
@@ -52,12 +53,14 @@ export default function QuizzesManager() {
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }] = await Promise.all([
+    const [{ data: qz }, { data: lsn }, { data: mods }, { data: bst }, { data: bks }] = await Promise.all([
       supabase.from("quizzes").select("*, lessons(title, module_id, modules(id, title, course_id, courses(title)))").order("created_at"),
       supabase.from("lessons").select("id, title, display_order, module_id, modules(title, display_order, course_id, courses(title, level))").order("display_order"),
       supabase.from("modules").select("id, title, display_order, course_id, courses(title, level)").order("display_order"),
       supabase.from("bst_products").select("id, title").order("display_order"),
+      supabase.from("book_texts" as any).select("id, title, level, display_order").order("level").order("display_order"),
     ]);
+    if (bks) setBookTexts(bks as unknown as BookTextOption[]);
     if (qz) setQuizzes(qz);
     if (lsn) setLessons(lsn.map((l: any) => ({
       id: l.id, title: l.title, display_order: l.display_order ?? 0, module_id: l.module_id,
