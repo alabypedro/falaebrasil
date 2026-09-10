@@ -380,6 +380,28 @@ export default function QuizzesManager() {
                   options={lessonOptionsFor("all", "all")}
                 />
               </div>
+            ) : form.owner === "book" ? (
+              <div className="space-y-2">
+                <Label>Estória Curta (IA Leiaê)</Label>
+                <SearchableSelect
+                  value={form.book_text_id}
+                  onChange={(v) => {
+                    const bt = bookTexts.find((b) => b.id === v);
+                    setForm({ ...form, book_text_id: v, level: bt?.level ?? form.level });
+                  }}
+                  placeholder="Selecione a estória curta"
+                  searchPlaceholder="Buscar por nível ou título..."
+                  options={bookTexts.map((b) => ({
+                    value: b.id,
+                    label: `${b.level} › ${b.title}`,
+                    group: b.level,
+                    keywords: `${b.level} ${b.title}`,
+                  }))}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  O quiz aparece para o aluno na página Estórias Curtas, junto do texto escolhido.
+                </p>
+              </div>
             ) : (
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2 col-span-1 sm:col-span-1">
