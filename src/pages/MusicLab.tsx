@@ -433,6 +433,9 @@ export default function MusicLab() {
         <p className="text-sm text-muted-foreground">
           Aprenda inglês com música: ouça, complete a letra e explore gírias e expressões.
         </p>
+        <Button asChild size="sm" variant="outline">
+          <a href="/music-lab/choice">Modo Escuta: Fill-in-the-Blanks</a>
+        </Button>
       </header>
 
       <div className="space-y-3">
