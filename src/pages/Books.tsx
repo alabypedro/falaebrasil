@@ -262,6 +262,44 @@ export default function Books() {
         </CardContent>
       </Card>
 
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <HelpCircle className="h-5 w-5 text-primary" /> Quizz
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Teste seus conhecimentos das estórias do nível {level}. Cada quiz vale XP ao atingir a nota mínima.
+          </p>
+        </div>
+
+        {levelQuizzes.length === 0 ? (
+          <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
+            Nenhum quiz disponível no nível {level} ainda.
+          </CardContent></Card>
+        ) : (
+          <ol className="space-y-2">
+            {levelQuizzes.map((q, i) => (
+              <li key={q.id}>
+                <button
+                  onClick={() => setActiveQuiz(q)}
+                  className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
+                >
+                  <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">{q.title}</span>
+                    <span className="block text-xs text-muted-foreground">Nota mínima: {q.passing_score}%</span>
+                  </span>
+                  <Badge variant="outline" className="shrink-0">{level}</Badge>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Cole seu próprio texto</CardTitle>
