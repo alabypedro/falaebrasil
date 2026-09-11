@@ -39,6 +39,7 @@ interface ReviewRow {
 }
 
 import { LEVELS, type Level } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 const NEW_PER_DAY = 20;
 
@@ -56,6 +57,10 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
   const [decks, setDecks] = useState<Deck[]>([]);
   const [courseLevelById, setCourseLevelById] = useState<Record<string, string>>({});
   const [selectedLevel, setSelectedLevel] = useState<Level>("A1");
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(selectedLevel)) setSelectedLevel(allowedLevels[0] as Level);
+  }, [allowedLevels, selectedLevel]);
   const [cardsByDeck, setCardsByDeck] = useState<Record<string, Card[]>>({});
   const [reviews, setReviews] = useState<Record<string, ReviewRow>>({});
   const [loading, setLoading] = useState(true);
@@ -437,13 +442,13 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
         <>
         {!bstMode && (
         <div className="flex justify-center gap-2 flex-wrap">
-          {LEVELS.map((lv) => (
+          {allowedLevels.map((lv) => (
             <Button
               key={lv}
               size="sm"
               variant={selectedLevel === lv ? "default" : "outline"}
               className="rounded-full w-11 h-11"
-              onClick={() => setSelectedLevel(lv)}
+              onClick={() => setSelectedLevel(lv as Level)}
             >
               {lv}
             </Button>

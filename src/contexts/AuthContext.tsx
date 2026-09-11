@@ -29,6 +29,8 @@ interface AuthContextType {
     phone: string | null;
     asaas_customer_id: string | null;
     asaas_subscription_id: string | null;
+    allowed_levels: string[] | null;
+    has_books_access: boolean;
   } | null;
   refreshProfile: () => Promise<void>;
 }
@@ -70,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, level, xp, streak_days, has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access, plan_tier, scripted_balance, unscripted_balance, best_scripted_score, best_unscripted_score, subscription_status, subscription_grace_until, subscription_current_period_end, phone, asaas_customer_id, asaas_subscription_id")
+      .select("id, display_name, avatar_url, level, xp, streak_days, has_course_access, has_ebook1_access, has_ebook2_access, has_ebook3_access, plan_tier, scripted_balance, unscripted_balance, best_scripted_score, best_unscripted_score, subscription_status, subscription_grace_until, subscription_current_period_end, phone, asaas_customer_id, asaas_subscription_id, allowed_levels, has_books_access")
       .eq("user_id", user.id)
       .single();
     if (data) setProfile(data as any);

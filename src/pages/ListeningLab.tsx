@@ -21,11 +21,13 @@ interface ListeningLesson {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { LEVEL_LIST } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 export default function ListeningLab() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { levels: allowedLevels } = useAllowedLevels();
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);
@@ -259,10 +261,11 @@ export default function ListeningLab() {
   }
 
   if (!selectedLesson) {
-    const levels = LEVEL_LIST;
+    const levels = allowedLevels;
+    const visibleLessons = lessons.filter(l => allowedLevels.includes(l.level));
     const filteredLessons = (filterLevel === "all" 
-      ? lessons 
-      : lessons.filter(l => l.level === filterLevel))
+      ? visibleLessons 
+      : visibleLessons.filter(l => l.level === filterLevel))
       .sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
 
     return (

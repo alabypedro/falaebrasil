@@ -1833,6 +1833,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allowed_levels: string[] | null
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
           avatar_url: string | null
@@ -1846,6 +1847,7 @@ export type Database = {
           has_a2_access: boolean
           has_b1_access: boolean
           has_b2_access: boolean
+          has_books_access: boolean
           has_course_access: boolean
           has_ebook1_access: boolean
           has_ebook2_access: boolean
@@ -1873,6 +1875,7 @@ export type Database = {
           xp: number
         }
         Insert: {
+          allowed_levels?: string[] | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           avatar_url?: string | null
@@ -1886,6 +1889,7 @@ export type Database = {
           has_a2_access?: boolean
           has_b1_access?: boolean
           has_b2_access?: boolean
+          has_books_access?: boolean
           has_course_access?: boolean
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean
@@ -1913,6 +1917,7 @@ export type Database = {
           xp?: number
         }
         Update: {
+          allowed_levels?: string[] | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           avatar_url?: string | null
@@ -1926,6 +1931,7 @@ export type Database = {
           has_a2_access?: boolean
           has_b1_access?: boolean
           has_b2_access?: boolean
+          has_books_access?: boolean
           has_course_access?: boolean
           has_ebook1_access?: boolean
           has_ebook2_access?: boolean

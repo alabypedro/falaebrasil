@@ -18,6 +18,7 @@ import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { LEVEL_LIST } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 type NormalizedAzureResponse = {
   status?: string;
@@ -99,6 +100,10 @@ export default function VoiceLab() {
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [topicLoading, setTopicLoading] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<string>("A1");
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(selectedLevel)) setSelectedLevel(allowedLevels[0]);
+  }, [allowedLevels, selectedLevel]);
 
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -684,7 +689,7 @@ export default function VoiceLab() {
           )}
 
           <div className="flex flex-wrap gap-1.5 justify-center">
-            {LEVEL_LIST.map((level) => (
+            {allowedLevels.map((level) => (
               <Button
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}

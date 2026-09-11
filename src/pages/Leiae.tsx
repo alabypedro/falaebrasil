@@ -11,6 +11,7 @@ import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 import { LEVELS, type Level } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 interface LeiaeText {
   id: string;
@@ -31,6 +32,10 @@ export default function Leiae({
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
   const [level, setLevel] = useState<Level>("A1");
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(level)) setLevel(allowedLevels[0] as Level);
+  }, [allowedLevels, level]);
   const [items, setItems] = useState<LeiaeText[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const { open, loading } = useLeiae("pt-BR");
@@ -113,13 +118,13 @@ export default function Leiae({
         <CardContent className="space-y-4">
           {!bstMode && !fixedLevel && (
           <div className="flex justify-center gap-2 flex-wrap">
-            {LEVELS.map((lv) => (
+            {allowedLevels.map((lv) => (
               <Button
                 key={lv}
                 size="sm"
                 variant={level === lv ? "default" : "outline"}
                 className="rounded-full w-11 h-11"
-                onClick={() => setLevel(lv)}
+                onClick={() => setLevel(lv as Level)}
               >
                 {lv}
               </Button>

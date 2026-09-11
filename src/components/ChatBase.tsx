@@ -16,6 +16,7 @@ import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import EmailResultButton from "@/components/EmailResultButton";
 import { LEVEL_LIST, type Level } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 function parseFeedbackForEmail(content: string) {
   const clean = content.replace(/\*\*/g, "").replace(/__/g, "");
@@ -167,6 +168,10 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [topicLoading, setTopicLoading] = useState(false);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<Level>('A1');
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(selectedLevel)) setSelectedLevel(allowedLevels[0] as Level);
+  }, [allowedLevels, selectedLevel]);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -551,7 +556,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       {mode === 'writing' && (
         <div className="mb-2 sm:mb-4 space-y-2 sm:space-y-3 shrink-0">
           <div className="flex flex-wrap gap-1 sm:gap-1.5 justify-center">
-            {(Object.keys(levels) as Array<keyof typeof levels>).map((level) => (
+            {(Object.keys(levels) as Array<keyof typeof levels>).filter((lv) => allowedLevels.includes(lv)).map((level) => (
               <Button
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}
