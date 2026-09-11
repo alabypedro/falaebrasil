@@ -262,9 +262,10 @@ export default function ListeningLab() {
 
   if (!selectedLesson) {
     const levels = allowedLevels;
+    const visibleLessons = lessons.filter(l => allowedLevels.includes(l.level));
     const filteredLessons = (filterLevel === "all" 
-      ? lessons 
-      : lessons.filter(l => l.level === filterLevel))
+      ? visibleLessons 
+      : visibleLessons.filter(l => l.level === filterLevel))
       .sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
 
     return (

@@ -129,7 +129,8 @@ export default function MusicLab() {
   const filtered = useMemo(() => {
     const q = normalize(search);
     return songs.filter((s) => {
-      const okLevel = levelFilter === "all" || s.level === levelFilter;
+      const okLevel =
+        allowedLevels.includes(s.level) && (levelFilter === "all" || s.level === levelFilter);
       const okQuery =
         !q ||
         normalize(s.title).includes(q) ||
@@ -137,7 +138,7 @@ export default function MusicLab() {
         normalize(s.level).includes(q);
       return okLevel && okQuery;
     });
-  }, [songs, search, levelFilter]);
+  }, [songs, search, levelFilter, allowedLevels]);
 
   const correctCount = blanks.filter((b) => normalize(answers[b.id] ?? "") === normalize(b.answer)).length;
 
