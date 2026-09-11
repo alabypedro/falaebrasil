@@ -32,7 +32,8 @@ export default function Books() {
   const [items, setItems] = useState<BookText[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [audio, setAudio] = useState<BookText | null>(null);
-  const [quizByText, setQuizByText] = useState<Record<string, { id: string; title: string }>>({});
+  const [quizRows, setQuizRows] = useState<QuizRow[]>([]);
+  const [activeQuiz, setActiveQuiz] = useState<QuizRow | null>(null);
   const { t } = useLanguage();
   const { open, loading } = useLeiae("pt-BR");
   const { levels: allowedLevels } = useAllowedLevels();
@@ -41,21 +42,30 @@ export default function Books() {
   useEffect(() => {
     if (allowedLevels.length && !allowedLevels.includes(level)) setLevel(allowedLevels[0] as Level);
   }, [allowedLevels, level]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
       const [{ data }, { data: quizzes }] = await Promise.all([
         supabase.from("book_texts" as any).select("*").order("level").order("display_order"),
-        supabase.from("quizzes" as any).select("id, title, book_text_id").not("book_text_id", "is", null),
+        supabase
+          .from("quizzes" as any)
+          .select("id, title, passing_score, display_order, level, book_text_id")
+          .not("book_text_id", "is", null)
+          .order("display_order")
+          .order("title"),
       ]);
       setItems((data as unknown as BookText[]) || []);
-      const map: Record<string, { id: string; title: string }> = {};
-      ((quizzes as any[]) || []).forEach((q) => { map[q.book_text_id] = { id: q.id, title: q.title }; });
-      setQuizByText(map);
+      setQuizRows((quizzes as unknown as QuizRow[]) || []);
       setLoadingItems(false);
     })();
   }, []);
+
+  const quizByText = useMemo(() => {
+    const map: Record<string, QuizRow> = {};
+    quizRows.forEach((q) => { if (q.book_text_id) map[q.book_text_id] = q; });
+    return map;
+  }, [quizRows]);
+
 
   const levelItems = useMemo(
     () => items.filter((x) => x.level === level && allowedLevels.includes(x.level)),
