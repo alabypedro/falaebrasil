@@ -80,6 +80,8 @@ export default function StudentAccessDialog({
   const [selBst, setSelBst] = useState<Record<string, boolean>>({});
   const [musicLab, setMusicLab] = useState(false);
   const [musicBusy, setMusicBusy] = useState(false);
+  const [booksAccess, setBooksAccess] = useState(true);
+  const [levels, setLevels] = useState<string[]>([...LEVELS]);
 
   const loadMusicLab = useCallback(async () => {
     if (!userId) return;
@@ -91,9 +93,31 @@ export default function StudentAccessDialog({
     setMusicLab(!!data);
   }, [userId]);
 
+  const loadExtras = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("has_books_access, allowed_levels")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setBooksAccess((data as any)?.has_books_access !== false);
+    const lv = (data as any)?.allowed_levels as string[] | null;
+    setLevels(lv && lv.length > 0 ? lv : [...LEVELS]);
+  }, [userId]);
+
   useEffect(() => {
-    if (open) loadMusicLab();
-  }, [open, loadMusicLab]);
+    if (open) {
+      loadMusicLab();
+      loadExtras();
+    }
+  }, [open, loadMusicLab, loadExtras]);
+
+  const toggleLevel = (lv: string) =>
+    setLevels((s) => (s.includes(lv) ? s.filter((x) => x !== lv) : [...s, lv]));
+  const setGroupLevels = (group: readonly string[], value: boolean) =>
+    setLevels((s) =>
+      value ? Array.from(new Set([...s, ...group])) : s.filter((x) => !group.includes(x)),
+    );
 
   const toggleMusicLab = async (value: boolean) => {
     if (!userId) {
