@@ -132,8 +132,7 @@ export default function BstProduct() {
   const back = () => {
     if (levelMode) {
       if (module0View) { setModule0View(false); return; }
-      if (unit) { setUnit(null); setView("home"); return; }
-      if (levelTool) { setLevelTool(null); setView("home"); return; }
+      if (levelTool) { setLevelTool(null); setUnit(null); setView("home"); return; }
       if (level) return setLevel(null);
       navigate("/library");
       return;
@@ -145,8 +144,6 @@ export default function BstProduct() {
   const backLabel = levelMode
     ? module0View
       ? product.title
-      : unit
-      ? `Unidades — ${toolLabel[levelTool!]}`
       : levelTool
         ? `${level} - ${LEVELS.find((l) => l.code === level)?.label}`
         : level
@@ -156,12 +153,7 @@ export default function BstProduct() {
       ? product.title
       : "Biblioteca BST";
 
-  const openUnit = (u: number) => {
-    setUnit(u);
-    setView(levelTool === "quiz" ? "primary" : "tool");
-  };
-
-  const showLevelHome = levelMode && view === "home" && !unit && !module0View;
+  const showLevelHome = levelMode && view === "home" && !module0View;
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
@@ -261,31 +253,17 @@ export default function BstProduct() {
                 <CardContent className="p-5 space-y-3 text-center">
                   <HelpCircle className="h-7 w-7 mx-auto text-primary" />
                   <div className="text-sm font-semibold">Quiz</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setLevelTool("quiz")}>
-                    Abrir unidades
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => { setLevelTool("quiz"); setUnit(null); setView("primary"); }}
+                  >
+                    Abrir quizzes
                   </Button>
                 </CardContent>
               </Card>
             </div>
-          ) : levelMode && levelTool === "quiz" ? (
-            <ol className="space-y-2">
-              {UNITS.map((u) => {
-                return (
-                  <li key={u}>
-                    <button
-                      onClick={() => openUnit(u)}
-                      className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card"
-                    >
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-sm font-semibold text-foreground">Unit {u}</span>
-                      </span>
-                      <Badge variant="outline" className="shrink-0">{level}</Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
           ) : (
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="hover:shadow-md transition-shadow">
