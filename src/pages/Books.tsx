@@ -74,6 +74,23 @@ export default function Books() {
     open([{ title: x.title, content: x.content, lang: "en", mimeType: "text/plain" }]);
   };
 
+  if (!hasBooksAccess) {
+    return (
+      <div className="space-y-6 max-w-2xl">
+        <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
+        <Card>
+          <CardContent className="py-12 text-center space-y-2">
+            <BookText className="h-8 w-8 mx-auto text-muted-foreground" />
+            <p className="font-medium">{t("nav.library.books")}</p>
+            <p className="text-sm text-muted-foreground">
+              Este conteúdo não está liberado para a sua conta.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-4xl">
       <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
