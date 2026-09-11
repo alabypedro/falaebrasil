@@ -290,8 +290,27 @@ export default function MusicLab() {
             <Tabs defaultValue="activity">
               <TabsList>
                 <TabsTrigger value="activity">Preencher as lacunas</TabsTrigger>
+                <TabsTrigger value="listen">Modo Escuta</TabsTrigger>
                 <TabsTrigger value="vocab">Vocabulário &amp; Expressões</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="listen" className="mt-4">
+                <ListenMode
+                  blanks={blanks}
+                  onComplete={async (score, correct) => {
+                    const points = correct * 5;
+                    if (points > 0 && selected) {
+                      const res = await awardAiXp(
+                        "musiclab",
+                        points,
+                        `musiclab:listen:${selected.id}:${correct}`,
+                      );
+                      if (res?.awarded) toast.success(`+${res.points} XP no Cantaê!`);
+                      else toast.success(`Modo Escuta concluído — ${score} pontos`);
+                    }
+                  }}
+                />
+              </TabsContent>
 
               <TabsContent value="activity" className="mt-4">
                 <Card className="border-border/60">
