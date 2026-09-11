@@ -136,7 +136,32 @@ export default function Books() {
     );
   }
 
+  if (activeQuiz) {
+    const idx = levelQuizzes.findIndex((q) => q.id === activeQuiz.id);
+    const nextQuiz = levelQuizzes[idx + 1];
+    return (
+      <div className="space-y-4 max-w-4xl">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 text-muted-foreground hover:text-foreground"
+          onClick={() => setActiveQuiz(null)}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" /> Todos os quizzes
+        </Button>
+        <InlineQuiz
+          quizId={activeQuiz.id}
+          hasNext={!!nextQuiz}
+          onNext={() => setActiveQuiz(nextQuiz ?? null)}
+          contextText={activeContext?.content ?? null}
+          contextTitle={activeContext?.title ?? null}
+        />
+      </div>
+    );
+  }
+
   return (
+
     <div className="space-y-6 max-w-4xl">
       <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div>
