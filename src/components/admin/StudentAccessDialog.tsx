@@ -233,7 +233,7 @@ export default function StudentAccessDialog({
             course_ids: [],
             bst_product_ids: [],
             books_access: booksAccess,
-            allowed_levels: levels.length === LEVELS.length ? [] : levels,
+            allowed_levels: levels,
             grant: true,
           },
         });
