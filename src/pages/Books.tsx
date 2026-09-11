@@ -130,7 +130,7 @@ export default function Books() {
                 size="sm"
                 variant={level === lv ? "default" : "outline"}
                 className="rounded-full w-11 h-11"
-                onClick={() => setLevel(lv)}
+                onClick={() => setLevel(lv as Level)}
               >
                 {lv}
               </Button>

@@ -448,7 +448,7 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
               size="sm"
               variant={selectedLevel === lv ? "default" : "outline"}
               className="rounded-full w-11 h-11"
-              onClick={() => setSelectedLevel(lv)}
+              onClick={() => setSelectedLevel(lv as Level)}
             >
               {lv}
             </Button>
