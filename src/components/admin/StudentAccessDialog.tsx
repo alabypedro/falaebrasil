@@ -436,17 +436,86 @@ export default function StudentAccessDialog({
               </div>
             )}
 
-            <div className="rounded-lg border border-border p-3">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <Checkbox
-                  checked={musicLab}
-                  disabled={musicBusy || !userId}
-                  onCheckedChange={(v) => toggleMusicLab(!!v)}
-                />
-                <Music className="h-4 w-4 text-primary" />
-                <span>Liberar Cantaê</span>
-              </label>
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <Label className="text-xs uppercase text-muted-foreground">Conteúdos extras</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm cursor-pointer hover:bg-muted/40">
+                  <Checkbox
+                    checked={musicLab}
+                    disabled={musicBusy || !userId}
+                    onCheckedChange={(v) => toggleMusicLab(!!v)}
+                  />
+                  <Music className="h-4 w-4 text-primary" />
+                  <span>Cantaê (Music Lab)</span>
+                </label>
+                <label className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm cursor-pointer hover:bg-muted/40">
+                  <Checkbox
+                    checked={booksAccess}
+                    disabled={!userId}
+                    onCheckedChange={(v) => setBooksAccess(!!v)}
+                  />
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <span>Estórias Curtas (Todos os níveis)</span>
+                </label>
+              </div>
             </div>
+
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div>
+                <Label className="text-xs uppercase text-muted-foreground">Níveis liberados</Label>
+                <p className="text-xs text-muted-foreground">
+                  Somente os níveis selecionados aparecerão para o aluno nas IAs, Cantaê e Estórias
+                  Curtas. Selecionar todos mantém o acesso completo.
+                </p>
+              </div>
+              {LEVEL_GROUPS.map((g) => (
+                <div key={g.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">
+                      {g.title}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => setGroupLevels(g.levels, true)}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:underline"
+                        onClick={() => setGroupLevels(g.levels, false)}
+                      >
+                        Nenhum
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {g.levels.map((lv) => (
+                      <button
+                        key={lv}
+                        type="button"
+                        onClick={() => toggleLevel(lv)}
+                        className={`w-11 h-9 rounded-full text-xs font-bold border ${
+                          levels.includes(lv)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-muted"
+                        }`}
+                      >
+                        {lv}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {levels.length === 0 && (
+                <p className="text-xs text-destructive">
+                  Nenhum nível selecionado: o aluno não verá conteúdo por nível.
+                </p>
+              )}
+            </div>
+
 
             <div className="space-y-4">
               {grouped.map((g) => (
