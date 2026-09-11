@@ -326,7 +326,7 @@ export default function CreateStudent({
                 </label>
                 <label className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted">
                   <Checkbox checked={booksAccess} onCheckedChange={() => setBooksAccess((v) => !v)} />
-                  <span className="text-sm">Estórias Curtas (A1 até C2)</span>
+                  <span className="text-sm">Estórias Curtas (Todos os níveis)</span>
                 </label>
               </div>
             </div>

@@ -23,7 +23,7 @@ const dict: Dict = {
   "nav.musiclab": { pt: "Cantaê", en: "Cantaê" },
   "nav.library": { pt: "Bibliotecaê", en: "Bibliotecaê" },
   "nav.library.bst": { pt: "Guias Brasil Sem Trava (BST)", en: "BST Guides" },
-  "nav.library.books": { pt: "Estórias Curtas (A1 até C2)", en: "Short Stories (A1 to C2)" },
+  "nav.library.books": { pt: "Estórias Curtas (Todos os níveis)", en: "Short Stories (All levels)" },
   "nav.communities": { pt: "Comunidades FB", en: "FB Communities" },
   "nav.tutorials": { pt: "Tutoriais", en: "Tutorials" },
   "nav.contracts": { pt: "Contratos", en: "Contracts" },
