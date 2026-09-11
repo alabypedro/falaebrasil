@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Music, Search, ArrowLeft, CheckCircle2, XCircle, Sparkles, Lock, Loader2 } from "lucide-react";
+import { Music, Search, ArrowLeft, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
