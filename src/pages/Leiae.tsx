@@ -50,8 +50,12 @@ export default function Leiae({
   const levelItems = useMemo(() => {
     let list = items;
     if (unit) list = list.filter((x) => x.unit === unit);
-    if (fixedLevel) return list.filter((x) => x.level === fixedLevel);
-    return bstMode ? list : list.filter((x) => x.level === level);
+    if (fixedLevel) list = list.filter((x) => x.level === fixedLevel);
+    else if (!bstMode) list = list.filter((x) => x.level === level);
+    if (!bstMode) return list;
+    return [...list].sort(
+      (a, b) => (a.unit ?? 99) - (b.unit ?? 99) || a.display_order - b.display_order,
+    );
   }, [items, level, bstMode, fixedLevel, unit]);
 
   const handleOpen = () => {
