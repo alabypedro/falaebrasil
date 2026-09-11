@@ -18,6 +18,7 @@ import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { LEVEL_LIST } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 type NormalizedAzureResponse = {
   status?: string;
@@ -684,7 +685,7 @@ export default function VoiceLab() {
           )}
 
           <div className="flex flex-wrap gap-1.5 justify-center">
-            {LEVEL_LIST.map((level) => (
+            {allowedLevels.map((level) => (
               <Button
                 key={level}
                 variant={selectedLevel === level ? "default" : "outline"}

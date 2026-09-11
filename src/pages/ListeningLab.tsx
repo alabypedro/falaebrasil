@@ -21,6 +21,7 @@ interface ListeningLesson {
 
 import { useAuth } from "@/contexts/AuthContext";
 import { LEVEL_LIST } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 export default function ListeningLab() {
   const { user } = useAuth();
@@ -259,7 +260,7 @@ export default function ListeningLab() {
   }
 
   if (!selectedLesson) {
-    const levels = LEVEL_LIST;
+    const levels = allowedLevels;
     const filteredLessons = (filterLevel === "all" 
       ? lessons 
       : lessons.filter(l => l.level === filterLevel))

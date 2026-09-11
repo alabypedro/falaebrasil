@@ -39,6 +39,7 @@ interface ReviewRow {
 }
 
 import { LEVELS, type Level } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 const NEW_PER_DAY = 20;
 
@@ -437,7 +438,7 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
         <>
         {!bstMode && (
         <div className="flex justify-center gap-2 flex-wrap">
-          {LEVELS.map((lv) => (
+          {allowedLevels.map((lv) => (
             <Button
               key={lv}
               size="sm"

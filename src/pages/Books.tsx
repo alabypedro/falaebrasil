@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import ChapterAudioPlayer from "@/components/books/ChapterAudioPlayer";
 import { LEVELS, type Level } from "@/lib/levels";
+import { useAllowedLevels, useBooksAccess } from "@/hooks/useAllowedLevels";
 
 interface BookText {
   id: string;
@@ -33,6 +34,12 @@ export default function Books() {
   const [quizByText, setQuizByText] = useState<Record<string, { id: string; title: string }>>({});
   const { t } = useLanguage();
   const { open, loading } = useLeiae("pt-BR");
+  const { levels: allowedLevels } = useAllowedLevels();
+  const hasBooksAccess = useBooksAccess();
+
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(level)) setLevel(allowedLevels[0] as Level);
+  }, [allowedLevels, level]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,7 +56,10 @@ export default function Books() {
     })();
   }, []);
 
-  const levelItems = useMemo(() => items.filter((x) => x.level === level), [items, level]);
+  const levelItems = useMemo(
+    () => items.filter((x) => x.level === level && allowedLevels.includes(x.level)),
+    [items, level, allowedLevels],
+  );
 
   const handleOpen = () => {
     const content = text.trim();
@@ -97,7 +107,7 @@ export default function Books() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-center gap-2 flex-wrap">
-            {LEVELS.map((lv) => (
+            {allowedLevels.map((lv) => (
               <Button
                 key={lv}
                 size="sm"

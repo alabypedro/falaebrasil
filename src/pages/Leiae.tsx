@@ -11,6 +11,7 @@ import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 import { LEVELS, type Level } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 
 interface LeiaeText {
   id: string;
@@ -113,7 +114,7 @@ export default function Leiae({
         <CardContent className="space-y-4">
           {!bstMode && !fixedLevel && (
           <div className="flex justify-center gap-2 flex-wrap">
-            {LEVELS.map((lv) => (
+            {allowedLevels.map((lv) => (
               <Button
                 key={lv}
                 size="sm"

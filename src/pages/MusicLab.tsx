@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { LEVELS } from "@/lib/levels";
+import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 import { awardAiXp } from "@/lib/aiXp";
 import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, type MediaType } from "@/lib/musicMedia";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -121,7 +122,7 @@ export default function MusicLab() {
 
   const levelsAvailable = useMemo(() => {
     const set = new Set(songs.map((s) => s.level));
-    return LEVELS.filter((l) => set.has(l));
+    return LEVELS.filter((l) => set.has(l) && allowedLevels.includes(l));
   }, [songs]);
 
   const filtered = useMemo(() => {
