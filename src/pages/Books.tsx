@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones, HelpCircle } from "lucide-react";
+import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones, HelpCircle, ArrowLeft, ChevronRight } from "lucide-react";
 import { useLeiae } from "@/hooks/useLeiae";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import ChapterAudioPlayer from "@/components/books/ChapterAudioPlayer";
+import InlineQuiz from "@/components/InlineQuiz";
 import { LEVELS, type Level } from "@/lib/levels";
 import { useAllowedLevels, useBooksAccess } from "@/hooks/useAllowedLevels";
+
 
 interface BookText {
   id: string;
@@ -24,6 +25,16 @@ interface BookText {
   display_order: number;
 }
 
+interface QuizRow {
+  id: string;
+  title: string;
+  passing_score: number;
+  display_order: number;
+  level: string;
+  book_text_id: string | null;
+}
+
+
 export default function Books() {
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
@@ -31,7 +42,8 @@ export default function Books() {
   const [items, setItems] = useState<BookText[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [audio, setAudio] = useState<BookText | null>(null);
-  const [quizByText, setQuizByText] = useState<Record<string, { id: string; title: string }>>({});
+  const [quizRows, setQuizRows] = useState<QuizRow[]>([]);
+  const [activeQuiz, setActiveQuiz] = useState<QuizRow | null>(null);
   const { t } = useLanguage();
   const { open, loading } = useLeiae("pt-BR");
   const { levels: allowedLevels } = useAllowedLevels();
@@ -40,26 +52,59 @@ export default function Books() {
   useEffect(() => {
     if (allowedLevels.length && !allowedLevels.includes(level)) setLevel(allowedLevels[0] as Level);
   }, [allowedLevels, level]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
       const [{ data }, { data: quizzes }] = await Promise.all([
         supabase.from("book_texts" as any).select("*").order("level").order("display_order"),
-        supabase.from("quizzes" as any).select("id, title, book_text_id").not("book_text_id", "is", null),
+        supabase
+          .from("quizzes" as any)
+          .select("id, title, passing_score, display_order, level, book_text_id")
+          .not("book_text_id", "is", null)
+          .order("display_order")
+          .order("title"),
       ]);
       setItems((data as unknown as BookText[]) || []);
-      const map: Record<string, { id: string; title: string }> = {};
-      ((quizzes as any[]) || []).forEach((q) => { map[q.book_text_id] = { id: q.id, title: q.title }; });
-      setQuizByText(map);
+      setQuizRows((quizzes as unknown as QuizRow[]) || []);
       setLoadingItems(false);
     })();
   }, []);
+
+  const quizByText = useMemo(() => {
+    const map: Record<string, QuizRow> = {};
+    quizRows.forEach((q) => { if (q.book_text_id) map[q.book_text_id] = q; });
+    return map;
+  }, [quizRows]);
+
 
   const levelItems = useMemo(
     () => items.filter((x) => x.level === level && allowedLevels.includes(x.level)),
     [items, level, allowedLevels],
   );
+
+  const textById = useMemo(() => {
+    const map: Record<string, BookText> = {};
+    items.forEach((x) => { map[x.id] = x; });
+    return map;
+  }, [items]);
+
+  // Quizzes do nível atual, ordenados igual ao modelo BST
+  const levelQuizzes = useMemo(() => {
+    return quizRows
+      .filter((q) => {
+        const bt = q.book_text_id ? textById[q.book_text_id] : undefined;
+        return bt ? bt.level === level : false;
+      })
+      .sort((a, b) => {
+        const oa = textById[a.book_text_id!]?.display_order ?? a.display_order ?? 0;
+        const ob = textById[b.book_text_id!]?.display_order ?? b.display_order ?? 0;
+        if (oa !== ob) return oa - ob;
+        return a.title.localeCompare(b.title);
+      });
+  }, [quizRows, textById, level]);
+
+  const activeContext = activeQuiz?.book_text_id ? textById[activeQuiz.book_text_id] : undefined;
+
 
   const handleOpen = () => {
     const content = text.trim();
@@ -91,7 +136,32 @@ export default function Books() {
     );
   }
 
+  if (activeQuiz) {
+    const idx = levelQuizzes.findIndex((q) => q.id === activeQuiz.id);
+    const nextQuiz = levelQuizzes[idx + 1];
+    return (
+      <div className="space-y-4 max-w-4xl">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 text-muted-foreground hover:text-foreground"
+          onClick={() => setActiveQuiz(null)}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" /> Todos os quizzes
+        </Button>
+        <InlineQuiz
+          quizId={activeQuiz.id}
+          hasNext={!!nextQuiz}
+          onNext={() => setActiveQuiz(nextQuiz ?? null)}
+          contextText={activeContext?.content ?? null}
+          contextTitle={activeContext?.title ?? null}
+        />
+      </div>
+    );
+  }
+
   return (
+
     <div className="space-y-6 max-w-4xl">
       <BackToDashboardButton className="-ml-2 text-muted-foreground hover:text-foreground" />
       <div>
@@ -173,11 +243,12 @@ export default function Books() {
                         size="sm"
                         variant="secondary"
                         className="shrink-0"
-                        onClick={() => navigate(`/quiz/${quizByText[x.id].id}`)}
+                        onClick={() => setActiveQuiz(quizByText[x.id])}
                       >
                         <HelpCircle className="h-4 w-4 mr-1" /> Quiz
                       </Button>
                     )}
+
                   </div>
                   {audio?.id === x.id && x.audio_url && (
                     <div className="p-3 pt-0">
@@ -190,6 +261,44 @@ export default function Books() {
           )}
         </CardContent>
       </Card>
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <HelpCircle className="h-5 w-5 text-primary" /> Quizz
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Teste seus conhecimentos das estórias do nível {level}. Cada quiz vale XP ao atingir a nota mínima.
+          </p>
+        </div>
+
+        {levelQuizzes.length === 0 ? (
+          <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
+            Nenhum quiz disponível no nível {level} ainda.
+          </CardContent></Card>
+        ) : (
+          <ol className="space-y-2">
+            {levelQuizzes.map((q, i) => (
+              <li key={q.id}>
+                <button
+                  onClick={() => setActiveQuiz(q)}
+                  className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
+                >
+                  <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold text-foreground">{q.title}</span>
+                    <span className="block text-xs text-muted-foreground">Nota mínima: {q.passing_score}%</span>
+                  </span>
+                  <Badge variant="outline" className="shrink-0">{level}</Badge>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+
 
       <Card>
         <CardHeader>
