@@ -381,7 +381,7 @@ export default function MusicLabManager() {
             <Music className="h-5 w-5 text-primary" /> Cantaê
           </h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre músicas, lacunas da letra e vocabulário.
+            Cadastre músicas, lacunas do Modo Escuta e vocabulário.
           </p>
         </div>
         <Button onClick={openNew}>
@@ -631,9 +631,10 @@ export default function MusicLabManager() {
 
               <div className="sm:col-span-2 rounded-lg border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground max-w-md">
-                  Cole o link da música acima e gere automaticamente as lacunas da letra e o
-                  vocabulário. Você pode revisar tudo antes de salvar.
+                  Cole o link da música acima e gere automaticamente as duas atividades: as lacunas do
+                  Modo Escuta e o Vocabulário &amp; Expressões. Você pode revisar tudo antes de salvar.
                 </p>
+
                 <Button onClick={autofill} disabled={generating}>
                   {generating ? (
                     <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -670,8 +671,9 @@ export default function MusicLabManager() {
             <div className="space-y-2 border-t border-border pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-xs uppercase text-muted-foreground">
-                  Lacunas da letra (Fill in the Blanks)
+                  Lacunas do Modo Escuta
                 </Label>
+
                 <Button
                   variant="outline"
                   size="sm"
