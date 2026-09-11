@@ -469,11 +469,11 @@ export default function ListeningManager() {
 
               <TabsContent value="part3" className="space-y-4 pt-4">
                 <Card>
-                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Mini Diálogo (3 Questões)</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><MessageSquare className="h-4 w-4" /> Conversa Curta (3 Questões)</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label>Scripts do Diálogo (Narrado com vozes alternadas)</Label>
+                        <Label>Scripts da Conversa Curta (Narrado com vozes alternadas)</Label>
                         <Button 
                           variant="outline" 
                           size="sm" 
@@ -562,10 +562,10 @@ export default function ListeningManager() {
 
               <TabsContent value="part4" className="space-y-4 pt-4">
                 <Card>
-                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> Mini Dissertação (3 Questões)</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> Papo (3 Questões)</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Script da Dissertação (Apenas Narrado)</Label>
+                      <Label>Script do Papo (Apenas Narrado)</Label>
                       <Textarea value={form.content.part4.script} onChange={(e) => updatePart4("script", e.target.value)} rows={6} />
                     </div>
 
