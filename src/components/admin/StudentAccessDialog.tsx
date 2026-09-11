@@ -12,7 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, KeyRound, ShieldOff, RefreshCw, Music } from "lucide-react";
+import { Loader2, KeyRound, ShieldOff, RefreshCw, Music, BookOpen } from "lucide-react";
+import { LEVELS } from "@/lib/levels";
+
+const LEVEL_GROUPS = [
+  { key: "adults", title: "Níveis Adultos", levels: ["A1", "A2", "B1", "B2", "C1", "C2"] },
+  { key: "teens", title: "Níveis Teens", levels: ["T1", "T2", "T3", "T4"] },
+  { key: "kids", title: "Níveis Kids", levels: ["K1", "K2", "K3", "K4"] },
+] as const;
 
 interface CourseRow {
   id: string;
