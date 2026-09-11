@@ -36,7 +36,6 @@ const LEVELS = [
   { code: "C2", label: "Avançado" },
 ] as const;
 type LevelCode = typeof LEVELS[number]["code"];
-const UNITS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MODULE0_LEVEL = "M0";
 const MODULE0_TITLE = "Módulo 0 - Tutorial: Como Estudar para Provas";
 
@@ -54,7 +53,6 @@ export default function BstProduct() {
   const [pdfTitle, setPdfTitle] = useState<string>("");
   const [level, setLevel] = useState<LevelCode | null>(null);
   const [levelTool, setLevelTool] = useState<LevelTool | null>(null);
-  const [unit, setUnit] = useState<number | null>(null);
   const [levelPdf, setLevelPdf] = useState<UnitPdf | null>(null);
   const [module0, setModule0] = useState<UnitPdf | null>(null);
   const [module0View, setModule0View] = useState(false);
@@ -132,7 +130,6 @@ export default function BstProduct() {
   const back = () => {
     if (levelMode) {
       if (module0View) { setModule0View(false); return; }
-      if (unit) { setUnit(null); setView("home"); return; }
       if (levelTool) { setLevelTool(null); setView("home"); return; }
       if (level) return setLevel(null);
       navigate("/library");
@@ -145,8 +142,6 @@ export default function BstProduct() {
   const backLabel = levelMode
     ? module0View
       ? product.title
-      : unit
-      ? `Unidades — ${toolLabel[levelTool!]}`
       : levelTool
         ? `${level} - ${LEVELS.find((l) => l.code === level)?.label}`
         : level
@@ -156,12 +151,7 @@ export default function BstProduct() {
       ? product.title
       : "Biblioteca BST";
 
-  const openUnit = (u: number) => {
-    setUnit(u);
-    setView(levelTool === "quiz" ? "primary" : "tool");
-  };
-
-  const showLevelHome = levelMode && view === "home" && !unit && !module0View;
+  const showLevelHome = levelMode && view === "home" && !module0View;
 
   return (
     <div className="space-y-6 max-w-4xl page-transition">
@@ -251,7 +241,7 @@ export default function BstProduct() {
                     size="sm"
                     variant="outline"
                     className="w-full"
-                    onClick={() => { setLevelTool("leiae"); setUnit(null); setView("tool"); }}
+                    onClick={() => { setLevelTool("leiae"); setView("tool"); }}
                   >
                     Abrir textos
                   </Button>
@@ -261,31 +251,17 @@ export default function BstProduct() {
                 <CardContent className="p-5 space-y-3 text-center">
                   <HelpCircle className="h-7 w-7 mx-auto text-primary" />
                   <div className="text-sm font-semibold">Quiz</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setLevelTool("quiz")}>
-                    Abrir unidades
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => { setLevelTool("quiz"); setView("primary"); }}
+                  >
+                    Abrir quizzes
                   </Button>
                 </CardContent>
               </Card>
             </div>
-          ) : levelMode && levelTool === "quiz" ? (
-            <ol className="space-y-2">
-              {UNITS.map((u) => {
-                return (
-                  <li key={u}>
-                    <button
-                      onClick={() => openUnit(u)}
-                      className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card"
-                    >
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-sm font-semibold text-foreground">Unit {u}</span>
-                      </span>
-                      <Badge variant="outline" className="shrink-0">{level}</Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
           ) : (
             <div className="grid gap-4 sm:grid-cols-3">
               <Card className="hover:shadow-md transition-shadow">
@@ -374,19 +350,19 @@ export default function BstProduct() {
       {view === "primary" && hasAccess && (
         levelMode && module0View ? null :
         product.primary_tool === "quiz" || levelMode
-          ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
+          ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} />
           : <Memorizae bstProductId={product.id} />
       )}
       {view === "tool" && hasAccess && (
         product.secondary_tool === "leiae" || levelMode
-          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
+          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} />
           : <BstFalae bstProductId={product.id} />
       )}
 
       {readingPdf && pdfUrl && (
         <PdfReader
           isOpen={readingPdf}
-          onClose={() => { setReadingPdf(false); if (levelMode) setUnit(null); }}
+          onClose={() => setReadingPdf(false)}
           url={pdfUrl}
           title={pdfTitle || product.title}
           allowDownload

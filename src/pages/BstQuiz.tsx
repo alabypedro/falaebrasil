@@ -31,6 +31,7 @@ export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: s
       if (level) query = query.eq("level", level);
       if (unit) query = query.eq("unit", unit);
       const { data } = await query
+        .order("unit", { ascending: true, nullsFirst: false })
         .order("display_order")
         .order("title");
       setQuizzes((data as any as BstQuizRow[]) || []);
@@ -102,24 +103,35 @@ export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: s
           {unit ? `Nenhum quiz disponível na Unit ${unit} ainda.` : "Nenhum quiz disponível neste produto ainda."}
         </CardContent></Card>
       ) : (
-        <ol className="space-y-2">
-          {quizzes.map((q, i) => (
-            <li key={q.id}>
-              <button
-                onClick={() => setActive(q)}
-                className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
-              >
-                <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">{q.title}</span>
-                  <span className="block text-xs text-muted-foreground">Nota mínima: {q.passing_score}%</span>
-                </span>
-                <Badge variant="outline" className="shrink-0">{q.level}</Badge>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-              </button>
-            </li>
+        <div className="space-y-5">
+          {[...new Set(quizzes.map((q) => q.unit ?? 0))].map((u) => (
+            <div key={u} className="space-y-2">
+              {!unit && (
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  {u > 0 ? `Unit ${u}` : "Geral"}
+                </h3>
+              )}
+              <ol className="space-y-2">
+                {quizzes.filter((q) => (q.unit ?? 0) === u).map((q, i) => (
+                  <li key={q.id}>
+                    <button
+                      onClick={() => setActive(q)}
+                      className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
+                    >
+                      <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-semibold text-foreground">{q.title}</span>
+                        <span className="block text-xs text-muted-foreground">Nota mínima: {q.passing_score}%</span>
+                      </span>
+                      <Badge variant="outline" className="shrink-0">{q.level}</Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
           ))}
-        </ol>
+        </div>
       )}
     </div>
   );
