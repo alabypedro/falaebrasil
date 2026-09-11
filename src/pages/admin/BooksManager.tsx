@@ -101,7 +101,7 @@ export default function BooksManager() {
       <Card className="bg-primary/5 border-primary/20">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <BookText className="h-4 w-4 text-primary" /> Livros e audio-livros — Biblioteca de Textos
+            <BookText className="h-4 w-4 text-primary" /> Livros e audio-livros — Bibliotecaê de Textos
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">

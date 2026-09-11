@@ -341,7 +341,7 @@ export default function LibraryManager() {
     <div className="space-y-4">
       <Card className="bg-primary/5 border-primary/20">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Biblioteca BST — Produtos Low-Ticket</CardTitle>
+          <CardTitle className="text-base">Bibliotecaê BST — Produtos Low-Ticket</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <p className="text-sm text-muted-foreground">

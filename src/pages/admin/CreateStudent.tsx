@@ -277,7 +277,7 @@ export default function CreateStudent({
               {bstProducts.length > 0 && (
                 <div className="space-y-2">
                   <span className="text-xs font-semibold uppercase text-muted-foreground">
-                    Biblioteca BST
+                    Bibliotecaê BST
                   </span>
                   <div className="grid gap-2">
                     {bstProducts.map((p) => (

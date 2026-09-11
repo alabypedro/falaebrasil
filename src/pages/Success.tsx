@@ -62,7 +62,7 @@ export default function Success() {
             )}
             {hasAnyEbook && (
               <Button variant="outline" onClick={() => navigate("/library")}>
-                <LibraryIcon className="mr-1.5 h-4 w-4" /> Biblioteca BST
+                <LibraryIcon className="mr-1.5 h-4 w-4" /> Bibliotecaê BST
               </Button>
             )}
           </div>

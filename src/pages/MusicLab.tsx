@@ -146,7 +146,7 @@ export default function MusicLab() {
     const points = correctCount * 5;
     if (points > 0 && selected) {
       const res = await awardAiXp("musiclab", points, `musiclab:${selected.id}:${correctCount}`);
-      if (res?.awarded) toast.success(`+${res.points} XP no Music Lab!`);
+      if (res?.awarded) toast.success(`+${res.points} XP no Cantaê!`);
       else toast.success(`${correctCount} de ${blanks.length} corretas!`);
     } else {
       toast.info("Nenhuma lacuna correta ainda — tente de novo!");
@@ -168,9 +168,9 @@ export default function MusicLab() {
         <Card className="border-border/60">
           <CardContent className="p-8 text-center space-y-3">
             <Lock className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="font-semibold text-foreground">Music Lab bloqueado</p>
+            <p className="font-semibold text-foreground">Cantaê bloqueado</p>
             <p className="text-sm text-muted-foreground">
-              Fale com a equipe Falaê Brasil para liberar o Music Lab no seu plano.
+              Fale com a equipe Falaê Brasil para liberar o Cantaê no seu plano.
             </p>
           </CardContent>
         </Card>
@@ -413,7 +413,7 @@ export default function MusicLab() {
               </DialogTitle>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
-              Você acertou 100% das lacunas de “{selected.title}” e ganhou XP no Music Lab.
+              Você acertou 100% das lacunas de “{selected.title}” e ganhou XP no Cantaê.
             </p>
             <Button onClick={() => setCongrats(false)}>Continuar</Button>
           </DialogContent>
@@ -428,7 +428,7 @@ export default function MusicLab() {
 
       <header className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground flex items-center gap-2">
-          <Music className="h-6 w-6 text-primary" /> Music Lab
+          <Music className="h-6 w-6 text-primary" /> Cantaê
         </h1>
         <p className="text-sm text-muted-foreground">
           Aprenda inglês com música: ouça, complete a letra e explore gírias e expressões.

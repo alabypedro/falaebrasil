@@ -223,7 +223,7 @@ export default function MusicLabChoice() {
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground flex items-center gap-2">
-            <Music className="h-6 w-6 text-primary" /> Music Lab
+            <Music className="h-6 w-6 text-primary" /> Cantaê
           </h1>
           <Badge className="bg-primary/15 text-primary border border-primary/30 font-semibold">
             Nível {song.cefrLevel}

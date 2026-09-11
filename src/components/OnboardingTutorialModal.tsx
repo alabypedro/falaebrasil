@@ -12,7 +12,7 @@ type Variant = "install" | "bst";
 /**
  * Pop-up de PRIMEIRO ACESSO.
  * - variant="install": vídeo de instalação do app (alunos OPEN).
- * - variant="bst": vídeo tutorial da Biblioteca BST (alunos BST / low ticket).
+ * - variant="bst": vídeo tutorial da Bibliotecaê BST (alunos BST / low ticket).
  * Cada variante tem sua própria flag no perfil, então aparece só uma vez.
  */
 export default function OnboardingTutorialModal({ variant = "install" }: { variant?: Variant }) {
@@ -76,9 +76,9 @@ export default function OnboardingTutorialModal({ variant = "install" }: { varia
     if (variant === "bst") {
       return {
         icon: <Library className="h-6 w-6 text-primary" />,
-        title: "Como usar a Biblioteca BST",
+        title: "Como usar a Bibliotecaê BST",
         description:
-          "Assista ao vídeo abaixo para aprender a usar seus guias, cartilhas e manuais da Biblioteca BST.",
+          "Assista ao vídeo abaixo para aprender a usar seus guias, cartilhas e manuais da Bibliotecaê BST.",
       };
     }
     if (device === "ios") {

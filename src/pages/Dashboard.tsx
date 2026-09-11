@@ -212,7 +212,7 @@ export default function Dashboard() {
               <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
                 <Library className="h-5 w-5 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground leading-tight">Biblioteca</span>
+              <span className="text-sm font-semibold text-foreground leading-tight">Bibliotecaê</span>
               <span className="text-[11px] text-muted-foreground tabular-nums">Acessar</span>
             </button>
           </DialogTrigger>
@@ -220,7 +220,7 @@ export default function Dashboard() {
             <DialogHeader className="p-5 pb-3">
               <DialogTitle className="flex items-center gap-2 text-lg">
                 <Library className="h-5 w-5 text-primary" />
-                Biblioteca
+                Bibliotecaê
               </DialogTitle>
             </DialogHeader>
             <div className="p-5 pt-0 space-y-2">
@@ -253,7 +253,7 @@ export default function Dashboard() {
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
             <Music className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-sm font-semibold text-foreground leading-tight">Music Lab</span>
+          <span className="text-sm font-semibold text-foreground leading-tight">Cantaê</span>
           <span className="text-[11px] text-muted-foreground tabular-nums">{aiXp.musiclab} XP</span>
         </button>
       </div>
