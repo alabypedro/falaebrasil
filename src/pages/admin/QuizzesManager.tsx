@@ -134,10 +134,16 @@ export default function QuizzesManager() {
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
+    const bstFilter = filterCourse.startsWith("bst:") ? filterCourse.slice(4) : null;
+    const bookFilter = filterCourse.startsWith("book:") ? filterCourse.slice(5) : null;
     return quizzes
       .filter((qz) => {
         const l = qz.lesson_id ? lessonById.get(qz.lesson_id) : undefined;
-        if (q && !(qz.title.toLowerCase().includes(q) || (l?.title ?? "").toLowerCase().includes(q) || (l?.course_title ?? "").toLowerCase().includes(q))) return false;
+        const bstTitle = qz.bst_product_id ? bstProducts.find((b) => b.id === qz.bst_product_id)?.title ?? "" : "";
+        const bookTitle = qz.book_text_id ? bookTexts.find((b) => b.id === qz.book_text_id)?.title ?? "" : "";
+        if (q && !(qz.title.toLowerCase().includes(q) || (l?.title ?? "").toLowerCase().includes(q) || (l?.course_title ?? "").toLowerCase().includes(q) || bstTitle.toLowerCase().includes(q) || bookTitle.toLowerCase().includes(q))) return false;
+        if (bstFilter) return qz.bst_product_id === bstFilter;
+        if (bookFilter) return qz.book_text_id === bookFilter;
         if (filterLesson !== "all") return qz.lesson_id === filterLesson;
         if (filterModule !== "all") return (qz.lessons as any)?.modules?.id === filterModule || (qz.lessons as any)?.module_id === filterModule;
         if (filterCourse !== "all") return l?.course_id === filterCourse;
