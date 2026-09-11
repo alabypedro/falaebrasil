@@ -267,7 +267,7 @@ export default function BstProduct() {
                 </CardContent>
               </Card>
             </div>
-          ) : levelMode ? (
+          ) : levelMode && levelTool === "quiz" ? (
             <ol className="space-y-2">
               {UNITS.map((u) => {
                 return (
