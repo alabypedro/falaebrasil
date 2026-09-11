@@ -143,8 +143,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    const updates: Record<string, boolean> = {};
+    const updates: Record<string, unknown> = {};
     for (const f of validAccesses) updates[f] = grant;
+    if (hasBooksFlag) updates.has_books_access = booksAccess;
+    if (hasLevels) {
+      updates.allowed_levels =
+        allowedLevels.length === 0 || allowedLevels.length === ALL_LEVELS.length
+          ? null
+          : allowedLevels;
+    }
     if (Object.keys(updates).length > 0) {
       const { error: upErr } = await admin
         .from("profiles")
