@@ -97,7 +97,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             {children}
           </main>
           {/* Alunos restritos (BST) não passam pelo Dashboard: no primeiro
-              acesso mostramos o tutorial da Biblioteca BST. */}
+              acesso mostramos o tutorial da Bibliotecaê BST. */}
           {isBstOnly && <OnboardingTutorialModal variant="bst" />}
         </div>
       </div>
