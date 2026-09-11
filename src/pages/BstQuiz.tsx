@@ -95,7 +95,6 @@ export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: s
         <p className="text-sm text-muted-foreground mt-1">
           {unit ? `Unit ${unit} — ` : ""}Teste seus conhecimentos deste guia. Cada quiz vale XP ao atingir a nota mínima.
         </p>
-      {/* quizzes exibidos agrupados por unidade */}
       </div>
 
       {quizzes.length === 0 ? (
