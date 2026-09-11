@@ -298,7 +298,7 @@ export default function QuizzesManager() {
             <SearchableSelect
               value={filterCourse}
               onChange={(v) => { setFilterCourse(v); setFilterModule("all"); setFilterLesson("all"); }}
-              groupOrder={SEGMENT_GROUP_ORDER}
+              groupOrder={[...SEGMENT_GROUP_ORDER, "BST", "Estórias Curtas"]}
               searchPlaceholder="Buscar curso..."
               options={[{ value: "all", label: "Todos os cursos" }, ...courseOptions]}
             />
