@@ -71,8 +71,8 @@ export default function MusicLab() {
 
   const [blanks, setBlanks] = useState<Blank[]>([]);
   const [vocab, setVocab] = useState<Vocab[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [checked, setChecked] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+
   const [detailLoading, setDetailLoading] = useState(false);
   const [mediaTab, setMediaTab] = useState<MediaType>("youtube");
   const [congrats, setCongrats] = useState(false);
