@@ -118,7 +118,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 /**
  * Alunos que compraram apenas um produto BST (Low-Ticket) ficam restritos
- * à Biblioteca BST e ao produto adquirido.
+ * à Bibliotecaê BST e ao produto adquirido.
  */
 function BstGate({ children }: { children: React.ReactNode }) {
   const { isBstOnly, slug, loading } = useBstOnly();
@@ -134,7 +134,7 @@ function BstGate({ children }: { children: React.ReactNode }) {
     path.startsWith("/tutoriais");
 
   if (!allowed) {
-    // Alunos BST caem sempre na Biblioteca BST.
+    // Alunos BST caem sempre na Bibliotecaê BST.
     return <Navigate to="/library" replace />;
   }
   return <>{children}</>;

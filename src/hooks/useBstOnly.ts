@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Aluno "BST only" (low ticket): categorizado como BST1/BST2/... sem a
- * categoria OPEN. Só pode acessar Biblioteca BST, Tutoriais e Instalar App,
+ * categoria OPEN. Só pode acessar Bibliotecaê BST, Tutoriais e Instalar App,
  * e apenas os produtos BST que comprou.
  *
  * O fallback por `plan_tier === 'bst'` mantém compatibilidade com contas

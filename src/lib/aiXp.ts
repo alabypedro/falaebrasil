@@ -8,7 +8,7 @@ export const AI_LABELS: Record<AiSource, string> = {
   escutae: "IA Escutaê",
   escreveae: "IA Escreveaê",
   leiae: "IA Leiaê",
-  musiclab: "Music Lab",
+  musiclab: "Cantaê",
   books: "Livros e audio-livros",
 };
 

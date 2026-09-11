@@ -12,7 +12,7 @@ export interface StudentCategory {
 /**
  * Categorias do aluno (OPEN / BST1 / BST2 ...).
  * OPEN = acesso a tudo. Categorias BST (sem OPEN) = acesso restrito
- * à Biblioteca BST, Tutoriais e Instalar App.
+ * à Bibliotecaê BST, Tutoriais e Instalar App.
  */
 export function useStudentCategories() {
   const { user, profile } = useAuth();

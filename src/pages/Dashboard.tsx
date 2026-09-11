@@ -253,7 +253,7 @@ export default function Dashboard() {
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
             <Music className="h-5 w-5 text-primary" />
           </div>
-          <span className="text-sm font-semibold text-foreground leading-tight">Music Lab</span>
+          <span className="text-sm font-semibold text-foreground leading-tight">Cantaê</span>
           <span className="text-[11px] text-muted-foreground tabular-nums">{aiXp.musiclab} XP</span>
         </button>
       </div>

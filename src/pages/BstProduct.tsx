@@ -118,7 +118,7 @@ export default function BstProduct() {
     return (
       <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/library")}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Biblioteca BST
+          <ArrowLeft className="h-4 w-4 mr-1" /> Bibliotecaê BST
         </Button>
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Produto não encontrado.</CardContent></Card>
       </div>
@@ -146,10 +146,10 @@ export default function BstProduct() {
         ? `${level} - ${LEVELS.find((l) => l.code === level)?.label}`
         : level
           ? product.title
-          : "Biblioteca BST"
+          : "Bibliotecaê BST"
     : view !== "home"
       ? product.title
-      : "Biblioteca BST";
+      : "Bibliotecaê BST";
 
   const showLevelHome = levelMode && view === "home" && !module0View;
 
@@ -313,7 +313,7 @@ export default function BstProduct() {
             </div>
           )}
 
-          <Badge variant="outline" className="text-[10px]">Ambiente exclusivo Biblioteca BST</Badge>
+          <Badge variant="outline" className="text-[10px]">Ambiente exclusivo Bibliotecaê BST</Badge>
         </>
       )}
 

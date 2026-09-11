@@ -31,7 +31,7 @@ export const TUTORIAL_TOPICS = [
   },
   {
     slug: "biblioteca-bst",
-    title: "Biblioteca BST",
+    title: "Bibliotecaê BST",
     description: "Como acessar ebooks, áudios e materiais complementares.",
     icon: Library,
     gradient: "bg-gradient-to-br from-primary to-primary/70",

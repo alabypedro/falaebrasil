@@ -109,7 +109,7 @@ export default function StudentAccessDialog({
     setMusicBusy(false);
     if (error) return toast.error(error.message);
     setMusicLab(value);
-    toast.success(value ? "Music Lab liberado" : "Music Lab bloqueado");
+    toast.success(value ? "Cantaê liberado" : "Cantaê bloqueado");
     onChanged?.();
   };
 
@@ -405,7 +405,7 @@ export default function StudentAccessDialog({
                   onCheckedChange={(v) => toggleMusicLab(!!v)}
                 />
                 <Music className="h-4 w-4 text-primary" />
-                <span>Liberar Music Lab</span>
+                <span>Liberar Cantaê</span>
               </label>
             </div>
 
@@ -475,7 +475,7 @@ export default function StudentAccessDialog({
               {bstProducts.length > 0 && (
                 <div className="space-y-2">
                   <span className="text-xs font-semibold uppercase text-muted-foreground">
-                    Biblioteca BST
+                    Bibliotecaê BST
                   </span>
                   <div className="grid gap-2">
                     {bstProducts.map((p) => {
@@ -556,7 +556,7 @@ export default function StudentAccessDialog({
             <p className="text-xs text-muted-foreground">
               Marque para liberar e desmarque para remover — as alterações são aplicadas ao salvar.
               Produtos BST liberados sozinhos aplicam o mesmo modelo do checkout (aluno restrito à
-              Biblioteca BST).
+              Bibliotecaê BST).
             </p>
           </div>
         )}
