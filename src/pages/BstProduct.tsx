@@ -362,7 +362,7 @@ export default function BstProduct() {
       {readingPdf && pdfUrl && (
         <PdfReader
           isOpen={readingPdf}
-          onClose={() => { setReadingPdf(false); if (levelMode) setUnit(null); }}
+          onClose={() => setReadingPdf(false)}
           url={pdfUrl}
           title={pdfTitle || product.title}
           allowDownload
