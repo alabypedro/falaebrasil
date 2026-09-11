@@ -25,6 +25,16 @@ interface BookText {
   display_order: number;
 }
 
+interface QuizRow {
+  id: string;
+  title: string;
+  passing_score: number;
+  display_order: number;
+  level: string;
+  book_text_id: string | null;
+}
+
+
 export default function Books() {
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
