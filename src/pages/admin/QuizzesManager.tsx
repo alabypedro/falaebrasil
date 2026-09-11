@@ -162,7 +162,7 @@ export default function QuizzesManager() {
         }
         return a.title.localeCompare(b.title, "pt-BR", { numeric: true });
       });
-  }, [quizzes, searchQuery, filterCourse, filterModule, filterLesson, lessonById]);
+  }, [quizzes, searchQuery, filterCourse, filterModule, filterLesson, lessonById, bstProducts, bookTexts]);
 
   const openNew = () => {
     setEditing(null);
