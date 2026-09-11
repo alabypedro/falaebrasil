@@ -82,6 +82,30 @@ export default function Books() {
     [items, level, allowedLevels],
   );
 
+  const textById = useMemo(() => {
+    const map: Record<string, BookText> = {};
+    items.forEach((x) => { map[x.id] = x; });
+    return map;
+  }, [items]);
+
+  // Quizzes do nível atual, ordenados igual ao modelo BST
+  const levelQuizzes = useMemo(() => {
+    return quizRows
+      .filter((q) => {
+        const bt = q.book_text_id ? textById[q.book_text_id] : undefined;
+        return bt ? bt.level === level : false;
+      })
+      .sort((a, b) => {
+        const oa = textById[a.book_text_id!]?.display_order ?? a.display_order ?? 0;
+        const ob = textById[b.book_text_id!]?.display_order ?? b.display_order ?? 0;
+        if (oa !== ob) return oa - ob;
+        return a.title.localeCompare(b.title);
+      });
+  }, [quizRows, textById, level]);
+
+  const activeContext = activeQuiz?.book_text_id ? textById[activeQuiz.book_text_id] : undefined;
+
+
   const handleOpen = () => {
     const content = text.trim();
     if (!content) {
