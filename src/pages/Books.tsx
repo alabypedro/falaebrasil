@@ -218,11 +218,12 @@ export default function Books() {
                         size="sm"
                         variant="secondary"
                         className="shrink-0"
-                        onClick={() => navigate(`/quiz/${quizByText[x.id].id}`)}
+                        onClick={() => setActiveQuiz(quizByText[x.id])}
                       >
                         <HelpCircle className="h-4 w-4 mr-1" /> Quiz
                       </Button>
                     )}
+
                   </div>
                   {audio?.id === x.id && x.audio_url && (
                     <div className="p-3 pt-0">
