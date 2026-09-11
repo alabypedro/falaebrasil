@@ -15,6 +15,7 @@ import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, type MediaType }
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PartyPopper } from "lucide-react";
+import ListenMode from "@/components/musiclab/ListenMode";
 
 interface Song {
   id: string;
@@ -290,8 +291,27 @@ export default function MusicLab() {
             <Tabs defaultValue="activity">
               <TabsList>
                 <TabsTrigger value="activity">Preencher as lacunas</TabsTrigger>
+                <TabsTrigger value="listen">Modo Escuta</TabsTrigger>
                 <TabsTrigger value="vocab">Vocabulário &amp; Expressões</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="listen" className="mt-4">
+                <ListenMode
+                  blanks={blanks}
+                  onComplete={async (score, correct) => {
+                    const points = correct * 5;
+                    if (points > 0 && selected) {
+                      const res = await awardAiXp(
+                        "musiclab",
+                        points,
+                        `musiclab:listen:${selected.id}:${correct}`,
+                      );
+                      if (res?.awarded) toast.success(`+${res.points} XP no Cantaê!`);
+                      else toast.success(`Modo Escuta concluído — ${score} pontos`);
+                    }
+                  }}
+                />
+              </TabsContent>
 
               <TabsContent value="activity" className="mt-4">
                 <Card className="border-border/60">
@@ -436,9 +456,6 @@ export default function MusicLab() {
         <p className="text-sm text-muted-foreground">
           Aprenda inglês com música: ouça, complete a letra e explore gírias e expressões.
         </p>
-        <Button asChild size="sm" variant="outline">
-          <a href="/music-lab/choice">Modo Escuta: Fill-in-the-Blanks</a>
-        </Button>
       </header>
 
       <div className="space-y-3">
