@@ -288,9 +288,8 @@ export default function MusicLab() {
               </div>
             )}
 
-            <Tabs defaultValue="activity">
+            <Tabs defaultValue="listen">
               <TabsList>
-                <TabsTrigger value="activity">Preencher as lacunas</TabsTrigger>
                 <TabsTrigger value="listen">Modo Escuta</TabsTrigger>
                 <TabsTrigger value="vocab">Vocabulário &amp; Expressões</TabsTrigger>
               </TabsList>
@@ -298,7 +297,8 @@ export default function MusicLab() {
               <TabsContent value="listen" className="mt-4">
                 <ListenMode
                   blanks={blanks}
-                  onComplete={async (score, correct) => {
+                  onComplete={async (score, correct, total) => {
+                    if (correct === total && total > 0) setCongrats(true);
                     const points = correct * 5;
                     if (points > 0 && selected) {
                       const res = await awardAiXp(
@@ -313,84 +313,6 @@ export default function MusicLab() {
                 />
               </TabsContent>
 
-              <TabsContent value="activity" className="mt-4">
-                <Card className="border-border/60">
-                  <CardHeader>
-                    <CardTitle className="text-base font-display flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-primary" /> Fill in the Blanks
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {blanks.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        Esta música ainda não tem lacunas cadastradas.
-                      </p>
-                    ) : (
-                      <>
-                        {blanks.map((b, i) => {
-                          const value = answers[b.id] ?? "";
-                          const ok = normalize(value) === normalize(b.answer);
-                          return (
-                            <div key={b.id} className="space-y-1">
-                              <div className="flex flex-wrap items-center gap-2 text-sm leading-relaxed">
-                                <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
-                                <span className="text-foreground">{b.text_before}</span>
-                                <Input
-                                  value={value}
-                                  onChange={(e) => setAnswers((a) => ({ ...a, [b.id]: e.target.value }))}
-                                  placeholder="..."
-                                  className={`h-9 w-40 ${
-                                    checked
-                                      ? ok
-                                        ? "border-success text-success"
-                                        : "border-destructive text-destructive"
-                                      : ""
-                                  }`}
-                                />
-                                <span className="text-foreground">{b.text_after}</span>
-                                {checked &&
-                                  (ok ? (
-                                    <CheckCircle2 className="h-4 w-4 text-success" />
-                                  ) : (
-                                    <XCircle className="h-4 w-4 text-destructive" />
-                                  ))}
-                              </div>
-                              {checked && !ok && (
-                                <p className="text-xs text-muted-foreground pl-6">
-                                  Resposta correta: <span className="font-semibold">{b.answer}</span>
-                                </p>
-                              )}
-                              {!checked && b.hint && (
-                                <p className="text-xs text-muted-foreground pl-6">Dica: {b.hint}</p>
-                              )}
-                            </div>
-                          );
-                        })}
-
-                        <div className="flex flex-wrap items-center gap-3 pt-2">
-                          <Button onClick={handleCheck}>Verificar Respostas</Button>
-                          {checked && (
-                            <>
-                              <span className="text-sm text-muted-foreground tabular-nums">
-                                {correctCount} / {blanks.length} corretas
-                              </span>
-                              <Button
-                                variant="outline"
-                                onClick={() => {
-                                  setAnswers({});
-                                  setChecked(false);
-                                }}
-                              >
-                                Tentar de novo
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
 
               <TabsContent value="vocab" className="mt-4">
                 <Card className="border-border/60">
