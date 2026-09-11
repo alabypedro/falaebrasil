@@ -110,9 +110,8 @@ export default function MusicLab() {
           : "spotify",
     );
     setCongrats(false);
-    setAnswers({});
-    setChecked(false);
     setDetailLoading(true);
+
     const [{ data: b }, { data: v }] = await Promise.all([
       supabase.from("music_lab_blanks").select("*").eq("song_id", song.id).order("line_index"),
       supabase.from("music_lab_vocabulary").select("*").eq("song_id", song.id).order("display_order"),
