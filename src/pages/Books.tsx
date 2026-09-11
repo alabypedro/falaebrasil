@@ -216,39 +216,40 @@ export default function Books() {
           ) : (
             <div className="grid gap-2">
               {levelItems.map((x) => (
-                <div key={x.id} className="rounded-lg border bg-card">
-                  <div className="flex items-center gap-3 p-3">
+                <div key={x.id} className="rounded-lg border bg-card overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3">
                     <button onClick={() => openSaved(x)} className="flex-1 min-w-0 text-left">
                       <div className="font-medium text-sm truncate">{x.title}</div>
                       <div className="text-xs text-muted-foreground truncate">
                         {x.author ? `${x.author} — ` : ""}{x.content.slice(0, 120)}…
                       </div>
                     </button>
-                    {x.audio_url && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0"
-                        onClick={() => setAudio(audio?.id === x.id ? null : x)}
-                      >
-                        <Headphones className="h-4 w-4" />
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {x.audio_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                          onClick={() => setAudio(audio?.id === x.id ? null : x)}
+                        >
+                          <Headphones className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Badge variant="outline" className="shrink-0">{x.level}</Badge>
+                      <Button size="sm" onClick={() => openSaved(x)} className="shrink-0">
+                        <Play className="h-4 w-4 mr-1" /> Ler
                       </Button>
-                    )}
-                    <Badge variant="outline" className="shrink-0">{x.level}</Badge>
-                    <Button size="sm" onClick={() => openSaved(x)} className="shrink-0">
-                      <Play className="h-4 w-4 mr-1" /> Ler
-                    </Button>
-                    {quizByText[x.id] && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="shrink-0"
-                        onClick={() => setActiveQuiz(quizByText[x.id])}
-                      >
-                        <HelpCircle className="h-4 w-4 mr-1" /> Quiz
-                      </Button>
-                    )}
-
+                      {quizByText[x.id] && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="shrink-0"
+                          onClick={() => setActiveQuiz(quizByText[x.id])}
+                        >
+                          <HelpCircle className="h-4 w-4 mr-1" /> Quiz
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   {audio?.id === x.id && x.audio_url && (
                     <div className="p-3 pt-0">
