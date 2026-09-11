@@ -133,7 +133,7 @@ export default function BstProduct() {
     if (levelMode) {
       if (module0View) { setModule0View(false); return; }
       if (unit) { setUnit(null); setView("home"); return; }
-      if (levelTool) return setLevelTool(null);
+      if (levelTool) { setLevelTool(null); setView("home"); return; }
       if (level) return setLevel(null);
       navigate("/library");
       return;
@@ -247,8 +247,13 @@ export default function BstProduct() {
                 <CardContent className="p-5 space-y-3 text-center">
                   <BookText className="h-7 w-7 mx-auto text-primary" />
                   <div className="text-sm font-semibold">IA Leiaê</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setLevelTool("leiae")}>
-                    Abrir unidades
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => { setLevelTool("leiae"); setUnit(null); setView("tool"); }}
+                  >
+                    Abrir textos
                   </Button>
                 </CardContent>
               </Card>
@@ -262,7 +267,7 @@ export default function BstProduct() {
                 </CardContent>
               </Card>
             </div>
-          ) : levelMode ? (
+          ) : levelMode && levelTool === "quiz" ? (
             <ol className="space-y-2">
               {UNITS.map((u) => {
                 return (

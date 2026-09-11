@@ -50,8 +50,12 @@ export default function Leiae({
   const levelItems = useMemo(() => {
     let list = items;
     if (unit) list = list.filter((x) => x.unit === unit);
-    if (fixedLevel) return list.filter((x) => x.level === fixedLevel);
-    return bstMode ? list : list.filter((x) => x.level === level);
+    if (fixedLevel) list = list.filter((x) => x.level === fixedLevel);
+    else if (!bstMode) list = list.filter((x) => x.level === level);
+    if (!bstMode) return list;
+    return [...list].sort(
+      (a, b) => (a.unit ?? 99) - (b.unit ?? 99) || a.display_order - b.display_order,
+    );
   }, [items, level, bstMode, fixedLevel, unit]);
 
   const handleOpen = () => {
@@ -144,7 +148,9 @@ export default function Leiae({
                   className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left hover:border-primary hover:bg-muted/40 transition"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{x.title}</div>
+                    <div className="font-medium text-sm truncate">
+                      {bstMode && x.unit ? `Unit ${x.unit} — ` : ""}{x.title}
+                    </div>
                     <div className="text-xs text-muted-foreground truncate">{x.content.slice(0, 120)}…</div>
                   </div>
                   <Badge variant="outline" className="shrink-0">{x.level}</Badge>
