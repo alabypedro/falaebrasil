@@ -222,16 +222,24 @@ export default function StudentAccessDialog({
     const toRevokeCourses = [...activeCourseIds].filter((id) => !wantedCourses.includes(id));
     const toRevokeBst = [...activeBstIds].filter((id) => !wantedBst.includes(id));
 
-    if (
-      toGrantCourses.length + toGrantBst.length + toRevokeCourses.length + toRevokeBst.length ===
-      0
-    ) {
-      toast.info("Nenhuma alteração para aplicar.");
-      return;
-    }
-
     setBusy("grant");
     try {
+      // Conteúdos extras (Estórias Curtas) + níveis liberados
+      {
+        const { data, error } = await supabase.functions.invoke("grant-access-admin", {
+          body: {
+            email,
+            accesses: [],
+            course_ids: [],
+            bst_product_ids: [],
+            books_access: booksAccess,
+            allowed_levels: levels.length === LEVELS.length ? [] : levels,
+            grant: true,
+          },
+        });
+        if (error || (data as { error?: string })?.error)
+          throw new Error((data as { error?: string })?.error ?? "Erro ao salvar níveis");
+      }
       if (toGrantCourses.length || toGrantBst.length) {
         const { data, error } = await supabase.functions.invoke("grant-access-admin", {
           body: {
