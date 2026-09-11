@@ -670,8 +670,9 @@ export default function MusicLabManager() {
             <div className="space-y-2 border-t border-border pt-4">
               <div className="flex items-center justify-between">
                 <Label className="text-xs uppercase text-muted-foreground">
-                  Lacunas da letra (Fill in the Blanks)
+                  Lacunas do Modo Escuta
                 </Label>
+
                 <Button
                   variant="outline"
                   size="sm"
