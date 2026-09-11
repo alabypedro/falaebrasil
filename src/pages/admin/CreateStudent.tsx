@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { UserPlus, Copy, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { LEVELS } from "@/lib/levels";
 
 const TIERS = ["open", "pro", "vip", "kids", "teens", "bst"] as const;
 
@@ -22,6 +23,12 @@ interface BstRow {
   id: string;
   title: string;
 }
+
+const LEVEL_GROUPS = [
+  { key: "adults", title: "Níveis Adultos", levels: ["A1", "A2", "B1", "B2", "C1", "C2"] },
+  { key: "teens", title: "Níveis Teens", levels: ["T1", "T2", "T3", "T4"] },
+  { key: "kids", title: "Níveis Kids", levels: ["K1", "K2", "K3", "K4"] },
+] as const;
 
 const GROUPS = [
   { key: "adults", title: "Cursos Adultos (A1 → C2)", tiers: ["open", "pro", "vip"] },
@@ -55,6 +62,9 @@ export default function CreateStudent({
   const [bstProducts, setBstProducts] = useState<BstRow[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<Record<string, boolean>>({});
   const [selectedBst, setSelectedBst] = useState<Record<string, boolean>>({});
+  const [musicLab, setMusicLab] = useState(true);
+  const [booksAccess, setBooksAccess] = useState(true);
+  const [levels, setLevels] = useState<string[]>([...LEVELS]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ email: string; password: string; created: boolean } | null>(null);
 
@@ -86,6 +96,13 @@ export default function CreateStudent({
     [courses],
   );
 
+  const toggleLevel = (lv: string) =>
+    setLevels((s) => (s.includes(lv) ? s.filter((x) => x !== lv) : [...s, lv]));
+  const setGroupLevels = (group: readonly string[], value: boolean) =>
+    setLevels((s) =>
+      value ? Array.from(new Set([...s, ...group])) : s.filter((x) => !group.includes(x)),
+    );
+
   const toggleCourse = (id: string) => setSelectedCourses((s) => ({ ...s, [id]: !s[id] }));
   const toggleBst = (id: string) => setSelectedBst((s) => ({ ...s, [id]: !s[id] }));
   const selectAllCourses = (ids: string[], value: boolean) =>
@@ -111,6 +128,9 @@ export default function CreateStudent({
           bst_product_ids: bstIds,
           plan_tier: tier,
           role,
+          music_lab: musicLab,
+          books_access: booksAccess,
+          allowed_levels: levels.length === LEVELS.length ? [] : levels,
         },
       });
       if (error) throw error;
@@ -294,6 +314,76 @@ export default function CreateStudent({
                     ))}
                   </div>
                 </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <Label>Conteúdos extras</Label>
+              <div className="grid gap-2 md:grid-cols-2">
+                <label className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted">
+                  <Checkbox checked={musicLab} onCheckedChange={() => setMusicLab((v) => !v)} />
+                  <span className="text-sm">Cantaê (Music Lab)</span>
+                </label>
+                <label className="flex items-center gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted">
+                  <Checkbox checked={booksAccess} onCheckedChange={() => setBooksAccess((v) => !v)} />
+                  <span className="text-sm">Estórias Curtas (A1 até C2)</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <Label>Níveis liberados</Label>
+                <p className="text-xs text-muted-foreground">
+                  Somente os níveis selecionados aparecerão para o aluno nas IAs, Cantaê e Estórias
+                  Curtas. Selecionar todos mantém o acesso completo.
+                </p>
+              </div>
+              {LEVEL_GROUPS.map((g) => (
+                <div key={g.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">
+                      {g.title}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => setGroupLevels(g.levels, true)}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:underline"
+                        onClick={() => setGroupLevels(g.levels, false)}
+                      >
+                        Nenhum
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {g.levels.map((lv) => (
+                      <button
+                        key={lv}
+                        type="button"
+                        onClick={() => toggleLevel(lv)}
+                        className={`w-11 h-9 rounded-full text-xs font-bold border ${
+                          levels.includes(lv)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-muted"
+                        }`}
+                      >
+                        {lv}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {levels.length === 0 && (
+                <p className="text-xs text-destructive">
+                  Nenhum nível selecionado: o aluno não verá conteúdo por nível.
+                </p>
               )}
             </div>
 
