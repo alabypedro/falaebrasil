@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones, HelpCircle } from "lucide-react";
+import { BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, Headphones, HelpCircle, ArrowLeft, ChevronRight } from "lucide-react";
 import { useLeiae } from "@/hooks/useLeiae";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import ChapterAudioPlayer from "@/components/books/ChapterAudioPlayer";
+import InlineQuiz from "@/components/InlineQuiz";
 import { LEVELS, type Level } from "@/lib/levels";
 import { useAllowedLevels, useBooksAccess } from "@/hooks/useAllowedLevels";
+
 
 interface BookText {
   id: string;
