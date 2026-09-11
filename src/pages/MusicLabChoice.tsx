@@ -214,6 +214,8 @@ export default function MusicLabChoice() {
   const lyricWithFill = (ex: Exercise) =>
     filled[ex.id] ? ex.lyricContext.replace("___", filled[ex.id]) : ex.lyricContext;
 
+  const currentEx = current;
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 page-transition">
       <BackToDashboardButton />
@@ -251,110 +253,142 @@ export default function MusicLabChoice() {
         </CardContent>
       </Card>
 
-      <Card className="border-border/60">
-        <CardContent className="p-5 space-y-5">
-          {song.exercises.map((ex, i) => {
-            const isCurrent = current?.id === ex.id;
-            const isDone = doneIds.includes(ex.id);
-            return (
-              <div
-                key={ex.id}
-                className={`rounded-xl border p-4 space-y-3 transition ${
-                  isCurrent
-                    ? "border-primary bg-primary/5"
-                    : isDone
-                      ? "border-success/40 bg-success/5"
-                      : "border-border/60 opacity-70"
-                }`}
-              >
-                <div className="flex items-start gap-2 text-sm leading-relaxed">
-                  <span className="text-muted-foreground tabular-nums">{i + 1}.</span>
-                  <p className="text-foreground font-medium">
-                    {isDone ? (
-                      lyricWithFill(ex)
+      {finished ? (
+        <Card className="border-primary/40 bg-primary/5 border">
+          <CardContent className="p-6 text-center space-y-3">
+            <Trophy className="h-8 w-8 mx-auto text-primary" />
+            <p className="font-display font-bold text-foreground text-lg">
+              Exercício concluído — {score} pontos
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {correctCount}/{total} acertos · {misses} erros · {hintsUsed.length} traduções usadas
+            </p>
+            <Button variant="outline" onClick={restart}>
+              <RotateCcw className="h-4 w-4 mr-2" /> Tentar de novo
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-border/60">
+          <CardContent className="p-5 space-y-5">
+            {currentEx ? (
+              <div className="rounded-xl border border-primary bg-primary/5 p-5 space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-primary/15 text-primary text-sm font-bold shrink-0">
+                    {song.exercises.findIndex((e) => e.id === currentEx.id) + 1}
+                  </span>
+                  <p className="text-lg md:text-xl leading-relaxed text-foreground font-medium">
+                    {lyricWithFill(currentEx).split(filled[currentEx.id] ?? "___").length > 1 ? (
+                      lyricWithFill(currentEx)
                     ) : (
                       <>
-                        {ex.lyricContext.split("___")[0]}
-                        <span className="inline-block min-w-16 border-b-2 border-primary align-middle mx-1" />
-                        {ex.lyricContext.split("___")[1]}
+                        {currentEx.lyricContext.split("___")[0]}
+                        <span className="inline-flex items-center justify-center min-w-[4.5rem] px-2 py-0.5 mx-1 rounded-md bg-primary/10 border border-primary/40 text-primary font-bold align-middle">
+                          {filled[currentEx.id] ?? "___"}
+                        </span>
+                        {currentEx.lyricContext.split("___")[1]}
                       </>
                     )}
                   </p>
-                  {isDone && <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-0.5" />}
+                  {doneIds.includes(currentEx.id) && (
+                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-1" />
+                  )}
                 </div>
 
-                {isCurrent && (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {ex.options.map((opt) => {
-                        const isWrong = wrong === opt;
-                        return (
-                          <Button
-                            key={opt}
-                            variant="outline"
-                            onClick={() => answer(opt)}
-                            className={`h-11 font-semibold ${
-                              isWrong
-                                ? "border-destructive text-destructive animate-[shake_0.4s_ease-in-out]"
-                                : "hover:border-primary hover:bg-primary/10"
-                            }`}
-                          >
-                            {isWrong && <XCircle className="h-4 w-4 mr-1" />}
-                            {opt}
-                          </Button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {currentEx.options.map((opt) => {
+                    const isWrong = wrong === opt;
+                    const isFilled = filled[currentEx.id] === opt;
+                    return (
                       <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setShowTranslation((s) => !s);
-                          if (!hintsUsed.includes(ex.id)) setHintsUsed((h) => [...h, ex.id]);
-                        }}
+                        key={opt}
+                        variant="outline"
+                        onClick={() => answer(opt)}
+                        className={`h-12 font-semibold text-base transition ${
+                          isFilled
+                            ? "border-success text-success bg-success/10 hover:bg-success/10"
+                            : isWrong
+                              ? "border-destructive text-destructive animate-[shake_0.4s_ease-in-out]"
+                              : "hover:border-primary hover:bg-primary/10"
+                        }`}
                       >
-                        <Lightbulb className="h-4 w-4 mr-1 text-primary" /> Ver Tradução
+                        {isWrong && <XCircle className="h-4 w-4 mr-1" />}
+                        {isFilled && <CheckCircle2 className="h-4 w-4 mr-1" />}
+                        {opt}
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={skip}>
-                        Pular (−20 pts)
-                      </Button>
-                    </div>
+                    );
+                  })}
+                </div>
 
-                    {showTranslation && (
-                      <div className="rounded-lg bg-muted/60 border border-border/60 p-3 text-sm text-muted-foreground animate-in fade-in slide-in-from-top-1">
-                        {ex.translation}
-                      </div>
-                    )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowTranslation((s) => !s);
+                      if (!hintsUsed.includes(currentEx.id)) setHintsUsed((h) => [...h, currentEx.id]);
+                    }}
+                  >
+                    <Lightbulb className="h-4 w-4 mr-1 text-primary" /> Ver Tradução
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={skip}>
+                    Pular (−20 pts)
+                  </Button>
+                </div>
+
+                {showTranslation && (
+                  <div className="rounded-lg bg-muted/60 border border-border/60 p-3 text-sm text-muted-foreground animate-in fade-in slide-in-from-top-1">
+                    {currentEx.translation}
                   </div>
                 )}
               </div>
-            );
-          })}
+            ) : (
+              <div className="text-center space-y-3 py-4">
+                <p className="text-sm text-muted-foreground">
+                  Dê play no vídeo: ele pausa sozinho em cada lacuna para você escolher a palavra.
+                </p>
+                <Button variant="outline" onClick={() => playerRef.current?.playVideo?.()}>
+                  <Music className="h-4 w-4 mr-2" /> Tocar música
+                </Button>
+              </div>
+            )}
 
-          {finished && (
-            <div className="rounded-xl border border-primary/40 bg-primary/5 p-5 text-center space-y-2">
-              <Trophy className="h-7 w-7 mx-auto text-primary" />
-              <p className="font-display font-bold text-foreground">
-                Exercício concluído — {score} pontos
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">
+                Progresso das lacunas
               </p>
-              <p className="text-sm text-muted-foreground">
-                {correctCount}/{total} acertos · {misses} erros · {hintsUsed.length} traduções usadas
-              </p>
-              <Button variant="outline" onClick={restart}>
-                <RotateCcw className="h-4 w-4 mr-2" /> Tentar de novo
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {song.exercises.map((ex, i) => {
+                  const isDone = doneIds.includes(ex.id);
+                  const isCurrent = current?.id === ex.id;
+                  return (
+                    <button
+                      key={ex.id}
+                      onClick={() => {
+                        if (isDone) return;
+                        playerRef.current?.pauseVideo?.();
+                        setShowTranslation(false);
+                        setWrong(null);
+                        setCurrent(ex);
+                      }}
+                      className={`h-9 w-9 rounded-full text-sm font-bold border transition ${
+                        isDone
+                          ? "border-success/40 bg-success/10 text-success"
+                          : isCurrent
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border/60 bg-muted/40 text-muted-foreground hover:border-primary/40"
+                      }`}
+                      title={`Lacuna ${i + 1}`}
+                    >
+                      {isDone ? <CheckCircle2 className="h-4 w-4 mx-auto" /> : i + 1}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          )}
-
-          {!current && !finished && (
-            <p className="text-xs text-muted-foreground text-center">
-              Dê play no vídeo: ele pausa sozinho em cada lacuna para você escolher a palavra.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
