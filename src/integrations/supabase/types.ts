@@ -2859,6 +2859,18 @@ export type Database = {
           question_text: string
         }[]
       }
+      get_coupon_by_code: {
+        Args: { _code: string }
+        Returns: {
+          checkout_url: string
+          code: string
+          price_cents: number
+          product_description: string
+          product_name: string
+          product_price_cents: number
+          product_type: string
+        }[]
+      }
       get_latest_quiz_attempt: { Args: { _quiz_id: string }; Returns: Json }
       get_listening_lessons_public: {
         Args: never
