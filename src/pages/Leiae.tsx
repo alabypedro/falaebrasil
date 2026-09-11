@@ -148,7 +148,9 @@ export default function Leiae({
                   className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left hover:border-primary hover:bg-muted/40 transition"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{x.title}</div>
+                    <div className="font-medium text-sm truncate">
+                      {bstMode && x.unit ? `Unit ${x.unit} — ` : ""}{x.title}
+                    </div>
                     <div className="text-xs text-muted-foreground truncate">{x.content.slice(0, 120)}…</div>
                   </div>
                   <Badge variant="outline" className="shrink-0">{x.level}</Badge>
