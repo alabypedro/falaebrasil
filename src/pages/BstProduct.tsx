@@ -247,8 +247,13 @@ export default function BstProduct() {
                 <CardContent className="p-5 space-y-3 text-center">
                   <BookText className="h-7 w-7 mx-auto text-primary" />
                   <div className="text-sm font-semibold">IA Leiaê</div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={() => setLevelTool("leiae")}>
-                    Abrir unidades
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => { setLevelTool("leiae"); setUnit(null); setView("tool"); }}
+                  >
+                    Abrir textos
                   </Button>
                 </CardContent>
               </Card>
