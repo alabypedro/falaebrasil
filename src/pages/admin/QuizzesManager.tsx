@@ -83,10 +83,23 @@ export default function QuizzesManager() {
   const courseOptions: SearchableOption[] = useMemo(() => {
     const map = new Map<string, { id: string; title: string; level: string }>();
     modules.forEach((m) => { if (m.course_id && !map.has(m.course_id)) map.set(m.course_id, courseOf(m)); });
-    return [...map.values()]
+    const courseOpts = [...map.values()]
       .sort(compareCourses)
       .map((c) => ({ value: c.id, label: courseLabel(c), group: segmentGroupOf(c), keywords: `${c.title} ${c.level}` }));
-  }, [modules]);
+    const bstOpts: SearchableOption[] = bstProducts.map((b) => ({
+      value: `bst:${b.id}`,
+      label: `BST: ${b.title}`,
+      group: "BST",
+      keywords: `bst ${b.title}`,
+    }));
+    const bookOpts: SearchableOption[] = bookTexts.map((b) => ({
+      value: `book:${b.id}`,
+      label: `Estórias Curtas: ${b.level} › ${b.title}`,
+      group: "Estórias Curtas",
+      keywords: `estorias curtas livros ${b.level} ${b.title}`,
+    }));
+    return [...courseOpts, ...bstOpts, ...bookOpts];
+  }, [modules, bstProducts, bookTexts]);
 
   const sortedModules = useMemo(
     () => [...modules].sort((a, b) => compareCourses(courseOf(a), courseOf(b)) || a.display_order - b.display_order || a.title.localeCompare(b.title, "pt-BR", { numeric: true })),
