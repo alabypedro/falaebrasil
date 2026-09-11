@@ -12,7 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, KeyRound, ShieldOff, RefreshCw, Music } from "lucide-react";
+import { Loader2, KeyRound, ShieldOff, RefreshCw, Music, BookOpen } from "lucide-react";
+import { LEVELS } from "@/lib/levels";
+
+const LEVEL_GROUPS = [
+  { key: "adults", title: "Níveis Adultos", levels: ["A1", "A2", "B1", "B2", "C1", "C2"] },
+  { key: "teens", title: "Níveis Teens", levels: ["T1", "T2", "T3", "T4"] },
+  { key: "kids", title: "Níveis Kids", levels: ["K1", "K2", "K3", "K4"] },
+] as const;
 
 interface CourseRow {
   id: string;
@@ -80,6 +87,8 @@ export default function StudentAccessDialog({
   const [selBst, setSelBst] = useState<Record<string, boolean>>({});
   const [musicLab, setMusicLab] = useState(false);
   const [musicBusy, setMusicBusy] = useState(false);
+  const [booksAccess, setBooksAccess] = useState(true);
+  const [levels, setLevels] = useState<string[]>([...LEVELS]);
 
   const loadMusicLab = useCallback(async () => {
     if (!userId) return;
@@ -91,9 +100,31 @@ export default function StudentAccessDialog({
     setMusicLab(!!data);
   }, [userId]);
 
+  const loadExtras = useCallback(async () => {
+    if (!userId) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("has_books_access, allowed_levels")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setBooksAccess((data as any)?.has_books_access !== false);
+    const lv = (data as any)?.allowed_levels as string[] | null;
+    setLevels(lv && lv.length > 0 ? lv : [...LEVELS]);
+  }, [userId]);
+
   useEffect(() => {
-    if (open) loadMusicLab();
-  }, [open, loadMusicLab]);
+    if (open) {
+      loadMusicLab();
+      loadExtras();
+    }
+  }, [open, loadMusicLab, loadExtras]);
+
+  const toggleLevel = (lv: string) =>
+    setLevels((s) => (s.includes(lv) ? s.filter((x) => x !== lv) : [...s, lv]));
+  const setGroupLevels = (group: readonly string[], value: boolean) =>
+    setLevels((s) =>
+      value ? Array.from(new Set([...s, ...group])) : s.filter((x) => !group.includes(x)),
+    );
 
   const toggleMusicLab = async (value: boolean) => {
     if (!userId) {
@@ -191,16 +222,24 @@ export default function StudentAccessDialog({
     const toRevokeCourses = [...activeCourseIds].filter((id) => !wantedCourses.includes(id));
     const toRevokeBst = [...activeBstIds].filter((id) => !wantedBst.includes(id));
 
-    if (
-      toGrantCourses.length + toGrantBst.length + toRevokeCourses.length + toRevokeBst.length ===
-      0
-    ) {
-      toast.info("Nenhuma alteração para aplicar.");
-      return;
-    }
-
     setBusy("grant");
     try {
+      // Conteúdos extras (Estórias Curtas) + níveis liberados
+      {
+        const { data, error } = await supabase.functions.invoke("grant-access-admin", {
+          body: {
+            email,
+            accesses: [],
+            course_ids: [],
+            bst_product_ids: [],
+            books_access: booksAccess,
+            allowed_levels: levels,
+            grant: true,
+          },
+        });
+        if (error || (data as { error?: string })?.error)
+          throw new Error((data as { error?: string })?.error ?? "Erro ao salvar níveis");
+      }
       if (toGrantCourses.length || toGrantBst.length) {
         const { data, error } = await supabase.functions.invoke("grant-access-admin", {
           body: {
@@ -397,17 +436,86 @@ export default function StudentAccessDialog({
               </div>
             )}
 
-            <div className="rounded-lg border border-border p-3">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <Checkbox
-                  checked={musicLab}
-                  disabled={musicBusy || !userId}
-                  onCheckedChange={(v) => toggleMusicLab(!!v)}
-                />
-                <Music className="h-4 w-4 text-primary" />
-                <span>Liberar Cantaê</span>
-              </label>
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <Label className="text-xs uppercase text-muted-foreground">Conteúdos extras</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm cursor-pointer hover:bg-muted/40">
+                  <Checkbox
+                    checked={musicLab}
+                    disabled={musicBusy || !userId}
+                    onCheckedChange={(v) => toggleMusicLab(!!v)}
+                  />
+                  <Music className="h-4 w-4 text-primary" />
+                  <span>Cantaê (Music Lab)</span>
+                </label>
+                <label className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm cursor-pointer hover:bg-muted/40">
+                  <Checkbox
+                    checked={booksAccess}
+                    disabled={!userId}
+                    onCheckedChange={(v) => setBooksAccess(!!v)}
+                  />
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <span>Estórias Curtas (Todos os níveis)</span>
+                </label>
+              </div>
             </div>
+
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div>
+                <Label className="text-xs uppercase text-muted-foreground">Níveis liberados</Label>
+                <p className="text-xs text-muted-foreground">
+                  Somente os níveis selecionados aparecerão para o aluno nas IAs, Cantaê e Estórias
+                  Curtas. Selecionar todos mantém o acesso completo.
+                </p>
+              </div>
+              {LEVEL_GROUPS.map((g) => (
+                <div key={g.key} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase text-muted-foreground">
+                      {g.title}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:underline"
+                        onClick={() => setGroupLevels(g.levels, true)}
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:underline"
+                        onClick={() => setGroupLevels(g.levels, false)}
+                      >
+                        Nenhum
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {g.levels.map((lv) => (
+                      <button
+                        key={lv}
+                        type="button"
+                        onClick={() => toggleLevel(lv)}
+                        className={`w-11 h-9 rounded-full text-xs font-bold border ${
+                          levels.includes(lv)
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background hover:bg-muted"
+                        }`}
+                      >
+                        {lv}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {levels.length === 0 && (
+                <p className="text-xs text-destructive">
+                  Nenhum nível selecionado: o aluno não verá conteúdo por nível.
+                </p>
+              )}
+            </div>
+
 
             <div className="space-y-4">
               {grouped.map((g) => (

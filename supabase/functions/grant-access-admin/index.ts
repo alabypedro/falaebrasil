@@ -65,13 +65,26 @@ Deno.serve(async (req) => {
     const planTier = body.plan_tier ? String(body.plan_tier) : null;
     const grant = body.grant !== false; // default true
 
+    const ALL_LEVELS = [
+      "A1","A2","B1","B2","C1","C2","T1","T2","T3","T4","K1","K2","K3","K4",
+    ];
+    const hasBooksFlag = typeof body.books_access === "boolean";
+    const booksAccess = body.books_access === true;
+    const hasLevels = Array.isArray(body.allowed_levels);
+    const allowedLevels = (Array.isArray(body.allowed_levels) ? body.allowed_levels : [])
+      .map((x: unknown) => String(x).toUpperCase())
+      .filter((x: string) => ALL_LEVELS.includes(x));
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return jsonResponse({ error: "Email inválido" }, 400);
     }
     const validAccesses = accesses.filter((a): a is AccessField =>
       (ACCESS_FIELDS as readonly string[]).includes(a)
     );
-    if (validAccesses.length === 0 && courseIds.length === 0 && bstProductIds.length === 0) {
+    if (
+      validAccesses.length === 0 && courseIds.length === 0 && bstProductIds.length === 0 &&
+      !hasBooksFlag && !hasLevels
+    ) {
       return jsonResponse({ error: "Selecione ao menos um acesso." }, 400);
     }
 
@@ -130,8 +143,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    const updates: Record<string, boolean> = {};
+    const updates: Record<string, unknown> = {};
     for (const f of validAccesses) updates[f] = grant;
+    if (hasBooksFlag) updates.has_books_access = booksAccess;
+    if (hasLevels) {
+      updates.allowed_levels =
+        allowedLevels.length === 0 || allowedLevels.length === ALL_LEVELS.length
+          ? null
+          : allowedLevels;
+    }
     if (Object.keys(updates).length > 0) {
       const { error: upErr } = await admin
         .from("profiles")
