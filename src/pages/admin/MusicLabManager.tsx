@@ -631,9 +631,10 @@ export default function MusicLabManager() {
 
               <div className="sm:col-span-2 rounded-lg border border-primary/40 bg-primary/5 p-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground max-w-md">
-                  Cole o link da música acima e gere automaticamente as lacunas da letra e o
-                  vocabulário. Você pode revisar tudo antes de salvar.
+                  Cole o link da música acima e gere automaticamente as duas atividades: as lacunas do
+                  Modo Escuta e o Vocabulário &amp; Expressões. Você pode revisar tudo antes de salvar.
                 </p>
+
                 <Button onClick={autofill} disabled={generating}>
                   {generating ? (
                     <Loader2 className="h-4 w-4 mr-1 animate-spin" />
