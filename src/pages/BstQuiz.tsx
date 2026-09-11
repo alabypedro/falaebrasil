@@ -87,6 +87,14 @@ export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: s
     );
   }
 
+  const sortedQuizzes = [...quizzes].sort((a, b) => {
+    const unitA = a.unit ?? 0;
+    const unitB = b.unit ?? 0;
+    if (unitA !== unitB) return unitA - unitB;
+    if (a.display_order !== b.display_order) return (a.display_order ?? 0) - (b.display_order ?? 0);
+    return a.title.localeCompare(b.title);
+  });
+
   return (
     <div className="space-y-4">
       <div>
@@ -103,35 +111,26 @@ export default function BstQuiz({ bstProductId, level, unit }: { bstProductId: s
           {unit ? `Nenhum quiz disponível na Unit ${unit} ainda.` : "Nenhum quiz disponível neste produto ainda."}
         </CardContent></Card>
       ) : (
-        <div className="space-y-5">
-          {[...new Set(quizzes.map((q) => q.unit ?? 0))].map((u) => (
-            <div key={u} className="space-y-2">
-              {!unit && (
-                <h3 className="text-sm font-semibold text-muted-foreground">
-                  {u > 0 ? `Unit ${u}` : "Geral"}
-                </h3>
-              )}
-              <ol className="space-y-2">
-                {quizzes.filter((q) => (q.unit ?? 0) === u).map((q, i) => (
-                  <li key={q.id}>
-                    <button
-                      onClick={() => setActive(q)}
-                      className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
-                    >
-                      <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
-                      <span className="flex-1 min-w-0">
-                        <span className="block text-sm font-semibold text-foreground">{q.title}</span>
-                        <span className="block text-xs text-muted-foreground">Nota mínima: {q.passing_score}%</span>
-                      </span>
-                      <Badge variant="outline" className="shrink-0">{q.level}</Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </div>
+        <ol className="space-y-2">
+          {sortedQuizzes.map((q, i) => (
+            <li key={q.id}>
+              <button
+                onClick={() => setActive(q)}
+                className="w-full flex items-center gap-4 rounded-lg border bg-card p-4 text-left hover:border-primary hover:bg-muted/40 transition"
+              >
+                <span className="text-sm font-mono text-muted-foreground w-6 shrink-0">{i + 1}.</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">
+                    {q.unit ? `Unit ${q.unit} — ` : ""}{q.title}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">Nota mínima: {q.passing_score}%</span>
+                </span>
+                <Badge variant="outline" className="shrink-0">{q.level}</Badge>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
     </div>
   );
