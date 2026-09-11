@@ -66,6 +66,14 @@ Deno.serve(async (req) => {
       (x: unknown) => String(x),
     );
     const planTier = body.plan_tier ? String(body.plan_tier) : null;
+    const musicLab = body.music_lab !== false;
+    const booksAccess = body.books_access !== false;
+    const ALL_LEVELS = [
+      "A1","A2","B1","B2","C1","C2","T1","T2","T3","T4","K1","K2","K3","K4",
+    ];
+    const allowedLevels = (Array.isArray(body.allowed_levels) ? body.allowed_levels : [])
+      .map((x: unknown) => String(x).toUpperCase())
+      .filter((x: string) => ALL_LEVELS.includes(x));
     const role = String(body.role ?? "student").toLowerCase() === "teacher" ? "teacher" : "student";
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -149,6 +157,8 @@ Deno.serve(async (req) => {
     if (effectiveTier && ["open", "pro", "vip", "kids", "teens", "bst"].includes(effectiveTier)) {
       updates.plan_tier = effectiveTier;
     }
+    updates.has_books_access = booksAccess;
+    updates.allowed_levels = allowedLevels.length > 0 ? allowedLevels : null;
     if (Object.keys(updates).length > 0) {
       const { error: pErr } = await admin.from("profiles").update(updates).eq("user_id", foundId);
       if (pErr) throw pErr;
@@ -170,6 +180,16 @@ Deno.serve(async (req) => {
         { onConflict: "user_id,product_id" },
       );
       if (bErr) throw bErr;
+    }
+
+    // Cantaê (Music Lab)
+    if (musicLab) {
+      const { error: mErr } = await admin
+        .from("music_lab_access")
+        .upsert({ user_id: foundId, source: "admin" }, { onConflict: "user_id" });
+      if (mErr) throw mErr;
+    } else {
+      await admin.from("music_lab_access").delete().eq("user_id", foundId);
     }
 
     if (effectiveTier === "bst") await applyBstOnlyTier(admin, foundId);
