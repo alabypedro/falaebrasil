@@ -26,23 +26,20 @@ export default function Promo() {
     if (!code) return;
     setLoading(true);
     supabase
-      .from("payment_product_coupons")
-      .select("code, checkout_url, price_cents, payment_products!inner(name, description, price_cents, type, active)")
-      .eq("code", code.toUpperCase())
-      .eq("active", true)
+      .rpc("get_coupon_by_code", { _code: code })
       .maybeSingle()
       .then(({ data }) => {
-        if (data && (data as any).payment_products?.active) {
-          const p = (data as any).payment_products;
+        if (data) {
+          const d = data as any;
           setPromo({
-            code: (data as any).code,
-            checkout_url: (data as any).checkout_url,
-            price_cents: (data as any).price_cents,
+            code: d.code,
+            checkout_url: d.checkout_url,
+            price_cents: d.price_cents,
             product: {
-              name: p.name,
-              description: p.description,
-              price_cents: p.price_cents,
-              type: p.type,
+              name: d.product_name,
+              description: d.product_description,
+              price_cents: d.product_price_cents,
+              type: d.product_type,
             },
           });
         }
