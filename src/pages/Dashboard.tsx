@@ -154,26 +154,26 @@ export default function Dashboard() {
       </div>
 
       {/* AI quick-access + Courses */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 animate-fade-up">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3 animate-fade-up">
         <button
           onClick={() => navigate("/courses")}
-          className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition"
+          className="group flex flex-col items-center gap-1.5 sm:gap-2 rounded-xl border border-border/60 bg-card p-2 sm:p-3 text-center hover:border-primary hover:bg-primary/5 transition"
         >
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-            <GradIcon className="h-5 w-5 text-primary" />
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+            <GradIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <span className="text-sm font-semibold text-foreground leading-tight">Cursos FB!</span>
-          <span className="text-[11px] text-muted-foreground tabular-nums">Acessar</span>
+          <span className="text-[11px] sm:text-sm font-semibold text-foreground leading-tight">Cursos FB!</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground tabular-nums">Acessar</span>
         </button>
 
         <Dialog open={practiceOpen} onOpenChange={setPracticeOpen}>
           <DialogTrigger asChild>
-            <button className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-                <Brain className="h-5 w-5 text-primary" />
+            <button className="group flex flex-col items-center gap-1.5 sm:gap-2 rounded-xl border border-border/60 bg-card p-2 sm:p-3 text-center hover:border-primary hover:bg-primary/5 transition">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground leading-tight">Praticaê (IAs)</span>
-              <span className="text-[11px] text-muted-foreground tabular-nums">Treinar</span>
+              <span className="text-[11px] sm:text-sm font-semibold text-foreground leading-tight">Praticaê (IAs)</span>
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground tabular-nums">Treinar</span>
             </button>
           </DialogTrigger>
           <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
@@ -208,12 +208,12 @@ export default function Dashboard() {
 
         <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
           <DialogTrigger asChild>
-            <button className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-                <Library className="h-5 w-5 text-primary" />
+            <button className="group flex flex-col items-center gap-1.5 sm:gap-2 rounded-xl border border-border/60 bg-card p-2 sm:p-3 text-center hover:border-primary hover:bg-primary/5 transition">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <Library className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground leading-tight">Bibliotecaê</span>
-              <span className="text-[11px] text-muted-foreground tabular-nums">Acessar</span>
+              <span className="text-[11px] sm:text-sm font-semibold text-foreground leading-tight">Bibliotecaê</span>
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground tabular-nums">Acessar</span>
             </button>
           </DialogTrigger>
           <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden">
@@ -248,13 +248,13 @@ export default function Dashboard() {
 
         <button
           onClick={() => navigate("/music-lab")}
-          className="group flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center hover:border-primary hover:bg-primary/5 transition"
+          className="group flex flex-col items-center gap-1.5 sm:gap-2 rounded-xl border border-border/60 bg-card p-2 sm:p-3 text-center hover:border-primary hover:bg-primary/5 transition"
         >
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-            <Music className="h-5 w-5 text-primary" />
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+            <Music className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           </div>
-          <span className="text-sm font-semibold text-foreground leading-tight">Cantaê</span>
-          <span className="text-[11px] text-muted-foreground tabular-nums">{aiXp.musiclab} XP</span>
+          <span className="text-[11px] sm:text-sm font-semibold text-foreground leading-tight">Cantaê</span>
+          <span className="text-[10px] sm:text-[11px] text-muted-foreground tabular-nums">{aiXp.musiclab} XP</span>
         </button>
       </div>
 
