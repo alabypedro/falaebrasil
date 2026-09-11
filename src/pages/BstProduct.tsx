@@ -133,7 +133,7 @@ export default function BstProduct() {
     if (levelMode) {
       if (module0View) { setModule0View(false); return; }
       if (unit) { setUnit(null); setView("home"); return; }
-      if (levelTool) return setLevelTool(null);
+      if (levelTool) { setLevelTool(null); setView("home"); return; }
       if (level) return setLevel(null);
       navigate("/library");
       return;
