@@ -27,6 +27,7 @@ export default function ListeningLab() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { levels: allowedLevels } = useAllowedLevels();
   const [lessons, setLessons] = useState<ListeningLesson[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<ListeningLesson | null>(null);
   const [loading, setLoading] = useState(true);

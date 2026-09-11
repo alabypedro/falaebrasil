@@ -168,6 +168,10 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [topicLoading, setTopicLoading] = useState(false);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<Level>('A1');
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(selectedLevel)) setSelectedLevel(allowedLevels[0] as Level);
+  }, [allowedLevels, selectedLevel]);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {

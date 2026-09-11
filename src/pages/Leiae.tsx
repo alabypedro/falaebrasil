@@ -32,6 +32,10 @@ export default function Leiae({
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
   const [level, setLevel] = useState<Level>("A1");
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(level)) setLevel(allowedLevels[0] as Level);
+  }, [allowedLevels, level]);
   const [items, setItems] = useState<LeiaeText[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const { open, loading } = useLeiae("pt-BR");

@@ -100,6 +100,10 @@ export default function VoiceLab() {
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [topicLoading, setTopicLoading] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<string>("A1");
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(selectedLevel)) setSelectedLevel(allowedLevels[0]);
+  }, [allowedLevels, selectedLevel]);
 
   const [feedback, setFeedback] = useState<FeedbackScores | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);

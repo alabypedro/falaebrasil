@@ -65,6 +65,7 @@ export default function MusicLab() {
   const [hasAccess, setHasAccess] = useState(true);
   const [search, setSearch] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("all");
+  const { levels: allowedLevels } = useAllowedLevels();
   const [selected, setSelected] = useState<Song | null>(null);
 
   const [blanks, setBlanks] = useState<Blank[]>([]);

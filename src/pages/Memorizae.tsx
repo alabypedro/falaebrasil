@@ -57,6 +57,10 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
   const [decks, setDecks] = useState<Deck[]>([]);
   const [courseLevelById, setCourseLevelById] = useState<Record<string, string>>({});
   const [selectedLevel, setSelectedLevel] = useState<Level>("A1");
+  const { levels: allowedLevels } = useAllowedLevels();
+  useEffect(() => {
+    if (allowedLevels.length && !allowedLevels.includes(selectedLevel)) setSelectedLevel(allowedLevels[0] as Level);
+  }, [allowedLevels, selectedLevel]);
   const [cardsByDeck, setCardsByDeck] = useState<Record<string, Card[]>>({});
   const [reviews, setReviews] = useState<Record<string, ReviewRow>>({});
   const [loading, setLoading] = useState(true);
