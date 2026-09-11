@@ -29,7 +29,6 @@ import Communities from "@/pages/Communities";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
 import MusicLab from "@/pages/MusicLab";
-import MusicLabChoice from "@/pages/MusicLabChoice";
 import Books from "@/pages/Books";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -194,7 +193,6 @@ const App = () => {
                         <Route path="/memorizae" element={<Memorizae />} />
                         <Route path="/leiae" element={<Leiae />} />
                         <Route path="/music-lab" element={<MusicLab />} />
-                        <Route path="/music-lab/choice" element={<MusicLabChoice />} />
                         <Route path="/books" element={<Books />} />
                         <Route
                           path="/professor"

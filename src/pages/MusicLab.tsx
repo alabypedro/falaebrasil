@@ -15,6 +15,7 @@ import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, type MediaType }
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PartyPopper } from "lucide-react";
+import ListenMode from "@/components/musiclab/ListenMode";
 
 interface Song {
   id: string;
@@ -455,9 +456,6 @@ export default function MusicLab() {
         <p className="text-sm text-muted-foreground">
           Aprenda inglês com música: ouça, complete a letra e explore gírias e expressões.
         </p>
-        <Button asChild size="sm" variant="outline">
-          <a href="/music-lab/choice">Modo Escuta: Fill-in-the-Blanks</a>
-        </Button>
       </header>
 
       <div className="space-y-3">
