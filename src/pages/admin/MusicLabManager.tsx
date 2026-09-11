@@ -381,7 +381,7 @@ export default function MusicLabManager() {
             <Music className="h-5 w-5 text-primary" /> Cantaê
           </h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre músicas, lacunas da letra e vocabulário.
+            Cadastre músicas, lacunas do Modo Escuta e vocabulário.
           </p>
         </div>
         <Button onClick={openNew}>
