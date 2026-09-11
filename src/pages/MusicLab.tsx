@@ -141,21 +141,8 @@ export default function MusicLab() {
     });
   }, [songs, search, levelFilter, allowedLevels]);
 
-  const correctCount = blanks.filter((b) => normalize(answers[b.id] ?? "") === normalize(b.answer)).length;
 
-  const handleCheck = async () => {
-    if (blanks.length === 0) return;
-    setChecked(true);
-    if (correctCount === blanks.length) setCongrats(true);
-    const points = correctCount * 5;
-    if (points > 0 && selected) {
-      const res = await awardAiXp("musiclab", points, `musiclab:${selected.id}:${correctCount}`);
-      if (res?.awarded) toast.success(`+${res.points} XP no Cantaê!`);
-      else toast.success(`${correctCount} de ${blanks.length} corretas!`);
-    } else {
-      toast.info("Nenhuma lacuna correta ainda — tente de novo!");
-    }
-  };
+
 
   if (loading) {
     return (
