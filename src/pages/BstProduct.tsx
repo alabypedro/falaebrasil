@@ -36,7 +36,6 @@ const LEVELS = [
   { code: "C2", label: "Avançado" },
 ] as const;
 type LevelCode = typeof LEVELS[number]["code"];
-const UNITS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MODULE0_LEVEL = "M0";
 const MODULE0_TITLE = "Módulo 0 - Tutorial: Como Estudar para Provas";
 
@@ -54,7 +53,6 @@ export default function BstProduct() {
   const [pdfTitle, setPdfTitle] = useState<string>("");
   const [level, setLevel] = useState<LevelCode | null>(null);
   const [levelTool, setLevelTool] = useState<LevelTool | null>(null);
-  const [unit, setUnit] = useState<number | null>(null);
   const [levelPdf, setLevelPdf] = useState<UnitPdf | null>(null);
   const [module0, setModule0] = useState<UnitPdf | null>(null);
   const [module0View, setModule0View] = useState(false);
@@ -132,7 +130,7 @@ export default function BstProduct() {
   const back = () => {
     if (levelMode) {
       if (module0View) { setModule0View(false); return; }
-      if (levelTool) { setLevelTool(null); setUnit(null); setView("home"); return; }
+      if (levelTool) { setLevelTool(null); setView("home"); return; }
       if (level) return setLevel(null);
       navigate("/library");
       return;
@@ -243,7 +241,7 @@ export default function BstProduct() {
                     size="sm"
                     variant="outline"
                     className="w-full"
-                    onClick={() => { setLevelTool("leiae"); setUnit(null); setView("tool"); }}
+                    onClick={() => { setLevelTool("leiae"); setView("tool"); }}
                   >
                     Abrir textos
                   </Button>
@@ -257,7 +255,7 @@ export default function BstProduct() {
                     size="sm"
                     variant="outline"
                     className="w-full"
-                    onClick={() => { setLevelTool("quiz"); setUnit(null); setView("primary"); }}
+                    onClick={() => { setLevelTool("quiz"); setView("primary"); }}
                   >
                     Abrir quizzes
                   </Button>
@@ -352,12 +350,12 @@ export default function BstProduct() {
       {view === "primary" && hasAccess && (
         levelMode && module0View ? null :
         product.primary_tool === "quiz" || levelMode
-          ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
+          ? <BstQuiz bstProductId={product.id} level={levelMode && level ? level : undefined} />
           : <Memorizae bstProductId={product.id} />
       )}
       {view === "tool" && hasAccess && (
         product.secondary_tool === "leiae" || levelMode
-          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} unit={levelMode ? unit ?? undefined : undefined} />
+          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} />
           : <BstFalae bstProductId={product.id} />
       )}
 
