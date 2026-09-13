@@ -11,7 +11,7 @@ import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { LEVELS } from "@/lib/levels";
 import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 import { awardAiXp } from "@/lib/aiXp";
-import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, type MediaType } from "@/lib/musicMedia";
+import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, youtubeWatch, type MediaType } from "@/lib/musicMedia";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PartyPopper } from "lucide-react";
@@ -248,15 +248,29 @@ export default function MusicLab() {
                 <Card className="overflow-hidden border-border/60">
                   <CardContent className="p-0">
                     {activeMedia === "youtube" && ytId ? (
-                      <div className="aspect-video w-full">
-                        <iframe
-                          className="h-full w-full"
-                          src={youtubeEmbed(ytId)}
-                          title={selected.title}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-                          allowFullScreen
-                          loading="lazy"
-                        />
+                      <div>
+                        <div className="aspect-video w-full">
+                          <iframe
+                            className="h-full w-full"
+                            src={youtubeEmbed(ytId)}
+                            title={selected.title}
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                          />
+                        </div>
+                        <div className="px-3 py-2 text-xs text-muted-foreground">
+                          Se o vídeo não tocar aqui,{" "}
+                          <a
+                            href={youtubeWatch(ytId)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline hover:text-accent"
+                          >
+                            abra no YouTube
+                          </a>
+                          .
+                        </div>
                       </div>
                     ) : spId ? (
                       <iframe
