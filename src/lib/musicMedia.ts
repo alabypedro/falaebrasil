@@ -25,8 +25,20 @@ export function detectMedia(url: string): { media_type: MediaType; media_id: str
   return null;
 }
 
-export const youtubeEmbed = (id: string) =>
-  `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1`;
+export const youtubeEmbed = (id: string) => {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const params = new URLSearchParams({
+    rel: "0",
+    modestbranding: "1",
+    playsinline: "1",
+    enablejsapi: "1",
+  });
+  if (origin) params.set("origin", origin);
+  return `https://www.youtube.com/embed/${id}?${params.toString()}`;
+};
+
+/** Link direto para assistir no YouTube (fallback quando o embed é bloqueado). */
+export const youtubeWatch = (id: string) => `https://www.youtube.com/watch?v=${id}`;
 
 export const spotifyEmbed = (id: string) =>
   `https://open.spotify.com/embed/track/${id}?utm_source=generator&theme=0`;
