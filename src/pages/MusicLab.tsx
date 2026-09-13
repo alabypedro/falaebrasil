@@ -11,7 +11,7 @@ import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { LEVELS } from "@/lib/levels";
 import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 import { awardAiXp } from "@/lib/aiXp";
-import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, type MediaType } from "@/lib/musicMedia";
+import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, youtubeWatch, type MediaType } from "@/lib/musicMedia";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PartyPopper } from "lucide-react";
