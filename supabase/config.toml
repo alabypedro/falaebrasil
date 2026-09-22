@@ -21,4 +21,6 @@ project_id = "qiuqmowxwlqnjhlqvxzw"
     verify_jwt = false
   [functions.contract-signed-url]
     verify_jwt = true
+  [functions.send-student-progress]
+    verify_jwt = true
 
