@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation, Music, BookMarked, Library } from "lucide-react";
+import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation, Music, BookMarked, Library, Crown, Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,25 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchAiXpBreakdown, AI_LABELS, type AiSource } from "@/lib/aiXp";
 import { useRoles } from "@/hooks/useRoles";
 
+interface RankingStudent {
+  user_id: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  level: string | null;
+  total_xp: number | null;
+  rank_position: number | null;
+}
+
+function getInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
@@ -21,6 +41,8 @@ export default function Dashboard() {
   const [completedCount, setCompletedCount] = useState(0);
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [ranking, setRanking] = useState<RankingStudent[]>([]);
+  const [rankingLoading, setRankingLoading] = useState(true);
   const [aiXp, setAiXp] = useState<Record<AiSource, number> & { total: number }>({
     memorizae: 0, falae: 0, escutae: 0, escreveae: 0, leiae: 0, musiclab: 0, books: 0, total: 0,
   });
@@ -51,6 +73,29 @@ export default function Dashboard() {
       setCompletedCount((vprog || []).length);
     };
     load();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadRanking = async () => {
+      setRankingLoading(true);
+      const { data, error } = await supabase
+        .from("xp_ranking")
+        .select("user_id, display_name, avatar_url, level, total_xp, rank_position")
+        .order("rank_position", { ascending: true })
+        .limit(5);
+
+      if (error) {
+        console.warn("Não foi possível carregar o ranking de XP", error.message);
+        setRanking([]);
+      } else {
+        setRanking(data ?? []);
+      }
+      setRankingLoading(false);
+    };
+
+    loadRanking();
   }, [user]);
 
   const stats = [
@@ -295,6 +340,117 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      <section className="animate-fade-up" aria-labelledby="xp-ranking-title">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 id="xp-ranking-title" className="text-xl font-display font-bold text-foreground">
+                Ranking de XP
+              </h2>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">Os cinco alunos que estão no topo.</p>
+          </div>
+          <span className="rounded-full border border-border/60 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
+            Top 5
+          </span>
+        </div>
+
+        <Card className="overflow-hidden border-border/50 bg-card">
+          <CardContent className="p-4 sm:p-6">
+            {rankingLoading ? (
+              <div className="grid min-h-52 grid-cols-3 items-end gap-2 sm:gap-4" aria-label="Carregando ranking">
+                {[1, 2, 3].map((item) => (
+                  <div key={item} className="flex flex-col items-center gap-3 animate-pulse">
+                    <div className="h-14 w-14 rounded-full bg-muted" />
+                    <div className="h-3 w-20 rounded bg-muted" />
+                    <div className={`w-full rounded-t-lg bg-muted ${item === 2 ? "h-24" : "h-16"}`} />
+                  </div>
+                ))}
+              </div>
+            ) : ranking.length === 0 ? (
+              <div className="flex min-h-40 flex-col items-center justify-center text-center">
+                <Trophy className="mb-3 h-9 w-9 text-muted-foreground" aria-hidden="true" />
+                <p className="font-semibold text-foreground">O pódio está esperando.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Complete atividades para conquistar XP.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 items-end gap-2 sm:gap-4">
+                  {[ranking[1], ranking[0], ranking[2]].map((student, podiumIndex) => {
+                    if (!student) return <div key={`empty-${podiumIndex}`} />;
+                    const place = podiumIndex === 0 ? 2 : podiumIndex === 1 ? 1 : 3;
+                    const isCurrentUser = student.user_id === user?.id;
+                    const name = student.display_name?.trim() || "Aluno";
+                    const podiumHeight = place === 1 ? "min-h-32 sm:min-h-36" : place === 2 ? "min-h-24 sm:min-h-28" : "min-h-20 sm:min-h-24";
+                    const placeStyle = place === 1
+                      ? "border-xp/50 bg-xp/10 text-xp"
+                      : place === 2
+                        ? "border-muted-foreground/35 bg-muted/60 text-foreground"
+                        : "border-warning/40 bg-warning/10 text-warning";
+
+                    return (
+                      <div key={student.user_id ?? place} className="flex min-w-0 flex-col items-center text-center">
+                        <div className="relative mb-2">
+                          {place === 1 && <Crown className="absolute -top-6 left-1/2 h-5 w-5 -translate-x-1/2 text-xp" aria-hidden="true" />}
+                          <Avatar className={`h-12 w-12 border-2 sm:h-16 sm:w-16 ${isCurrentUser ? "border-primary ring-4 ring-primary/15" : "border-border"}`}>
+                            <AvatarImage src={student.avatar_url ?? undefined} alt="" />
+                            <AvatarFallback className="bg-muted text-sm font-bold text-foreground">{getInitials(name)}</AvatarFallback>
+                          </Avatar>
+                          <span className={`absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border bg-card text-xs font-extrabold ${placeStyle}`}>
+                            {place}
+                          </span>
+                        </div>
+                        <p className="w-full truncate text-xs font-semibold text-foreground sm:text-sm" title={name}>
+                          {isCurrentUser ? "Você" : name}
+                        </p>
+                        <p className="mb-3 text-[11px] font-bold tabular-nums text-muted-foreground sm:text-xs">
+                          {(student.total_xp ?? 0).toLocaleString("pt-BR")} XP
+                        </p>
+                        <div className={`flex w-full flex-col items-center justify-center rounded-t-lg border border-b-0 ${podiumHeight} ${placeStyle}`}>
+                          {place === 1 ? <Crown className="h-6 w-6" aria-hidden="true" /> : <Medal className="h-5 w-5" aria-hidden="true" />}
+                          <span className="mt-1 text-xs font-extrabold uppercase">{place}º lugar</span>
+                          <span className="mt-1 text-[10px] font-semibold opacity-75">Nível {student.level ?? "A1"}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {ranking.length > 3 && (
+                  <div className="mt-4 grid gap-2 border-t border-border/50 pt-4 sm:grid-cols-2">
+                    {ranking.slice(3, 5).map((student, index) => {
+                      const place = index + 4;
+                      const isCurrentUser = student.user_id === user?.id;
+                      const name = student.display_name?.trim() || "Aluno";
+                      return (
+                        <div
+                          key={student.user_id ?? place}
+                          className={`flex items-center gap-3 rounded-lg border p-3 ${isCurrentUser ? "border-primary/50 bg-primary/5" : "border-border/50 bg-muted/20"}`}
+                        >
+                          <span className="w-7 text-center text-lg font-extrabold tabular-nums text-muted-foreground">{place}º</span>
+                          <Avatar className="h-9 w-9 border border-border">
+                            <AvatarImage src={student.avatar_url ?? undefined} alt="" />
+                            <AvatarFallback className="bg-muted text-xs font-bold text-foreground">{getInitials(name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-foreground">{isCurrentUser ? "Você" : name}</p>
+                            <p className="text-xs text-muted-foreground">Nível {student.level ?? "A1"}</p>
+                          </div>
+                          <span className="shrink-0 text-sm font-extrabold tabular-nums text-primary">
+                            {(student.total_xp ?? 0).toLocaleString("pt-BR")} XP
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
     </div>
   );
