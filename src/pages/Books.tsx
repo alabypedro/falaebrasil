@@ -78,6 +78,11 @@ export default function Books() {
   }, [quizRows]);
 
 
+  const visibleItems = useMemo(
+    () => items.filter((x) => allowedLevels.includes(x.level)),
+    [items, allowedLevels],
+  );
+
   const levelItems = useMemo(
     () => items.filter((x) => x.level === level && allowedLevels.includes(x.level)),
     [items, level, allowedLevels],
