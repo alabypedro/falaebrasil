@@ -18,7 +18,6 @@ export default function Dashboard() {
   const { profile, user } = useAuth();
   const { t } = useLanguage();
   const { isTeacher } = useRoles();
-  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
