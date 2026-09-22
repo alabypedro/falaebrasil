@@ -15,6 +15,13 @@
       "when": 1790115133619,
       "tag": "0001_exclude_admins_teachers_from_xp_ranking",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790117928521,
+      "tag": "0002_xp_ranking_include_ai_xp",
+      "breakpoints": true
     }
   ]
 }
