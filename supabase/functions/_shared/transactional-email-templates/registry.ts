@@ -1,5 +1,6 @@
 import type { ComponentType } from 'npm:react@18.3.1'
 import { template as evaluationReport } from './evaluation-report.tsx'
+import { template as studentProgressReport } from './student-progress-report.tsx'
 
 export interface TemplateEntry {
   // deno-lint-ignore no-explicit-any
@@ -14,4 +15,5 @@ export interface TemplateEntry {
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'evaluation-report': evaluationReport,
+  'student-progress-report': studentProgressReport,
 }

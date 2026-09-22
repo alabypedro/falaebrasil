@@ -30,7 +30,16 @@ import {
   BookText,
   Package,
   Clock,
+  Mail,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 type AiStat = { xp: number; events: number };
 
@@ -216,6 +225,27 @@ export default function StudentProgressDialog({
   const [perf, setPerf] = useState<Perf | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const sendReport = async (recipient: "student" | "me") => {
+    setSending(true);
+    const { data, error: err } = await supabase.functions.invoke("send-student-progress", {
+      body: { studentId, recipient },
+    });
+    setSending(false);
+    if (err) {
+      toast.error("Não foi possível enviar o relatório por e-mail.");
+      return;
+    }
+    if ((data as any)?.success) {
+      toast.success(`Relatório enviado para ${(data as any).recipient}.`);
+    } else if ((data as any)?.reason === "recipient_suppressed") {
+      toast.error("Este e-mail está bloqueado para envios.");
+    } else {
+      toast.error((data as any)?.error ?? "Não foi possível enviar o relatório.");
+    }
+  };
+
 
   useEffect(() => {
     if (!open || !studentId) return;
@@ -246,9 +276,35 @@ export default function StudentProgressDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">
-            Progresso de {perf?.student.display_name || fallbackName || "aluno"}
-          </DialogTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3 pr-8">
+            <DialogTitle className="text-base">
+              Progresso de {perf?.student.display_name || fallbackName || "aluno"}
+            </DialogTitle>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={sending || !perf}>
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4 mr-1.5" />
+                  )}
+                  Enviar por e-mail
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={!perf?.student.email}
+                  onClick={() => sendReport("student")}
+                >
+                  Enviar para o aluno
+                  {perf?.student.email ? ` (${perf.student.email})` : ""}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => sendReport("me")}>
+                  Enviar para mim
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </DialogHeader>
 
         {loading ? (
