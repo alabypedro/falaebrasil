@@ -276,9 +276,35 @@ export default function StudentProgressDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">
-            Progresso de {perf?.student.display_name || fallbackName || "aluno"}
-          </DialogTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3 pr-8">
+            <DialogTitle className="text-base">
+              Progresso de {perf?.student.display_name || fallbackName || "aluno"}
+            </DialogTitle>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline" disabled={sending || !perf}>
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4 mr-1.5" />
+                  )}
+                  Enviar por e-mail
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={!perf?.student.email}
+                  onClick={() => sendReport("student")}
+                >
+                  Enviar para o aluno
+                  {perf?.student.email ? ` (${perf.student.email})` : ""}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => sendReport("me")}>
+                  Enviar para mim
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </DialogHeader>
 
         {loading ? (
