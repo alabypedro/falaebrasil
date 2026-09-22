@@ -296,32 +296,6 @@ export default function Dashboard() {
         })}
       </div>
 
-      {courseProgress.length > 0 && (
-        <Card className="animate-fade-up border-border/50" style={{ "--delay": "400ms" } as React.CSSProperties}>
-          <CardHeader>
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-gradient-accent animate-pulse" />
-              {t("dashboard.progress")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {courseProgress.map((track, i) => (
-              <div
-                key={track.name}
-                className="space-y-2 animate-fade-up"
-                style={{ "--delay": `${450 + i * 60}ms` } as React.CSSProperties}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-foreground">{track.name}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums font-bold">{track.progress}%</span>
-                </div>
-                <Progress value={track.progress} className="h-2 [&>div]:bg-gradient-accent" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
     </div>
   );
 }
