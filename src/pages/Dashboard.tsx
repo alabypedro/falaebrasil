@@ -412,8 +412,8 @@ export default function Dashboard() {
                             {place}
                           </span>
                         </div>
-                        <p className="w-full truncate text-xs font-semibold text-foreground sm:text-sm" title={name}>
-                          {isCurrentUser ? "Você" : name}
+                        <p className="w-full truncate text-xs font-semibold text-foreground sm:text-sm">
+                          {isCurrentUser ? "Você" : abbreviateName(name)}
                         </p>
                         <p className="mb-3 text-[11px] font-bold tabular-nums text-muted-foreground sm:text-xs">
                           {(student.total_xp ?? 0).toLocaleString("pt-BR")} XP
