@@ -60,7 +60,7 @@ export default function AiProgressPanel({
         .eq("source", source);
 
       if (cancelled) return;
-      const rows = ((data as Array<{ points: number | null; key: string | null }>) || []).filter((row) => {
+      const rows = ((data as unknown as Array<{ points: number | null; key: string | null }>) || []).filter((row) => {
         if (!xpKeyPrefixes?.length) return true;
         return xpKeyPrefixes.some((prefix) => (row.key || "").startsWith(prefix));
       });
