@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { LEVELS, type Level } from "@/lib/levels";
 import { useAllowedLevels } from "@/hooks/useAllowedLevels";
 import InlineQuiz from "@/components/InlineQuiz";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 interface LeiaeText {
   id: string;
@@ -156,6 +157,21 @@ export default function Leiae({
           </div>
         ))}
       </div>
+
+      <AiProgressPanel
+        title={`Progresso da IA Leiaê${bstMode ? " BST" : ""}`}
+        subtitle={bstMode ? "Textos lidos no produto BST selecionado." : `Textos lidos no nível ${level}.`}
+        source="leiae"
+        total={levelItems.length}
+        completedLabel="leituras estimadas"
+        totalLabel="textos"
+        icon={BookText}
+        stats={[
+          { label: "textos disponíveis", value: levelItems.length },
+          { label: "níveis liberados", value: allowedLevels.length },
+          ...(showBstQuizzes ? [{ label: "quizzes vinculados", value: quizzes.length }] : []),
+        ]}
+      />
 
       <Card className="min-w-0 overflow-hidden">
         <CardHeader>

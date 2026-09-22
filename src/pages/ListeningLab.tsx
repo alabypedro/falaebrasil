@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import BackToLessonButton from "@/components/BackToLessonButton";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 interface ListeningLesson {
   id: string;
@@ -293,6 +294,22 @@ export default function ListeningLab() {
               </Button>
             ))}
           </div>
+        </div>
+
+        <div className="mb-6">
+          <AiProgressPanel
+            title="Progresso da IA Escutaê"
+            subtitle={filterLevel === "all" ? "Lições de escuta concluídas em todos os níveis liberados." : `Lições de escuta concluídas no nível ${filterLevel}.`}
+            source="escutae"
+            total={filteredLessons.length}
+            completedLabel="lições estimadas"
+            totalLabel="lições"
+            icon={Headphones}
+            stats={[
+              { label: "lições disponíveis", value: filteredLessons.length },
+              { label: "níveis liberados", value: allowedLevels.length },
+            ]}
+          />
         </div>
 
         {filteredLessons.length === 0 ? (

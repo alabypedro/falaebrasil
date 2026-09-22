@@ -8,6 +8,7 @@ import FeedbackCard, { type FeedbackScores } from "@/components/FeedbackCard";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { toast } from "sonner";
 import { awardAiXp } from "@/lib/aiXp";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 interface Script {
   id: string;
@@ -189,6 +190,20 @@ export default function BstFalae({ bstProductId }: { bstProductId: string }) {
           Leia em voz alta os scripts deste produto e receba notas de pronúncia, fluência e prosódia.
         </p>
       </div>
+      <AiProgressPanel
+        title="Progresso da IA Falaê BST"
+        subtitle="Scripts deste produto praticados com avaliação de pronúncia."
+        source="falae"
+        xpKeyPrefixes={["bst-falae:"]}
+        total={scripts.length}
+        completedLabel="scripts estimados"
+        totalLabel="scripts"
+        icon={Mic}
+        stats={[
+          { label: "scripts disponíveis", value: scripts.length },
+          { label: "níveis no produto", value: new Set(scripts.map((script) => script.level)).size || "—" },
+        ]}
+      />
       {scripts.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Nenhum script disponível neste produto ainda.</CardContent></Card>
       ) : (

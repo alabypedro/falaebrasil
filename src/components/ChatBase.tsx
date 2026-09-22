@@ -17,6 +17,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import EmailResultButton from "@/components/EmailResultButton";
 import { LEVEL_LIST, type Level } from "@/lib/levels";
 import { useAllowedLevels } from "@/hooks/useAllowedLevels";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 function parseFeedbackForEmail(content: string) {
   const clean = content.replace(/\*\*/g, "").replace(/__/g, "");
@@ -168,6 +169,7 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   const [topicLoading, setTopicLoading] = useState(false);
   const [recentTopics, setRecentTopics] = useState<string[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<Level>('A1');
+  const [writingProgress, setWritingProgress] = useState({ count: 0, best: 0, avg: 0 });
   const { levels: allowedLevels } = useAllowedLevels();
   useEffect(() => {
     if (allowedLevels.length && !allowedLevels.includes(selectedLevel)) setSelectedLevel(allowedLevels[0] as Level);
@@ -189,6 +191,29 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
   };
 
   const { isRecording, startRecording, stopRecording, recordings } = useAudioRecorder();
+
+  useEffect(() => {
+    if (!user || mode !== 'writing') return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('fb_cefr_metrics')
+        .select('score')
+        .eq('user_id', user.id)
+        .eq('mode', 'writing');
+      if (cancelled) return;
+      const scores = ((data || []) as Array<{ score: number | null }>).map((row) => row.score || 0).filter((score) => score > 0);
+      const total = scores.reduce((sum, score) => sum + score, 0);
+      setWritingProgress({
+        count: scores.length,
+        best: scores.length ? Math.max(...scores) : 0,
+        avg: scores.length ? Math.round((total / scores.length) * 10) / 10 : 0,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -555,6 +580,22 @@ export default function ChatBase({ mode, title, description }: { mode: 'writing'
       </div>
       {mode === 'writing' && (
         <div className="mb-2 sm:mb-4 space-y-2 sm:space-y-3 shrink-0">
+          <AiProgressPanel
+            title="Progresso da IA Escreveaê"
+            subtitle="Textos enviados para correção e evolução da sua escrita."
+            source="escreveae"
+            completed={Math.min(writingProgress.count, 12)}
+            total={12}
+            completedLabel="textos corrigidos"
+            totalLabel="textos-meta"
+            icon={MessageSquareText}
+            stats={[
+              { label: "textos enviados", value: writingProgress.count },
+              { label: "melhor nota", value: writingProgress.best ? `${writingProgress.best}/100` : "—" },
+              { label: "média", value: writingProgress.avg ? `${writingProgress.avg}/100` : "—" },
+              { label: "níveis liberados", value: allowedLevels.length },
+            ]}
+          />
           <div className="flex flex-wrap gap-1 sm:gap-1.5 justify-center">
             {(Object.keys(levels) as Array<keyof typeof levels>).filter((lv) => allowedLevels.includes(lv)).map((level) => (
               <Button
