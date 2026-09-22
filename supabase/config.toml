@@ -19,4 +19,6 @@ project_id = "qiuqmowxwlqnjhlqvxzw"
     verify_jwt = true
   [functions.preview-transactional-email]
     verify_jwt = false
+  [functions.contract-signed-url]
+    verify_jwt = true
 
