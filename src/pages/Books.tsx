@@ -13,6 +13,7 @@ import ChapterAudioPlayer from "@/components/books/ChapterAudioPlayer";
 import InlineQuiz from "@/components/InlineQuiz";
 import { LEVELS, type Level } from "@/lib/levels";
 import { useAllowedLevels, useBooksAccess } from "@/hooks/useAllowedLevels";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 
 interface BookText {
@@ -76,6 +77,11 @@ export default function Books() {
     return map;
   }, [quizRows]);
 
+
+  const visibleItems = useMemo(
+    () => items.filter((x) => allowedLevels.includes(x.level)),
+    [items, allowedLevels],
+  );
 
   const levelItems = useMemo(
     () => items.filter((x) => x.level === level && allowedLevels.includes(x.level)),
@@ -187,6 +193,21 @@ export default function Books() {
           </div>
         ))}
       </div>
+
+      <AiProgressPanel
+        title="Progresso da IA Leiaê"
+        subtitle={`Leituras de Estórias Curtas no nível ${level}.`}
+        source="books"
+        total={visibleItems.length}
+        completedLabel="leituras estimadas"
+        totalLabel="livros"
+        icon={BookText}
+        stats={[
+          { label: "livros disponíveis", value: visibleItems.length },
+          { label: "níveis liberados", value: allowedLevels.length },
+          { label: "quizzes vinculados", value: quizRows.length },
+        ]}
+      />
 
       <Card>
         <CardHeader>
