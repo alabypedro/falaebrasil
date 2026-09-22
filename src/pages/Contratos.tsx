@@ -63,7 +63,7 @@ export default function Contratos() {
               </CardHeader>
               <CardContent>
                 {c.file_path ? (
-                  <Button className="w-full" onClick={() => openContract(c.file_path!)}>
+                  <Button className="w-full" onClick={() => openContract(c.id)}>
                     <Download className="h-4 w-4 mr-1.5" />
                     {t("contracts.open")}
                   </Button>
