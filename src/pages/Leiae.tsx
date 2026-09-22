@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { BookText, Sparkles, Languages, Volume2, Image as ImageIcon, Loader2, Play } from "lucide-react";
+import { ArrowLeft, BookText, Languages, Volume2, Image as ImageIcon, Loader2, Play, HelpCircle } from "lucide-react";
 import { useLeiae } from "@/hooks/useLeiae";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 import { LEVELS, type Level } from "@/lib/levels";
 import { useAllowedLevels } from "@/hooks/useAllowedLevels";
+import InlineQuiz from "@/components/InlineQuiz";
 
 interface LeiaeText {
   id: string;
@@ -22,11 +23,20 @@ interface LeiaeText {
   unit?: number | null;
 }
 
+interface BstQuizRow {
+  id: string;
+  title: string;
+  passing_score: number;
+  display_order: number;
+  unit: number | null;
+}
+
 export default function Leiae({
   bstProductId,
   fixedLevel,
   unit,
-}: { bstProductId?: string; fixedLevel?: Level; unit?: number } = {}) {
+  showBstQuizzes = false,
+}: { bstProductId?: string; fixedLevel?: Level; unit?: number; showBstQuizzes?: boolean } = {}) {
   const bstMode = !!bstProductId;
   const { t } = useLanguage();
   const [text, setText] = useState("");
@@ -37,20 +47,33 @@ export default function Leiae({
     if (allowedLevels.length && !allowedLevels.includes(level)) setLevel(allowedLevels[0] as Level);
   }, [allowedLevels, level]);
   const [items, setItems] = useState<LeiaeText[]>([]);
+  const [quizzes, setQuizzes] = useState<BstQuizRow[]>([]);
+  const [activeQuiz, setActiveQuiz] = useState<BstQuizRow | null>(null);
+  const [activeQuizText, setActiveQuizText] = useState<LeiaeText | null>(null);
   const [loadingItems, setLoadingItems] = useState(true);
   const { open, loading } = useLeiae("pt-BR");
 
   useEffect(() => {
     (async () => {
       const q = supabase.from("leiae_texts").select("*");
-      const { data } = await (bstMode
+      const itemsPromise = (bstMode
         ? q.eq("bst_product_id", bstProductId)
         : q.is("bst_product_id", null)
       ).order("display_order");
+      const quizPromise = showBstQuizzes && bstProductId
+        ? supabase
+            .from("quizzes")
+            .select("id,title,passing_score,display_order,unit")
+            .eq("bst_product_id", bstProductId)
+            .eq("level", fixedLevel ?? level)
+            .order("display_order")
+        : Promise.resolve({ data: [] });
+      const [{ data }, { data: quizData }] = await Promise.all([itemsPromise, quizPromise]);
       setItems((data as LeiaeText[]) || []);
+      setQuizzes((quizData as BstQuizRow[]) || []);
       setLoadingItems(false);
     })();
-  }, [bstProductId]);
+  }, [bstProductId, bstMode, fixedLevel, level, showBstQuizzes]);
 
   const levelItems = useMemo(() => {
     let list = items;
@@ -82,6 +105,29 @@ export default function Leiae({
   const openSaved = (x: LeiaeText) => {
     open([{ title: x.title, content: x.content, lang: "en", mimeType: "text/plain" }]);
   };
+
+  const quizForText = (x: LeiaeText) => quizzes.find((quiz) => quiz.unit === x.unit);
+
+  if (activeQuiz && activeQuizText) {
+    return (
+      <div className="space-y-4 max-w-4xl">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 text-muted-foreground hover:text-foreground"
+          onClick={() => { setActiveQuiz(null); setActiveQuizText(null); }}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" /> Todos os textos
+        </Button>
+        <InlineQuiz
+          quizId={activeQuiz.id}
+          hasNext={false}
+          contextText={activeQuizText.content}
+          contextTitle={activeQuizText.title}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -146,22 +192,35 @@ export default function Leiae({
             </p>
           ) : (
             <div className="grid gap-2">
-              {levelItems.map((x) => (
-                <button
-                  key={x.id}
-                  onClick={() => openSaved(x)}
-                  className="flex items-center gap-3 rounded-lg border bg-card p-3 text-left hover:border-primary hover:bg-muted/40 transition"
-                >
-                  <div className="flex-1 min-w-0">
+              {levelItems.map((x) => {
+                const linkedQuiz = quizForText(x);
+                return (
+                <div key={x.id} className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center">
+                  <button onClick={() => openSaved(x)} className="flex-1 min-w-0 text-left">
                     <div className="font-medium text-sm truncate">
                       {bstMode && x.unit ? `Unit ${x.unit} — ` : ""}{x.title}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{x.content.slice(0, 120)}…</div>
+                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className="shrink-0">{x.level}</Badge>
+                    <Button size="sm" onClick={() => openSaved(x)} className="shrink-0">
+                      <Play className="h-4 w-4 mr-1" /> Ler
+                    </Button>
+                    {linkedQuiz && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="shrink-0"
+                        onClick={() => { setActiveQuiz(linkedQuiz); setActiveQuizText(x); }}
+                      >
+                        <HelpCircle className="h-4 w-4 mr-1" /> Quiz
+                      </Button>
+                    )}
                   </div>
-                  <Badge variant="outline" className="shrink-0">{x.level}</Badge>
-                  <Play className="h-4 w-4 text-primary shrink-0" />
-                </button>
-              ))}
+                </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
