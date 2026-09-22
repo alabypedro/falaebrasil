@@ -19,6 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { LEVEL_LIST } from "@/lib/levels";
 import { useAllowedLevels } from "@/hooks/useAllowedLevels";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 type NormalizedAzureResponse = {
   status?: string;
@@ -112,6 +113,7 @@ export default function VoiceLab() {
   const [promptsLoading, setPromptsLoading] = useState(true);
   const [analyzedId, setAnalyzedId] = useState<string | null>(null);
   const [isNewHighScore, setIsNewHighScore] = useState(false);
+  const [voiceProgress, setVoiceProgress] = useState({ total: 0, scripted: 0, unscripted: 0, best: 0 });
 
   // Course selector + phrases of the active course
   const [courses, setCourses] = useState<CourseOption[]>([]);
@@ -126,6 +128,32 @@ export default function VoiceLab() {
   const unscriptedBalance = profile?.unscripted_balance ?? 0;
   const scriptedExhausted = scriptedBalance <= 0;
   const unscriptedExhausted = unscriptedBalance <= 0;
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("voice_sessions")
+        .select("mode, accuracy_score, fluency_score, prosody_score")
+        .eq("user_id", user.id);
+      if (cancelled) return;
+      const rows = (data || []) as Array<{ mode: string | null; accuracy_score: number | null; fluency_score: number | null; prosody_score: number | null }>;
+      const best = rows.reduce((max, row) => {
+        const avg = Math.round((((row.accuracy_score || 0) + (row.fluency_score || 0) + (row.prosody_score || 0)) / 3) * 10) / 10;
+        return Math.max(max, avg);
+      }, 0);
+      setVoiceProgress({
+        total: rows.length,
+        scripted: rows.filter((row) => row.mode === "scripted").length,
+        unscripted: rows.filter((row) => row.mode === "unscripted").length,
+        best,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   // Load all published courses for the selector
   useEffect(() => {
@@ -527,6 +555,24 @@ export default function VoiceLab() {
         </div>
         <BackToLessonButton className="shrink-0" />
       </div>
+
+      <AiProgressPanel
+        title="Progresso da IA Falaê"
+        subtitle="Práticas de fala concluídas nas modalidades Scripted e Unscripted."
+        source="falae"
+        xpKeyPrefixes={["falae:"]}
+        completed={Math.min(voiceProgress.total, 20)}
+        total={20}
+        completedLabel="práticas feitas"
+        totalLabel="práticas-meta"
+        icon={Mic}
+        stats={[
+          { label: "scripted", value: voiceProgress.scripted },
+          { label: "unscripted", value: voiceProgress.unscripted },
+          { label: "melhor nota", value: voiceProgress.best ? `${voiceProgress.best}/100` : "—" },
+          { label: "frases do curso atual", value: coursePhrases.length },
+        ]}
+      />
 
       {/* AI Consumption panel */}
       <Card>

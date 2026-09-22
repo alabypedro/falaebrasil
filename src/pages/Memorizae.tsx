@@ -9,6 +9,7 @@ import { Brain, ArrowLeft, Loader2, Volume2, Sparkles, Trophy, Timer, Target } f
 import { toast } from "sonner";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { useLanguage } from "@/contexts/LanguageContext";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 interface Deck {
   id: string;
@@ -140,6 +141,22 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
     [reviews]
   );
   const totalReviews = Object.keys(reviews).length;
+
+  const visibleDecks = useMemo(
+    () => bstMode
+      ? decks
+      : decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false)),
+    [bstMode, courseLevelById, decks, selectedLevel],
+  );
+
+  const visibleCardIds = useMemo(
+    () => visibleDecks.flatMap((deck) => (cardsByDeck[deck.id] || []).map((card) => card.id)),
+    [cardsByDeck, visibleDecks],
+  );
+
+  const visibleReviewRows = visibleCardIds.map((id) => reviews[id]).filter(Boolean) as ReviewRow[];
+  const visibleMastered = visibleReviewRows.filter((r) => r.interval_days >= 21 && r.ease_factor >= 2.5).length;
+  const visibleDue = visibleReviewRows.filter((r) => new Date(r.due_at).getTime() <= Date.now()).length;
 
   const deckStats = (deckId: string) => {
     const cards = cardsByDeck[deckId] || [];
@@ -389,6 +406,22 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
         </div>
       </div>
 
+      <AiProgressPanel
+        title={`Progresso da IA Memorizaê${bstMode ? " BST" : ""}`}
+        subtitle={bstMode ? "Cartas revisadas neste produto BST." : `Cartas revisadas no nível ${selectedLevel}.`}
+        source="memorizae"
+        completed={visibleReviewRows.length}
+        total={visibleCardIds.length}
+        completedLabel="cartas revisadas"
+        totalLabel="cartas"
+        icon={Brain}
+        stats={[
+          { label: "cartas dominadas", value: visibleMastered },
+          { label: "para revisar hoje", value: visibleDue },
+          { label: "baralhos disponíveis", value: visibleDecks.length },
+        ]}
+      />
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
@@ -456,9 +489,7 @@ export default function Memorizae({ bstProductId }: { bstProductId?: string } = 
         </div>
         )}
         {(() => {
-          const filtered = bstMode
-            ? decks
-            : decks.filter((d) => (d.course_id ? courseLevelById[d.course_id] === selectedLevel : false));
+          const filtered = visibleDecks;
           if (filtered.length === 0) {
             return (
               <Card>
