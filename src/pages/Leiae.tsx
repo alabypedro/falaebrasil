@@ -140,7 +140,7 @@ export default function Leiae({
         <p className="text-sm text-muted-foreground mt-1">{t("leiae.subtitle")}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { icon: Languages, label: t("leiae.feature.translation") },
           { icon: Volume2, label: t("leiae.feature.audio") },
@@ -149,7 +149,7 @@ export default function Leiae({
         ].map(({ icon: Icon, label }) => (
           <div
             key={label}
-            className="flex items-center gap-2 rounded-lg border bg-card p-3 text-xs text-muted-foreground"
+            className="flex min-w-0 items-center gap-2 rounded-lg border bg-card p-3 text-xs text-muted-foreground"
           >
             <Icon className="h-4 w-4 text-primary shrink-0" />
             <span>{label}</span>
@@ -157,11 +157,11 @@ export default function Leiae({
         ))}
       </div>
 
-      <Card>
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle className="text-base">{t("leiae.textsByLevel")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="min-w-0 space-y-4 overflow-hidden">
           {!bstMode && !fixedLevel && (
           <div className="flex justify-center gap-2 flex-wrap">
             {allowedLevels.map((lv) => (
@@ -191,27 +191,27 @@ export default function Leiae({
                   : `Nenhum texto disponível no nível ${level} ainda.`}
             </p>
           ) : (
-            <div className="grid gap-2">
+            <div className="grid min-w-0 gap-2">
               {levelItems.map((x) => {
                 const linkedQuiz = quizForText(x);
                 return (
-                <div key={x.id} className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center">
+                <div key={x.id} className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden rounded-lg border bg-card p-3 sm:flex-row sm:items-center">
                   <button onClick={() => openSaved(x)} className="flex-1 min-w-0 text-left">
                     <div className="font-medium text-sm truncate">
                       {bstMode && x.unit ? `Unit ${x.unit} — ` : ""}{x.title}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{x.content.slice(0, 120)}…</div>
                   </button>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0">
                     <Badge variant="outline" className="shrink-0">{x.level}</Badge>
-                    <Button size="sm" onClick={() => openSaved(x)} className="shrink-0">
+                    <Button size="sm" onClick={() => openSaved(x)} className="min-w-0 flex-1 sm:flex-none">
                       <Play className="h-4 w-4 mr-1" /> Ler
                     </Button>
                     {linkedQuiz && (
                       <Button
                         size="sm"
                         variant="secondary"
-                        className="shrink-0"
+                        className="min-w-0 flex-1 sm:flex-none"
                         onClick={() => { setActiveQuiz(linkedQuiz); setActiveQuizText(x); }}
                       >
                         <HelpCircle className="h-4 w-4 mr-1" /> Quiz
