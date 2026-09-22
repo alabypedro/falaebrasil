@@ -29,6 +29,13 @@
       "when": 1790117946509,
       "tag": "0003_xp_ranking_definer_view",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790120139188,
+      "tag": "0004_add_student_xp_activity_history",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -9,6 +9,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
   Loader2,
   Brain,
@@ -65,6 +72,7 @@ interface Perf {
     quiz_avg: number | null;
   };
   recent: { type: string; title: string | null; at: string; points: number | null }[];
+  activity_history: { date: string; xp: number; events: number }[];
 }
 
 const AI_LIST = [
@@ -91,6 +99,86 @@ const fmtDate = (v?: string | null) =>
 
 const fmtGrade = (v?: number | null) =>
   v === null || v === undefined ? "—" : `${Number(v).toFixed(0)}%`;
+
+const chartConfig = {
+  xp: { label: "XP", color: "hsl(var(--primary))" },
+} satisfies ChartConfig;
+
+function XpEvolutionChart({
+  title,
+  days,
+  history,
+}: {
+  title: string;
+  days: number;
+  history: Perf["activity_history"];
+}) {
+  const data = history.slice(-days).map((item) => ({
+    ...item,
+    label: new Date(`${item.date}T12:00:00`).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    }),
+  }));
+  const totalXp = data.reduce((sum, item) => sum + item.xp, 0);
+  const activeDays = data.filter((item) => item.events > 0).length;
+  const tickInterval = days === 7 ? 0 : days === 30 ? 5 : 14;
+
+  return (
+    <div className="min-w-0 rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+          <p className="text-[11px] text-muted-foreground">XP por dia</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm font-bold tabular-nums text-primary">{totalXp} XP</p>
+          <p className="text-[10px] text-muted-foreground">{activeDays} dias ativos</p>
+        </div>
+      </div>
+      <ChartContainer config={chartConfig} className="h-48 w-full aspect-auto">
+        <LineChart data={data} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            interval={tickInterval}
+            minTickGap={12}
+          />
+          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={44} />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => payload?.[0]?.payload?.label ?? ""}
+                formatter={(value, name, item) => (
+                  <div className="flex min-w-28 items-center justify-between gap-4">
+                    <span className="text-muted-foreground">{name === "xp" ? "XP" : name}</span>
+                    <span className="font-mono font-medium tabular-nums text-foreground">
+                      {Number(value).toLocaleString("pt-BR")} XP
+                    </span>
+                    {item.payload.events > 0 && (
+                      <span className="text-muted-foreground">{item.payload.events} ativ.</span>
+                    )}
+                  </div>
+                )}
+              />
+            }
+          />
+          <Line
+            dataKey="xp"
+            type="monotone"
+            stroke="var(--color-xp)"
+            strokeWidth={2}
+            dot={days === 7 ? { r: 3, fill: "var(--color-xp)" } : false}
+            activeDot={{ r: 4 }}
+          />
+        </LineChart>
+      </ChartContainer>
+    </div>
+  );
+}
 
 function Metric({
   icon: Icon,
@@ -152,6 +240,7 @@ export default function StudentProgressDialog({
   const aiMax = perf
     ? Math.max(1, ...AI_LIST.map((a) => perf.ais?.[a.key]?.xp ?? 0))
     : 1;
+  const activityHistory = useMemo(() => perf?.activity_history ?? [], [perf?.activity_history]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -321,6 +410,20 @@ export default function StudentProgressDialog({
                     ))}
                   </ul>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Evolução de XP por atividade</h3>
+                  <p className="text-xs text-muted-foreground">Comparativo diário das atividades recentes ao longo do tempo.</p>
+                </div>
+                <div className="grid gap-3 lg:grid-cols-3">
+                  <XpEvolutionChart title="Últimos 7 dias" days={7} history={activityHistory} />
+                  <XpEvolutionChart title="Últimos 30 dias" days={30} history={activityHistory} />
+                  <XpEvolutionChart title="Últimos 90 dias" days={90} history={activityHistory} />
+                </div>
               </CardContent>
             </Card>
           </div>
