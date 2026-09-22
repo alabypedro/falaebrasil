@@ -300,6 +300,15 @@ export default function StudentsManager() {
         />
       )}
 
+      {progressTarget && (
+        <StudentProgressDialog
+          open={!!progressTarget}
+          onOpenChange={(v) => !v && setProgressTarget(null)}
+          studentId={progressTarget.user_id}
+          fallbackName={progressTarget.display_name || progressTarget.email}
+        />
+      )}
+
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin" />
