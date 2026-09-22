@@ -2897,6 +2897,10 @@ export type Database = {
         }[]
       }
       get_student_performance: { Args: { _student_id: string }; Returns: Json }
+      get_student_progress_admin: {
+        Args: { _student_id: string }
+        Returns: Json
+      }
       grade_listening_lesson: {
         Args: { _answers: Json; _lesson_id: string }
         Returns: Json
