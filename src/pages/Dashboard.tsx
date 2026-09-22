@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation, Music, BookMarked, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -14,25 +13,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchAiXpBreakdown, AI_LABELS, type AiSource } from "@/lib/aiXp";
 import { useRoles } from "@/hooks/useRoles";
 
-interface CourseProgress {
-  name: string;
-  progress: number;
-}
-
-const desiredOrder = ["A1", "A2", "B1", "B2", "C1", "C2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
-
-function extractCode(title: string): string | null {
-  const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2|C1|C2)\b/i);
-  if (m) return m[1].toUpperCase();
-  return null;
-}
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { t } = useLanguage();
   const { isTeacher } = useRoles();
-  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
   const [completedCount, setCompletedCount] = useState(0);
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -62,50 +47,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: courses } = await supabase.from("courses").select("id, title, level, required_tier").eq("published", true).order("display_order");
-      const { data: modules } = await supabase.from("modules").select("id, course_id");
-      const { data: lessons } = await supabase.from("lessons").select("id, module_id");
-      const { data: videos } = await supabase.from("lesson_videos").select("id, lesson_id");
       const { data: vprog } = await supabase.from("user_video_progress").select("video_id").eq("user_id", user.id);
-
-      const completedVideoIds = new Set((vprog || []).map((p) => p.video_id));
-      setCompletedCount(completedVideoIds.size);
-
-      const modCourse: Record<string, string> = {};
-      (modules || []).forEach((m) => { modCourse[m.id] = m.course_id; });
-      const lessonCourse: Record<string, string> = {};
-      (lessons || []).forEach((l) => { const cid = modCourse[l.module_id]; if (cid) lessonCourse[l.id] = cid; });
-
-      const courseVideos: Record<string, string[]> = {};
-      (videos || []).forEach((v) => {
-        const cid = lessonCourse[v.lesson_id];
-        if (cid) { if (!courseVideos[cid]) courseVideos[cid] = []; courseVideos[cid].push(v.id); }
-      });
-
-      const userTier = (profile?.plan_tier ?? "open").toLowerCase();
-      const allowedTiers =
-        userTier === "teens" ? ["teens"]
-        : userTier === "kids" ? ["kids"]
-        : ["open", "pro", "vip", "teens", "kids"];
-
-      const result = (courses || [])
-        .filter((c: any) => allowedTiers.includes((c.required_tier ?? "open").toLowerCase()))
-        .map((c: any) => {
-          const ids = courseVideos[c.id] || [];
-          const done = ids.filter((id) => completedVideoIds.has(id)).length;
-          const code = (c.level || extractCode(c.title) || "").toUpperCase();
-          return {
-            name: code || c.title,
-            code,
-            progress: ids.length > 0 ? Math.round((done / ids.length) * 100) : 0,
-          };
-        })
-        .filter((r) => desiredOrder.includes(r.code))
-        .sort((a, b) => desiredOrder.indexOf(a.code) - desiredOrder.indexOf(b.code));
-      setCourseProgress(result);
+      setCompletedCount((vprog || []).length);
     };
     load();
-  }, [user, profile?.plan_tier]);
+  }, [user]);
 
   const stats = [
     {
@@ -349,32 +295,6 @@ export default function Dashboard() {
           );
         })}
       </div>
-
-      {courseProgress.length > 0 && (
-        <Card className="animate-fade-up border-border/50" style={{ "--delay": "400ms" } as React.CSSProperties}>
-          <CardHeader>
-            <CardTitle className="text-base font-display flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-gradient-accent animate-pulse" />
-              {t("dashboard.progress")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {courseProgress.map((track, i) => (
-              <div
-                key={track.name}
-                className="space-y-2 animate-fade-up"
-                style={{ "--delay": `${450 + i * 60}ms` } as React.CSSProperties}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-foreground">{track.name}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums font-bold">{track.progress}%</span>
-                </div>
-                <Progress value={track.progress} className="h-2 [&>div]:bg-gradient-accent" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
 
     </div>
   );
