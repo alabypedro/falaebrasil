@@ -13,6 +13,7 @@ import ChapterAudioPlayer from "@/components/books/ChapterAudioPlayer";
 import InlineQuiz from "@/components/InlineQuiz";
 import { LEVELS, type Level } from "@/lib/levels";
 import { useAllowedLevels, useBooksAccess } from "@/hooks/useAllowedLevels";
+import AiProgressPanel from "@/components/AiProgressPanel";
 
 
 interface BookText {
@@ -187,6 +188,22 @@ export default function Books() {
           </div>
         ))}
       </div>
+
+      <AiProgressPanel
+        title="Progresso da IA Leiaê"
+        subtitle={`Leituras de Estórias Curtas no nível ${level}.`}
+        source="books"
+        completed={levelItems.length}
+        total={visibleItems.length}
+        completedLabel="livros no nível"
+        totalLabel="livros"
+        icon={BookText}
+        stats={[
+          { label: "livros disponíveis", value: visibleItems.length },
+          { label: "níveis liberados", value: allowedLevels.length },
+          { label: "quizzes vinculados", value: quizRows.length },
+        ]}
+      />
 
       <Card>
         <CardHeader>
