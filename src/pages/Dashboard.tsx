@@ -445,7 +445,7 @@ export default function Dashboard() {
                             <AvatarFallback className="bg-muted text-xs font-bold text-foreground">{getInitials(name)}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-foreground">{isCurrentUser ? "Você" : name}</p>
+                            <p className="truncate text-sm font-semibold text-foreground">{isCurrentUser ? "Você" : abbreviateName(name)}</p>
                             <p className="text-xs text-muted-foreground">Nível {student.level ?? "A1"}</p>
                           </div>
                           <span className="shrink-0 text-sm font-extrabold tabular-nums text-primary">
