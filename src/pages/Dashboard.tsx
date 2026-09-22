@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 import { Zap, BookOpen, Trophy, GraduationCap, Info, Brain, Mic, Headphones, MessageSquare, BookText, GraduationCap as GradIcon, Presentation, Music, BookMarked, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -13,19 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fetchAiXpBreakdown, AI_LABELS, type AiSource } from "@/lib/aiXp";
 import { useRoles } from "@/hooks/useRoles";
-
-interface CourseProgress {
-  name: string;
-  progress: number;
-}
-
-const desiredOrder = ["A1", "A2", "B1", "B2", "C1", "C2", "T1", "T2", "T3", "T4", "K1", "K2", "K3", "K4"];
-
-function extractCode(title: string): string | null {
-  const m = title.match(/\b([ATK][1-4]|A1|A2|B1|B2|C1|C2)\b/i);
-  if (m) return m[1].toUpperCase();
-  return null;
-}
 
 export default function Dashboard() {
   const navigate = useNavigate();
