@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, UserPlus, Mail, Presentation } from "lucide-react";
+import { Loader2, Search, UserPlus, Mail, Presentation, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import StudentAccessDialog from "@/components/admin/StudentAccessDialog";
 import CreateStudent from "@/pages/admin/CreateStudent";
 import WelcomeEmailSender from "@/pages/admin/WelcomeEmailSender";
+import StudentProgressDialog from "@/components/admin/StudentProgressDialog";
 
 const PAGE_SIZE = 12;
 
@@ -67,6 +68,7 @@ export default function StudentsManager() {
   const [createOpen, setCreateOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [accessTarget, setAccessTarget] = useState<StudentRow | null>(null);
+  const [progressTarget, setProgressTarget] = useState<StudentRow | null>(null);
   const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [teachersLoading, setTeachersLoading] = useState(true);
   const [links, setLinks] = useState<Record<string, string>>({});
@@ -388,7 +390,16 @@ export default function StudentsManager() {
                       {savingId === s.user_id && (
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setProgressTarget(s)}
+                        aria-label={`Ver progresso de ${s.display_name || s.email || "aluno"}`}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-1.5" /> Progresso
+                      </Button>
                     </div>
+
 
                   </div>
                 );
