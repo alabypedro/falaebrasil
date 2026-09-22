@@ -31,12 +31,13 @@ export default function Contratos() {
     })();
   }, []);
 
-  const openContract = async (path: string) => {
-    const { data, error } = await supabase.storage
-      .from("contracts")
-      .createSignedUrl(path, 60 * 10); // 10 min
-    if (error || !data?.signedUrl) return;
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  const openContract = async (contractId: string) => {
+    const { data, error } = await supabase.functions.invoke("contract-signed-url", {
+      body: { contractId },
+    });
+    const url = (data as { url?: string } | null)?.url;
+    if (error || !url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -62,7 +63,7 @@ export default function Contratos() {
               </CardHeader>
               <CardContent>
                 {c.file_path ? (
-                  <Button className="w-full" onClick={() => openContract(c.file_path!)}>
+                  <Button className="w-full" onClick={() => openContract(c.id)}>
                     <Download className="h-4 w-4 mr-1.5" />
                     {t("contracts.open")}
                   </Button>
