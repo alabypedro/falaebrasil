@@ -225,6 +225,27 @@ export default function StudentProgressDialog({
   const [perf, setPerf] = useState<Perf | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const sendReport = async (recipient: "student" | "me") => {
+    setSending(true);
+    const { data, error: err } = await supabase.functions.invoke("send-student-progress", {
+      body: { studentId, recipient },
+    });
+    setSending(false);
+    if (err) {
+      toast.error("Não foi possível enviar o relatório por e-mail.");
+      return;
+    }
+    if ((data as any)?.success) {
+      toast.success(`Relatório enviado para ${(data as any).recipient}.`);
+    } else if ((data as any)?.reason === "recipient_suppressed") {
+      toast.error("Este e-mail está bloqueado para envios.");
+    } else {
+      toast.error((data as any)?.error ?? "Não foi possível enviar o relatório.");
+    }
+  };
+
 
   useEffect(() => {
     if (!open || !studentId) return;
