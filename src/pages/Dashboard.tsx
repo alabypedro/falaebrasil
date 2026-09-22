@@ -94,7 +94,7 @@ export default function Dashboard() {
         .from("xp_ranking")
         .select("user_id, display_name, avatar_url, level, total_xp, rank_position")
         .order("rank_position", { ascending: true })
-        .limit(5);
+        .limit(10);
 
       if (error) {
         console.warn("Não foi possível carregar o ranking de XP", error.message);
@@ -360,10 +360,10 @@ export default function Dashboard() {
                 Ranking de XP
               </h2>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">Os cinco alunos que estão no topo.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Os dez alunos que estão no topo.</p>
           </div>
           <span className="rounded-full border border-border/60 bg-card px-3 py-1 text-xs font-semibold text-muted-foreground">
-            Top 5
+            Top 10
           </span>
         </div>
 
@@ -430,7 +430,7 @@ export default function Dashboard() {
 
                 {ranking.length > 3 && (
                   <div className="mt-4 grid gap-2 border-t border-border/50 pt-4 sm:grid-cols-2">
-                    {ranking.slice(3, 5).map((student, index) => {
+                    {ranking.slice(3, 10).map((student, index) => {
                       const place = index + 4;
                       const isCurrentUser = student.user_id === user?.id;
                       const name = student.display_name?.trim() || "Aluno";
