@@ -33,6 +33,16 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+// "Adenilson Dutra da Silva" -> "A. D. S" | "Ronaldo" -> "R." | 4+ nomes -> 3 primeiras iniciais
+function abbreviateName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "Aluno";
+  return parts
+    .slice(0, 3)
+    .map((part) => `${part[0].toUpperCase()}.`)
+    .join(" ");
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
@@ -402,8 +412,8 @@ export default function Dashboard() {
                             {place}
                           </span>
                         </div>
-                        <p className="w-full truncate text-xs font-semibold text-foreground sm:text-sm" title={name}>
-                          {isCurrentUser ? "Você" : name}
+                        <p className="w-full truncate text-xs font-semibold text-foreground sm:text-sm">
+                          {isCurrentUser ? "Você" : abbreviateName(name)}
                         </p>
                         <p className="mb-3 text-[11px] font-bold tabular-nums text-muted-foreground sm:text-xs">
                           {(student.total_xp ?? 0).toLocaleString("pt-BR")} XP
@@ -435,7 +445,7 @@ export default function Dashboard() {
                             <AvatarFallback className="bg-muted text-xs font-bold text-foreground">{getInitials(name)}</AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-foreground">{isCurrentUser ? "Você" : name}</p>
+                            <p className="truncate text-sm font-semibold text-foreground">{isCurrentUser ? "Você" : abbreviateName(name)}</p>
                             <p className="text-xs text-muted-foreground">Nível {student.level ?? "A1"}</p>
                           </div>
                           <span className="shrink-0 text-sm font-extrabold tabular-nums text-primary">
