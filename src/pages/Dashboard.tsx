@@ -47,50 +47,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data: courses } = await supabase.from("courses").select("id, title, level, required_tier").eq("published", true).order("display_order");
-      const { data: modules } = await supabase.from("modules").select("id, course_id");
-      const { data: lessons } = await supabase.from("lessons").select("id, module_id");
-      const { data: videos } = await supabase.from("lesson_videos").select("id, lesson_id");
       const { data: vprog } = await supabase.from("user_video_progress").select("video_id").eq("user_id", user.id);
-
-      const completedVideoIds = new Set((vprog || []).map((p) => p.video_id));
-      setCompletedCount(completedVideoIds.size);
-
-      const modCourse: Record<string, string> = {};
-      (modules || []).forEach((m) => { modCourse[m.id] = m.course_id; });
-      const lessonCourse: Record<string, string> = {};
-      (lessons || []).forEach((l) => { const cid = modCourse[l.module_id]; if (cid) lessonCourse[l.id] = cid; });
-
-      const courseVideos: Record<string, string[]> = {};
-      (videos || []).forEach((v) => {
-        const cid = lessonCourse[v.lesson_id];
-        if (cid) { if (!courseVideos[cid]) courseVideos[cid] = []; courseVideos[cid].push(v.id); }
-      });
-
-      const userTier = (profile?.plan_tier ?? "open").toLowerCase();
-      const allowedTiers =
-        userTier === "teens" ? ["teens"]
-        : userTier === "kids" ? ["kids"]
-        : ["open", "pro", "vip", "teens", "kids"];
-
-      const result = (courses || [])
-        .filter((c: any) => allowedTiers.includes((c.required_tier ?? "open").toLowerCase()))
-        .map((c: any) => {
-          const ids = courseVideos[c.id] || [];
-          const done = ids.filter((id) => completedVideoIds.has(id)).length;
-          const code = (c.level || extractCode(c.title) || "").toUpperCase();
-          return {
-            name: code || c.title,
-            code,
-            progress: ids.length > 0 ? Math.round((done / ids.length) * 100) : 0,
-          };
-        })
-        .filter((r) => desiredOrder.includes(r.code))
-        .sort((a, b) => desiredOrder.indexOf(a.code) - desiredOrder.indexOf(b.code));
-      setCourseProgress(result);
+      setCompletedCount((vprog || []).length);
     };
     load();
-  }, [user, profile?.plan_tier]);
+  }, [user]);
 
   const stats = [
     {
