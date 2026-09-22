@@ -33,6 +33,16 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+// "Adenilson Dutra da Silva" -> "A. D. S" | "Ronaldo" -> "R." | 4+ nomes -> 3 primeiras iniciais
+function abbreviateName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "Aluno";
+  return parts
+    .slice(0, 3)
+    .map((part) => `${part[0].toUpperCase()}.`)
+    .join(" ");
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
