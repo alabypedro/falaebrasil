@@ -24,7 +24,7 @@ interface BstProduct {
 }
 
 type View = "home" | "primary" | "tool";
-type LevelTool = "leiae" | "quiz";
+type LevelTool = "leiae";
 
 const LEVEL_SLUG = "bst-cartilha-de-ingles-instrumental-do-zero-a1-ao-c2-avancado";
 const LEVELS = [
@@ -125,7 +125,7 @@ export default function BstProduct() {
     );
   }
 
-  const toolLabel: Record<LevelTool, string> = { leiae: "IA Leiaê", quiz: "Quiz" };
+  const toolLabel: Record<LevelTool, string> = { leiae: "IA Leiaê" };
 
   const back = () => {
     if (levelMode) {
@@ -213,7 +213,7 @@ export default function BstProduct() {
               </div>
             </div>
           ) : levelMode && !levelTool ? (
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3 text-center">
                   <FileText className="h-7 w-7 mx-auto text-primary" />
@@ -244,20 +244,6 @@ export default function BstProduct() {
                     onClick={() => { setLevelTool("leiae"); setView("tool"); }}
                   >
                     Abrir textos
-                  </Button>
-                </CardContent>
-              </Card>
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-5 space-y-3 text-center">
-                  <HelpCircle className="h-7 w-7 mx-auto text-primary" />
-                  <div className="text-sm font-semibold">Quiz</div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => { setLevelTool("quiz"); setView("primary"); }}
-                  >
-                    Abrir quizzes
                   </Button>
                 </CardContent>
               </Card>
@@ -355,7 +341,11 @@ export default function BstProduct() {
       )}
       {view === "tool" && hasAccess && (
         product.secondary_tool === "leiae" || levelMode
-          ? <Leiae bstProductId={product.id} fixedLevel={levelMode && level ? level : undefined} />
+          ? <Leiae
+              bstProductId={product.id}
+              fixedLevel={levelMode && level ? level : undefined}
+              showBstQuizzes={levelMode}
+            />
           : <BstFalae bstProductId={product.id} />
       )}
 
