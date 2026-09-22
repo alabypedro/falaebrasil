@@ -198,9 +198,8 @@ export default function Books() {
         title="Progresso da IA Leiaê"
         subtitle={`Leituras de Estórias Curtas no nível ${level}.`}
         source="books"
-        completed={levelItems.length}
         total={visibleItems.length}
-        completedLabel="livros no nível"
+        completedLabel="leituras estimadas"
         totalLabel="livros"
         icon={BookText}
         stats={[
