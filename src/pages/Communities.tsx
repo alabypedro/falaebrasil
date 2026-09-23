@@ -200,12 +200,14 @@ export default function Communities() {
 
   useEffect(() => {
     (async () => {
-      const [communitiesRes, teacherRes, productsRes] = await Promise.all([
+      const [communitiesRes, teacherRes, productsRes, subsRes] = await Promise.all([
         supabase.from("fb_communities").select("*").order("sort_order", { ascending: true }),
         supabase.from("vip_config").select("teacher_chat_url, paid_chat_url").eq("id", 1).maybeSingle(),
         supabase.from("payment_products").select("product_key, name").in("product_key", ["plano_pro", "plano_vip"]).eq("active", true),
+        supabase.from("fb_community_subfolders").select("*").order("sort_order", { ascending: true }),
       ]);
       if (communitiesRes.data) setItems(communitiesRes.data as Community[]);
+      if (subsRes.data) setSubfolders(subsRes.data as Subfolder[]);
       setTeacherUrl(teacherRes.data?.teacher_chat_url ?? null);
       setPaidChatUrl((teacherRes.data as any)?.paid_chat_url ?? null);
       const products = productsRes.data ?? [];
