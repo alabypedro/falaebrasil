@@ -65,6 +65,12 @@ export default function CommunitiesManager() {
       .select("*")
       .order("sort_order", { ascending: true });
     if (data) setItems(data as Community[]);
+    const { data: subs } = await supabase
+      .from("fb_community_subfolders")
+      .select("community_id");
+    const counts: Record<string, number> = {};
+    (subs ?? []).forEach((s: any) => { counts[s.community_id] = (counts[s.community_id] ?? 0) + 1; });
+    setSubCounts(counts);
   };
 
   useEffect(() => { load(); }, []);
