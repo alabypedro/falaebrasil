@@ -1004,6 +1004,47 @@ export type Database = {
         }
         Relationships: []
       }
+      fb_community_subfolders: {
+        Row: {
+          community_id: string
+          created_at: string
+          description: string | null
+          id: string
+          sort_order: number
+          title: string
+          updated_at: string
+          whatsapp_url: string | null
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+          whatsapp_url?: string | null
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          whatsapp_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fb_community_subfolders_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "fb_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hubla_product_courses: {
         Row: {
           course_id: string

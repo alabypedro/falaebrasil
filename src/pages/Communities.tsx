@@ -38,16 +38,29 @@ const TIER_LABELS: Record<Tier, string> = {
 };
 const TIER_ORDER: Tier[] = [];
 
+interface Subfolder {
+  id: string;
+  community_id: string;
+  title: string;
+  description: string | null;
+  whatsapp_url: string | null;
+  sort_order: number;
+}
+
+type JoinTarget = { title: string; description: string | null; whatsapp_url: string | null };
+
 function SubfolderRow({
   item,
+  subs,
   isOpen,
   onToggle,
   onJoin,
 }: {
   item: Community;
+  subs: Subfolder[];
   isOpen: boolean;
   onToggle: () => void;
-  onJoin: () => void;
+  onJoin: (target: JoinTarget) => void;
 }) {
   return (
     <div>
@@ -65,14 +78,43 @@ function SubfolderRow({
           <Folder className="h-4 w-4 text-primary shrink-0" />
         )}
         <span className="text-sm text-foreground truncate">{item.title}</span>
+        {subs.length > 0 && (
+          <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{subs.length}</span>
+        )}
       </button>
       {isOpen && (
-        <div className="ml-7 pl-3 py-2 border-l border-border space-y-2">
+        <div className="ml-7 pl-3 py-2 border-l border-border space-y-3">
           {item.description && (
             <p className="text-xs text-muted-foreground">{item.description}</p>
           )}
-          {item.whatsapp_url ? (
-            <Button size="sm" variant="outline" onClick={onJoin}>
+
+          {subs.length > 0 ? (
+            <div className="space-y-2">
+              {subs.map((sub) => (
+                <div key={sub.id} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="text-sm text-foreground truncate">{sub.title}</span>
+                  </div>
+                  {sub.description && (
+                    <p className="text-xs text-muted-foreground pl-5">{sub.description}</p>
+                  )}
+                  <div className="pl-5">
+                    {sub.whatsapp_url ? (
+                      <Button size="sm" variant="outline" onClick={() => onJoin(sub)}>
+                        <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Entrar no grupo
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" disabled>
+                        Link em breve
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : item.whatsapp_url ? (
+            <Button size="sm" variant="outline" onClick={() => onJoin(item)}>
               <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Entrar no grupo
             </Button>
           ) : (
@@ -142,7 +184,8 @@ function UpsellInlineCheckout({
 export default function Communities() {
   const [items, setItems] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Community | null>(null);
+  const [selected, setSelected] = useState<JoinTarget | null>(null);
+  const [subfolders, setSubfolders] = useState<Subfolder[]>([]);
   const [upsellTier, setUpsellTier] = useState<"pro" | "vip" | null>(null);
   const [productKeys, setProductKeys] = useState<{ pro: string | null; vip: string | null }>({ pro: null, vip: null });
   const [productNames, setProductNames] = useState<{ pro: string; vip: string }>({ pro: "Plano PRO", vip: "Plano VIP" });
@@ -157,12 +200,14 @@ export default function Communities() {
 
   useEffect(() => {
     (async () => {
-      const [communitiesRes, teacherRes, productsRes] = await Promise.all([
+      const [communitiesRes, teacherRes, productsRes, subsRes] = await Promise.all([
         supabase.from("fb_communities").select("*").order("sort_order", { ascending: true }),
         supabase.from("vip_config").select("teacher_chat_url, paid_chat_url").eq("id", 1).maybeSingle(),
         supabase.from("payment_products").select("product_key, name").in("product_key", ["plano_pro", "plano_vip"]).eq("active", true),
+        supabase.from("fb_community_subfolders").select("*").order("sort_order", { ascending: true }),
       ]);
       if (communitiesRes.data) setItems(communitiesRes.data as Community[]);
+      if (subsRes.data) setSubfolders(subsRes.data as Subfolder[]);
       setTeacherUrl(teacherRes.data?.teacher_chat_url ?? null);
       setPaidChatUrl((teacherRes.data as any)?.paid_chat_url ?? null);
       const products = productsRes.data ?? [];
@@ -279,9 +324,10 @@ export default function Communities() {
                 <SubfolderRow
                   key={item.id}
                   item={item}
+                  subs={subfolders.filter((s) => s.community_id === item.id)}
                   isOpen={!!openFolders[item.id]}
                   onToggle={() => toggleFolder(item.id)}
-                  onJoin={() => setSelected(item)}
+                  onJoin={(target) => setSelected(target)}
                 />
               ))}
             </div>
@@ -328,9 +374,10 @@ export default function Communities() {
                         <SubfolderRow
                           key={item.id}
                           item={item}
+                          subs={subfolders.filter((s) => s.community_id === item.id)}
                           isOpen={!!openFolders[item.id]}
                           onToggle={() => toggleFolder(item.id)}
-                          onJoin={() => setSelected(item)}
+                          onJoin={(target) => setSelected(target)}
                         />
                       ))}
                     </div>

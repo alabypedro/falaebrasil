@@ -36,6 +36,13 @@
       "when": 1790120139188,
       "tag": "0004_add_student_xp_activity_history",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790122819702,
+      "tag": "0005_create_fb_community_subfolders",
+      "breakpoints": true
     }
   ]
 }

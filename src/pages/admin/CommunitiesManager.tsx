@@ -27,6 +27,13 @@ interface Community {
   sort_order: number;
 }
 
+interface SubfolderForm {
+  id?: string;
+  title: string;
+  description: string;
+  whatsapp_url: string;
+}
+
 const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as Tier, all_tiers: false, sort_order: 0 };
 
 export default function CommunitiesManager() {
@@ -35,6 +42,9 @@ export default function CommunitiesManager() {
   const [editing, setEditing] = useState<Community | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [subfolders, setSubfolders] = useState<SubfolderForm[]>([]);
+  const [removedSubIds, setRemovedSubIds] = useState<string[]>([]);
+  const [subCounts, setSubCounts] = useState<Record<string, number>>({});
 
   // Plan tier por email
   const [tierEmail, setTierEmail] = useState("");
@@ -55,6 +65,12 @@ export default function CommunitiesManager() {
       .select("*")
       .order("sort_order", { ascending: true });
     if (data) setItems(data as Community[]);
+    const { data: subs } = await supabase
+      .from("fb_community_subfolders")
+      .select("community_id");
+    const counts: Record<string, number> = {};
+    (subs ?? []).forEach((s: any) => { counts[s.community_id] = (counts[s.community_id] ?? 0) + 1; });
+    setSubCounts(counts);
   };
 
   useEffect(() => { load(); }, []);
@@ -67,9 +83,15 @@ export default function CommunitiesManager() {
       });
   }, []);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm, sort_order: items.length + 1 }); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm({ ...emptyForm, sort_order: items.length + 1 });
+    setSubfolders([]);
+    setRemovedSubIds([]);
+    setOpen(true);
+  };
 
-  const openEdit = (item: Community) => {
+  const openEdit = async (item: Community) => {
     setEditing(item);
     setForm({
       title: item.title,
@@ -80,7 +102,54 @@ export default function CommunitiesManager() {
       all_tiers: !!item.all_tiers,
       sort_order: item.sort_order,
     });
+    setRemovedSubIds([]);
+    setSubfolders([]);
     setOpen(true);
+    const { data } = await supabase
+      .from("fb_community_subfolders")
+      .select("id, title, description, whatsapp_url")
+      .eq("community_id", item.id)
+      .order("sort_order", { ascending: true });
+    setSubfolders((data ?? []).map((s: any) => ({
+      id: s.id,
+      title: s.title ?? "",
+      description: s.description ?? "",
+      whatsapp_url: s.whatsapp_url ?? "",
+    })));
+  };
+
+  const addSubfolder = () =>
+    setSubfolders((p) => [...p, { title: "", description: "", whatsapp_url: "" }]);
+
+  const updateSubfolder = (idx: number, patch: Partial<SubfolderForm>) =>
+    setSubfolders((p) => p.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
+
+  const removeSubfolder = (idx: number) => {
+    const target = subfolders[idx];
+    if (target?.id) setRemovedSubIds((p) => [...p, target.id!]);
+    setSubfolders((p) => p.filter((_, i) => i !== idx));
+  };
+
+  const saveSubfolders = async (communityId: string) => {
+    if (removedSubIds.length > 0) {
+      await supabase.from("fb_community_subfolders").delete().in("id", removedSubIds);
+    }
+    const valid = subfolders.filter((s) => s.title.trim());
+    for (let i = 0; i < valid.length; i++) {
+      const s = valid[i];
+      const payload = {
+        community_id: communityId,
+        title: s.title.trim(),
+        description: s.description.trim() || null,
+        whatsapp_url: s.whatsapp_url.trim() || null,
+        sort_order: i + 1,
+      };
+      if (s.id) {
+        await supabase.from("fb_community_subfolders").update(payload).eq("id", s.id);
+      } else {
+        await supabase.from("fb_community_subfolders").insert(payload);
+      }
+    }
   };
 
   const save = async () => {
@@ -98,13 +167,15 @@ export default function CommunitiesManager() {
     if (editing) {
       const { error } = await supabase.from("fb_communities").update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); setLoading(false); return; }
+      await saveSubfolders(editing.id);
       toast.success("Comunidade atualizada!");
     } else {
-      const { error } = await supabase.from("fb_communities").insert(payload);
+      const { data, error } = await supabase.from("fb_communities").insert(payload).select("id").single();
       if (error) { toast.error(error.message); setLoading(false); return; }
+      if (data?.id) await saveSubfolders(data.id);
       toast.success("Comunidade criada!");
     }
-    setOpen(false); setLoading(false); load();
+    setOpen(false); setLoading(false); setRemovedSubIds([]); load();
   };
 
   const remove = async (id: string) => {
@@ -252,6 +323,11 @@ export default function CommunitiesManager() {
                     {item.title}
                   </div>
                   {item.description && <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>}
+                  {(subCounts[item.id] ?? 0) > 0 && (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {subCounts[item.id]} subpasta{subCounts[item.id] > 1 ? "s" : ""}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   {item.all_tiers ? (
@@ -325,6 +401,51 @@ export default function CommunitiesManager() {
             <div className="space-y-2">
               <Label>Ordem de exibição</Label>
               <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
+            </div>
+
+            {/* === Subpastas === */}
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <Label>Subpastas</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Cada subpasta aparece dentro desta comunidade com seu próprio botão de entrar no grupo do WhatsApp.
+                  </p>
+                </div>
+                <Button type="button" size="sm" variant="outline" onClick={addSubfolder}>
+                  <Plus className="h-4 w-4 mr-1" />Adicionar
+                </Button>
+              </div>
+
+              {subfolders.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhuma subpasta. A comunidade usará apenas o link acima.</p>
+              )}
+
+              {subfolders.map((sub, idx) => (
+                <div key={sub.id ?? `new-${idx}`} className="space-y-2 rounded-md border p-3 bg-muted/30">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">Subpasta {idx + 1}</span>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeSubfolder(idx)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={sub.title}
+                    onChange={(e) => updateSubfolder(idx, { title: e.target.value })}
+                    placeholder="Ex: 1.1 English/Português"
+                  />
+                  <Input
+                    value={sub.description}
+                    onChange={(e) => updateSubfolder(idx, { description: e.target.value })}
+                    placeholder="Descrição (opcional)"
+                  />
+                  <Input
+                    value={sub.whatsapp_url}
+                    onChange={(e) => updateSubfolder(idx, { whatsapp_url: e.target.value })}
+                    placeholder="https://chat.whatsapp.com/..."
+                  />
+                </div>
+              ))}
             </div>
           </div>
           <DialogFooter>
