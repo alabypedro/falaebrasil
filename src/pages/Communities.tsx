@@ -38,16 +38,29 @@ const TIER_LABELS: Record<Tier, string> = {
 };
 const TIER_ORDER: Tier[] = [];
 
+interface Subfolder {
+  id: string;
+  community_id: string;
+  title: string;
+  description: string | null;
+  whatsapp_url: string | null;
+  sort_order: number;
+}
+
+type JoinTarget = { title: string; description: string | null; whatsapp_url: string | null };
+
 function SubfolderRow({
   item,
+  subs,
   isOpen,
   onToggle,
   onJoin,
 }: {
   item: Community;
+  subs: Subfolder[];
   isOpen: boolean;
   onToggle: () => void;
-  onJoin: () => void;
+  onJoin: (target: JoinTarget) => void;
 }) {
   return (
     <div>
@@ -65,14 +78,43 @@ function SubfolderRow({
           <Folder className="h-4 w-4 text-primary shrink-0" />
         )}
         <span className="text-sm text-foreground truncate">{item.title}</span>
+        {subs.length > 0 && (
+          <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{subs.length}</span>
+        )}
       </button>
       {isOpen && (
-        <div className="ml-7 pl-3 py-2 border-l border-border space-y-2">
+        <div className="ml-7 pl-3 py-2 border-l border-border space-y-3">
           {item.description && (
             <p className="text-xs text-muted-foreground">{item.description}</p>
           )}
-          {item.whatsapp_url ? (
-            <Button size="sm" variant="outline" onClick={onJoin}>
+
+          {subs.length > 0 ? (
+            <div className="space-y-2">
+              {subs.map((sub) => (
+                <div key={sub.id} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Folder className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="text-sm text-foreground truncate">{sub.title}</span>
+                  </div>
+                  {sub.description && (
+                    <p className="text-xs text-muted-foreground pl-5">{sub.description}</p>
+                  )}
+                  <div className="pl-5">
+                    {sub.whatsapp_url ? (
+                      <Button size="sm" variant="outline" onClick={() => onJoin(sub)}>
+                        <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Entrar no grupo
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" disabled>
+                        Link em breve
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : item.whatsapp_url ? (
+            <Button size="sm" variant="outline" onClick={() => onJoin(item)}>
               <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Entrar no grupo
             </Button>
           ) : (
