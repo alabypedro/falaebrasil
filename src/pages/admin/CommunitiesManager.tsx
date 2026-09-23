@@ -27,6 +27,13 @@ interface Community {
   sort_order: number;
 }
 
+interface SubfolderForm {
+  id?: string;
+  title: string;
+  description: string;
+  whatsapp_url: string;
+}
+
 const emptyForm = { title: "", description: "", whatsapp_url: "", access_key: "free", required_tier: "open" as Tier, all_tiers: false, sort_order: 0 };
 
 export default function CommunitiesManager() {
