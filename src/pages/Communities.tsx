@@ -184,7 +184,8 @@ function UpsellInlineCheckout({
 export default function Communities() {
   const [items, setItems] = useState<Community[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Community | null>(null);
+  const [selected, setSelected] = useState<JoinTarget | null>(null);
+  const [subfolders, setSubfolders] = useState<Subfolder[]>([]);
   const [upsellTier, setUpsellTier] = useState<"pro" | "vip" | null>(null);
   const [productKeys, setProductKeys] = useState<{ pro: string | null; vip: string | null }>({ pro: null, vip: null });
   const [productNames, setProductNames] = useState<{ pro: string; vip: string }>({ pro: "Plano PRO", vip: "Plano VIP" });
