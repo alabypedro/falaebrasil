@@ -42,6 +42,9 @@ export default function CommunitiesManager() {
   const [editing, setEditing] = useState<Community | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [subfolders, setSubfolders] = useState<SubfolderForm[]>([]);
+  const [removedSubIds, setRemovedSubIds] = useState<string[]>([]);
+  const [subCounts, setSubCounts] = useState<Record<string, number>>({});
 
   // Plan tier por email
   const [tierEmail, setTierEmail] = useState("");
