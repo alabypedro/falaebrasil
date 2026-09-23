@@ -397,6 +397,51 @@ export default function CommunitiesManager() {
               <Label>Ordem de exibição</Label>
               <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
             </div>
+
+            {/* === Subpastas === */}
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <Label>Subpastas</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Cada subpasta aparece dentro desta comunidade com seu próprio botão de entrar no grupo do WhatsApp.
+                  </p>
+                </div>
+                <Button type="button" size="sm" variant="outline" onClick={addSubfolder}>
+                  <Plus className="h-4 w-4 mr-1" />Adicionar
+                </Button>
+              </div>
+
+              {subfolders.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhuma subpasta. A comunidade usará apenas o link acima.</p>
+              )}
+
+              {subfolders.map((sub, idx) => (
+                <div key={sub.id ?? `new-${idx}`} className="space-y-2 rounded-md border p-3 bg-muted/30">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">Subpasta {idx + 1}</span>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeSubfolder(idx)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={sub.title}
+                    onChange={(e) => updateSubfolder(idx, { title: e.target.value })}
+                    placeholder="Ex: 1.1 English/Português"
+                  />
+                  <Input
+                    value={sub.description}
+                    onChange={(e) => updateSubfolder(idx, { description: e.target.value })}
+                    placeholder="Descrição (opcional)"
+                  />
+                  <Input
+                    value={sub.whatsapp_url}
+                    onChange={(e) => updateSubfolder(idx, { whatsapp_url: e.target.value })}
+                    placeholder="https://chat.whatsapp.com/..."
+                  />
+                </div>
+              ))}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
