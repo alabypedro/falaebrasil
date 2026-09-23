@@ -324,9 +324,10 @@ export default function Communities() {
                 <SubfolderRow
                   key={item.id}
                   item={item}
+                  subs={subfolders.filter((s) => s.community_id === item.id)}
                   isOpen={!!openFolders[item.id]}
                   onToggle={() => toggleFolder(item.id)}
-                  onJoin={() => setSelected(item)}
+                  onJoin={(target) => setSelected(target)}
                 />
               ))}
             </div>
