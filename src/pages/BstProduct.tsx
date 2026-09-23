@@ -248,16 +248,47 @@ export default function BstProduct() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
               </button>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {LEVELS.map((lv) => (
+              {LEVELS.map((lv) => {
+                const st = levelStats[lv.code];
+                return (
                 <button
                   key={lv.code}
                   onClick={() => setLevel(lv.code)}
                   className="rounded-lg border bg-card p-5 text-left hover:border-primary hover:bg-muted/40 transition"
                 >
-                  <span className="block text-lg font-bold text-primary">{lv.code}</span>
-                  <span className="block text-sm font-semibold text-foreground">{lv.label}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="block text-lg font-bold text-primary">{lv.code}</span>
+                      <span className="block text-sm font-semibold text-foreground">{lv.label}</span>
+                      <span className="block text-xs text-muted-foreground mt-1">
+                        {st ? `${st.total} textos` : "…"}
+                      </span>
+                    </div>
+                    {st && st.percent === 100 && st.total > 0 && (
+                      <CheckCircle className="h-5 w-5 text-success shrink-0" />
+                    )}
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Progresso</span>
+                        <span>{st?.percent ?? 0}%</span>
+                      </div>
+                      <Progress value={st?.percent ?? 0} className="h-1.5" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1 text-xp font-medium">
+                        <Zap className="h-3 w-3 fill-xp/30" />
+                        {st?.earnedXp ?? 0} XP
+                      </span>
+                      <span className="text-muted-foreground tabular-nums">
+                        / {st?.totalXp ?? 0} XP
+                      </span>
+                    </div>
+                  </div>
                 </button>
-              ))}
+                );
+              })}
               </div>
             </div>
           ) : levelMode && !levelTool ? (
