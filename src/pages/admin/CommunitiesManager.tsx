@@ -83,9 +83,15 @@ export default function CommunitiesManager() {
       });
   }, []);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm, sort_order: items.length + 1 }); setOpen(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm({ ...emptyForm, sort_order: items.length + 1 });
+    setSubfolders([]);
+    setRemovedSubIds([]);
+    setOpen(true);
+  };
 
-  const openEdit = (item: Community) => {
+  const openEdit = async (item: Community) => {
     setEditing(item);
     setForm({
       title: item.title,
@@ -96,7 +102,54 @@ export default function CommunitiesManager() {
       all_tiers: !!item.all_tiers,
       sort_order: item.sort_order,
     });
+    setRemovedSubIds([]);
+    setSubfolders([]);
     setOpen(true);
+    const { data } = await supabase
+      .from("fb_community_subfolders")
+      .select("id, title, description, whatsapp_url")
+      .eq("community_id", item.id)
+      .order("sort_order", { ascending: true });
+    setSubfolders((data ?? []).map((s: any) => ({
+      id: s.id,
+      title: s.title ?? "",
+      description: s.description ?? "",
+      whatsapp_url: s.whatsapp_url ?? "",
+    })));
+  };
+
+  const addSubfolder = () =>
+    setSubfolders((p) => [...p, { title: "", description: "", whatsapp_url: "" }]);
+
+  const updateSubfolder = (idx: number, patch: Partial<SubfolderForm>) =>
+    setSubfolders((p) => p.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
+
+  const removeSubfolder = (idx: number) => {
+    const target = subfolders[idx];
+    if (target?.id) setRemovedSubIds((p) => [...p, target.id!]);
+    setSubfolders((p) => p.filter((_, i) => i !== idx));
+  };
+
+  const saveSubfolders = async (communityId: string) => {
+    if (removedSubIds.length > 0) {
+      await supabase.from("fb_community_subfolders").delete().in("id", removedSubIds);
+    }
+    const valid = subfolders.filter((s) => s.title.trim());
+    for (let i = 0; i < valid.length; i++) {
+      const s = valid[i];
+      const payload = {
+        community_id: communityId,
+        title: s.title.trim(),
+        description: s.description.trim() || null,
+        whatsapp_url: s.whatsapp_url.trim() || null,
+        sort_order: i + 1,
+      };
+      if (s.id) {
+        await supabase.from("fb_community_subfolders").update(payload).eq("id", s.id);
+      } else {
+        await supabase.from("fb_community_subfolders").insert(payload);
+      }
+    }
   };
 
   const save = async () => {
@@ -114,13 +167,15 @@ export default function CommunitiesManager() {
     if (editing) {
       const { error } = await supabase.from("fb_communities").update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); setLoading(false); return; }
+      await saveSubfolders(editing.id);
       toast.success("Comunidade atualizada!");
     } else {
-      const { error } = await supabase.from("fb_communities").insert(payload);
+      const { data, error } = await supabase.from("fb_communities").insert(payload).select("id").single();
       if (error) { toast.error(error.message); setLoading(false); return; }
+      if (data?.id) await saveSubfolders(data.id);
       toast.success("Comunidade criada!");
     }
-    setOpen(false); setLoading(false); load();
+    setOpen(false); setLoading(false); setRemovedSubIds([]); load();
   };
 
   const remove = async (id: string) => {
