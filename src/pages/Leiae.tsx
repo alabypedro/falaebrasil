@@ -158,20 +158,21 @@ export default function Leiae({
         ))}
       </div>
 
-      <AiProgressPanel
-        title={`Progresso da IA Leiaê${bstMode ? " BST" : ""}`}
-        subtitle={bstMode ? "Textos lidos no produto BST selecionado." : `Textos lidos no nível ${level}.`}
-        source="leiae"
-        total={levelItems.length}
-        completedLabel="leituras estimadas"
-        totalLabel="textos"
-        icon={BookText}
-        stats={[
-          { label: "textos disponíveis", value: levelItems.length },
-          { label: "níveis liberados", value: allowedLevels.length },
-          ...(showBstQuizzes ? [{ label: "quizzes vinculados", value: quizzes.length }] : []),
-        ]}
-      />
+      {!bstMode && (
+        <AiProgressPanel
+          title="Progresso da IA Leiaê"
+          subtitle={`Textos lidos no nível ${level}.`}
+          source="leiae"
+          total={levelItems.length}
+          completedLabel="leituras estimadas"
+          totalLabel="textos"
+          icon={BookText}
+          stats={[
+            { label: "textos disponíveis", value: levelItems.length },
+            { label: "níveis liberados", value: allowedLevels.length },
+          ]}
+        />
+      )}
 
       <Card className="min-w-0 overflow-hidden">
         <CardHeader>

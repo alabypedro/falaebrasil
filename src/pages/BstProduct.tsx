@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Brain, BookText, ChevronRight, FileText, HelpCircle, Loader2, Lock, Mic } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, Brain, BookText, CheckCircle, ChevronRight, FileText, HelpCircle, Loader2, Lock, Mic, Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { PdfReader } from "@/components/library/PdfReader";
 import Memorizae from "@/pages/Memorizae";
 import Leiae from "@/pages/Leiae";
@@ -41,6 +43,8 @@ const MODULE0_TITLE = "Módulo 0 - Tutorial: Como Estudar para Provas";
 
 interface UnitPdf { unit: number; title: string | null; pdf_url: string | null; }
 
+interface LevelStats { total: number; read: number; earnedXp: number; totalXp: number; percent: number; }
+
 export default function BstProduct() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -57,6 +61,8 @@ export default function BstProduct() {
   const [module0, setModule0] = useState<UnitPdf | null>(null);
   const [module0View, setModule0View] = useState(false);
   const { isBstOnly, slug: ownedSlug, loading: bstLoading } = useBstOnly();
+  const { user } = useAuth();
+  const [levelStats, setLevelStats] = useState<Record<string, LevelStats>>({});
 
   useEffect(() => {
     (async () => {
@@ -91,6 +97,48 @@ export default function BstProduct() {
       setLevelPdf((data as UnitPdf) || null);
     })();
   }, [product?.id, levelMode, level]);
+
+  useEffect(() => {
+    if (!product || !levelMode || !hasAccess || !user) { setLevelStats({}); return; }
+    (async () => {
+      const [{ data: texts }, { data: events }] = await Promise.all([
+        supabase
+          .from("leiae_texts")
+          .select("id,title,level")
+          .eq("bst_product_id", product.id),
+        supabase
+          .from("ai_xp_events" as any)
+          .select("points,key")
+          .eq("user_id", user.id)
+          .eq("source", "leiae"),
+      ]);
+      const rows = (texts as Array<{ id: string; title: string; level: string }>) || [];
+      const evs = (events as unknown as Array<{ points: number | null; key: string | null }>) || [];
+      const stats: Record<string, LevelStats> = {};
+      LEVELS.forEach((lv) => {
+        const levelTexts = rows.filter((r) => r.level === lv.code);
+        const readTitles = new Set<string>();
+        let earnedXp = 0;
+        levelTexts.forEach((txt) => {
+          const match = evs.filter((e) => (e.key || "").includes(txt.title));
+          if (match.some((e) => (e.points || 0) >= 25)) readTitles.add(txt.id);
+          // soma XP uma vez por título (maior evento completo + aberturas)
+          const readEvent = match.find((e) => (e.points || 0) >= 25);
+          if (readEvent) earnedXp += readEvent.points || 0;
+        });
+        const total = levelTexts.length;
+        const totalXp = total * 25;
+        stats[lv.code] = {
+          total,
+          read: readTitles.size,
+          earnedXp,
+          totalXp,
+          percent: total > 0 ? Math.min(100, Math.round((readTitles.size / total) * 100)) : 0,
+        };
+      });
+      setLevelStats(stats);
+    })();
+  }, [product?.id, levelMode, hasAccess, user?.id]);
 
   useEffect(() => {
     if (!product || !levelMode) { setModule0(null); return; }
@@ -200,16 +248,47 @@ export default function BstProduct() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
               </button>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {LEVELS.map((lv) => (
+              {LEVELS.map((lv) => {
+                const st = levelStats[lv.code];
+                return (
                 <button
                   key={lv.code}
                   onClick={() => setLevel(lv.code)}
                   className="rounded-lg border bg-card p-5 text-left hover:border-primary hover:bg-muted/40 transition"
                 >
-                  <span className="block text-lg font-bold text-primary">{lv.code}</span>
-                  <span className="block text-sm font-semibold text-foreground">{lv.label}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="block text-lg font-bold text-primary">{lv.code}</span>
+                      <span className="block text-sm font-semibold text-foreground">{lv.label}</span>
+                      <span className="block text-xs text-muted-foreground mt-1">
+                        {st ? `${st.total} textos` : "…"}
+                      </span>
+                    </div>
+                    {st && st.percent === 100 && st.total > 0 && (
+                      <CheckCircle className="h-5 w-5 text-success shrink-0" />
+                    )}
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Progresso</span>
+                        <span>{st?.percent ?? 0}%</span>
+                      </div>
+                      <Progress value={st?.percent ?? 0} className="h-1.5" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1 text-xp font-medium">
+                        <Zap className="h-3 w-3 fill-xp/30" />
+                        {st?.earnedXp ?? 0} XP
+                      </span>
+                      <span className="text-muted-foreground tabular-nums">
+                        / {st?.totalXp ?? 0} XP
+                      </span>
+                    </div>
+                  </div>
                 </button>
-              ))}
+                );
+              })}
               </div>
             </div>
           ) : levelMode && !levelTool ? (
