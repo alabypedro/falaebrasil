@@ -43,6 +43,8 @@ const MODULE0_TITLE = "Módulo 0 - Tutorial: Como Estudar para Provas";
 
 interface UnitPdf { unit: number; title: string | null; pdf_url: string | null; }
 
+interface LevelStats { total: number; read: number; earnedXp: number; totalXp: number; percent: number; }
+
 export default function BstProduct() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -59,6 +61,8 @@ export default function BstProduct() {
   const [module0, setModule0] = useState<UnitPdf | null>(null);
   const [module0View, setModule0View] = useState(false);
   const { isBstOnly, slug: ownedSlug, loading: bstLoading } = useBstOnly();
+  const { user } = useAuth();
+  const [levelStats, setLevelStats] = useState<Record<string, LevelStats>>({});
 
   useEffect(() => {
     (async () => {
