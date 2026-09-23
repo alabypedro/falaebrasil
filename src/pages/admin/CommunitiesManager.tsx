@@ -323,6 +323,11 @@ export default function CommunitiesManager() {
                     {item.title}
                   </div>
                   {item.description && <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>}
+                  {(subCounts[item.id] ?? 0) > 0 && (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {subCounts[item.id]} subpasta{subCounts[item.id] > 1 ? "s" : ""}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   {item.all_tiers ? (
