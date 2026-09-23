@@ -99,6 +99,48 @@ export default function BstProduct() {
   }, [product?.id, levelMode, level]);
 
   useEffect(() => {
+    if (!product || !levelMode || !hasAccess || !user) { setLevelStats({}); return; }
+    (async () => {
+      const [{ data: texts }, { data: events }] = await Promise.all([
+        supabase
+          .from("leiae_texts")
+          .select("id,title,level")
+          .eq("bst_product_id", product.id),
+        supabase
+          .from("ai_xp_events" as any)
+          .select("points,key")
+          .eq("user_id", user.id)
+          .eq("source", "leiae"),
+      ]);
+      const rows = (texts as Array<{ id: string; title: string; level: string }>) || [];
+      const evs = (events as unknown as Array<{ points: number | null; key: string | null }>) || [];
+      const stats: Record<string, LevelStats> = {};
+      LEVELS.forEach((lv) => {
+        const levelTexts = rows.filter((r) => r.level === lv.code);
+        const readTitles = new Set<string>();
+        let earnedXp = 0;
+        levelTexts.forEach((txt) => {
+          const match = evs.filter((e) => (e.key || "").includes(txt.title));
+          if (match.some((e) => (e.points || 0) >= 25)) readTitles.add(txt.id);
+          // soma XP uma vez por título (maior evento completo + aberturas)
+          const readEvent = match.find((e) => (e.points || 0) >= 25);
+          if (readEvent) earnedXp += readEvent.points || 0;
+        });
+        const total = levelTexts.length;
+        const totalXp = total * 25;
+        stats[lv.code] = {
+          total,
+          read: readTitles.size,
+          earnedXp,
+          totalXp,
+          percent: total > 0 ? Math.min(100, Math.round((readTitles.size / total) * 100)) : 0,
+        };
+      });
+      setLevelStats(stats);
+    })();
+  }, [product?.id, levelMode, hasAccess, user?.id]);
+
+  useEffect(() => {
     if (!product || !levelMode) { setModule0(null); return; }
     (async () => {
       const { data } = await supabase
