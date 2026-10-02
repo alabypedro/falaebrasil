@@ -23,4 +23,6 @@ project_id = "qiuqmowxwlqnjhlqvxzw"
     verify_jwt = true
   [functions.send-student-progress]
     verify_jwt = true
+  [functions.bst-file-signed-url]
+    verify_jwt = true
 

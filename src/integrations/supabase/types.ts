@@ -2887,6 +2887,7 @@ export type Database = {
       }
       calculate_level_from_xp: { Args: { _xp: number }; Returns: string }
       can_access_level: { Args: { _level: string }; Returns: boolean }
+      can_access_quiz: { Args: { _quiz_id: string }; Returns: boolean }
       complete_video: { Args: { _video_id: string }; Returns: Json }
       debit_scripted_seconds: { Args: { _seconds: number }; Returns: Json }
       debit_unscripted_seconds: { Args: { _seconds: number }; Returns: Json }

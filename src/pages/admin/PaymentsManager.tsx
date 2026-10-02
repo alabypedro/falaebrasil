@@ -47,6 +47,7 @@ type PaymentProduct = {
   grants_scripted_seconds: number;
   grants_unscripted_seconds: number;
   checkout_url: string | null;
+  grants_category?: string | null;
 };
 
 type CourseRow = { id: string; title: string; level: string; required_tier: string };
@@ -995,6 +996,7 @@ export default function PaymentsManager() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {products
                     .filter((op) => op.id !== draft.id)
+                    .filter((op) => draft.grants_category === "open" || op.grants_category !== "open")
                     .map((op) => {
                       const checked = productBundles[draft.id]?.has(op.id) ?? false;
                       return (

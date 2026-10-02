@@ -152,10 +152,9 @@ export default function LibraryManager() {
     setLevelUploading(lv);
     const safe = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `bst/levels/${Date.now()}_${safe}`;
-    const { error } = await supabase.storage.from("lesson-files").upload(path, file);
+    const { error } = await supabase.storage.from("bst-files").upload(path, file);
     if (error) { toast.error("Erro no upload: " + error.message); setLevelUploading(null); return; }
-    const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
-    const next = { title: levelRows[lv]?.title ?? "", pdf_url: data.publicUrl };
+    const next = { title: levelRows[lv]?.title ?? "", pdf_url: path };
     setLevelRows((r) => ({ ...r, [lv]: next }));
     await saveLevelPdf(lv, next);
     setLevelUploading(null);
@@ -199,10 +198,9 @@ export default function LibraryManager() {
     setUploading(true);
     const safe = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `bst/${Date.now()}_${safe}`;
-    const { error } = await supabase.storage.from("lesson-files").upload(path, file);
+    const { error } = await supabase.storage.from("bst-files").upload(path, file);
     if (error) { toast.error("Erro no upload: " + error.message); setUploading(false); return; }
-    const { data } = supabase.storage.from("lesson-files").getPublicUrl(path);
-    setForm((f) => ({ ...f, pdf_url: data.publicUrl }));
+    setForm((f) => ({ ...f, pdf_url: path }));
     setUploading(false);
     toast.success("PDF enviado!");
   };
@@ -565,9 +563,9 @@ export default function LibraryManager() {
               <Input placeholder="email do aluno" value={grantEmail} onChange={(e) => setGrantEmail(e.target.value)} />
               <Button onClick={grant} disabled={granting || !grantEmail.trim()}>Liberar</Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Alunos OPEN, PRO e VIP já têm acesso a todos os produtos BST automaticamente.
-            </p>
+              <p className="text-xs text-muted-foreground">
+                Alunos OPEN têm acesso completo. Os demais veem somente os produtos liberados individualmente.
+              </p>
             <div className="rounded-md border divide-y max-h-72 overflow-auto">
               {accessRows.length === 0 && <p className="p-4 text-sm text-muted-foreground text-center">Nenhum aluno liberado manualmente.</p>}
               {accessRows.map((r) => (
