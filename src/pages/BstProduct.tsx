@@ -13,6 +13,7 @@ import Leiae from "@/pages/Leiae";
 import BstFalae from "@/pages/BstFalae";
 import BstQuiz from "@/pages/BstQuiz";
 import { useBstOnly } from "@/hooks/useBstOnly";
+import { toast } from "sonner";
 
 interface BstProduct {
   id: string;
@@ -41,7 +42,7 @@ type LevelCode = typeof LEVELS[number]["code"];
 const MODULE0_LEVEL = "M0";
 const MODULE0_TITLE = "Módulo 0 - Tutorial: Como Estudar para Provas";
 
-interface UnitPdf { unit: number; title: string | null; pdf_url: string | null; }
+interface UnitPdf { id: string; unit: number; title: string | null; pdf_url: string | null; }
 
 interface LevelStats { total: number; read: number; earnedXp: number; totalXp: number; percent: number; }
 
@@ -89,7 +90,7 @@ export default function BstProduct() {
     (async () => {
       const { data } = await supabase
         .from("bst_product_pdfs")
-        .select("unit,title,pdf_url")
+        .select("id,unit,title,pdf_url")
         .eq("bst_product_id", product.id)
         .eq("level", level)
         .eq("unit", 0)
@@ -145,7 +146,7 @@ export default function BstProduct() {
     (async () => {
       const { data } = await supabase
         .from("bst_product_pdfs")
-        .select("unit,title,pdf_url")
+        .select("id,unit,title,pdf_url")
         .eq("bst_product_id", product.id)
         .eq("level", MODULE0_LEVEL)
         .maybeSingle();
@@ -198,6 +199,21 @@ export default function BstProduct() {
     : view !== "home"
       ? product.title
       : "Bibliotecaê BST";
+
+  const openProtectedPdf = async (title: string, pdfId?: string) => {
+    if (!product) return;
+    const { data, error } = await supabase.functions.invoke("bst-file-signed-url", {
+      body: { productId: product.id, pdfId },
+    });
+    const url = (data as { url?: string } | null)?.url;
+    if (error || !url) {
+      toast.error("Não foi possível abrir este PDF.");
+      return;
+    }
+    setPdfUrl(url);
+    setPdfTitle(title);
+    setReadingPdf(true);
+  };
 
   const showLevelHome = levelMode && view === "home" && !module0View;
 
@@ -301,12 +317,7 @@ export default function BstProduct() {
                     size="sm"
                     className="w-full"
                     disabled={!levelPdf?.pdf_url}
-                    onClick={() => {
-                      if (!levelPdf?.pdf_url) return;
-                      setPdfUrl(levelPdf.pdf_url);
-                      setPdfTitle(`${product.title} — ${level}`);
-                      setReadingPdf(true);
-                    }}
+                    onClick={() => levelPdf && openProtectedPdf(`${product.title} — ${level}`, levelPdf.id)}
                   >
                     {levelPdf?.pdf_url ? "Abrir e baixar" : "Indisponível"}
                   </Button>
@@ -337,7 +348,7 @@ export default function BstProduct() {
                     size="sm"
                     className="w-full"
                     disabled={!product.pdf_url}
-                    onClick={() => { setPdfUrl(product.pdf_url); setPdfTitle(product.title); setReadingPdf(true); }}
+                    onClick={() => openProtectedPdf(product.title)}
                   >
                     {product.pdf_url ? "Abrir e baixar" : "Indisponível"}
                   </Button>
@@ -398,12 +409,7 @@ export default function BstProduct() {
                 size="sm"
                 className="w-full"
                 disabled={!module0?.pdf_url}
-                onClick={() => {
-                  if (!module0?.pdf_url) return;
-                  setPdfUrl(module0.pdf_url);
-                  setPdfTitle(MODULE0_TITLE);
-                  setReadingPdf(true);
-                }}
+                onClick={() => module0 && openProtectedPdf(MODULE0_TITLE, module0.id)}
               >
                 {module0?.pdf_url ? "Abrir e baixar" : "Indisponível"}
               </Button>
