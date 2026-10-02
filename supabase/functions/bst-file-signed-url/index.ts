@@ -41,9 +41,9 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } });
-    const { data: allowed } = await admin.rpc("has_bst_product_access", {
+    const { data: allowed } = await authClient.rpc("has_bst_product_access", {
       _product_id: productId,
-    }, { headers: { Authorization: authHeader } });
+    });
     if (!allowed) return json({ error: "Forbidden" }, 403);
 
     let storedValue: string | null = null;
