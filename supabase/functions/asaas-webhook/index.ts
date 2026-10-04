@@ -311,11 +311,14 @@ Deno.serve(async (req) => {
 
 async function upsertPayment(admin: any, payment: any, userId: string | null) {
   const productKey = payment.description ?? payment.subscription?.description ?? null;
+  const subscriptionId = typeof payment.subscription === "string"
+    ? payment.subscription
+    : payment.subscription?.id ?? null;
   const { error } = await admin.from("asaas_payments").upsert(
     {
       asaas_payment_id: payment.id,
       user_id: userId,
-      asaas_subscription_id: payment.subscription?.id ?? null,
+      asaas_subscription_id: subscriptionId,
       product_key: productKey,
       status: payment.status,
       billing_type: payment.billingType,
@@ -442,12 +445,18 @@ async function resolveMetaProduct(admin: any, productKey: string) {
 
   const { data: bundleRows, error: bundleError } = await admin
     .from("payment_product_bundles")
-    .select("included_product_id, payment_products!payment_product_bundles_included_product_id_fkey(product_key)")
+    .select("included_product_id")
     .eq("product_id", product.id);
   if (bundleError) throw bundleError;
 
-  const bundledKeys = (bundleRows ?? [])
-    .map((row: any) => row.payment_products?.product_key)
+  const includedIds = (bundleRows ?? []).map((row: any) => row.included_product_id);
+  const { data: includedProducts, error: includedError } = includedIds.length > 0
+    ? await admin.from("payment_products").select("product_key").in("id", includedIds)
+    : { data: [], error: null };
+  if (includedError) throw includedError;
+
+  const bundledKeys = (includedProducts ?? [])
+    .map((row: any) => row.product_key)
     .filter((key: unknown): key is string => typeof key === "string")
     .map((key: string) => key.toUpperCase());
 
