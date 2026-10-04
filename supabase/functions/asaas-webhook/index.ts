@@ -15,6 +15,13 @@ const SUPABASE_URL = getEnv("SUPABASE_URL");
 const SERVICE = getEnv("SUPABASE_SERVICE_ROLE_KEY");
 const ANON = getEnv("SUPABASE_ANON_KEY");
 const APP_URL = "https://app.falaebrasil.com.br";
+const DEFAULT_META_PIXEL_ID = "2142327090010383";
+const DEFAULT_META_GRAPH_VERSION = "v24.0";
+
+interface BuyerContact {
+  email?: string;
+  phone?: string;
+}
 
 interface AsaasEvent {
   event: string;
@@ -89,6 +96,7 @@ Deno.serve(async (req) => {
     // Resolve user from ASAAS customer id
     const customerId = payment?.customer ?? subscription?.customer;
     let userId: string | null = null;
+    let buyerContact: BuyerContact = {};
     if (customerId) {
       // The buyer's email is the source of truth: ASAAS reuses the same customer
       // record for a repeat buyer (same CPF/phone) even when they check out with a
@@ -104,6 +112,7 @@ Deno.serve(async (req) => {
             customerEmail = email;
             const cpfCnpj = (cust.cpfCnpj ?? "").replace(/\D/g, "");
             const phone = (cust.mobilePhone ?? cust.phone ?? "").replace(/\D/g, "");
+            buyerContact = { email, phone };
 
             if (email) {
               const { data: profileRow } = await admin
@@ -232,8 +241,25 @@ Deno.serve(async (req) => {
     const eventType = event.event;
     let result: any = { processed: true };
     try {
-      if (eventType === "PAYMENT_CREATED" || eventType === "PAYMENT_RECEIVED" || eventType === "PAYMENT_CONFIRMED") {
+      if (eventType === "PAYMENT_RECEIVED" || eventType === "PAYMENT_CONFIRMED") {
         result = await handlePaymentConfirmed(admin, payment, userId);
+        if (result.handled === true && result.product_key) {
+          try {
+            result.meta_purchase = await sendMetaPurchase(
+              admin,
+              payment,
+              result.product_key,
+              buyerContact,
+            );
+          } catch (metaErr) {
+            console.error("Meta Purchase failed (non-fatal)", {
+              paymentId: payment?.id,
+              productKey: result.product_key,
+              error: (metaErr as Error).message,
+            });
+            result.meta_purchase = { sent: false, reason: "meta_request_failed" };
+          }
+        }
       } else if (eventType === "PAYMENT_OVERDUE") {
         result = await handlePaymentOverdue(admin, payment, userId);
       } else if (eventType === "PAYMENT_REFUNDED") {
@@ -285,11 +311,14 @@ Deno.serve(async (req) => {
 
 async function upsertPayment(admin: any, payment: any, userId: string | null) {
   const productKey = payment.description ?? payment.subscription?.description ?? null;
+  const subscriptionId = typeof payment.subscription === "string"
+    ? payment.subscription
+    : payment.subscription?.id ?? null;
   const { error } = await admin.from("asaas_payments").upsert(
     {
       asaas_payment_id: payment.id,
       user_id: userId,
-      asaas_subscription_id: payment.subscription?.id ?? null,
+      asaas_subscription_id: subscriptionId,
       product_key: productKey,
       status: payment.status,
       billing_type: payment.billingType,
@@ -373,6 +402,164 @@ async function resolveProductKey(admin: any, payment: any): Promise<string | nul
   }
 
   return null;
+}
+
+async function sha256(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function normalizeBrazilianPhone(value?: string): string {
+  const digits = (value ?? "").replace(/\D/g, "");
+  return digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
+}
+
+function metaSourceUrl(productKey: string): string {
+  const urls: Record<string, string> = {
+    bst1: "https://falaebrasil.com.br/bst1",
+    bst2: "https://falaebrasil.com.br/bst2",
+    bst4: "https://falaebrasil.com.br/bst4",
+    bst5: "https://falaebrasil.com.br/bst5",
+    combo_bst1_bst4: "https://falaebrasil.com.br/bst1",
+    combo_bst2_bst5: "https://falaebrasil.com.br/bst2",
+    combo_bst5_bst1: "https://falaebrasil.com.br/bst5",
+    combo_bst5_bst4: "https://falaebrasil.com.br/bst5",
+    combo_bst5_bst1_bst4: "https://falaebrasil.com.br/bst5",
+    pro_adultos: "https://falaebrasil.com.br/lp/adultos",
+    pro_kids_teens: "https://falaebrasil.com.br/lp/kids-teens",
+  };
+  return urls[productKey.toLowerCase()] ?? "https://falaebrasil.com.br";
+}
+
+async function resolveMetaProduct(admin: any, productKey: string) {
+  const { data: product, error: productError } = await admin
+    .from("payment_products")
+    .select("id, product_key, name, type")
+    .eq("product_key", productKey)
+    .maybeSingle();
+  if (productError) throw productError;
+  if (!product) return null;
+
+  const { data: bundleRows, error: bundleError } = await admin
+    .from("payment_product_bundles")
+    .select("included_product_id")
+    .eq("product_id", product.id);
+  if (bundleError) throw bundleError;
+
+  const includedIds = (bundleRows ?? []).map((row: any) => row.included_product_id);
+  const { data: includedProducts, error: includedError } = includedIds.length > 0
+    ? await admin.from("payment_products").select("product_key").in("id", includedIds)
+    : { data: [], error: null };
+  if (includedError) throw includedError;
+
+  const bundledKeys = (includedProducts ?? [])
+    .map((row: any) => row.product_key)
+    .filter((key: unknown): key is string => typeof key === "string")
+    .map((key: string) => key.toUpperCase());
+
+  return {
+    name: product.name || productKey,
+    type: product.type,
+    contentIds: bundledKeys.length > 0 ? bundledKeys : [productKey.toUpperCase()],
+  };
+}
+
+async function isSubscriptionRenewal(admin: any, payment: any): Promise<boolean> {
+  const subscriptionId = typeof payment?.subscription === "string"
+    ? payment.subscription
+    : payment?.subscription?.id;
+  if (!subscriptionId || !payment?.id) return false;
+
+  const { data, error } = await admin
+    .from("asaas_payments")
+    .select("asaas_payment_id")
+    .eq("asaas_subscription_id", subscriptionId)
+    .neq("asaas_payment_id", payment.id)
+    .not("access_granted_at", "is", null)
+    .in("status", ["RECEIVED", "CONFIRMED"])
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
+async function sendMetaPurchase(
+  admin: any,
+  payment: any,
+  productKey: string,
+  buyer: BuyerContact,
+) {
+  const token = Deno.env.get("META_CAPI_ACCESS_TOKEN");
+  if (!token) {
+    console.warn("Meta Purchase skipped", { paymentId: payment?.id, productKey, reason: "missing_meta_token" });
+    return { sent: false, reason: "missing_meta_token" };
+  }
+  if (!payment?.id) return { sent: false, reason: "missing_payment_id" };
+
+  const metaProduct = await resolveMetaProduct(admin, productKey);
+  if (!metaProduct) return { sent: false, reason: "product_not_found" };
+  if (metaProduct.type === "subscription" && await isSubscriptionRenewal(admin, payment)) {
+    return { sent: false, reason: "subscription_renewal" };
+  }
+
+  const normalizedEmail = (buyer.email ?? "").trim().toLowerCase();
+  const normalizedPhone = normalizeBrazilianPhone(buyer.phone);
+  const userData: Record<string, string[]> = {};
+  if (normalizedEmail) userData.em = [await sha256(normalizedEmail)];
+  if (normalizedPhone) userData.ph = [await sha256(normalizedPhone)];
+
+  const value = Number(payment.value ?? 0);
+  const pixelId = Deno.env.get("META_PIXEL_ID") || DEFAULT_META_PIXEL_ID;
+  const graphVersion = Deno.env.get("META_GRAPH_VERSION") || DEFAULT_META_GRAPH_VERSION;
+  const payload = {
+    data: [{
+      event_name: "Purchase",
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: `asaas_${payment.id}`,
+      action_source: "website",
+      event_source_url: metaSourceUrl(productKey),
+      user_data: userData,
+      custom_data: {
+        currency: "BRL",
+        value,
+        content_type: "product",
+        content_ids: metaProduct.contentIds,
+        content_name: metaProduct.name,
+      },
+    }],
+  };
+
+  const response = await fetch(
+    `https://graph.facebook.com/${graphVersion}/${pixelId}/events?access_token=${encodeURIComponent(token)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+  );
+  const responseBody = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    console.error("Meta Purchase rejected", {
+      paymentId: payment.id,
+      productKey,
+      contentIds: metaProduct.contentIds,
+      value,
+      status: response.status,
+      response: responseBody,
+    });
+    return { sent: false, reason: "meta_api_error", status: response.status };
+  }
+
+  console.log("Meta Purchase sent", {
+    paymentId: payment.id,
+    productKey,
+    contentIds: metaProduct.contentIds,
+    value,
+    eventsReceived: responseBody.events_received ?? null,
+  });
+  return { sent: true };
 }
 
 async function handlePaymentConfirmed(admin: any, payment: any, userId: string | null) {
