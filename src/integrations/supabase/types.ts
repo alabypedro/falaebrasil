@@ -41,6 +41,65 @@ export type Database = {
         }
         Relationships: []
       }
+      asaas_access_entitlements: {
+        Row: {
+          asaas_payment_id: string
+          asaas_subscription_id: string | null
+          created_at: string
+          entitlement_type: string
+          granted_at: string
+          id: string
+          payment_product_id: string
+          resource_id: string
+          revoke_reason: string | null
+          revoked_at: string | null
+          source: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asaas_payment_id: string
+          asaas_subscription_id?: string | null
+          created_at?: string
+          entitlement_type: string
+          granted_at?: string
+          id?: string
+          payment_product_id: string
+          resource_id: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asaas_payment_id?: string
+          asaas_subscription_id?: string | null
+          created_at?: string
+          entitlement_type?: string
+          granted_at?: string
+          id?: string
+          payment_product_id?: string
+          resource_id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asaas_access_entitlements_payment_product_id_fkey"
+            columns: ["payment_product_id"]
+            isOneToOne: false
+            referencedRelation: "payment_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asaas_customers: {
         Row: {
           asaas_customer_id: string
@@ -2988,6 +3047,15 @@ export type Database = {
       recharge_monthly_tokens: { Args: never; Returns: undefined }
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
+      revoke_access_from_asaas: {
+        Args: {
+          _asaas_payment_id?: string
+          _asaas_subscription_id?: string
+          _reason?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       submit_book_quiz: {
         Args: { _answers: Json; _chapter_id: string }
         Returns: Json
