@@ -50,6 +50,13 @@
       "when": 1790973209758,
       "tag": "0006_lock_bst_access_to_entitled_products",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791087962733,
+      "tag": "0007_track_asaas_purchase_entitlements",
+      "breakpoints": true
     }
   ]
 }
