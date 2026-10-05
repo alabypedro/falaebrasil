@@ -529,6 +529,7 @@ async function sendMetaPurchase(
         content_name: metaProduct.name,
       },
     }],
+    test_event_code: "TEST88287",
   };
 
   const response = await fetch(
