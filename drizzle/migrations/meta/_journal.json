@@ -57,6 +57,13 @@
       "when": 1791087962733,
       "tag": "0007_track_asaas_purchase_entitlements",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791205930780,
+      "tag": "0008_create_customer_relationship_module",
+      "breakpoints": true
     }
   ]
 }

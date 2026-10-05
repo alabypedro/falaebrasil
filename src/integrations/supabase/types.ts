@@ -890,6 +890,84 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_relationship_history: {
+        Row: {
+          channel: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          responsible_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          responsible_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          responsible_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customer_relationships: {
+        Row: {
+          created_at: string
+          id: string
+          internal_notes: string | null
+          last_contact_at: string | null
+          next_contact_at: string | null
+          next_offer: string
+          next_offer_notes: string | null
+          preferred_channel: string | null
+          responsible_id: string | null
+          stage: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          last_contact_at?: string | null
+          next_contact_at?: string | null
+          next_offer?: string
+          next_offer_notes?: string | null
+          preferred_channel?: string | null
+          responsible_id?: string | null
+          stage?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          last_contact_at?: string | null
+          next_contact_at?: string | null
+          next_offer?: string
+          next_offer_notes?: string | null
+          preferred_channel?: string | null
+          responsible_id?: string | null
+          stage?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2293,6 +2371,24 @@ export type Database = {
         }
         Relationships: []
       }
+      relationship_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       student_categories: {
         Row: {
           code: string
@@ -2997,6 +3093,7 @@ export type Database = {
           xp: number
         }[]
       }
+      get_relationship_customers: { Args: never; Returns: Json }
       get_student_performance: { Args: { _student_id: string }; Returns: Json }
       get_student_progress_admin: {
         Args: { _student_id: string }
