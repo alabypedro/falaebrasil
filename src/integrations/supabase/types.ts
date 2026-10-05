@@ -898,6 +898,7 @@ export type Database = {
           id: string
           notes: string | null
           responsible_id: string | null
+          result: string | null
           type: string
           user_id: string
         }
@@ -908,6 +909,7 @@ export type Database = {
           id?: string
           notes?: string | null
           responsible_id?: string | null
+          result?: string | null
           type: string
           user_id: string
         }
@@ -918,6 +920,7 @@ export type Database = {
           id?: string
           notes?: string | null
           responsible_id?: string | null
+          result?: string | null
           type?: string
           user_id?: string
         }
@@ -926,12 +929,17 @@ export type Database = {
       customer_relationships: {
         Row: {
           created_at: string
+          engagement_level: string | null
           id: string
           internal_notes: string | null
           last_contact_at: string | null
+          manual_attention: boolean
           next_contact_at: string | null
+          next_contact_type: string | null
           next_offer: string
           next_offer_notes: string | null
+          next_offer_responsible_id: string | null
+          next_offer_suggested_at: string | null
           preferred_channel: string | null
           responsible_id: string | null
           stage: string
@@ -940,12 +948,17 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          engagement_level?: string | null
           id?: string
           internal_notes?: string | null
           last_contact_at?: string | null
+          manual_attention?: boolean
           next_contact_at?: string | null
+          next_contact_type?: string | null
           next_offer?: string
           next_offer_notes?: string | null
+          next_offer_responsible_id?: string | null
+          next_offer_suggested_at?: string | null
           preferred_channel?: string | null
           responsible_id?: string | null
           stage?: string
@@ -954,12 +967,17 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          engagement_level?: string | null
           id?: string
           internal_notes?: string | null
           last_contact_at?: string | null
+          manual_attention?: boolean
           next_contact_at?: string | null
+          next_contact_type?: string | null
           next_offer?: string
           next_offer_notes?: string | null
+          next_offer_responsible_id?: string | null
+          next_offer_suggested_at?: string | null
           preferred_channel?: string | null
           responsible_id?: string | null
           stage?: string
@@ -2371,6 +2389,48 @@ export type Database = {
         }
         Relationships: []
       }
+      relationship_message_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          day_offset: number
+          id: string
+          interaction_type: string
+          message: string
+          name: string
+          next_offer: string | null
+          product_key: string | null
+          stage: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          day_offset: number
+          id?: string
+          interaction_type?: string
+          message: string
+          name: string
+          next_offer?: string | null
+          product_key?: string | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          day_offset?: number
+          id?: string
+          interaction_type?: string
+          message?: string
+          name?: string
+          next_offer?: string | null
+          product_key?: string | null
+          stage?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       relationship_settings: {
         Row: {
           key: string
@@ -2386,6 +2446,57 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      relationship_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          dedupe_key: string | null
+          due_at: string
+          id: string
+          notes: string | null
+          priority: string
+          reason: string
+          responsible_id: string | null
+          source: string
+          status: string
+          task_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          due_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          reason: string
+          responsible_id?: string | null
+          source?: string
+          status?: string
+          task_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          due_at?: string
+          id?: string
+          notes?: string | null
+          priority?: string
+          reason?: string
+          responsible_id?: string | null
+          source?: string
+          status?: string
+          task_type?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3047,6 +3158,7 @@ export type Database = {
       debit_scripted_seconds: { Args: { _seconds: number }; Returns: Json }
       debit_unscripted_seconds: { Args: { _seconds: number }; Returns: Json }
       expire_overdue_subscriptions: { Args: never; Returns: Json }
+      generate_relationship_tasks: { Args: never; Returns: number }
       get_book_quiz: {
         Args: { _chapter_id: string }
         Returns: {
@@ -3142,6 +3254,7 @@ export type Database = {
       is_my_student: { Args: { _student_id: string }; Returns: boolean }
       level_rank: { Args: { _level: string }; Returns: number }
       recharge_monthly_tokens: { Args: never; Returns: undefined }
+      relationship_alert_count: { Args: never; Returns: number }
       reset_all_progress: { Args: never; Returns: Json }
       reset_course_progress: { Args: { _course_id: string }; Returns: Json }
       revoke_access_from_asaas: {
