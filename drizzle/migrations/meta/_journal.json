@@ -64,6 +64,13 @@
       "when": 1791205930780,
       "tag": "0008_create_customer_relationship_module",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791206797512,
+      "tag": "0009_relationship_crm_tasks_alerts",
+      "breakpoints": true
     }
   ]
 }
