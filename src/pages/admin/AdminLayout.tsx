@@ -1,4 +1,6 @@
 import { NavLink, Outlet, useLocation, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { LayoutDashboard, BookOpen, Sparkles, Users, PlayCircle, FileSignature, ShieldCheck, CreditCard, Music, ArrowLeft, Library, GraduationCap, Presentation, BookMarked, HeartHandshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -73,8 +75,29 @@ function BackToHub() {
   );
 }
 
+function useRelationshipAlerts() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const { data } = await (supabase as any).rpc("relationship_alert_count");
+      if (active) setCount(Number(data ?? 0));
+    };
+    refresh();
+    const id = window.setInterval(refresh, 5 * 60_000);
+    window.addEventListener("relationship:changed", refresh);
+    return () => {
+      active = false;
+      window.clearInterval(id);
+      window.removeEventListener("relationship:changed", refresh);
+    };
+  }, []);
+  return count;
+}
+
 function AdminNav() {
   const { pathname } = useLocation();
+  const alerts = useRelationshipAlerts();
   const isActive = (item: (typeof adminNav)[number]) => {
     if (item.end) return pathname === item.to;
     return item.match.some((m) => pathname === m || pathname.startsWith(m + "/"));
@@ -95,6 +118,14 @@ function AdminNav() {
         >
           <item.icon className="h-4 w-4" />
           {item.label}
+          {item.to === "/admin/relationship" && alerts > 0 && (
+            <span
+              className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground"
+              aria-label={`${alerts} tarefas pendentes`}
+            >
+              {alerts}
+            </span>
+          )}
         </NavLink>
       ))}
     </nav>
