@@ -54,6 +54,7 @@ import BooksManager from "@/pages/admin/BooksManager";
 import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
 import StudentsManager from "@/pages/admin/StudentsManager";
+import RelationshipManager from "@/pages/admin/RelationshipManager";
 import { CoursesHub, AIHub, TutorialsHub, AdminsHub, AsaasHub } from "@/pages/admin/hubs/AdminHubs";
 import Contratos from "@/pages/Contratos";
 import TeacherArea from "@/pages/TeacherArea";
@@ -250,6 +251,7 @@ const App = () => {
                           <Route path="leiae" element={<LeiaeManager />} />
                           <Route path="music-lab" element={<MusicLabManager />} />
                           <Route path="books" element={<BooksManager />} />
+                          <Route path="relationship" element={<RelationshipManager />} />
                         </Route>
                         <Route path="*" element={<NotFound />} />
                       </Routes>
