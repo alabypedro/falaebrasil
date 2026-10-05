@@ -250,6 +250,7 @@ Deno.serve(async (req) => {
               payment,
               result.product_key,
               buyerContact,
+              userId,
             );
           } catch (metaErr) {
             console.error("Meta Purchase failed (non-fatal)", {
@@ -404,7 +405,7 @@ async function resolveProductKey(admin: any, payment: any): Promise<string | nul
   return null;
 }
 
-async function sha256(value: string): Promise<string> {
+async function sha256Hex(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest))
@@ -490,6 +491,7 @@ async function sendMetaPurchase(
   payment: any,
   productKey: string,
   buyer: BuyerContact,
+  userId: string,
 ) {
   const token = Deno.env.get("META_CAPI_ACCESS_TOKEN");
   if (!token) {
@@ -506,9 +508,11 @@ async function sendMetaPurchase(
 
   const normalizedEmail = (buyer.email ?? "").trim().toLowerCase();
   const normalizedPhone = normalizeBrazilianPhone(buyer.phone);
-  const userData: Record<string, string[]> = {};
-  if (normalizedEmail) userData.em = [await sha256(normalizedEmail)];
-  if (normalizedPhone) userData.ph = [await sha256(normalizedPhone)];
+  const userData: Record<string, string[]> = {
+    external_id: [await sha256Hex(userId)],
+  };
+  if (normalizedEmail) userData.em = [await sha256Hex(normalizedEmail)];
+  if (normalizedPhone) userData.ph = [await sha256Hex(normalizedPhone)];
 
   const value = Number(payment.value ?? 0);
   const pixelId = Deno.env.get("META_PIXEL_ID") || DEFAULT_META_PIXEL_ID;
