@@ -36,7 +36,11 @@ const LEVEL_SLUGS = [
   "bst3c",
 ];
 // Níveis exibidos por produto (os demais mostram todos).
-const PRODUCT_LEVELS: Record<string, string[]> = { bst3a: ["A1", "A2"] };
+const PRODUCT_LEVELS: Record<string, string[]> = {
+  bst3a: ["A1", "A2"],
+  bst3b: ["A2", "B1"],
+  bst3c: ["B1", "B2", "C1", "C2"],
+};
 const LEVELS = [
   { code: "A1", label: "Básico" },
   { code: "A2", label: "Pré-Intermediário" },
