@@ -273,7 +273,7 @@ export default function BstProduct() {
                 <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
               </button>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {LEVELS.map((lv) => {
+              {shownLevels.map((lv) => {
                 const st = levelStats[lv.code];
                 return (
                 <button
