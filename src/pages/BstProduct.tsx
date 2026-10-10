@@ -29,7 +29,14 @@ interface BstProduct {
 type View = "home" | "primary" | "tool";
 type LevelTool = "leiae";
 
-const LEVEL_SLUG = "bst-cartilha-de-ingles-instrumental-do-zero-a1-ao-c2-avancado";
+const LEVEL_SLUGS = [
+  "bst-cartilha-de-ingles-instrumental-do-zero-a1-ao-c2-avancado",
+  "bst3a",
+  "bst3b",
+  "bst3c",
+];
+// Níveis exibidos por produto (os demais mostram todos).
+const PRODUCT_LEVELS: Record<string, string[]> = { bst3a: ["A1", "A2"] };
 const LEVELS = [
   { code: "A1", label: "Básico" },
   { code: "A2", label: "Pré-Intermediário" },
@@ -83,7 +90,9 @@ export default function BstProduct() {
     })();
   }, [slug]);
 
-  const levelMode = product?.slug === LEVEL_SLUG;
+  const levelMode = !!product && LEVEL_SLUGS.includes(product.slug);
+  const visibleLevels = (product && PRODUCT_LEVELS[product.slug]) || LEVELS.map((l) => l.code);
+  const shownLevels = LEVELS.filter((l) => visibleLevels.includes(l.code));
 
   useEffect(() => {
     if (!product || !levelMode || !level) { setLevelPdf(null); return; }
