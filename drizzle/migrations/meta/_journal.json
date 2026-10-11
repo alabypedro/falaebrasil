@@ -71,6 +71,13 @@
       "when": 1791206797512,
       "tag": "0009_relationship_crm_tasks_alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791678681123,
+      "tag": "0010_open_music_lab_to_all_users",
+      "breakpoints": true
     }
   ]
 }
