@@ -78,6 +78,13 @@
       "when": 1791678681123,
       "tag": "0010_open_music_lab_to_all_users",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791812043413,
+      "tag": "0011_bst_monthly_ai_credits",
+      "breakpoints": true
     }
   ]
 }
