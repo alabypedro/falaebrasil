@@ -4,3 +4,5 @@
 - BST PDFs live in the private `bst-files` bucket and are opened only through short-lived signed URLs after a server-side product-access check.
 - Non-OPEN payment bundles cannot include an OPEN product, preventing an individual BST checkout from escalating into full catalog access.
 - Meta Purchase tracking is a non-blocking server-side layer after confirmed ASAAS access grants; it must never affect access, email, refunds, or subscriptions.- Admin relationship data lives in dedicated admin-only tables and is read through an admin-checked RPC, so commercial notes never reach students and purchase/XP sources stay untouched.
+
+- BST buyers get monthly scripted AI credits via grant_bst_monthly_credits (daily cron, logged per month index), because a unique log row per month prevents double credit.

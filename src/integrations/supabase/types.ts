@@ -478,6 +478,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bst_monthly_credit_log: {
+        Row: {
+          created_at: string
+          id: string
+          month_index: number
+          seconds_added: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month_index: number
+          seconds_added?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month_index?: number
+          seconds_added?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       bst_product_access: {
         Row: {
           created_at: string
@@ -3224,6 +3248,7 @@ export type Database = {
         }
         Returns: Json
       }
+      grant_bst_monthly_credits: { Args: never; Returns: number }
       grant_voice_credits: {
         Args: {
           _hubla_event_id: string
