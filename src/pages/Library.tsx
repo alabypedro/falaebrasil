@@ -123,6 +123,9 @@ export default function Library() {
             ) : (
               <Button className="w-full" disabled>Checkout indisponível</Button>
             )}
+            <p className="text-xs text-muted-foreground text-center">
+              Já pagou? Verifique seu e-mail (e a caixa de spam) para acessar o app.
+            </p>
             <Button variant="outline" className="w-full" onClick={() => setLocked(null)}>
               Fechar
             </Button>
