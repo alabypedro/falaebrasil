@@ -26,3 +26,5 @@ project_id = "qiuqmowxwlqnjhlqvxzw"
   [functions.bst-file-signed-url]
     verify_jwt = true
 
+  [functions.relationship-auto-emails]
+    verify_jwt = false

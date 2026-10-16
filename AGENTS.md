@@ -6,3 +6,5 @@
 - Meta Purchase tracking is a non-blocking server-side layer after confirmed ASAAS access grants; it must never affect access, email, refunds, or subscriptions.- Admin relationship data lives in dedicated admin-only tables and is read through an admin-checked RPC, so commercial notes never reach students and purchase/XP sources stay untouched.
 
 - BST buyers get monthly scripted AI credits via grant_bst_monthly_credits (daily cron, logged per month index), because a unique log row per month prevents double credit.
+
+- Relationship onboarding emails (D0, D+1, D+3) are sent hourly by relationship-auto-emails with one log row per step (relationship_email_log unique key), so a step is never sent twice; offer steps (D+30) stay human because sales offers cannot go through app emails.
