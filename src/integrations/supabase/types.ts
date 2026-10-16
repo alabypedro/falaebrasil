@@ -2413,6 +2413,33 @@ export type Database = {
         }
         Relationships: []
       }
+      relationship_email_log: {
+        Row: {
+          created_at: string
+          day_offset: number
+          dedupe_key: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_offset: number
+          dedupe_key: string
+          id?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_offset?: number
+          dedupe_key?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       relationship_message_templates: {
         Row: {
           active: boolean
