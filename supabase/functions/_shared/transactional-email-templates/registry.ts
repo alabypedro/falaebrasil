@@ -3,6 +3,7 @@ import { template as evaluationReport } from './evaluation-report.tsx'
 import { template as studentProgressReport } from './student-progress-report.tsx'
 import { template as relationshipDailySummary } from './relationship-daily-summary.tsx'
 import { template as relationshipFollowup } from './relationship-followup.tsx'
+import { template as purchaseAccessGranted } from './purchase-access-granted.tsx'
 
 export interface TemplateEntry {
   // deno-lint-ignore no-explicit-any
@@ -20,4 +21,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'student-progress-report': studentProgressReport,
   'relationship-daily-summary': relationshipDailySummary,
   'relationship-followup': relationshipFollowup,
+  'purchase-access-granted': purchaseAccessGranted,
 }

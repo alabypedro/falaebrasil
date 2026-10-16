@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { sendTemplateEmail } from "../_shared/transactional-email-templates/send-email.ts";
 
 const getEnv = (key: string) => {
   const value = Deno.env.get(key);
@@ -583,7 +584,7 @@ async function handlePaymentConfirmed(admin: any, payment: any, userId: string |
 
   // Send welcome/onboarding email for first-time buyers (no prior sign-in).
   try {
-    await sendWelcomePurchaseEmail(admin, userId);
+    await sendWelcomePurchaseEmail(admin, userId, payment, productKey);
   } catch (mailErr) {
     console.error("welcome email send failed (non-fatal)", mailErr);
   }
@@ -786,15 +787,30 @@ async function handleSubscriptionEvent(admin: any, subscription: any, userId: st
 // Sends the branded "welcome_purchase" email to first-time buyers.
 // Reuses the auth-email-hook flow: the hook detects `from_hubla=true`
 // + never signed in and swaps recovery → welcome_purchase automatically.
-async function sendWelcomePurchaseEmail(admin: any, userId: string) {
+async function sendWelcomePurchaseEmail(admin: any, userId: string, payment?: any, productKey?: string) {
   const { data: userRes, error: getErr } = await admin.auth.admin.getUserById(userId);
   if (getErr || !userRes?.user) return;
   const user = userRes.user;
   const email = user.email;
   if (!email) return;
 
-  // Only onboard first-time buyers. Returning users already have access.
-  if (user.last_sign_in_at) return;
+  // Returning users (already signed in before) get an "access unlocked" email
+  // for every confirmed purchase, so no buyer is ever left without a message.
+  if (user.last_sign_in_at) {
+    let productName = "";
+    if (productKey) {
+      const { data: pp } = await admin.from("payment_products").select("name").eq("product_key", productKey).maybeSingle();
+      productName = pp?.name ?? "";
+    }
+    const { data: prof } = await admin.from("profiles").select("full_name").eq("user_id", userId).maybeSingle();
+    const firstName = (prof?.full_name ?? "").trim().split(/\s+/)[0] || undefined;
+    const res = await sendTemplateEmail("purchase-access-granted", email, {
+      templateData: { name: firstName, productName, email },
+      idempotencyKey: `purchase-access-${payment?.id ?? userId}`,
+    });
+    console.log("Access-granted email (returning buyer)", { email, res });
+    return;
+  }
 
   const meta = user.user_metadata || {};
   // Skip if we already sent a welcome email recently (prevents dup sends
