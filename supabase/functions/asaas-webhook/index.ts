@@ -802,8 +802,8 @@ async function sendWelcomePurchaseEmail(admin: any, userId: string, payment?: an
       const { data: pp } = await admin.from("payment_products").select("name").eq("product_key", productKey).maybeSingle();
       productName = pp?.name ?? "";
     }
-    const { data: prof } = await admin.from("profiles").select("full_name").eq("user_id", userId).maybeSingle();
-    const firstName = (prof?.full_name ?? "").trim().split(/\s+/)[0] || undefined;
+    const { data: prof } = await admin.from("profiles").select("display_name").eq("user_id", userId).maybeSingle();
+    const firstName = (prof?.display_name ?? "").trim().split(/\s+/)[0] || undefined;
     const res = await sendTemplateEmail("purchase-access-granted", email, {
       templateData: { name: firstName, productName, email },
       idempotencyKey: `purchase-access-${payment?.id ?? userId}`,
