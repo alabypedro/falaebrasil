@@ -264,6 +264,9 @@ export default function BstProduct() {
                     <a href={product.checkout_url} target="_blank" rel="noopener noreferrer">Comprar agora</a>
                   </Button>
                 )}
+                <p className="text-xs text-muted-foreground">
+                  Já pagou? Verifique seu e-mail (e a caixa de spam) para acessar o app.
+                </p>
               </CardContent>
             </Card>
           ) : levelMode && !level ? (
