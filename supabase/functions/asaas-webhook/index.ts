@@ -573,6 +573,11 @@ async function handlePaymentConfirmed(admin: any, payment: any, userId: string |
   const productKey = await resolveProductKey(admin, payment);
   if (!productKey) return { handled: false, reason: "unknown_product_key", key: payment.description };
 
+  const experienceSegment = EXPERIENCE_SEGMENTS[productKey];
+  if (experienceSegment) {
+    return handleExperienceConfirmed(admin, payment, userId, productKey, experienceSegment);
+  }
+
   // Grant access via idempotent RPC
   const { data, error } = await admin.rpc("grant_access_from_asaas", {
     _user_id: userId,
@@ -629,6 +634,85 @@ async function handlePaymentConfirmed(admin: any, payment: any, userId: string |
   }
 
   return { handled: true, product_key: productKey, grant: data };
+}
+
+const EXPERIENCE_SEGMENTS: Record<string, "adults" | "kids_teens"> = {
+  experiencia_pro_adultos: "adults",
+  experiencia_pro_kids_teens: "kids_teens",
+};
+
+// Experiência PRO de R$5: 30 dias de acesso, uma única vez por aluno.
+// Não concede matrícula, não altera plan_tier nem subscription_status.
+async function handleExperienceConfirmed(
+  admin: any,
+  payment: any,
+  userId: string,
+  productKey: string,
+  segment: "adults" | "kids_teens",
+) {
+  const { data: prior } = await admin
+    .from("asaas_payments")
+    .select("access_granted_at, access_grant_result")
+    .eq("asaas_payment_id", payment.id)
+    .maybeSingle();
+
+  if (prior?.access_granted_at) {
+    return {
+      handled: true,
+      product_key: productKey,
+      grant: prior.access_grant_result ?? { granted: false, reason: "already_processed" },
+    };
+  }
+
+  const { data, error } = await admin.rpc("grant_experience_access", {
+    _user_id: userId,
+    _segment: segment,
+    _asaas_payment_id: payment.id,
+  });
+  if (error) throw error;
+
+  const grant = (data ?? { granted: false }) as Record<string, any>;
+  const alreadyUsed = grant.reason === "already_used";
+  const expiresAt = (grant.expires_at ?? null) as string | null;
+
+  await admin
+    .from("asaas_payments")
+    .update({
+      product_key: productKey,
+      access_granted_at: new Date().toISOString(),
+      access_grant_result: grant,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("asaas_payment_id", payment.id);
+
+  const audience = segment === "adults" ? "Adultos" : "Kids e Teens";
+  const expiryLabel = expiresAt
+    ? new Date(expiresAt).toLocaleDateString("pt-BR")
+    : null;
+
+  let expiryNote: string | undefined;
+  if (alreadyUsed && expiryLabel) {
+    expiryNote = `Você já havia usado a experiência de 30 dias, que segue válida até ${expiryLabel}. Este novo pagamento foi registrado e nossa equipe vai falar com você.`;
+  } else if (expiryLabel) {
+    expiryNote = `Sua experiência de 30 dias para o público ${audience} vale até ${expiryLabel}. Depois dessa data o acesso é encerrado automaticamente.`;
+  }
+
+  try {
+    await sendWelcomePurchaseEmail(admin, userId, payment, productKey, expiryNote);
+  } catch (mailErr) {
+    console.error("welcome email send failed (non-fatal)", mailErr);
+  }
+
+  console.log("Experience processed", {
+    paymentId: payment.id,
+    productKey,
+    segment,
+    granted: grant.granted === true,
+    alreadyUsed,
+    expiresAt,
+  });
+
+  return { handled: true, product_key: productKey, grant };
 }
 
 async function handlePaymentOverdue(admin: any, payment: any, userId: string | null) {
@@ -787,7 +871,7 @@ async function handleSubscriptionEvent(admin: any, subscription: any, userId: st
 // Sends the branded "welcome_purchase" email to first-time buyers.
 // Reuses the auth-email-hook flow: the hook detects `from_hubla=true`
 // + never signed in and swaps recovery → welcome_purchase automatically.
-async function sendWelcomePurchaseEmail(admin: any, userId: string, payment?: any, productKey?: string) {
+async function sendWelcomePurchaseEmail(admin: any, userId: string, payment?: any, productKey?: string, expiryNote?: string) {
   const { data: userRes, error: getErr } = await admin.auth.admin.getUserById(userId);
   if (getErr || !userRes?.user) return;
   const user = userRes.user;
@@ -805,7 +889,7 @@ async function sendWelcomePurchaseEmail(admin: any, userId: string, payment?: an
     const { data: prof } = await admin.from("profiles").select("display_name").eq("user_id", userId).maybeSingle();
     const firstName = (prof?.display_name ?? "").trim().split(/\s+/)[0] || undefined;
     const res = await sendTemplateEmail("purchase-access-granted", email, {
-      templateData: { name: firstName, productName, email },
+      templateData: { name: firstName, productName, email, expiryNote },
       idempotencyKey: `purchase-access-${payment?.id ?? userId}`,
     });
     console.log("Access-granted email (returning buyer)", { email, res });
