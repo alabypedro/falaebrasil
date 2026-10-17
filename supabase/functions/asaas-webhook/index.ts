@@ -20,6 +20,9 @@ const DEFAULT_META_PIXEL_ID = "2142327090010383";
 const DEFAULT_META_GRAPH_VERSION = "v24.0";
 
 // NFS-e: código e nome do serviço usados em toda nota emitida pelo app.
+// Emissão automática em stand-by por decisão do usuário (2026-10-17): nenhuma
+// nota é criada a partir de pagamentos confirmados até que se reative a flag.
+const NFS_E_AUTO_ISSUANCE_ENABLED = false;
 const NFS_E_SERVICE_CODE = "080201";
 const NFS_E_SERVICE_NAME =
   "Instrução, treinamento, orientação pedagógica e educacional, avaliação de conhecimentos de qualquer natureza";
@@ -266,14 +269,17 @@ Deno.serve(async (req) => {
             });
             result.meta_purchase = { sent: false, reason: "meta_request_failed" };
           }
-          try {
-            result.invoice = await issueInvoiceForPayment(payment);
-          } catch (invoiceErr) {
-            console.error("NFS-e issuance failed (non-fatal)", {
-              paymentId: payment?.id,
-              error: (invoiceErr as Error).message,
-            });
-            result.invoice = { issued: false, reason: "invoice_request_failed" };
+          // Emissão de NFS-e em stand-by: nenhuma nota é criada automaticamente.
+          if (NFS_E_AUTO_ISSUANCE_ENABLED) {
+            try {
+              result.invoice = await issueInvoiceForPayment(payment);
+            } catch (invoiceErr) {
+              console.error("NFS-e issuance failed (non-fatal)", {
+                paymentId: payment?.id,
+                error: (invoiceErr as Error).message,
+              });
+              result.invoice = { issued: false, reason: "invoice_request_failed" };
+            }
           }
         }
       } else if (eventType === "PAYMENT_OVERDUE") {
