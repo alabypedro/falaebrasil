@@ -1,103 +1,60 @@
-# Experiência PRO e automação da escola
+# Plano PRO recorrente mensal (R$147 adultos / R$126 Kids-Teens)
 
-## Entrega imediata: experiência de R$5
+## Objetivo
+Fechar o fluxo ponta a ponta: aluno sai da Experiência PRO (R$5/30 dias), assina o plano mensal pelo link ASAAS, e a cada pagamento confirmado o acesso é estendido automaticamente por mais um mês — sem ação do aluno — com lembretes amigáveis antes do vencimento e gestão completa no Admin.
 
-Cadastrar os dois pagamentos avulsos, sem assinatura recorrente nem matrícula automática:
+## O que já existe (não será refeito)
+- Os dois links ASAAS já são **assinaturas mensais recorrentes** (cartão habilitado).
+- O webhook já registra assinaturas (`asaas_subscriptions`), renova/cancela acesso e mostra aviso de pagamento pendente no app.
+- Já existe função de cancelamento de assinatura e relatório mensal de progresso do aluno.
 
-| Público | Checkout ASAAS | Acesso aos cursos |
-| --- | --- | --- |
-| Adultos | https://www.asaas.com/000/c/4d3sc7g8rky3eh40 | Adultos; Kids e Teens bloqueados |
-| Kids e Teens | https://www.asaas.com/000/c/ghhwvyupo5eqiqyr | Kids e Teens; adultos bloqueados |
+## 1. Cadastro dos produtos
+- Criar dois produtos de assinatura mensal no sistema:
+  - **PRO Mensal Adultos** — R$147/mês — link `57t5yjkcfmj757rl`
+  - **PRO Mensal Kids/Teens** — R$126/mês — link `qhk5xkozqahjvmul`
+- Cada um libera os cursos do seu público (Adultos ou Kids/Teens), mantendo o acesso geral a BST, Bibliotecaê e Cantaê.
 
-- R$5 por aluno, apenas uma experiência por aluno, com 30 dias contados da primeira confirmação de pagamento. Repetições de eventos ou novas compras não reiniciam o prazo.
-- Ambos acessam as IAs, todos os PDFs e atividades BST, Bibliotecaê e Cantaê, respeitando a separação de cursos e materiais associados a cada público.
-- Mostrar início, vencimento e condição de experiência no app; cursos excluídos aparecem bloqueados, inclusive quando abertos por link direto.
-- Encerrar os acessos concedidos pela experiência ao completar os 30 dias, sem apagar XP, leituras, quizzes ou histórico. Compras BST e matrículas independentes continuam válidas. Cantaê conserva a regra anterior de acesso a todo usuário autenticado.
-- Reutilizar o e-mail de primeiro acesso e criação de senha para novos clientes; quem já tem conta recebe confirmação, produto, prazo e instruções de login. Preservar o tutorial de instalação no primeiro acesso.
-- Caso alguém pague novamente uma experiência já utilizada, registrar a ocorrência para atendimento, sem conceder novos 30 dias nem iniciar cobrança recorrente.
+## 2. Conversão Experiência → Plano PRO (automática)
+- Quando o pagamento da assinatura for confirmado para um aluno que está na Experiência PRO:
+  - O acesso passa de "experiência de 30 dias" para **assinante ativo**, sem interrupção.
+  - O aviso de "Experiência PRO — X dias restantes" some e dá lugar ao status de assinante.
+- A cada nova cobrança mensal confirmada, o acesso é estendido até o próximo vencimento (o ASAAS já cobra sozinho todo mês no mesmo dia do primeiro pagamento — a regra do dia 17→17, 31→30 é dele; nós apenas obedecemos a data que ele informa).
 
-## Validade das compras BST
+## 3. Lembretes amigáveis de cobrança (e-mail)
+- Nova rotina automática diária que envia:
+  - **3 dias antes** do vencimento: lembrete amigável.
+  - **Na véspera**: lembrete.
+  - **No dia**: aviso de que a cobrança será feita automaticamente (cartão/Pix Automático).
+- Se o pagamento falhar: aviso de regularização (já existe o banner no app; adicionamos e-mail) e o acesso entra no período de tolerância já existente antes de bloquear.
 
-- Compras avulsas de qualquer BST concedem **um ano de acesso**, contado da confirmação do pagamento, ao PDF e às duas IAs daquele produto. Combos seguem o mesmo prazo para cada produto incluído.
-- Bloquear o conteúdo comprado ao vencer o ano, sem apagar progresso, XP ou histórico e sem interferir em acesso independente por matrícula PRO/OPEN ativa.
-- Exibir a validade na ficha de acesso e nas instruções de compra; não confundir o prazo do conteúdo com a recarga mensal de créditos.
-- Aplicar o prazo também às compras anteriores, desde a confirmação original do pagamento, conforme sua decisão. Compras com mais de um ano já estarão vencidas na ativação da regra; informar a equipe antes dessa ativação.
-- Ao vencer o ano, bloquear PDF e IAs e zerar os créditos BST remanescentes daquela concessão. Esta decisão substitui a regra anterior de saldo sem expiração. Não apagar créditos de outra compra ainda válida ou de uma matrícula ativa.
+## 4. Pix Automático e cartão — o que você precisa fazer no ASAAS
+- **Cartão**: já está ativo nos dois links. Nada a fazer.
+- **Pix Automático** (débito mensal sem o aluno copiar/colar): precisa ser habilitado na sua conta ASAAS (menu Pix → Pix Automático) e o aluno autoriza uma única vez no primeiro pagamento. Se não aparecer no painel, peça ao suporte ASAAS a ativação do Pix Automático para assinaturas.
+- Os links continuam oferecendo as duas opções; o aluno escolhe.
 
-## Relacionamentos
+## 5. Ferramenta no Admin: "Assinaturas PRO"
+Nova página no Admin com:
+- **Alunos ativos pagantes**: nome, plano (Adultos/Kids-Teens), dia de vencimento, valor, status.
+- **Recebíveis do mês**: total previsto (soma das assinaturas ativas) e total já confirmado.
+- **Arquivo morto**: ex-assinantes (cancelados/inadimplentes), com data de saída — alimenta o módulo Relacionamentos para reativação.
+- Ações: cancelar assinatura, ver histórico de pagamentos.
 
-- Identificar separadamente experiência de adultos e de Kids/Teens, com data de início, vencimento, dias restantes e situação ativa/encerrada/convertida em matrícula.
-- Adaptar D0, D+1 e D+3 por e-mail à experiência PRO, com o destino correto no app, sem mensagens de comprador de Guia.
-- Manter D+7 e D+14 como tarefas humanas e acrescentar uma tarefa humana D+27, três dias antes do vencimento, para Rosana ou o responsável administrativo. A mensagem comercial fica humana, não vira disparo automático de oferta.
-- Interromper tarefas de conversão pendentes quando houver matrícula confirmada ou registro de desinteresse; não duplicar tarefas ou mensagens.
-- Não incluir WhatsApp automático nesta etapa: permanece uma integração futura.
+## 6. Contrato anual e cancelamento
+- O contrato de 12 meses (compromisso psicológico, rescisão sem multa após 3 mensalidades pagas) segue o item já no roadmap: preenchimento automático + assinatura digital Adobe — continua pendente da configuração da Adobe e não bloqueia este plano.
+- A regra de cancelamento (mínimo 3 meses pagos) será aplicada na ferramenta de cancelamento do Admin.
 
-## Próxima etapa: contrato e matrícula
-
-**Contrato de 2026 recebido e analisado (oito páginas).** Usar como referência sem alterar cláusulas jurídicas silenciosamente; sua decisão é manter os dois anos de acesso para matrículas regulares.
-
-### Campos e assinatura
-
-- Cadastro do contratante/responsável: nome, nascimento, CPF/CNPJ, RG/IE, endereço completo, celular e e-mail; campos adicionais do modelo serão avaliados quanto à necessidade, sem tornar todos obrigatórios por padrão.
-- Cadastro do aluno separado do responsável, com nome, nascimento, documentos e contatos quando aplicável. Para menores de 18 anos, exigir assinatura do representante legal.
-- Preencher automaticamente matrícula, modalidade, curso/nível, preço de referência, desconto, valor mensal e total, parcelas, vencimentos e vigência a partir da oferta aprovada. Turma, primeira aula e horário vêm da equipe quando definidos, não serão inventados.
-- O modelo prevê assinatura da escola, contratante e duas testemunhas. Definir os participantes do fluxo Adobe e preservar o regulamento anexo e a versão assinada.
-
-### Pontos que exigem alinhamento
-
-- **Cláusula 2, §1.3, confirmada por você:** manter pelo menos dois anos de acesso ao curso completo para matrículas regulares, inclusive após cancelamento. Esse acesso à plataforma não implica aulas ao vivo além do mês de cancelamento pago. Não estender esse benefício à experiência de R$5 nem às compras BST.
-- **Cláusula 3:** antes do início das aulas, prevê ressarcimento integral; após o início e antes de três parcelas, pagamento das parcelas restantes do período inicial. Após a carência, pagamento apenas do mês de desistência, com direito às aulas desse mês e sem multa adicional. A experiência não integra a carência.
-- Gerar solicitação e termo de rescisão rastreáveis pelo botão de cancelamento, pois o modelo exige formalização da desistência.
-- As disposições de atraso, consentimento para imagem/voz, foro e incentivos por indicação devem ser revisadas juridicamente antes da automação; não ativar multas, consentimento pré-marcado ou benefícios novos apenas por ler o PDF.
-
-- Apresentar claramente R$147/mês para adultos ou R$126/mês para Kids/Teens **com compromisso anual**, versus R$210/mês sem compromisso anual. Os R$5 são uma experiência avulsa separada.
-- Automatizar preenchimento, envio para assinatura pelo Adobe Acrobat Sign, acompanhamento da assinatura e acesso ao documento assinado.
-- Integrar contrato, matrícula, pagamentos e contatos à ficha administrativa, sem expor notas comerciais aos alunos.
-- Disponibilizar cancelamento fácil, com confirmação, termo e acompanhamento. Após três mensalidades de matrícula efetivamente pagas, sem multa de rescisão, pagando o mês do cancelamento. Antes disso, o modelo prevê as parcelas restantes da carência inicial; aplicar somente os termos finais aprovados, sem incluir os R$5 da experiência.
-- Verificar a modalidade da conta Adobe e sua habilitação de integração antes de solicitar credenciais pelo formulário seguro. Uma conta Adobe comum não comprova acesso à API de assinatura.
-
-**Atenção ao site comercial:** as LPs verificadas mostram R$147/R$126 por mês, mas não deixam o compromisso anual claramente estabelecido no texto consultado. Ajustar essa transparência no projeto Falaê Brasil Site, separadamente; este plano não modifica aquele projeto.
-
-## Notas fiscais
-
-**Configuração fiscal informada como concluída por você.** Verificar o tipo de nota, serviços/tributos aprovados e a emissão automática já habilitada no ASAAS antes de ativar nossa integração, evitando duplicidade. A chave ASAAS já está armazenada com segurança; não pedir seu reenvio.
-
-- Validar com o contador a modalidade fiscal por oferta. A integração documentada de serviços do ASAAS emite **NFS-e**; NF-e de mercadorias usa outro fluxo. Não tratar recibo de pagamento como nota fiscal.
-- Configurar os dados do emitente, município, regime tributário, serviço e tributos, além dos dados necessários do comprador.
-- Após essa configuração, integrar emissão para cada pagamento confirmado, incluindo experiência, BST, combos e mensalidades, sem emissão duplicada.
-- Acompanhar autorização ou erro fiscal, enviar a nota autorizada por e-mail e mostrar pendências para a equipe. Falha fiscal nunca deve impedir o acesso já pago.
-- Tratar estornos e cancelamentos fiscais conforme orientação contábil, sem cancelar documentos silenciosamente.
-
-## Relatórios de desempenho
-
-O app já possui consulta de progresso por aluno e envio de relatório por e-mail pela equipe. A rotina mensal automática ainda precisa ser criada: consolidar período, evitar envio duplicado e registrar o envio na gestão interna. Reutilizar os dados existentes de cursos, quizzes, BST e IAs, sem modificar XP.
-
-## Detalhes técnicos
-
-- Criar concessões temporárias separadas das assinaturas e das liberações administrativas, vinculadas ao pagamento confirmado, com início, fim e público: 30 dias para experiência PRO e um ano para compras BST. Registrar a experiência utilizada de forma protegida; limite por aluno identificado, não apenas por link de checkout.
-- Para matrículas regulares, registrar separadamente o direito contratual de acesso ao curso por dois anos, preservado após cancelamento, sem manter cobranças ou aulas ao vivo por esse motivo. Não reutilizar a concessão da experiência ou de um BST para esse direito.
-- Implementar concessão transacional e idempotente no fluxo ASAAS, validando produto, valor e confirmação. Não adicionar OPEN permanente, grants permanentes de todo o catálogo ou flags sem prazo para simular experiência.
-- Verificar autorização no servidor a cada solicitação: cursos, aulas, vídeos, quizzes, materiais Leiaê/Memorizaê, PDFs assinados e funções de IA. A hierarquia atual permite adultos acessar Kids/Teens e precisa de uma exceção específica para experiências, sem alterar os direitos de alunos existentes.
-- Derivar validade do horário atual no servidor; não depender de tarefa diária para bloquear no vencimento. Atualizar avisos e bloqueios no app sem exigir novo login. Revogação por estorno fica restrita à concessão de origem.
-- Rastrear créditos BST por origem e validade para expirar somente o saldo associado ao acesso vencido, com débito/expiração idempotentes. Reconciliar o saldo histórico com os registros de concessão e uso; apresentar inconsistências à equipe, sem apagar saldo independente por suposição.
-- Preservar liberações administrativas independentes, matrículas ativas, permissões administrativas, Meta Purchase e liberação/e-mail dos demais produtos; adaptar somente as compras BST ao prazo anual confirmado.
-- As novas estruturas terão concessão de privilégios explícita e políticas de acesso; campos sensíveis não poderão ser alterados pelo aluno.
-- Estender a gestão de relacionamentos existente, mantendo informações internas exclusivas de administradores.
-
-## Validação antes de declarar funcionando
-
-- Testar R$5, 30 dias exatos, limite de uma experiência, eventos duplicados, pagamento não confirmado e estorno.
-- Testar um ano de acesso BST desde a confirmação para compras anteriores e futuras, incluindo combos, bloqueio, zeragem dos créditos associados, preservação de progresso e de outros créditos/acessos válidos.
-- Testar adultos sem Kids/Teens e Kids/Teens sem adultos, inclusive por solicitações diretas ao servidor; testar acesso aos BSTs, Bibliotecaê e IAs.
-- Testar o vencimento com sessão já aberta e confirmar que progresso e compras independentes são preservados.
-- Verificar os dois caminhos de e-mail: novo cliente e cliente existente, acompanhando o resultado real de entrega. Não declarar entrega garantida apenas por chamar o envio.
-- Testar tarefa D+27, mensagens iniciais, conversão e ausência de duplicações.
-- Exercitar a jornada com contas de teste autenticadas, sem cobrar ou enviar mensagens a clientes reais como teste.
-- Não declarar contratos Adobe, emissão fiscal ou rotina mensal automática operacionais antes de configurar e verificar suas respectivas integrações.
+## 7. Relatórios
+- Relatório mensal ao aluno (progresso) já existe — vou conferir e ligar à rotina automática.
+- Relatório administrativo mensal (ativos, recebíveis, cancelamentos) entra na nova página do Admin.
 
 ## Ordem de execução
+1. Cadastrar os 2 produtos de assinatura e ligar aos links.
+2. Webhook: conversão Experiência→PRO e extensão mensal de acesso.
+3. Rotina de lembretes por e-mail (D-3, D-1, D0, falha).
+4. Página Admin "Assinaturas PRO" (ativos, recebíveis, arquivo morto).
+5. Teste ponta a ponta com compra real ou simulada.
 
-1. Implementar e validar experiência de 30 dias, prazo anual e expiração de créditos dos BSTs, incluindo compras anteriores, e contatos de Relacionamentos.
-2. Com os dois anos de acesso contratual confirmados e após habilitar Adobe, implementar matrícula, preenchimento do contrato recebido, assinatura e cancelamento.
-3. Com a configuração contábil pronta, ativar e validar notas fiscais.
-4. Integrar o envio mensal de desempenho à gestão interna.
+## Fora deste plano (já no roadmap)
+- NFS-e (em stand-by por sua decisão).
+- Validade de 1 ano dos BST.
+- Contrato Adobe (depende de configuração externa).
