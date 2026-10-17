@@ -28,3 +28,5 @@ project_id = "qiuqmowxwlqnjhlqvxzw"
 
   [functions.relationship-auto-emails]
     verify_jwt = false
+  [functions.subscription-reminders]
+    verify_jwt = false

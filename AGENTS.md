@@ -8,3 +8,5 @@
 - BST buyers get monthly scripted AI credits via grant_bst_monthly_credits (daily cron, logged per month index), because a unique log row per month prevents double credit.
 
 - Relationship onboarding emails (D0, D+1, D+3) are sent hourly by relationship-auto-emails with one log row per step (relationship_email_log unique key), so a step is never sent twice; offer steps (D+30) stay human because sales offers cannot go through app emails.
+- PRO monthly subscription reminders (D-3, D-1, D0, overdue) are sent daily by the subscription-reminders edge function (pg_cron, x-cron-secret from relationship_settings), deduped by subscription_reminder_log unique key; the app trusts ASAAS next_due_date for renewal timing instead of computing due dates itself.
+- get_experience_status returns inactive for users with an active/overdue asaas_subscriptions row, so subscribers never see the 30-day experience banner.

@@ -53,6 +53,7 @@ import MusicLabManager from "@/pages/admin/MusicLabManager";
 import BooksManager from "@/pages/admin/BooksManager";
 import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
+import SubscriptionsManager from "@/pages/admin/SubscriptionsManager";
 import StudentsManager from "@/pages/admin/StudentsManager";
 import RelationshipManager from "@/pages/admin/RelationshipManager";
 import { CoursesHub, AIHub, TutorialsHub, AdminsHub, AsaasHub } from "@/pages/admin/hubs/AdminHubs";
@@ -245,6 +246,7 @@ const App = () => {
                           <Route path="payments" element={<PaymentsManager />} />
                           <Route path="webhook-logs" element={<WebhookLogsManager />} />
                         <Route path="link-payment" element={<LinkPayment />} />
+                          <Route path="subscriptions" element={<SubscriptionsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
                           <Route path="create-student" element={<CreateStudent />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />

@@ -5,7 +5,7 @@ import {
   Brain, BookText, Mic, MessageSquare, Headphones,
   PlayCircle, Smartphone,
   ShieldCheck,
-  CreditCard, Webhook, Link2,
+  CreditCard, Webhook, Link2, RefreshCw,
 } from "lucide-react";
 
 type Item = {
@@ -111,6 +111,7 @@ export function AsaasHub() {
       subtitle="Gateway de pagamento — produtos, logs e vinculação manual."
       items={[
         { to: "/admin/payments", label: "Pagamentos ASAAS", description: "Produtos, combos e cupons", icon: CreditCard },
+        { to: "/admin/subscriptions", label: "Assinaturas PRO", description: "Mensalidades, recebíveis e ex-assinantes", icon: RefreshCw },
         { to: "/admin/webhook-logs", label: "Logs Webhook", description: "Eventos recebidos da ASAAS", icon: Webhook },
         { to: "/admin/link-payment", label: "Vincular Pagamento", description: "Vincular manualmente por ID", icon: Link2 },
       ]}

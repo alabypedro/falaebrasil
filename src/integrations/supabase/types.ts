@@ -2688,6 +2688,39 @@ export type Database = {
           },
         ]
       }
+      subscription_reminder_log: {
+        Row: {
+          asaas_subscription_id: string
+          created_at: string
+          dedupe_key: string
+          due_date: string
+          id: string
+          kind: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          asaas_subscription_id: string
+          created_at?: string
+          dedupe_key: string
+          due_date: string
+          id?: string
+          kind: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          asaas_subscription_id?: string
+          created_at?: string
+          dedupe_key?: string
+          due_date?: string
+          id?: string
+          kind?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
