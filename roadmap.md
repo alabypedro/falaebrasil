@@ -1,7 +1,7 @@
 # School automation
 
 - [ ] Activate two R$5 one-time PRO experiences, restricted by audience and expiring after 30 days, with confirmed-payment access email.
-- [ ] Enforce one-year access for individual BST purchases and each included combo product, preserving progress and independent active PRO/OPEN access — clarify existing purchases and unused IA credits after expiry.
+- [ ] Enforce one-year access from confirmed payment for previous/future BST purchases and combos; zero associated remaining credits at expiry, preserving progress and independent valid access/credits.
 - [ ] Include experience dates and pre-expiry contacts in admin Relationships.
 - [ ] Implement annual contract autofill and Adobe digital signature — waiting for contract terms, registration fields and Adobe setup.
 - [ ] Present annual discounts (adults R$147/month, Kids/Teens R$126/month) versus R$210 monthly enrollment transparently — waiting for full contract/billing terms; commercial LP wording needs alignment in the site project.
