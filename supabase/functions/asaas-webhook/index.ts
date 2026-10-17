@@ -631,7 +631,23 @@ async function issueInvoiceForPayment(payment: any) {
   if (!resp.ok) {
     throw new Error(`invoice issuance failed: ${resp.status} ${JSON.stringify(json)}`);
   }
-  return { issued: true, invoiceId: json.id ?? null, status: json.status ?? null };
+  const invoiceId = json.id ?? null;
+  let status = json.status ?? null;
+
+  // A data de emissão é hoje: antecipamos a autorização em vez de esperar o lote do portal.
+  if (invoiceId && status === "SCHEDULED") {
+    const authResp = await fetchAsaas(`/invoices/${invoiceId}/authorize`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+    const authJson = await authResp.json().catch(() => ({}));
+    if (!authResp.ok) {
+      throw new Error(`invoice authorize failed: ${authResp.status} ${JSON.stringify(authJson)}`);
+    }
+    status = authJson.status ?? status;
+  }
+
+  return { issued: true, invoiceId, status };
 }
 
 async function handlePaymentConfirmed(admin: any, payment: any, userId: string | null) {
