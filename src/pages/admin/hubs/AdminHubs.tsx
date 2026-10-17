@@ -5,7 +5,7 @@ import {
   Brain, BookText, Mic, MessageSquare, Headphones,
   PlayCircle, Smartphone,
   ShieldCheck,
-  CreditCard, Webhook, Link2,
+  CreditCard, Webhook, Link2, RefreshCw,
 } from "lucide-react";
 
 type Item = {
