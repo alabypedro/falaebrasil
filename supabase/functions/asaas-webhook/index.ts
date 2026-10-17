@@ -269,14 +269,17 @@ Deno.serve(async (req) => {
             });
             result.meta_purchase = { sent: false, reason: "meta_request_failed" };
           }
-          try {
-            result.invoice = await issueInvoiceForPayment(payment);
-          } catch (invoiceErr) {
-            console.error("NFS-e issuance failed (non-fatal)", {
-              paymentId: payment?.id,
-              error: (invoiceErr as Error).message,
-            });
-            result.invoice = { issued: false, reason: "invoice_request_failed" };
+          // Emissão de NFS-e em stand-by: nenhuma nota é criada automaticamente.
+          if (NFS_E_AUTO_ISSUANCE_ENABLED) {
+            try {
+              result.invoice = await issueInvoiceForPayment(payment);
+            } catch (invoiceErr) {
+              console.error("NFS-e issuance failed (non-fatal)", {
+                paymentId: payment?.id,
+                error: (invoiceErr as Error).message,
+              });
+              result.invoice = { issued: false, reason: "invoice_request_failed" };
+            }
           }
         }
       } else if (eventType === "PAYMENT_OVERDUE") {
