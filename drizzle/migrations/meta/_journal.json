@@ -92,6 +92,13 @@
       "when": 1792262871850,
       "tag": "0012_create_experience_access",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792262936560,
+      "tag": "0013_experience_awards_ai_credits",
+      "breakpoints": true
     }
   ]
 }
