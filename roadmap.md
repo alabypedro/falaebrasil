@@ -1,5 +1,10 @@
 # School automation
 
+- [x] Plano PRO recorrente mensal (2026-10-17): produtos pro_mensal_adultos (R$147) e pro_mensal_kids_teens (R$126) ligados aos links ASAAS de assinatura; conversão Experiência→PRO automática (aviso de experiência some para assinantes); lembretes de mensalidade por e-mail (D-3, D-1, D0 e atraso) via subscription-reminders diário; página Admin "Assinaturas PRO" (/admin/subscriptions) com ativos, recebíveis e arquivo morto; os 4 sócios são admins.
+- [ ] Pix Automático: usuário precisa habilitar na conta ASAAS (menu Pix → Pix Automático) para débito mensal sem copiar/colar; cartão já está ativo nos links.
+- [ ] Teste ponta a ponta do Plano PRO recorrente com compra real (R$147 ou R$126): confirmar liberação, renovação mensal e lembretes.
+
+
 - [x] Activate two R$5 one-time PRO experiences, restricted by audience and expiring after 30 days, with confirmed-payment access email.
 - [ ] Enforce one-year access from confirmed payment for previous/future BST purchases and combos; zero associated remaining credits at expiry, preserving progress and independent valid access/credits.
 - [ ] Include experience dates and pre-expiry contacts in admin Relationships.
