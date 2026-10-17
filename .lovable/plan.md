@@ -21,8 +21,8 @@ Cadastrar os dois pagamentos avulsos, sem assinatura recorrente nem matrícula a
 - Compras avulsas de qualquer BST concedem **um ano de acesso**, contado da confirmação do pagamento, ao PDF e às duas IAs daquele produto. Combos seguem o mesmo prazo para cada produto incluído.
 - Bloquear o conteúdo comprado ao vencer o ano, sem apagar progresso, XP ou histórico e sem interferir em acesso independente por matrícula PRO/OPEN ativa.
 - Exibir a validade na ficha de acesso e nas instruções de compra; não confundir o prazo do conteúdo com a recarga mensal de créditos.
-- Antes de encurtar acessos já existentes, confirmar se o prazo anual também vale retroativamente.
-- Preservar o saldo de IA já acumulado: a regra anterior determina que ele não expira. Confirmar como será usado após o vencimento anual do produto, sem excluir créditos nem presumir acesso ilimitado ao conteúdo.
+- Aplicar o prazo também às compras anteriores, desde a confirmação original do pagamento, conforme sua decisão. Compras com mais de um ano já estarão vencidas na ativação da regra; informar a equipe antes dessa ativação.
+- Ao vencer o ano, bloquear PDF e IAs e zerar os créditos BST remanescentes daquela concessão. Esta decisão substitui a regra anterior de saldo sem expiração. Não apagar créditos de outra compra ainda válida ou de uma matrícula ativa.
 
 ## Relacionamentos
 
@@ -64,6 +64,7 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 - Implementar concessão transacional e idempotente no fluxo ASAAS, validando produto, valor e confirmação. Não adicionar OPEN permanente, grants permanentes de todo o catálogo ou flags sem prazo para simular experiência.
 - Verificar autorização no servidor a cada solicitação: cursos, aulas, vídeos, quizzes, materiais Leiaê/Memorizaê, PDFs assinados e funções de IA. A hierarquia atual permite adultos acessar Kids/Teens e precisa de uma exceção específica para experiências, sem alterar os direitos de alunos existentes.
 - Derivar validade do horário atual no servidor; não depender de tarefa diária para bloquear no vencimento. Atualizar avisos e bloqueios no app sem exigir novo login. Revogação por estorno fica restrita à concessão de origem.
+- Rastrear créditos BST por origem e validade para expirar somente o saldo associado ao acesso vencido, com débito/expiração idempotentes. Reconciliar o saldo histórico com os registros de concessão e uso; apresentar inconsistências à equipe, sem apagar saldo independente por suposição.
 - Preservar liberações administrativas independentes, matrículas ativas, permissões administrativas, Meta Purchase e liberação/e-mail dos demais produtos; adaptar somente as compras BST ao prazo anual confirmado.
 - As novas estruturas terão concessão de privilégios explícita e políticas de acesso; campos sensíveis não poderão ser alterados pelo aluno.
 - Estender a gestão de relacionamentos existente, mantendo informações internas exclusivas de administradores.
@@ -71,7 +72,7 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 ## Validação antes de declarar funcionando
 
 - Testar R$5, 30 dias exatos, limite de uma experiência, eventos duplicados, pagamento não confirmado e estorno.
-- Testar um ano de acesso BST desde a confirmação, incluindo combos, vencimento, preservação de saldo/progresso e acesso independente por matrícula ativa.
+- Testar um ano de acesso BST desde a confirmação para compras anteriores e futuras, incluindo combos, bloqueio, zeragem dos créditos associados, preservação de progresso e de outros créditos/acessos válidos.
 - Testar adultos sem Kids/Teens e Kids/Teens sem adultos, inclusive por solicitações diretas ao servidor; testar acesso aos BSTs, Bibliotecaê e IAs.
 - Testar o vencimento com sessão já aberta e confirmar que progresso e compras independentes são preservados.
 - Verificar os dois caminhos de e-mail: novo cliente e cliente existente, acompanhando o resultado real de entrega. Não declarar entrega garantida apenas por chamar o envio.
@@ -81,7 +82,7 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 
 ## Ordem de execução
 
-1. Implementar e validar experiência de 30 dias, prazo anual dos BSTs e contatos de Relacionamentos, após esclarecer os efeitos sobre compradores anteriores e créditos remanescentes.
+1. Implementar e validar experiência de 30 dias, prazo anual e expiração de créditos dos BSTs, incluindo compras anteriores, e contatos de Relacionamentos.
 2. Com seu contrato e os campos de cadastro, implementar matrícula, assinatura e cancelamento.
 3. Com a configuração contábil pronta, ativar e validar notas fiscais.
 4. Integrar o envio mensal de desempenho à gestão interna.
