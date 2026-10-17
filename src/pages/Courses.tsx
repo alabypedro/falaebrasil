@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useStudentCategories } from "@/hooks/useStudentCategories";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
-import { courseSegment, segmentAllows, userSegment } from "@/lib/segments";
+import { courseSegment, segmentAllows, userSegment, type Segment } from "@/lib/segments";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface CourseWithProgress {
@@ -148,6 +148,7 @@ export default function Courses() {
   const { isAdmin } = useAdmin();
   const { t } = useLanguage();
   const { hasOpen } = useStudentCategories();
+  const experience = useExperienceStatus();
 
   useEffect(() => {
     if (!user) return;
