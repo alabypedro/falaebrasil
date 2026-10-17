@@ -1097,6 +1097,70 @@ export type Database = {
         }
         Relationships: []
       }
+      experience_access: {
+        Row: {
+          asaas_payment_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          revoke_reason: string | null
+          revoked_at: string | null
+          segment: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asaas_payment_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          segment: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asaas_payment_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          segment?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "experience_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "experience_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "xp_ranking"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       fb_cefr_metrics: {
         Row: {
           created_at: string
@@ -3208,6 +3272,11 @@ export type Database = {
       complete_video: { Args: { _video_id: string }; Returns: Json }
       debit_scripted_seconds: { Args: { _seconds: number }; Returns: Json }
       debit_unscripted_seconds: { Args: { _seconds: number }; Returns: Json }
+      experience_allows_course: {
+        Args: { _course_id: string; _user_id: string }
+        Returns: boolean
+      }
+      experience_is_active: { Args: { _user_id: string }; Returns: boolean }
       expire_overdue_subscriptions: { Args: never; Returns: Json }
       generate_relationship_tasks: { Args: never; Returns: number }
       get_book_quiz: {
@@ -3231,6 +3300,7 @@ export type Database = {
           product_type: string
         }[]
       }
+      get_experience_status: { Args: never; Returns: Json }
       get_latest_quiz_attempt: { Args: { _quiz_id: string }; Returns: Json }
       get_listening_lessons_public: {
         Args: never
@@ -3276,6 +3346,10 @@ export type Database = {
         Returns: Json
       }
       grant_bst_monthly_credits: { Args: never; Returns: number }
+      grant_experience_access: {
+        Args: { _asaas_payment_id: string; _segment: string; _user_id: string }
+        Returns: Json
+      }
       grant_voice_credits: {
         Args: {
           _hubla_event_id: string
