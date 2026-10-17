@@ -581,6 +581,59 @@ async function sendMetaPurchase(
   return { sent: true };
 }
 
+// Emite a NFS-e assim que o pagamento é confirmado.
+// Compradores CPF não têm retenção: nada é deduzido do pagamento do aluno.
+// Compradores CNPJ ficam fora até o contador confirmar as alíquotas de retenção.
+async function issueInvoiceForPayment(payment: any) {
+  const paymentId = payment?.id;
+  const customerId = payment?.customer;
+  if (!paymentId || !customerId) return { issued: false, reason: "missing_payment_or_customer" };
+
+  const value = Number(payment.value ?? 0);
+  if (!Number.isFinite(value) || value <= 0) return { issued: false, reason: "invalid_value" };
+
+  const customerResp = await fetchAsaas(`/customers/${customerId}`);
+  if (!customerResp.ok) throw new Error(`customer fetch failed: ${customerResp.status}`);
+  const customer = await customerResp.json();
+  if (customer.personType !== "FISICA") {
+    return { issued: false, reason: "pj_retention_rates_pending" };
+  }
+
+  // RECEIVED e CONFIRMED disparam juntos: nunca emitir duas notas para a mesma cobrança.
+  const existingResp = await fetchAsaas(`/invoices?payment=${paymentId}`);
+  if (existingResp.ok) {
+    const existing = await existingResp.json();
+    if ((existing.totalCount ?? 0) > 0) {
+      return {
+        issued: false,
+        reason: "already_issued",
+        invoiceId: existing.data?.[0]?.id ?? null,
+      };
+    }
+  }
+
+  const body = {
+    payment: paymentId,
+    serviceDescription:
+      `${NFS_E_SERVICE_CODE} - ${NFS_E_SERVICE_NAME} — ${payment.description ?? "Serviço educacional Falaê Brasil"}`,
+    observations: "Nota emitida automaticamente após confirmação do pagamento.",
+    value,
+    deductions: 0,
+    effectiveDate: new Date().toISOString().slice(0, 10),
+    municipalServiceCode: NFS_E_SERVICE_CODE,
+    municipalServiceName: NFS_E_SERVICE_NAME,
+    externalReference: paymentId,
+    taxes: { retainIss: false, iss: 0, pis: 0, cofins: 0, csll: 0, inss: 0, ir: 0 },
+  };
+
+  const resp = await fetchAsaas("/invoices", { method: "POST", body: JSON.stringify(body) });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    throw new Error(`invoice issuance failed: ${resp.status} ${JSON.stringify(json)}`);
+  }
+  return { issued: true, invoiceId: json.id ?? null, status: json.status ?? null };
+}
+
 async function handlePaymentConfirmed(admin: any, payment: any, userId: string | null) {
   if (!userId || !payment?.id) return { handled: false, reason: "missing_user_or_payment" };
 
