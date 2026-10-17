@@ -34,7 +34,7 @@ Cadastrar os dois pagamentos avulsos, sem assinatura recorrente nem matrícula a
 
 ## Próxima etapa: contrato e matrícula
 
-**Contrato de 2026 recebido e analisado (oito páginas).** Usar como referência sem alterar cláusulas jurídicas silenciosamente; resolver a regra de acesso abaixo antes de ativar a matrícula automatizada.
+**Contrato de 2026 recebido e analisado (oito páginas).** Usar como referência sem alterar cláusulas jurídicas silenciosamente; sua decisão é manter os dois anos de acesso para matrículas regulares.
 
 ### Campos e assinatura
 
@@ -45,7 +45,7 @@ Cadastrar os dois pagamentos avulsos, sem assinatura recorrente nem matrícula a
 
 ### Pontos que exigem alinhamento
 
-- **Cláusula 2, §1.3:** garante pelo menos dois anos de acesso ao curso completo, mesmo ao aluno não ativo. Definir se essa condição será mantida para matrículas regulares ou substituída por acesso enquanto a matrícula estiver vigente. Não estender esse benefício à experiência de R$5 nem às compras BST.
+- **Cláusula 2, §1.3, confirmada por você:** manter pelo menos dois anos de acesso ao curso completo para matrículas regulares, inclusive após cancelamento. Esse acesso à plataforma não implica aulas ao vivo além do mês de cancelamento pago. Não estender esse benefício à experiência de R$5 nem às compras BST.
 - **Cláusula 3:** antes do início das aulas, prevê ressarcimento integral; após o início e antes de três parcelas, pagamento das parcelas restantes do período inicial. Após a carência, pagamento apenas do mês de desistência, com direito às aulas desse mês e sem multa adicional. A experiência não integra a carência.
 - Gerar solicitação e termo de rescisão rastreáveis pelo botão de cancelamento, pois o modelo exige formalização da desistência.
 - As disposições de atraso, consentimento para imagem/voz, foro e incentivos por indicação devem ser revisadas juridicamente antes da automação; não ativar multas, consentimento pré-marcado ou benefícios novos apenas por ler o PDF.
@@ -75,6 +75,7 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 ## Detalhes técnicos
 
 - Criar concessões temporárias separadas das assinaturas e das liberações administrativas, vinculadas ao pagamento confirmado, com início, fim e público: 30 dias para experiência PRO e um ano para compras BST. Registrar a experiência utilizada de forma protegida; limite por aluno identificado, não apenas por link de checkout.
+- Para matrículas regulares, registrar separadamente o direito contratual de acesso ao curso por dois anos, preservado após cancelamento, sem manter cobranças ou aulas ao vivo por esse motivo. Não reutilizar a concessão da experiência ou de um BST para esse direito.
 - Implementar concessão transacional e idempotente no fluxo ASAAS, validando produto, valor e confirmação. Não adicionar OPEN permanente, grants permanentes de todo o catálogo ou flags sem prazo para simular experiência.
 - Verificar autorização no servidor a cada solicitação: cursos, aulas, vídeos, quizzes, materiais Leiaê/Memorizaê, PDFs assinados e funções de IA. A hierarquia atual permite adultos acessar Kids/Teens e precisa de uma exceção específica para experiências, sem alterar os direitos de alunos existentes.
 - Derivar validade do horário atual no servidor; não depender de tarefa diária para bloquear no vencimento. Atualizar avisos e bloqueios no app sem exigir novo login. Revogação por estorno fica restrita à concessão de origem.
@@ -97,6 +98,6 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 ## Ordem de execução
 
 1. Implementar e validar experiência de 30 dias, prazo anual e expiração de créditos dos BSTs, incluindo compras anteriores, e contatos de Relacionamentos.
-2. Após resolver a cláusula de dois anos de acesso e habilitar Adobe, implementar matrícula, preenchimento do contrato recebido, assinatura e cancelamento.
+2. Com os dois anos de acesso contratual confirmados e após habilitar Adobe, implementar matrícula, preenchimento do contrato recebido, assinatura e cancelamento.
 3. Com a configuração contábil pronta, ativar e validar notas fiscais.
 4. Integrar o envio mensal de desempenho à gestão interna.
