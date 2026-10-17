@@ -1,22 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, Crown, MessageCircle, ExternalLink, BookOpen } from "lucide-react";
+import { Sparkles, Crown, MessageCircle, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStudentCategories } from "@/hooks/useStudentCategories";
 
 const WHATSAPP_URL = "https://wa.me/5511981612800";
-// Assinatura OPEN com desconto, exclusiva para quem já comprou um produto BST.
-const OPEN_UPGRADE_CHECKOUT = "https://www.asaas.com/c/7k2tdifhriu4etxs";
 
 const PLANS = [
-  {
-    key: "open",
-    name: "Plano OPEN",
-    icon: BookOpen,
-    description:
-      "Acesso ampliado às IAs e conteúdos avançados para acelerar seu inglês.",
-  },
   {
     key: "pro",
     name: "Plano PRO",
@@ -34,11 +25,10 @@ const PLANS = [
 
 export default function UpgradeButton() {
   const { profile } = useAuth();
-  const { categories, hasOpen, bstCategories, loading } = useStudentCategories();
+  const { categories, hasOpen, loading } = useStudentCategories();
   const [open, setOpen] = useState(false);
 
   const planTier = (profile?.plan_tier as string) ?? "open";
-  const isBstStudent = !loading && !hasOpen && bstCategories.length > 0;
   // A categoria cadastrada no painel admin manda no rótulo do plano.
   const currentLabel = (() => {
     if (!loading && categories.length > 0) {
@@ -79,7 +69,7 @@ export default function UpgradeButton() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid sm:grid-cols-3 gap-4 mt-2">
+          <div className="grid sm:grid-cols-2 gap-4 mt-2">
             {PLANS.map((p) => {
               const Icon = p.icon;
               return (
@@ -94,20 +84,14 @@ export default function UpgradeButton() {
                     <h3 className="font-bold text-foreground">{p.name}</h3>
                   </div>
                   <p className="text-sm text-muted-foreground flex-1">{p.description}</p>
-                  {p.key === "open" && isBstStudent && (
-                    <p className="text-xs font-medium text-primary mt-2">
-                      Oferta exclusiva para aluno BST: R$ 36/mês (em vez de R$ 48) com acesso
-                      liberado a TUDO na plataforma.
-                    </p>
-                  )}
                   <Button asChild className="w-full mt-4">
                     <a
-                      href={p.key === "open" && isBstStudent ? OPEN_UPGRADE_CHECKOUT : WHATSAPP_URL}
+                      href={WHATSAPP_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setOpen(false)}
                     >
-                      {p.key === "open" && isBstStudent ? "Assinar por R$ 36/mês" : "Quero Upgrade"}
+                      Quero Upgrade
                       <ExternalLink className="ml-1.5 h-4 w-4" />
                     </a>
                   </Button>
