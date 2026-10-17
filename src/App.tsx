@@ -53,6 +53,7 @@ import MusicLabManager from "@/pages/admin/MusicLabManager";
 import BooksManager from "@/pages/admin/BooksManager";
 import WebhookLogsManager from "@/pages/admin/WebhookLogsManager";
 import LinkPayment from "@/pages/admin/LinkPayment";
+import SubscriptionsManager from "@/pages/admin/SubscriptionsManager";
 import StudentsManager from "@/pages/admin/StudentsManager";
 import RelationshipManager from "@/pages/admin/RelationshipManager";
 import { CoursesHub, AIHub, TutorialsHub, AdminsHub, AsaasHub } from "@/pages/admin/hubs/AdminHubs";
