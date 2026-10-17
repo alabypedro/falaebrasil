@@ -30,15 +30,18 @@ export function useExperienceStatus() {
     }
     let alive = true;
     setLoading(true);
-    supabase
-      .rpc("get_experience_status")
-      .then(({ data, error }) => {
+
+    const run = async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_experience_status");
         if (!alive) return;
         setStatus(error || !data ? EMPTY : ((data as unknown) as ExperienceStatus));
-      })
-      .finally(() => {
+      } finally {
         if (alive) setLoading(false);
-      });
+      }
+    };
+    void run();
+
     return () => {
       alive = false;
     };
