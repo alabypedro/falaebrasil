@@ -6,11 +6,12 @@ interface Props {
   name?: string
   productName?: string
   email?: string
+  expiryNote?: string
 }
 
 const APP = 'https://app.falaebrasil.com.br'
 
-const Email = ({ name, productName, email }: Props) => (
+const Email = ({ name, productName, email, expiryNote }: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
     <Preview>Pagamento confirmado: seu acesso já está liberado no app Falaê Brasil</Preview>
@@ -21,6 +22,11 @@ const Email = ({ name, productName, email }: Props) => (
         <Text style={text}>
           Seu acesso a <strong>{productName || 'seu novo produto'}</strong> já está liberado no aplicativo Falaê Brasil.
         </Text>
+        {expiryNote ? (
+          <Text style={text}>
+            <strong>{expiryNote}</strong>
+          </Text>
+        ) : null}
         <Text style={text}>
           Entre com o mesmo e-mail que você usou na compra{email ? ` (${email})` : ''} e a sua senha de sempre.
         </Text>

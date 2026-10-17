@@ -11,8 +11,9 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useStudentCategories } from "@/hooks/useStudentCategories";
+import { useExperienceStatus } from "@/hooks/useExperienceStatus";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
-import { courseSegment, segmentAllows, userSegment } from "@/lib/segments";
+import { courseSegment, segmentAllows, userSegment, type Segment } from "@/lib/segments";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface CourseWithProgress {
@@ -148,6 +149,7 @@ export default function Courses() {
   const { isAdmin } = useAdmin();
   const { t } = useLanguage();
   const { hasOpen } = useStudentCategories();
+  const experience = useExperienceStatus();
 
   useEffect(() => {
     if (!user) return;
@@ -313,17 +315,27 @@ export default function Courses() {
   }
 
   // Regra: aluno com categoria OPEN tem acesso total a todos os cursos.
-  const isLocked = !isAdmin && !hasOpen && !profile?.has_course_access && grantedCourseIds.size === 0;
+  // Aluno em Experiência PRO (30 dias) acessa os cursos do seu público enquanto durar.
+  const isLocked =
+    !isAdmin &&
+    !experience.active &&
+    !hasOpen &&
+    !profile?.has_course_access &&
+    grantedCourseIds.size === 0;
 
   // Hierarquia de segmentos: Kids < Teens < Adultos.
   // Kids => só Kids | Teens => Teens + Kids | Adultos (open/pro/vip) => tudo.
   const grantedTiers = courses.filter((c) => grantedCourseIds.has(c.id)).map((c) => c.required_tier);
-  const mySegment = userSegment({
-    isAdmin,
-    hasOpen,
-    planTier: profile?.plan_tier,
-    grantedTiers,
-  });
+  const mySegment: Segment = experience.active
+    ? experience.segment === "kids_teens"
+      ? "teens"
+      : "adults"
+    : userSegment({
+        isAdmin,
+        hasOpen,
+        planTier: profile?.plan_tier,
+        grantedTiers,
+      });
 
   const groups: { key: string; title: string; tiers: string[] }[] = [
     { key: "adults", title: t("courses.group.adults"), tiers: ["open", "pro", "vip"] },
