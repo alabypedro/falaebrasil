@@ -34,12 +34,26 @@ Cadastrar os dois pagamentos avulsos, sem assinatura recorrente nem matrícula a
 
 ## Próxima etapa: contrato e matrícula
 
-**Aguardando seu prompt com o contrato e os campos de cadastro.** Não gerar contrato jurídico, multa ou cobrança recorrente com termos inventados.
+**Contrato de 2026 recebido e analisado (oito páginas).** Usar como referência sem alterar cláusulas jurídicas silenciosamente; resolver a regra de acesso abaixo antes de ativar a matrícula automatizada.
+
+### Campos e assinatura
+
+- Cadastro do contratante/responsável: nome, nascimento, CPF/CNPJ, RG/IE, endereço completo, celular e e-mail; campos adicionais do modelo serão avaliados quanto à necessidade, sem tornar todos obrigatórios por padrão.
+- Cadastro do aluno separado do responsável, com nome, nascimento, documentos e contatos quando aplicável. Para menores de 18 anos, exigir assinatura do representante legal.
+- Preencher automaticamente matrícula, modalidade, curso/nível, preço de referência, desconto, valor mensal e total, parcelas, vencimentos e vigência a partir da oferta aprovada. Turma, primeira aula e horário vêm da equipe quando definidos, não serão inventados.
+- O modelo prevê assinatura da escola, contratante e duas testemunhas. Definir os participantes do fluxo Adobe e preservar o regulamento anexo e a versão assinada.
+
+### Pontos que exigem alinhamento
+
+- **Cláusula 2, §1.3:** garante pelo menos dois anos de acesso ao curso completo, mesmo ao aluno não ativo. Definir se essa condição será mantida para matrículas regulares ou substituída por acesso enquanto a matrícula estiver vigente. Não estender esse benefício à experiência de R$5 nem às compras BST.
+- **Cláusula 3:** antes do início das aulas, prevê ressarcimento integral; após o início e antes de três parcelas, pagamento das parcelas restantes do período inicial. Após a carência, pagamento apenas do mês de desistência, com direito às aulas desse mês e sem multa adicional. A experiência não integra a carência.
+- Gerar solicitação e termo de rescisão rastreáveis pelo botão de cancelamento, pois o modelo exige formalização da desistência.
+- As disposições de atraso, consentimento para imagem/voz, foro e incentivos por indicação devem ser revisadas juridicamente antes da automação; não ativar multas, consentimento pré-marcado ou benefícios novos apenas por ler o PDF.
 
 - Apresentar claramente R$147/mês para adultos ou R$126/mês para Kids/Teens **com compromisso anual**, versus R$210/mês sem compromisso anual. Os R$5 são uma experiência avulsa separada.
 - Automatizar preenchimento, envio para assinatura pelo Adobe Acrobat Sign, acompanhamento da assinatura e acesso ao documento assinado.
 - Integrar contrato, matrícula, pagamentos e contatos à ficha administrativa, sem expor notas comerciais aos alunos.
-- Disponibilizar cancelamento fácil, com confirmação e acompanhamento. Após três mensalidades de matrícula efetivamente pagas, sem multa de rescisão, pagando o mês do cancelamento. A experiência não conta; as regras anteriores a esses três meses serão as do contrato que você enviará.
+- Disponibilizar cancelamento fácil, com confirmação, termo e acompanhamento. Após três mensalidades de matrícula efetivamente pagas, sem multa de rescisão, pagando o mês do cancelamento. Antes disso, o modelo prevê as parcelas restantes da carência inicial; aplicar somente os termos finais aprovados, sem incluir os R$5 da experiência.
 - Verificar a modalidade da conta Adobe e sua habilitação de integração antes de solicitar credenciais pelo formulário seguro. Uma conta Adobe comum não comprova acesso à API de assinatura.
 
 **Atenção ao site comercial:** as LPs verificadas mostram R$147/R$126 por mês, mas não deixam o compromisso anual claramente estabelecido no texto consultado. Ajustar essa transparência no projeto Falaê Brasil Site, separadamente; este plano não modifica aquele projeto.
@@ -83,6 +97,6 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 ## Ordem de execução
 
 1. Implementar e validar experiência de 30 dias, prazo anual e expiração de créditos dos BSTs, incluindo compras anteriores, e contatos de Relacionamentos.
-2. Com seu contrato e os campos de cadastro, implementar matrícula, assinatura e cancelamento.
+2. Após resolver a cláusula de dois anos de acesso e habilitar Adobe, implementar matrícula, preenchimento do contrato recebido, assinatura e cancelamento.
 3. Com a configuração contábil pronta, ativar e validar notas fiscais.
 4. Integrar o envio mensal de desempenho à gestão interna.
