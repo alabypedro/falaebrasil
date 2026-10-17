@@ -246,6 +246,7 @@ const App = () => {
                           <Route path="payments" element={<PaymentsManager />} />
                           <Route path="webhook-logs" element={<WebhookLogsManager />} />
                         <Route path="link-payment" element={<LinkPayment />} />
+                          <Route path="subscriptions" element={<SubscriptionsManager />} />
                           <Route path="welcome-email" element={<WelcomeEmailSender />} />
                           <Route path="create-student" element={<CreateStudent />} />
                           <Route path="memorizae" element={<MemorizaeManager />} />
