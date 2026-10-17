@@ -8,5 +8,5 @@
 - [ ] Implement annual contract autofill and Adobe digital signature — review supplied contract; Adobe setup remains pending.
 - [ ] Present annual discounts (adults R$147/month, Kids/Teens R$126/month) versus R$210 monthly enrollment transparently — waiting for full contract/billing terms; commercial LP wording needs alignment in the site project.
 - [ ] Add accessible cancellation and termination record: three paid enrollment months excluding experience, remaining initial installments before three months, cancellation month afterwards — verify final approved legal terms before charging.
-- [ ] Automate fiscal issuance/email for confirmed ASAAS purchases — ASAAS fiscal issuance is not configured; waiting for accountant-guided issuer settings and invoice type requirements.
+- [ ] Verify newly configured ASAAS fiscal issuance and identify required integration settings; automate issuance/email for every confirmed purchase without duplicates — user reports fiscal setup complete.
 - [ ] Verify existing monthly performance reports and integrate their internal management.
