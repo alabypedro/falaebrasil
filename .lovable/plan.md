@@ -16,6 +16,14 @@ Cadastrar os dois pagamentos avulsos, sem assinatura recorrente nem matrícula a
 - Reutilizar o e-mail de primeiro acesso e criação de senha para novos clientes; quem já tem conta recebe confirmação, produto, prazo e instruções de login. Preservar o tutorial de instalação no primeiro acesso.
 - Caso alguém pague novamente uma experiência já utilizada, registrar a ocorrência para atendimento, sem conceder novos 30 dias nem iniciar cobrança recorrente.
 
+## Validade das compras BST
+
+- Compras avulsas de qualquer BST concedem **um ano de acesso**, contado da confirmação do pagamento, ao PDF e às duas IAs daquele produto. Combos seguem o mesmo prazo para cada produto incluído.
+- Bloquear o conteúdo comprado ao vencer o ano, sem apagar progresso, XP ou histórico e sem interferir em acesso independente por matrícula PRO/OPEN ativa.
+- Exibir a validade na ficha de acesso e nas instruções de compra; não confundir o prazo do conteúdo com a recarga mensal de créditos.
+- Antes de encurtar acessos já existentes, confirmar se o prazo anual também vale retroativamente.
+- Preservar o saldo de IA já acumulado: a regra anterior determina que ele não expira. Confirmar como será usado após o vencimento anual do produto, sem excluir créditos nem presumir acesso ilimitado ao conteúdo.
+
 ## Relacionamentos
 
 - Identificar separadamente experiência de adultos e de Kids/Teens, com data de início, vencimento, dias restantes e situação ativa/encerrada/convertida em matrícula.
@@ -52,17 +60,18 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 
 ## Detalhes técnicos
 
-- Criar concessões temporárias separadas das assinaturas e dos acessos permanentes, vinculadas ao pagamento confirmado, com início, fim e público. Registrar a experiência utilizada de forma protegida; limite por aluno identificado, não apenas por link de checkout.
+- Criar concessões temporárias separadas das assinaturas e das liberações administrativas, vinculadas ao pagamento confirmado, com início, fim e público: 30 dias para experiência PRO e um ano para compras BST. Registrar a experiência utilizada de forma protegida; limite por aluno identificado, não apenas por link de checkout.
 - Implementar concessão transacional e idempotente no fluxo ASAAS, validando produto, valor e confirmação. Não adicionar OPEN permanente, grants permanentes de todo o catálogo ou flags sem prazo para simular experiência.
 - Verificar autorização no servidor a cada solicitação: cursos, aulas, vídeos, quizzes, materiais Leiaê/Memorizaê, PDFs assinados e funções de IA. A hierarquia atual permite adultos acessar Kids/Teens e precisa de uma exceção específica para experiências, sem alterar os direitos de alunos existentes.
 - Derivar validade do horário atual no servidor; não depender de tarefa diária para bloquear no vencimento. Atualizar avisos e bloqueios no app sem exigir novo login. Revogação por estorno fica restrita à concessão de origem.
-- Preservar acesso permanente independente, permissões administrativas, Meta Purchase e liberação/e-mail dos demais produtos.
+- Preservar liberações administrativas independentes, matrículas ativas, permissões administrativas, Meta Purchase e liberação/e-mail dos demais produtos; adaptar somente as compras BST ao prazo anual confirmado.
 - As novas estruturas terão concessão de privilégios explícita e políticas de acesso; campos sensíveis não poderão ser alterados pelo aluno.
 - Estender a gestão de relacionamentos existente, mantendo informações internas exclusivas de administradores.
 
 ## Validação antes de declarar funcionando
 
 - Testar R$5, 30 dias exatos, limite de uma experiência, eventos duplicados, pagamento não confirmado e estorno.
+- Testar um ano de acesso BST desde a confirmação, incluindo combos, vencimento, preservação de saldo/progresso e acesso independente por matrícula ativa.
 - Testar adultos sem Kids/Teens e Kids/Teens sem adultos, inclusive por solicitações diretas ao servidor; testar acesso aos BSTs, Bibliotecaê e IAs.
 - Testar o vencimento com sessão já aberta e confirmar que progresso e compras independentes são preservados.
 - Verificar os dois caminhos de e-mail: novo cliente e cliente existente, acompanhando o resultado real de entrega. Não declarar entrega garantida apenas por chamar o envio.
@@ -72,7 +81,7 @@ O app já possui consulta de progresso por aluno e envio de relatório por e-mai
 
 ## Ordem de execução
 
-1. Implementar e validar experiência de 30 dias e contatos de Relacionamentos.
+1. Implementar e validar experiência de 30 dias, prazo anual dos BSTs e contatos de Relacionamentos, após esclarecer os efeitos sobre compradores anteriores e créditos remanescentes.
 2. Com seu contrato e os campos de cadastro, implementar matrícula, assinatura e cancelamento.
 3. Com a configuração contábil pronta, ativar e validar notas fiscais.
 4. Integrar o envio mensal de desempenho à gestão interna.
