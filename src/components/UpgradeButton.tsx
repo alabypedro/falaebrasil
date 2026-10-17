@@ -25,7 +25,7 @@ const PLANS = [
 
 export default function UpgradeButton() {
   const { profile } = useAuth();
-  const { categories, hasOpen, loading } = useStudentCategories();
+  const { categories, hasOpen, bstCategories, loading } = useStudentCategories();
   const [open, setOpen] = useState(false);
 
   const planTier = (profile?.plan_tier as string) ?? "open";
