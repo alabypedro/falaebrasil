@@ -171,7 +171,7 @@ const dict: Dict = {
   "tutorials.t.nav.desc": { pt: "Aprenda a percorrer módulos, aulas e quizzes do Falaê Brasil!", en: "Learn to navigate modules, lessons and quizzes of Falaê Brasil!" },
   "tutorials.t.xp.title": { pt: "Acompanhando seu XP e Nível", en: "Tracking your XP and Level" },
   "tutorials.t.xp.desc": { pt: "Veja como ganhar XP, subir de nível e manter sua streak.", en: "See how to earn XP, level up and keep your streak." },
-  "tutorials.t.library.title": { pt: "Bibliotecaê BST", en: "Bibliotecaê BST" },
+  "tutorials.t.library.title": { pt: "Bibliotecaê GUIAS", en: "Bibliotecaê GUIAS" },
   "tutorials.t.library.desc": { pt: "Como acessar ebooks, áudios e materiais complementares.", en: "How to access ebooks, audios and supplementary materials." },
   "tutorials.t.community.title": { pt: "Comunidades FB", en: "FB Communities" },
   "tutorials.t.community.desc": { pt: "Acesse os grupos de WhatsApp e pratique com outros alunos do Falaê Brasil!", en: "Access the WhatsApp groups and practice with other Falaê Brasil! students." },
