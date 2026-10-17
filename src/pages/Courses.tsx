@@ -11,6 +11,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useStudentCategories } from "@/hooks/useStudentCategories";
+import { useExperienceStatus } from "@/hooks/useExperienceStatus";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
 import { courseSegment, segmentAllows, userSegment, type Segment } from "@/lib/segments";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
