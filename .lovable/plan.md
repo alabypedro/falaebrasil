@@ -60,7 +60,7 @@ Cadastrar os dois pagamentos avulsos, sem assinatura recorrente nem matrícula a
 
 ## Notas fiscais
 
-**Aguardando configuração fiscal:** você confirmou que o ASAAS ainda não emite notas da escola.
+**Configuração fiscal informada como concluída por você.** Verificar o tipo de nota, serviços/tributos aprovados e a emissão automática já habilitada no ASAAS antes de ativar nossa integração, evitando duplicidade. A chave ASAAS já está armazenada com segurança; não pedir seu reenvio.
 
 - Validar com o contador a modalidade fiscal por oferta. A integração documentada de serviços do ASAAS emite **NFS-e**; NF-e de mercadorias usa outro fluxo. Não tratar recibo de pagamento como nota fiscal.
 - Configurar os dados do emitente, município, regime tributário, serviço e tributos, além dos dados necessários do comprador.
