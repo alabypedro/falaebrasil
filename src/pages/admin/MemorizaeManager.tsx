@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { SearchableSelect } from "@/components/admin/SearchableSelect";
 import { compareCourses, courseLabel, segmentGroupOf, sortCourses, SEGMENT_GROUP_ORDER, SegmentGroup } from "@/lib/courseOrder";
 import { Search } from "lucide-react";
-import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X, Video, RotateCcw, Sparkles, Link as LinkIcon } from "lucide-react";
+import { Brain, Plus, Pencil, Trash2, ArrowLeft, Loader2, Upload, Music, Image as ImageIcon, X, Video, RotateCcw, Sparkles, Link as LinkIcon, ChevronUp, ChevronDown } from "lucide-react";
 
 interface Course { id: string; title: string; level?: string | null }
 interface BstProduct { id: string; title: string; }
@@ -36,6 +36,7 @@ interface CardRow {
   audio_url: string | null;
   image_url: string | null;
   display_order: number;
+  created_at?: string | null;
 }
 
 export default function MemorizaeManager() {
@@ -66,6 +67,7 @@ export default function MemorizaeManager() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [imageZoom, setImageZoom] = useState(false);
   const [translatingFront, setTranslatingFront] = useState(false);
+  const [movingId, setMovingId] = useState<string | null>(null);
 
   // Bulk import
   const [bulkDialog, setBulkDialog] = useState(false);
@@ -129,7 +131,19 @@ export default function MemorizaeManager() {
 
   useEffect(() => { load(); }, []);
 
-  const deckCards = useMemo(() => cards.filter((c) => c.deck_id === activeDeck?.id), [cards, activeDeck]);
+  const deckCards = useMemo(() => {
+    const list = cards.filter((c) => c.deck_id === activeDeck?.id);
+    return list.sort((a, b) => {
+      const d = (a.display_order ?? 0) - (b.display_order ?? 0);
+      if (d !== 0) return d;
+      const t = new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime();
+      if (t !== 0) return t;
+      return a.id.localeCompare(b.id);
+    });
+  }, [cards, activeDeck]);
+
+  const nextCardOrder = () =>
+    deckCards.length ? Math.max(...deckCards.map((c) => c.display_order ?? 0)) + 1 : 0;
 
   // ---------- Deck actions ----------
   const openNewDeck = () => {
@@ -199,7 +213,7 @@ export default function MemorizaeManager() {
       example_sentence: cardForm.example.trim() || null,
       audio_url: cardForm.audio.trim() || null,
       image_url: cardForm.image.trim() || null,
-      display_order: editingCard?.display_order ?? deckCards.length,
+      display_order: editingCard?.display_order ?? nextCardOrder(),
     };
     const { error } = editingCard
       ? await supabase.from("memorize_cards").update(payload).eq("id", editingCard.id)
@@ -214,6 +228,43 @@ export default function MemorizaeManager() {
     if (error) { toast.error(error.message); return; }
     toast.success("Carta removida");
     load();
+  };
+
+  // Move uma carta uma posição para cima (-1) ou para baixo (+1).
+  // A numeração é reescrita em sequência (0..n-1) para o deck inteiro,
+  // o que também conserta cartas que ficaram com a mesma ordem.
+  const moveCard = async (cardId: string, dir: -1 | 1) => {
+    if (!activeDeck || movingId) return;
+    const ordered = [...deckCards];
+    const from = ordered.findIndex((c) => c.id === cardId);
+    const to = from + dir;
+    if (from < 0 || to < 0 || to >= ordered.length) return;
+    const [moved] = ordered.splice(from, 1);
+    ordered.splice(to, 0, moved);
+    const changes = ordered
+      .map((c, i) => ({ id: c.id, display_order: i, previous: c.display_order ?? 0 }))
+      .filter((row, i) => row.display_order !== (ordered[i].display_order ?? 0));
+    if (changes.length === 0) return;
+    setMovingId(cardId);
+    for (const row of changes) {
+      const { error } = await supabase
+        .from("memorize_cards")
+        .update({ display_order: row.display_order })
+        .eq("id", row.id);
+      if (error) {
+        setMovingId(null);
+        toast.error(error.message);
+        load();
+        return;
+      }
+    }
+    setMovingId(null);
+    setCards((prev) =>
+      prev.map((c) => {
+        const hit = changes.find((r) => r.id === c.id);
+        return hit ? { ...c, display_order: hit.display_order } : c;
+      })
+    );
   };
 
   // ---------- File uploads ----------
@@ -265,6 +316,7 @@ export default function MemorizaeManager() {
   const bulkImport = async () => {
     if (!activeDeck) return;
     const lines = bulkText.split("\n").map((l) => l.trim()).filter(Boolean);
+    const baseOrder = nextCardOrder();
     const rows = lines.map((line, i) => {
       const [front, back, example] = line.split("|").map((s) => s?.trim() ?? "");
       return {
@@ -272,7 +324,7 @@ export default function MemorizaeManager() {
         front_text: front,
         back_text: back,
         example_sentence: example || null,
-        display_order: deckCards.length + i,
+        display_order: baseOrder + i,
       };
     }).filter((r) => r.front_text && r.back_text);
     if (rows.length === 0) { toast.error("Nenhuma linha válida (formato: frente | verso | exemplo)"); return; }
@@ -370,7 +422,7 @@ export default function MemorizaeManager() {
                   <TableHead>Frente</TableHead>
                   <TableHead>Verso</TableHead>
                   <TableHead>Exemplo</TableHead>
-                  <TableHead className="w-24 text-right">Ações</TableHead>
+                  <TableHead className="w-40 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -384,6 +436,26 @@ export default function MemorizaeManager() {
                     <TableCell className="text-xs text-muted-foreground italic">{c.example_sentence || "—"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Mover para cima"
+                          aria-label="Mover carta para cima"
+                          disabled={movingId !== null || i === 0}
+                          onClick={() => moveCard(c.id, -1)}
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Mover para baixo"
+                          aria-label="Mover carta para baixo"
+                          disabled={movingId !== null || i === deckCards.length - 1}
+                          onClick={() => moveCard(c.id, 1)}
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => openEditCard(c)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
