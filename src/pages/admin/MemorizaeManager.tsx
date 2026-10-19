@@ -67,6 +67,7 @@ export default function MemorizaeManager() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [imageZoom, setImageZoom] = useState(false);
   const [translatingFront, setTranslatingFront] = useState(false);
+  const [movingId, setMovingId] = useState<string | null>(null);
 
   // Bulk import
   const [bulkDialog, setBulkDialog] = useState(false);
