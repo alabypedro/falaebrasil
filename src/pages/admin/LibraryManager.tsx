@@ -482,7 +482,7 @@ export default function LibraryManager() {
                 <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Nenhum</SelectItem>
-                  {payProducts.map((pp) => (
+                  {payProducts.filter((pp) => /^bst\d/i.test(pp.product_key) || pp.product_key === payKey).map((pp) => (
                     <SelectItem key={pp.id} value={pp.product_key}>
                       {pp.name || pp.product_key} ({pp.product_key})
                     </SelectItem>
