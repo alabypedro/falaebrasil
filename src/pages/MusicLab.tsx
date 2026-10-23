@@ -87,12 +87,12 @@ export default function MusicLab() {
   const activity = selected ? readLyricsActivity(selected.lyrics_activity) : null;
   if (selected && activity) {
     return (
-      <div className="mx-auto w-full max-w-4xl space-y-6 page-transition">
+      <div className="mx-auto w-full max-w-4xl space-y-3 sm:space-y-6 page-transition">
         <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
           <ArrowLeft className="h-4 w-4 mr-2" /> {en ? "All songs" : "Todas as músicas"}
         </Button>
         <header className="text-center space-y-1">
-          <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground">{selected.title}</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-extrabold text-foreground">{selected.title}</h1>
           <p className="text-sm text-muted-foreground">{selected.artist}</p>
         </header>
         <LyricsGame activity={activity} title={selected.title} />

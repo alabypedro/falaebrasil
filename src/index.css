@@ -4,6 +4,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Keep the practice clip fixed while only the bilingual lyrics scroll.
+   Reserve four lyric rows even when 75% would crowd a small screen. */
+.lyrics-practice-dialog {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  grid-template-rows: 3rem min(75dvh, calc(100dvh - 15rem)) minmax(12rem, 1fr);
+}
+
+.cantae-game-video {
+  height: min(42dvh, 31.5rem);
+}
+
+@media (max-width: 767px) {
+  .cantae-game-video {
+    height: min(28dvh, 15rem);
+  }
+}
+
 @layer base {
   :root {
     /* ────── Core surface ────── */
