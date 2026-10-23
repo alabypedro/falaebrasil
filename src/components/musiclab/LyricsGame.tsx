@@ -118,9 +118,9 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
       </div>}
       {!finished && paused && <p className="text-sm text-primary">{L("Escolha a palavra que falta para a música continuar.", "Pick the missing word to keep the song playing.")}</p>}
       {finished ? <div className="py-6 text-center space-y-3"><Trophy className="h-8 w-8 mx-auto text-primary" /><h2 className="text-xl font-semibold">{L("Música concluída", "Song completed")}</h2><p className="text-muted-foreground">{score} {L("pontos", "points")}</p><Button variant="outline" onClick={restart}><RotateCcw className="mr-2 h-4 w-4" />{L("Tentar novamente", "Try again")}</Button></div> :
-        <div className="min-h-48 space-y-5" aria-live="polite">
-          {lines.slice(lineIndex, lineIndex + 3).map((line, offset) => <p key={lineIndex + offset} className={offset === 0 ? 'text-xl sm:text-2xl leading-relaxed font-semibold text-foreground motion-safe:animate-in motion-safe:fade-in' : 'text-base leading-relaxed text-muted-foreground'}>
-            {line.words.map((word, i) => <span key={i}>{line.gaps.includes(i) && !solved[`${lineIndex + offset}:${i}`] ? <span className={`inline-flex w-10 align-middle justify-center ${offset === 0 && gap === i ? 'text-primary' : 'text-muted-foreground'}`} aria-label={L("Palavra faltando", "Missing word")}><Loader2 className="h-5 w-5 motion-safe:animate-spin" /></span> : word}{' '}</span>)}
+        <div className="min-h-48 space-y-3" aria-live="polite">
+          {lines.slice(lineIndex, lineIndex + 3).map((line, offset) => <p key={lineIndex + offset} className={`rounded-md bg-lyric-frame px-4 py-3 text-lyric-frame-foreground shadow-soft-md ${offset === 0 ? 'text-xl sm:text-2xl leading-relaxed font-semibold motion-safe:animate-in motion-safe:fade-in' : 'text-base leading-relaxed opacity-80'}`}>
+            {line.words.map((word, i) => <span key={i}>{line.gaps.includes(i) && !solved[`${lineIndex + offset}:${i}`] ? <span className={`inline-flex w-10 align-middle justify-center text-lyric-frame-foreground ${offset === 0 && gap === i ? '' : 'opacity-70'}`} aria-label={L("Palavra faltando", "Missing word")}><Loader2 className="h-5 w-5 motion-safe:animate-spin" /></span> : word}{' '}</span>)}
           </p>)}
         </div>}
     </footer>
