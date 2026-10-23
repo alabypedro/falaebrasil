@@ -51,7 +51,10 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
   const answer = gap === undefined ? '' : cleanWord(current.words[gap]);
   const upcoming = useMemo(() => lines.slice(lineIndex).flatMap(line => line.gaps.map(i => cleanWord(line.words[i]))), [lines, lineIndex]);
   const options = useMemo(() => answer ? makeOptions(answer, upcoming) : [], [answer, upcoming, gapIndex]);
-  const active = ready && !finished && time + 0.15 >= (current?.start ?? 0);
+  // Answering is always allowed once the clip is ready, so estimated timings never lock the buttons.
+  const active = ready && !finished;
+  const nextStart = lines[lineIndex + 1]?.start;
+  const paused = nextStart !== undefined && time >= nextStart - 0.2;
   const videoId = youtubeId(activity.youtube_url);
 
   useEffect(() => {
