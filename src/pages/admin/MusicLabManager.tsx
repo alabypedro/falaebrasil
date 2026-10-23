@@ -21,7 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Music, Search, Loader2, X, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Music, Search, Loader2, X, Sparkles, FileMusic } from "lucide-react";
+import LyricsActivityEditor from "@/components/musiclab/LyricsActivityEditor";
 import { toast } from "sonner";
 import { LEVELS } from "@/lib/levels";
 import { VOCAB_KINDS } from "@/pages/MusicLab";
@@ -40,6 +41,7 @@ interface Song {
   media_id: string | null;
   active: boolean;
   display_order: number;
+  lyrics_activity?: unknown;
 }
 
 interface Blank {
@@ -85,6 +87,7 @@ export default function MusicLabManager() {
   const [vocab, setVocab] = useState<Vocab[]>([]);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [lyricsSong, setLyricsSong] = useState<Song | null>(null);
   const [ytQuery, setYtQuery] = useState("");
   const [ytLoading, setYtLoading] = useState(false);
   const [ytResults, setYtResults] = useState<
@@ -439,6 +442,9 @@ export default function MusicLabManager() {
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{s.title}</p>
                 </div>
+                <Button variant="outline" size="sm" onClick={() => setLyricsSong(s)} title="Nova atividade (letra sincronizada)">
+                  <FileMusic className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => openEdit(s)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -839,6 +845,14 @@ export default function MusicLabManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {lyricsSong && (
+        <LyricsActivityEditor
+          song={lyricsSong}
+          onClose={() => setLyricsSong(null)}
+          onSaved={load}
+        />
+      )}
     </div>
   );
 }
