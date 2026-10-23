@@ -1,151 +1,61 @@
 import { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Music, Search, ArrowLeft, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
-import { LEVELS } from "@/lib/levels";
-import { useAllowedLevels } from "@/hooks/useAllowedLevels";
-import { awardAiXp } from "@/lib/aiXp";
-import { detectMedia, spotifyEmbed, youtubeEmbed, youtubeThumb, youtubeWatch, type MediaType } from "@/lib/musicMedia";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PartyPopper } from "lucide-react";
-import ListenMode from "@/components/musiclab/ListenMode";
+import { detectMedia, youtubeThumb } from "@/lib/musicMedia";
 import LyricsGame from "@/components/musiclab/LyricsGame";
 import { readLyricsActivity } from "@/lib/cantaeGame";
-import { useAdmin } from "@/hooks/useAdmin";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Song {
   id: string;
   title: string;
   artist: string;
-  level: string;
-  youtube_url: string | null;
-  spotify_url: string | null;
   cover_url: string | null;
   description: string | null;
-  media_type: string | null;
-  media_id: string | null;
   lyrics_activity?: unknown;
 }
 
-interface Blank {
-  id: string;
-  line_index: number;
-  text_before: string;
-  answer: string;
-  text_after: string;
-  hint: string | null;
-}
-
-interface Vocab {
-  id: string;
-  term: string;
-  kind: string;
-  explanation: string;
-  example: string | null;
-  display_order: number;
-}
-
-export const VOCAB_KINDS: { value: string; label: string }[] = [
-  { value: "slang", label: "Gíria" },
-  { value: "phrasal_verb", label: "Phrasal verb" },
-  { value: "phonetics", label: "Fonética" },
-  { value: "expression", label: "Expressão" },
-];
-
-const kindLabel = (k: string) => VOCAB_KINDS.find((v) => v.value === k)?.label ?? k;
-
 const normalize = (s: string) =>
-  s.trim().toLowerCase().replace(/[.,!?;:"'’]/g, "").replace(/\s+/g, " ");
+  s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,!?;:"'’]/g, "").replace(/\s+/g, " ");
 
 export default function MusicLab() {
+  const { language } = useLanguage();
+  const en = language === "en";
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(true);
   const [search, setSearch] = useState("");
-  const [levelFilter, setLevelFilter] = useState<string>("all");
-  const { levels: allowedLevels } = useAllowedLevels();
   const [selected, setSelected] = useState<Song | null>(null);
-
-  const [blanks, setBlanks] = useState<Blank[]>([]);
-  const [vocab, setVocab] = useState<Vocab[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
-
-  const [mediaTab, setMediaTab] = useState<MediaType>("youtube");
-  const [congrats, setCongrats] = useState(false);
-  const { isAdmin } = useAdmin();
 
   useEffect(() => {
     (async () => {
+      const uid = (await supabase.auth.getUser()).data.user?.id as string;
       const [{ data: access }, { data }] = await Promise.all([
-        supabase.rpc("has_music_lab_access", {
-          _user_id: (await supabase.auth.getUser()).data.user?.id as string,
-        }),
-        supabase
-          .from("music_lab_songs")
-          .select("id,title,artist,level,youtube_url,spotify_url,cover_url,description,media_type,media_id,lyrics_activity")
-          .eq("active", true),
+        supabase.rpc("has_music_lab_access", { _user_id: uid }),
+        supabase.from("music_lab_songs").select("id,title,artist,cover_url,description,lyrics_activity").eq("active", true),
       ]);
       setHasAccess(access !== false);
       setSongs(
-        ((data as Song[]) ?? []).sort(
-          (a, b) =>
-            a.artist.localeCompare(b.artist, "pt-BR", { sensitivity: "base" }) ||
-            a.title.localeCompare(b.title, "pt-BR", { sensitivity: "base" }),
-        ),
+        ((data as Song[]) ?? [])
+          .filter((s) => readLyricsActivity(s.lyrics_activity))
+          .sort(
+            (a, b) =>
+              a.artist.localeCompare(b.artist, "pt-BR", { sensitivity: "base" }) ||
+              a.title.localeCompare(b.title, "pt-BR", { sensitivity: "base" }),
+          ),
       );
       setLoading(false);
     })();
   }, []);
 
-  const openSong = async (song: Song) => {
-    setSelected(song);
-    setMediaTab(
-      (song.media_type as MediaType) === "spotify" && detectMedia(song.spotify_url ?? "")
-        ? "spotify"
-        : detectMedia(song.youtube_url ?? "")
-          ? "youtube"
-          : "spotify",
-    );
-    setCongrats(false);
-    setDetailLoading(true);
-
-    const [{ data: b }, { data: v }] = await Promise.all([
-      supabase.from("music_lab_blanks").select("*").eq("song_id", song.id).order("line_index"),
-      supabase.from("music_lab_vocabulary").select("*").eq("song_id", song.id).order("display_order"),
-    ]);
-    setBlanks((b as Blank[]) ?? []);
-    setVocab((v as Vocab[]) ?? []);
-    setDetailLoading(false);
-  };
-
-  const levelsAvailable = useMemo(() => {
-    const set = new Set(songs.map((s) => s.level));
-    return LEVELS.filter((l) => set.has(l) && allowedLevels.includes(l));
-  }, [songs]);
-
   const filtered = useMemo(() => {
     const q = normalize(search);
-    return songs.filter((s) => {
-      const okLevel =
-        allowedLevels.includes(s.level) && (levelFilter === "all" || s.level === levelFilter);
-      const okQuery =
-        !q ||
-        normalize(s.title).includes(q) ||
-        normalize(s.artist).includes(q) ||
-        normalize(s.level).includes(q);
-      return okLevel && okQuery;
-    });
-  }, [songs, search, levelFilter, allowedLevels]);
-
-
-
+    return songs.filter((s) => !q || normalize(s.title).includes(q) || normalize(s.artist).includes(q));
+  }, [songs, search]);
 
   if (loading) {
     return (
@@ -157,14 +67,16 @@ export default function MusicLab() {
 
   if (!hasAccess) {
     return (
-      <div className="max-w-xl space-y-4 page-transition">
+      <div className="mx-auto max-w-xl space-y-4 page-transition">
         <BackToDashboardButton />
         <Card className="border-border/60">
           <CardContent className="p-8 text-center space-y-3">
             <Lock className="h-8 w-8 mx-auto text-muted-foreground" />
-            <p className="font-semibold text-foreground">Cantaê bloqueado</p>
+            <p className="font-semibold text-foreground">{en ? "Cantaê locked" : "Cantaê bloqueado"}</p>
             <p className="text-sm text-muted-foreground">
-              Fale com a equipe Falaê Brasil para liberar o Cantaê no seu plano.
+              {en
+                ? "Contact the Falaê Brasil team to unlock Cantaê in your plan."
+                : "Fale com a equipe Falaê Brasil para liberar o Cantaê no seu plano."}
             </p>
           </CardContent>
         </Card>
@@ -172,288 +84,76 @@ export default function MusicLab() {
     );
   }
 
-  if (selected) {
-    const ytId =
-      detectMedia(selected.youtube_url ?? "")?.media_type === "youtube"
-        ? detectMedia(selected.youtube_url ?? "")!.media_id
-        : selected.media_type === "youtube"
-          ? selected.media_id
-          : null;
-    const spId =
-      detectMedia(selected.spotify_url ?? "")?.media_type === "spotify"
-        ? detectMedia(selected.spotify_url ?? "")!.media_id
-        : selected.media_type === "spotify"
-          ? selected.media_id
-          : null;
-    const cover = selected.cover_url ?? (ytId ? youtubeThumb(ytId) : null);
-    const activeMedia: MediaType = mediaTab === "spotify" && spId ? "spotify" : ytId ? "youtube" : "spotify";
-
+  const activity = selected ? readLyricsActivity(selected.lyrics_activity) : null;
+  if (selected && activity) {
     return (
-      <div className="max-w-4xl space-y-6 page-transition">
+      <div className="mx-auto w-full max-w-4xl space-y-6 page-transition">
         <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Todas as músicas
+          <ArrowLeft className="h-4 w-4 mr-2" /> {en ? "All songs" : "Todas as músicas"}
         </Button>
-
-        <header className="flex flex-wrap items-start gap-4">
-          {cover && (
-            <img
-              src={cover}
-              alt={`Capa de ${selected.title} — ${selected.artist}`}
-              className="h-24 w-24 rounded-xl object-cover border border-border/60"
-              loading="lazy"
-            />
-          )}
-          <div className="space-y-2 min-w-0">
-            <div className="flex items-center gap-2">
-              <Music className="h-5 w-5 text-primary" />
-              <Badge className="bg-primary/15 text-primary border border-primary/30 font-semibold">
-                CEFR {selected.level}
-              </Badge>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground">
-              {selected.title}
-            </h1>
-            <p className="text-sm text-muted-foreground">{selected.artist}</p>
-            {selected.description && (
-              <p className="text-sm text-muted-foreground">{selected.description}</p>
-            )}
-          </div>
+        <header className="text-center space-y-1">
+          <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground">{selected.title}</h1>
+          <p className="text-sm text-muted-foreground">{selected.artist}</p>
         </header>
-
-        {detailLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div
-            className={`space-y-6 ${
-              (ytId || spId) ? "lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start lg:space-y-0" : ""
-            }`}
-          >
-            {(ytId || spId) && (
-              <div className="space-y-3 lg:sticky lg:top-4">
-                {ytId && spId && (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={activeMedia === "youtube" ? "default" : "outline"}
-                      onClick={() => setMediaTab("youtube")}
-                    >
-                      Vídeo (YouTube)
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={activeMedia === "spotify" ? "default" : "outline"}
-                      onClick={() => setMediaTab("spotify")}
-                    >
-                      Áudio (Spotify)
-                    </Button>
-                  </div>
-                )}
-                <Card className="overflow-hidden border-border/60">
-                  <CardContent className="p-0">
-                    {activeMedia === "youtube" && ytId ? (
-                      <div>
-                        <div className="aspect-video w-full">
-                          <iframe
-                            className="h-full w-full"
-                            src={youtubeEmbed(ytId)}
-                            title={selected.title}
-                            referrerPolicy="strict-origin-when-cross-origin"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                          />
-                        </div>
-                        <div className="px-3 py-2 text-xs text-muted-foreground">
-                          Se o vídeo não tocar aqui,{" "}
-                          <a
-                            href={youtubeWatch(ytId)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline hover:text-accent"
-                          >
-                            abra no YouTube
-                          </a>
-                          .
-                        </div>
-                      </div>
-                    ) : spId ? (
-                      <iframe
-                        className="w-full rounded-md"
-                        height={352}
-                        src={spotifyEmbed(spId)}
-                        title={selected.title}
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                        loading="lazy"
-                      />
-                    ) : null}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            <Tabs defaultValue="listen">
-              <TabsList>
-                <TabsTrigger value="listen">Modo Escuta</TabsTrigger>
-                <TabsTrigger value="vocab">Vocabulário &amp; Expressões</TabsTrigger>
-                {isAdmin && readLyricsActivity(selected.lyrics_activity) && <TabsTrigger value="nova">Nova versão (prévia)</TabsTrigger>}
-              </TabsList>
-              {isAdmin && readLyricsActivity(selected.lyrics_activity) && (
-                <TabsContent value="nova" className="mt-4">
-                  <LyricsGame activity={readLyricsActivity(selected.lyrics_activity)!} title={selected.title} />
-                </TabsContent>
-              )}
-
-              <TabsContent value="listen" className="mt-4">
-                <ListenMode
-                  blanks={blanks}
-                  onComplete={async (score, correct, total) => {
-                    if (correct === total && total > 0) setCongrats(true);
-                    const points = correct * 5;
-                    if (points > 0 && selected) {
-                      const res = await awardAiXp(
-                        "musiclab",
-                        points,
-                        `musiclab:listen:${selected.id}:${correct}`,
-                      );
-                      if (res?.awarded) toast.success(`+${res.points} XP no Cantaê!`);
-                      else toast.success(`Modo Escuta concluído — ${score} pontos`);
-                    }
-                  }}
-                />
-              </TabsContent>
-
-
-              <TabsContent value="vocab" className="mt-4">
-                <Card className="border-border/60">
-                  <CardContent className="p-5 space-y-3">
-                    {vocab.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        Nenhum vocabulário cadastrado para esta música.
-                      </p>
-                    ) : (
-                      <Accordion type="multiple" className="w-full">
-                        {vocab.map((v) => (
-                          <AccordionItem key={v.id} value={v.id}>
-                            <AccordionTrigger className="text-sm">
-                              <span className="flex items-center gap-2 text-left">
-                                <span className="font-semibold text-foreground">{v.term}</span>
-                                <Badge variant="outline" className="text-[10px]">
-                                  {kindLabel(v.kind)}
-                                </Badge>
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent className="space-y-1">
-                              <p className="text-sm text-muted-foreground">{v.explanation}</p>
-                              {v.example && (
-                                <p className="text-xs italic text-muted-foreground">“{v.example}”</p>
-                              )}
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
-
-        <Dialog open={congrats} onOpenChange={setCongrats}>
-          <DialogContent className="max-w-sm text-center">
-            <DialogHeader>
-              <DialogTitle className="flex items-center justify-center gap-2">
-                <PartyPopper className="h-5 w-5 text-primary" /> Parabéns!
-              </DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground">
-              Você acertou 100% das lacunas de “{selected.title}” e ganhou XP no Cantaê.
-            </p>
-            <Button onClick={() => setCongrats(false)}>Continuar</Button>
-          </DialogContent>
-        </Dialog>
+        <LyricsGame activity={activity} title={selected.title} />
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl space-y-6 page-transition">
+    <div className="mx-auto max-w-5xl space-y-6 page-transition">
       <BackToDashboardButton />
-
       <header className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground flex items-center gap-2">
           <Music className="h-6 w-6 text-primary" /> Cantaê
         </h1>
         <p className="text-sm text-muted-foreground">
-          Aprenda inglês com música: ouça, complete a letra e explore gírias e expressões.
+          {en
+            ? "Learn English with music: watch the official clip, pick the missing words and read the lyrics."
+            : "Aprenda inglês com música: assista ao clipe oficial, escolha as palavras que faltam e leia a letra."}
         </p>
       </header>
 
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por música, banda/artista ou nível (ex: B1)"
-            className="pl-9"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant={levelFilter === "all" ? "default" : "outline"}
-            onClick={() => setLevelFilter("all")}
-          >
-            Todos
-          </Button>
-          {levelsAvailable.map((l) => (
-            <Button
-              key={l}
-              size="sm"
-              variant={levelFilter === l ? "default" : "outline"}
-              onClick={() => setLevelFilter(l)}
-            >
-              {l}
-            </Button>
-          ))}
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={en ? "Search by song or artist/band" : "Buscar por música ou cantor/banda"}
+          className="pl-9"
+        />
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhuma música encontrada.</p>
+        <p className="text-sm text-muted-foreground">{en ? "No songs found." : "Nenhuma música encontrada."}</p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => openSong(s)}
-              className="text-left rounded-xl border border-border/60 bg-card overflow-hidden hover:border-primary hover:bg-primary/5 transition"
-            >
-              {(() => {
-                const ytc = detectMedia(s.youtube_url ?? "");
-                const cover =
-                  s.cover_url ?? (ytc?.media_type === "youtube" ? youtubeThumb(ytc.media_id) : null);
-                return cover ? (
-                  <img src={cover} alt={`Capa de ${s.title}`} className="h-32 w-full object-cover" loading="lazy" />
-                ) : null;
-              })()}
-              <div className="p-4 space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold uppercase text-muted-foreground truncate">
-                    {s.artist}
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] shrink-0">
-                    {s.level}
-                  </Badge>
+          {filtered.map((s) => {
+            const yt = detectMedia(readLyricsActivity(s.lyrics_activity)?.youtube_url ?? "");
+            const cover = s.cover_url ?? (yt?.media_type === "youtube" ? youtubeThumb(yt.media_id) : null);
+            return (
+              <button
+                key={s.id}
+                onClick={() => setSelected(s)}
+                className="text-left rounded-xl border border-border/60 bg-card overflow-hidden hover:border-primary hover:bg-primary/5 transition"
+              >
+                {cover && <img src={cover} alt={`${s.title} — ${s.artist}`} className="h-32 w-full object-cover" loading="lazy" />}
+                <div className="p-4 space-y-1">
+                  <span className="text-xs font-semibold uppercase text-muted-foreground truncate block">{s.artist}</span>
+                  <p className="text-sm font-semibold text-foreground leading-tight">{s.title}</p>
                 </div>
-                <p className="text-sm font-semibold text-foreground leading-tight">{s.title}</p>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
+
+export const VOCAB_KINDS: { value: string; label: string }[] = [
+  { value: "slang", label: "Gíria" },
+  { value: "phrasal_verb", label: "Phrasal verb" },
+  { value: "phonetics", label: "Fonética" },
+  { value: "expression", label: "Expressão" },
+];

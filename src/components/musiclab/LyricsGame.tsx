@@ -4,9 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { BookOpen, Loader2, RotateCcw, Trophy, ExternalLink, Undo2 } from 'lucide-react';
 import { youtubeId, youtubeWatch } from '@/lib/musicMedia';
 import { cleanWord, makeOptions, pointsForAttempt, prepareLines, wordKey, applyReplayPenalty, REPLAY_PENALTY, type LyricsActivity } from '@/lib/cantaeGame';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { loadYouTubeApi as loadApi, type YTPlayer as Player } from '@/lib/youtubeApi';
 
 export default function LyricsGame({ activity, title }: { activity: LyricsActivity; title: string }) {
+  const { language } = useLanguage();
+  const L = (pt: string, en: string) => (language === 'en' ? en : pt);
   const [lines, setLines] = useState(() => prepareLines(activity.lines));
   const [lineIndex, setLineIndex] = useState(0);
   const [gapIndex, setGapIndex] = useState(0);
@@ -99,30 +102,30 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
       <div className="flex items-center gap-4 text-sm text-muted-foreground tabular-nums">
         <span>{Math.min(lineIndex + 1, lines.length)} / {lines.length}</span>
         <span className="flex items-center gap-2 text-primary font-semibold"><Trophy className="h-4 w-4" />{score} pts</span>
-        <Button variant="ghost" size="icon" title="Recomeçar" aria-label="Recomeçar" onClick={restart}><RotateCcw className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" title={L("Recomeçar", "Restart")} aria-label={L("Recomeçar", "Restart")} onClick={restart}><RotateCcw className="h-4 w-4" /></Button>
       </div>
     </div>
     <div className="aspect-video w-full overflow-hidden bg-muted relative">
       <div ref={container} className="h-full w-full [&_iframe]:h-full [&_iframe]:w-full" />
       {!ready && !error && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
     </div>
-    {error && <p role="alert" className="text-sm text-destructive">Este clipe não pôde ser reproduzido aqui. Escolha outro clipe oficial no Admin.</p>}
-    {!finished && <Button variant="outline" disabled={!ready} onClick={replay} className="w-full"><Undo2 className="mr-2 h-4 w-4" />Ouvir a frase de novo (−{REPLAY_PENALTY} pts)</Button>}
-    {videoId && <a href={youtubeWatch(videoId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground underline"><ExternalLink className="h-3 w-3" />Abrir clipe no YouTube</a>}
+    {error && <p role="alert" className="text-sm text-destructive">{L("Este clipe não pôde ser reproduzido aqui.", "This clip could not be played here.")}</p>}
+    {!finished && <Button variant="outline" disabled={!ready} onClick={replay} className="w-full"><Undo2 className="mr-2 h-4 w-4" />{L("Ouvir novamente", "Listen again")} (−{REPLAY_PENALTY} pts)</Button>}
+    {videoId && <a href={youtubeWatch(videoId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground underline"><ExternalLink className="h-3 w-3" />{L("Abrir clipe no YouTube", "Open clip on YouTube")}</a>}
     <footer className="border-t border-border pt-4 space-y-4">
-      {!finished && <div className="grid grid-cols-4 gap-2" aria-label="Palavras disponíveis">
+      {!finished && <div className="grid grid-cols-4 gap-2" aria-label={L("Palavras disponíveis", "Available words")}>
         {(options.length ? options : ['—', '—', '—', '—']).map((word, i) => <Button key={`${lineIndex}:${gapIndex}:${i}`} variant={wrong.includes(word) ? 'destructive' : 'default'} disabled={!active || wrong.includes(word)} onClick={() => choose(word)} className="h-14 min-w-0 whitespace-normal break-words px-1 text-sm sm:text-lg font-semibold shadow-soft-md disabled:opacity-70">{word}</Button>)}
       </div>}
-      {!finished && paused && <p className="text-sm text-primary">Escolha a palavra que falta para a música continuar.</p>}
-      {finished ? <div className="py-6 text-center space-y-3"><Trophy className="h-8 w-8 mx-auto text-primary" /><h2 className="text-xl font-semibold">Música concluída</h2><p className="text-muted-foreground">{score} pontos</p><Button variant="outline" onClick={restart}><RotateCcw className="mr-2 h-4 w-4" />Tentar novamente</Button></div> :
+      {!finished && paused && <p className="text-sm text-primary">{L("Escolha a palavra que falta para a música continuar.", "Pick the missing word to keep the song playing.")}</p>}
+      {finished ? <div className="py-6 text-center space-y-3"><Trophy className="h-8 w-8 mx-auto text-primary" /><h2 className="text-xl font-semibold">{L("Música concluída", "Song completed")}</h2><p className="text-muted-foreground">{score} {L("pontos", "points")}</p><Button variant="outline" onClick={restart}><RotateCcw className="mr-2 h-4 w-4" />{L("Tentar novamente", "Try again")}</Button></div> :
         <div className="min-h-48 space-y-5" aria-live="polite">
           {lines.slice(lineIndex, lineIndex + 3).map((line, offset) => <p key={lineIndex + offset} className={offset === 0 ? 'text-xl sm:text-2xl leading-relaxed font-semibold text-foreground motion-safe:animate-in motion-safe:fade-in' : 'text-base leading-relaxed text-muted-foreground'}>
-            {line.words.map((word, i) => <span key={i}>{line.gaps.includes(i) && !solved[`${lineIndex + offset}:${i}`] ? <span className={`inline-flex w-10 align-middle justify-center ${offset === 0 && gap === i ? 'text-primary' : 'text-muted-foreground'}`} aria-label="Palavra faltando"><Loader2 className="h-5 w-5 motion-safe:animate-spin" /></span> : word}{' '}</span>)}
+            {line.words.map((word, i) => <span key={i}>{line.gaps.includes(i) && !solved[`${lineIndex + offset}:${i}`] ? <span className={`inline-flex w-10 align-middle justify-center ${offset === 0 && gap === i ? 'text-primary' : 'text-muted-foreground'}`} aria-label={L("Palavra faltando", "Missing word")}><Loader2 className="h-5 w-5 motion-safe:animate-spin" /></span> : word}{' '}</span>)}
           </p>)}
         </div>}
     </footer>
     <Dialog open={lyricsOpen} onOpenChange={setLyricsOpen}><DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>{title} — lyrics</DialogTitle></DialogHeader>
-      <div className="grid grid-cols-2 gap-x-6 py-2 text-xs font-semibold uppercase text-muted-foreground border-b border-border"><span>English</span><span>Português</span></div>
+      <div className="grid grid-cols-2 gap-x-6 py-2 text-xs font-semibold uppercase text-muted-foreground border-b border-border"><span>English</span><span>{L("Português", "Portuguese")}</span></div>
       <div className="py-2">{activity.lines.map((line, i) => <div key={i} className="grid grid-cols-2 gap-x-6 py-1.5"><p className="text-base leading-relaxed font-medium text-foreground">{line.en}</p><p className="text-base leading-relaxed text-muted-foreground">{line.pt}</p></div>)}</div>
     </DialogContent></Dialog>
   </section>;
