@@ -51,6 +51,14 @@ export default function LyricsActivityEditor({ song, onClose, onSaved }: { song:
   return <Dialog open onOpenChange={value => { if (!value) requestClose(); }}><DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" onInteractOutside={e => e.preventDefault()}><DialogHeader><DialogTitle>Nova atividade — {song.title}</DialogTitle></DialogHeader>
     <div className="space-y-2"><Label htmlFor="official-clip">Clipe oficial do YouTube (sem vídeo de letras)</Label><Input id="official-clip" value={url} onChange={e => { setUrl(e.target.value); setDirty(true); }} placeholder="https://www.youtube.com/watch?v=..." /></div>
     <label className="flex items-start gap-2 text-sm"><Checkbox checked={authorized} onCheckedChange={value => setAuthorized(value === true)} />Tenho autorização para usar a letra completa e sua tradução e conferi que correspondem a este clipe oficial.</label>
+    {!syncing && (pasteOpen ? <div className="space-y-3 rounded-md border border-border p-4">
+      <p className="text-sm text-muted-foreground">Cole a letra inteira em cada campo. Cada linha do inglês vira uma frase, pareada com a mesma linha do português (linhas em branco são ignoradas).</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1"><Label htmlFor="paste-en">Letra inteira em inglês</Label><Textarea id="paste-en" rows={12} value={pasteEn} onChange={e => setPasteEn(e.target.value)} /></div>
+        <div className="space-y-1"><Label htmlFor="paste-pt">Tradução inteira em português</Label><Textarea id="paste-pt" rows={12} value={pastePt} onChange={e => setPastePt(e.target.value)} /></div>
+      </div>
+      <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setPasteOpen(false)}>Cancelar</Button><Button onClick={applyPaste}>Criar as linhas</Button></div>
+    </div> : <Button variant="secondary" className="mr-2" onClick={() => setPasteOpen(true)}><ClipboardPaste className="h-4 w-4 mr-2" />Colar letra e tradução inteiras</Button>)}
     {syncing ? <LyricsSyncPanel url={url} lines={lines} onChange={changeLines} saving={saving} onDone={() => { setSyncing(false); void save(lines); }} onCancel={() => setSyncing(false)} /> :
       <Button variant="secondary" disabled={!youtubeId(url) || lines.length === 0} onClick={() => setSyncing(true)}><Timer className="h-4 w-4 mr-2" />Sincronizar tempos com o vídeo</Button>}
     <div className="space-y-4">{lines.map((line, i) => <div key={i} className="border-b border-border pb-4 space-y-2">
