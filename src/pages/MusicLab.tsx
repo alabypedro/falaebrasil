@@ -16,6 +16,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PartyPopper } from "lucide-react";
 import ListenMode from "@/components/musiclab/ListenMode";
+import LyricsGame from "@/components/musiclab/LyricsGame";
+import { readLyricsActivity } from "@/lib/cantaeGame";
+import { useAdmin } from "@/hooks/useAdmin";
 
 interface Song {
   id: string;
@@ -28,6 +31,7 @@ interface Song {
   description: string | null;
   media_type: string | null;
   media_id: string | null;
+  lyrics_activity?: unknown;
 }
 
 interface Blank {
@@ -75,6 +79,7 @@ export default function MusicLab() {
 
   const [mediaTab, setMediaTab] = useState<MediaType>("youtube");
   const [congrats, setCongrats] = useState(false);
+  const { isAdmin } = useAdmin();
 
   useEffect(() => {
     (async () => {
@@ -84,7 +89,7 @@ export default function MusicLab() {
         }),
         supabase
           .from("music_lab_songs")
-          .select("id,title,artist,level,youtube_url,spotify_url,cover_url,description,media_type,media_id")
+          .select("id,title,artist,level,youtube_url,spotify_url,cover_url,description,media_type,media_id,lyrics_activity")
           .eq("active", true),
       ]);
       setHasAccess(access !== false);
@@ -291,7 +296,13 @@ export default function MusicLab() {
               <TabsList>
                 <TabsTrigger value="listen">Modo Escuta</TabsTrigger>
                 <TabsTrigger value="vocab">Vocabulário &amp; Expressões</TabsTrigger>
+                {isAdmin && readLyricsActivity(selected.lyrics_activity) && <TabsTrigger value="nova">Nova versão (prévia)</TabsTrigger>}
               </TabsList>
+              {isAdmin && readLyricsActivity(selected.lyrics_activity) && (
+                <TabsContent value="nova" className="mt-4">
+                  <LyricsGame activity={readLyricsActivity(selected.lyrics_activity)!} title={selected.title} />
+                </TabsContent>
+              )}
 
               <TabsContent value="listen" className="mt-4">
                 <ListenMode

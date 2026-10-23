@@ -124,6 +124,9 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
           </p>)}
         </div>}
     </footer>
-    <Dialog open={lyricsOpen} onOpenChange={setLyricsOpen}><DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>{title} — lyrics</DialogTitle></DialogHeader><div className="space-y-6 py-4">{activity.lines.map((line, i) => <div key={i}><p className="text-xl leading-relaxed font-medium text-foreground">{line.en}</p><p className="text-sm italic leading-relaxed text-muted-foreground mt-1">{line.pt}</p></div>)}</div></DialogContent></Dialog>
+    <Dialog open={lyricsOpen} onOpenChange={setLyricsOpen}><DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>{title} — lyrics</DialogTitle></DialogHeader>
+      <div className="grid grid-cols-2 gap-x-6 py-2 text-xs font-semibold uppercase text-muted-foreground border-b border-border"><span>English</span><span>Português</span></div>
+      <div className="py-2">{activity.lines.map((line, i) => <div key={i} className="grid grid-cols-2 gap-x-6 py-1.5"><p className="text-base leading-relaxed font-medium text-foreground">{line.en}</p><p className="text-base leading-relaxed text-muted-foreground">{line.pt}</p></div>)}</div>
+    </DialogContent></Dialog>
   </section>;
 }
