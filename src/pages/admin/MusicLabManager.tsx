@@ -88,6 +88,7 @@ export default function MusicLabManager() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [lyricsSong, setLyricsSong] = useState<Song | null>(null);
+  const [quick, setQuick] = useState<{ id?: string; title: string; artist: string } | null>(null);
   const [ytQuery, setYtQuery] = useState("");
   const [ytLoading, setYtLoading] = useState(false);
   const [ytResults, setYtResults] = useState<
@@ -255,12 +256,33 @@ export default function MusicLabManager() {
     });
   }, [songs, search, levelFilter]);
 
-  const openNew = () => {
-    setEditing(null);
-    setForm({ ...emptySong });
-    setBlanks([]);
-    setVocab([]);
-    setOpen(true);
+  const openNew = () => setQuick({ title: "", artist: "" });
+
+  const saveQuick = async () => {
+    if (!quick) return;
+    const title = quick.title.trim();
+    const artist = quick.artist.trim();
+    if (!title || !artist) return toast.error("Informe o nome da música e o cantor/banda.");
+    setSaving(true);
+    if (quick.id) {
+      const { error } = await supabase.from("music_lab_songs").update({ title, artist }).eq("id", quick.id);
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success("Música atualizada");
+      setQuick(null);
+      load();
+      return;
+    }
+    const { data, error } = await supabase
+      .from("music_lab_songs")
+      .insert({ title, artist, level: "A1", active: true, display_order: 0, media_type: "youtube" })
+      .select("*")
+      .single();
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    setQuick(null);
+    load();
+    setLyricsSong(data as Song);
   };
 
   const openEdit = async (song: Song) => {
@@ -383,7 +405,7 @@ export default function MusicLabManager() {
             <Music className="h-5 w-5 text-primary" /> Cantaê
           </h1>
           <p className="text-sm text-muted-foreground">
-            Cadastre músicas, lacunas do Modo Escuta e vocabulário.
+            Cadastre músicas e use o ícone de partitura para clipe, letra, tradução e tempos.
           </p>
         </div>
         <Button onClick={openNew}>
@@ -428,7 +450,7 @@ export default function MusicLabManager() {
                 <Button variant="outline" size="sm" onClick={() => setLyricsSong(s)} title="Nova atividade (letra sincronizada)">
                   <FileMusic className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => openEdit(s)}>
+                <Button variant="outline" size="sm" title="Editar nome e cantor" onClick={() => setQuick({ id: s.id, title: s.title, artist: s.artist })}>
                   <Pencil className="h-4 w-4" />
                 </Button>
                 <Button variant="destructive" size="sm" onClick={() => remove(s)}>
@@ -809,6 +831,34 @@ export default function MusicLabManager() {
             <Button onClick={save} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={quick !== null} onOpenChange={(v) => { if (!v) setQuick(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{quick?.id ? "Editar música" : "Nova música"}</DialogTitle>
+          </DialogHeader>
+          {quick && (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="quick-artist">Cantor / banda</Label>
+                <Input id="quick-artist" value={quick.artist} onChange={(e) => setQuick({ ...quick, artist: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="quick-title">Nome da música</Label>
+                <Input id="quick-title" value={quick.title} onChange={(e) => setQuick({ ...quick, title: e.target.value })} />
+              </div>
+              {!quick.id && <p className="text-xs text-muted-foreground">Na próxima tela você cola o link do clipe oficial, a letra e a tradução, e marca os tempos.</p>}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuick(null)}>Cancelar</Button>
+            <Button onClick={saveQuick} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+              {quick?.id ? "Salvar" : "Continuar"}
             </Button>
           </DialogFooter>
         </DialogContent>
