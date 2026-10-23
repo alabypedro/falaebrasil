@@ -850,7 +850,7 @@ export default function MusicLabManager() {
         <LyricsActivityEditor
           song={lyricsSong}
           onClose={() => setLyricsSong(null)}
-          onSaved={fetchSongs}
+          onSaved={load}
         />
       )}
     </div>
