@@ -2,10 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Music, Search, ArrowLeft, Lock, Loader2 } from "lucide-react";
+import { Music, Search, ArrowLeft, Lock, Loader2, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
-import { detectMedia, youtubeThumb } from "@/lib/musicMedia";
 import LyricsGame from "@/components/musiclab/LyricsGame";
 import { readLyricsActivity } from "@/lib/cantaeGame";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -127,25 +126,25 @@ export default function MusicLab() {
       {filtered.length === 0 ? (
         <p className="text-sm text-muted-foreground">{en ? "No songs found." : "Nenhuma música encontrada."}</p>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((s) => {
-            const yt = detectMedia(readLyricsActivity(s.lyrics_activity)?.youtube_url ?? "");
-            const cover = s.cover_url ?? (yt?.media_type === "youtube" ? youtubeThumb(yt.media_id) : null);
-            return (
-              <button
-                key={s.id}
+        <ul className="space-y-2">
+          {filtered.map((s) => (
+            <li key={s.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 sm:px-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground break-words">{s.artist}</p>
+                <p className="text-sm text-muted-foreground break-words">{s.title}</p>
+              </div>
+              <Button
+                size="sm"
+                className="shrink-0 gap-2"
                 onClick={() => setSelected(s)}
-                className="text-left rounded-xl border border-border/60 bg-card overflow-hidden hover:border-primary hover:bg-primary/5 transition"
+                aria-label={`${en ? "Play" : "Jogar"}: ${s.title} — ${s.artist}`}
               >
-                {cover && <img src={cover} alt={`${s.title} — ${s.artist}`} className="h-32 w-full object-cover" loading="lazy" />}
-                <div className="p-4 space-y-1">
-                  <span className="text-xs font-semibold uppercase text-muted-foreground truncate block">{s.artist}</span>
-                  <p className="text-sm font-semibold text-foreground leading-tight">{s.title}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                <Play className="h-4 w-4" />
+                {en ? "Play" : "Play"}
+              </Button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
