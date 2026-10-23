@@ -111,7 +111,7 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
     {videoId && <a href={youtubeWatch(videoId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground underline"><ExternalLink className="h-3 w-3" />Abrir clipe no YouTube</a>}
     <footer className="border-t border-border pt-4 space-y-4">
       {!finished && <div className="grid grid-cols-4 gap-2" aria-label="Palavras disponíveis">
-        {(options.length ? options : ['—', '—', '—', '—']).map((word, i) => <Button key={`${lineIndex}:${gapIndex}:${i}`} variant={wrong.includes(word) ? 'destructive' : 'outline'} disabled={!active || wrong.includes(word)} onClick={() => choose(word)} className="h-14 min-w-0 whitespace-normal break-words px-1 text-sm sm:text-lg font-semibold">{word}</Button>)}
+        {(options.length ? options : ['—', '—', '—', '—']).map((word, i) => <Button key={`${lineIndex}:${gapIndex}:${i}`} variant={wrong.includes(word) ? 'destructive' : 'default'} disabled={!active || wrong.includes(word)} onClick={() => choose(word)} className="h-14 min-w-0 whitespace-normal break-words px-1 text-sm sm:text-lg font-semibold shadow-soft-md disabled:opacity-70">{word}</Button>)}
       </div>}
       {!finished && paused && <p className="text-sm text-primary">Escolha a palavra que falta para a música continuar.</p>}
       {finished ? <div className="py-6 text-center space-y-3"><Trophy className="h-8 w-8 mx-auto text-primary" /><h2 className="text-xl font-semibold">Música concluída</h2><p className="text-muted-foreground">{score} pontos</p><Button variant="outline" onClick={restart}><RotateCcw className="mr-2 h-4 w-4" />Tentar novamente</Button></div> :
