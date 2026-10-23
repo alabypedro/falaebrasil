@@ -51,7 +51,10 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
   const answer = gap === undefined ? '' : cleanWord(current.words[gap]);
   const upcoming = useMemo(() => lines.slice(lineIndex).flatMap(line => line.gaps.map(i => cleanWord(line.words[i]))), [lines, lineIndex]);
   const options = useMemo(() => answer ? makeOptions(answer, upcoming) : [], [answer, upcoming, gapIndex]);
-  const active = ready && !finished && time + 0.15 >= (current?.start ?? 0);
+  // Answering is always allowed once the clip is ready, so estimated timings never lock the buttons.
+  const active = ready && !finished;
+  const nextStart = lines[lineIndex + 1]?.start;
+  const paused = nextStart !== undefined && time >= nextStart - 0.2;
   const videoId = youtubeId(activity.youtube_url);
 
   useEffect(() => {
@@ -106,10 +109,11 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
   return <section className="mx-auto w-full max-w-4xl space-y-4">
     <div className="flex items-center justify-between gap-3">
       <Button variant="outline" onClick={() => setLyricsOpen(true)}><BookOpen className="mr-2 h-4 w-4" />lyrics</Button>
-      <Button variant="ghost" size="icon" title="Recomeçar" aria-label="Recomeçar" onClick={restart}><RotateCcw className="h-4 w-4" /></Button>
-    </div>
-    <div className="grid grid-cols-4 gap-2" aria-label="Palavras disponíveis">
-      {(options.length ? options : ['—', '—', '—', '—']).map((word, i) => <Button key={`${lineIndex}:${gapIndex}:${i}`} variant={wrong.includes(word) ? 'destructive' : 'outline'} disabled={!active || wrong.includes(word)} onClick={() => choose(word)} className="h-14 min-w-0 whitespace-normal break-words px-1 text-sm sm:text-lg font-semibold">{word}</Button>)}
+      <div className="flex items-center gap-4 text-sm text-muted-foreground tabular-nums">
+        <span>{Math.min(lineIndex + 1, lines.length)} / {lines.length}</span>
+        <span className="flex items-center gap-2 text-primary font-semibold"><Trophy className="h-4 w-4" />{score} pts</span>
+        <Button variant="ghost" size="icon" title="Recomeçar" aria-label="Recomeçar" onClick={restart}><RotateCcw className="h-4 w-4" /></Button>
+      </div>
     </div>
     <div className="aspect-video w-full overflow-hidden bg-muted relative">
       <div ref={container} className="h-full w-full [&_iframe]:h-full [&_iframe]:w-full" />
@@ -118,7 +122,10 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
     {error && <p role="alert" className="text-sm text-destructive">Este clipe não pôde ser reproduzido aqui. Escolha outro clipe oficial no Admin.</p>}
     {videoId && <a href={youtubeWatch(videoId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground underline"><ExternalLink className="h-3 w-3" />Abrir clipe no YouTube</a>}
     <footer className="border-t border-border pt-4 space-y-4">
-      <div className="flex justify-between items-center text-sm text-muted-foreground tabular-nums"><span>{Math.min(lineIndex + 1, lines.length)} / {lines.length}</span><span className="flex items-center gap-2 text-primary font-semibold"><Trophy className="h-4 w-4" />{score} pts</span></div>
+      {!finished && <div className="grid grid-cols-4 gap-2" aria-label="Palavras disponíveis">
+        {(options.length ? options : ['—', '—', '—', '—']).map((word, i) => <Button key={`${lineIndex}:${gapIndex}:${i}`} variant={wrong.includes(word) ? 'destructive' : 'outline'} disabled={!active || wrong.includes(word)} onClick={() => choose(word)} className="h-14 min-w-0 whitespace-normal break-words px-1 text-sm sm:text-lg font-semibold">{word}</Button>)}
+      </div>}
+      {!finished && paused && <p className="text-sm text-primary">Escolha a palavra que falta para a música continuar.</p>}
       {finished ? <div className="py-6 text-center space-y-3"><Trophy className="h-8 w-8 mx-auto text-primary" /><h2 className="text-xl font-semibold">Música concluída</h2><p className="text-muted-foreground">{score} pontos</p><Button variant="outline" onClick={restart}><RotateCcw className="mr-2 h-4 w-4" />Tentar novamente</Button></div> :
         <div className="min-h-48 space-y-5" aria-live="polite">
           {lines.slice(lineIndex, lineIndex + 3).map((line, offset) => <p key={lineIndex + offset} className={offset === 0 ? 'text-xl sm:text-2xl leading-relaxed font-semibold text-foreground motion-safe:animate-in motion-safe:fade-in' : 'text-base leading-relaxed text-muted-foreground'}>
