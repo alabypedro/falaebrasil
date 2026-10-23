@@ -40,6 +40,7 @@ interface Song {
   media_id: string | null;
   active: boolean;
   display_order: number;
+  lyrics_activity?: unknown;
 }
 
 interface Blank {
