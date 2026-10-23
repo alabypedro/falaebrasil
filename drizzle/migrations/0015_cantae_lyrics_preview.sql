@@ -1,0 +1,2 @@
+ALTER TABLE public.music_lab_songs ADD COLUMN IF NOT EXISTS lyrics_activity jsonb;
+COMMENT ON COLUMN public.music_lab_songs.lyrics_activity IS 'Additive Cantae preview: official YouTube clip and administrator-supplied authorized bilingual timed lyrics; legacy exercises remain unchanged.';
