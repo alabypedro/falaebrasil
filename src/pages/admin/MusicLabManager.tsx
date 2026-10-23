@@ -845,6 +845,14 @@ export default function MusicLabManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {lyricsSong && (
+        <LyricsActivityEditor
+          song={lyricsSong}
+          onClose={() => setLyricsSong(null)}
+          onSaved={fetchSongs}
+        />
+      )}
     </div>
   );
 }
