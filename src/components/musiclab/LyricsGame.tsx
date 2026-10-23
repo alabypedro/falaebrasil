@@ -85,6 +85,14 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
     player.current?.seekTo(0, true); setTime(0); player.current?.pauseVideo();
   };
 
+  const replay = () => {
+    if (!player.current || finished) return;
+    const start = lines[lineIndex]?.start ?? 0;
+    setScore(applyReplayPenalty);
+    player.current.seekTo(Math.max(0, start - 1), true);
+    player.current.playVideo();
+  };
+
   return <section className="mx-auto w-full max-w-4xl space-y-4">
     <div className="flex items-center justify-between gap-3">
       <Button variant="outline" onClick={() => setLyricsOpen(true)}><BookOpen className="mr-2 h-4 w-4" />lyrics</Button>
@@ -99,6 +107,7 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
       {!ready && !error && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
     </div>
     {error && <p role="alert" className="text-sm text-destructive">Este clipe não pôde ser reproduzido aqui. Escolha outro clipe oficial no Admin.</p>}
+    {!finished && <Button variant="outline" disabled={!ready} onClick={replay} className="w-full"><Undo2 className="mr-2 h-4 w-4" />Ouvir a frase de novo (−{REPLAY_PENALTY} pts)</Button>}
     {videoId && <a href={youtubeWatch(videoId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground underline"><ExternalLink className="h-3 w-3" />Abrir clipe no YouTube</a>}
     <footer className="border-t border-border pt-4 space-y-4">
       {!finished && <div className="grid grid-cols-4 gap-2" aria-label="Palavras disponíveis">
