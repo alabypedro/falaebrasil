@@ -48,4 +48,11 @@ export function makeOptions(answer: string, upcoming: string[], random = Math.ra
   const unique = new Map<string, string>();
   for (const word of pool) if (wordKey(word) && wordKey(word) !== wordKey(answer)) unique.set(wordKey(word), cleanWord(word));
   return shuffled([cleanWord(answer), ...shuffled([...unique.values()], random).slice(0, 3)], random);
+}/** Pairs pasted English and Portuguese lyrics line by line (blank lines ignored); times are placeholders until synced. */
+export function pairPastedLyrics(en: string, pt: string): { lines: LyricLine[] } | { error: string } {
+  const split = (text: string) => text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const a = split(en), b = split(pt);
+  if (!a.length) return { error: 'Cole a letra em inglês.' };
+  if (a.length !== b.length) return { error: `A letra tem ${a.length} linhas e a tradução tem ${b.length}. Elas precisam ter o mesmo número de linhas.` };
+  return { lines: a.map((line, i) => ({ en: line, pt: b[i], start: i * 5 })) };
 }
