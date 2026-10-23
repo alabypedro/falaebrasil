@@ -1,5 +1,11 @@
 # School automation
 
+## Cantaê — nova abordagem
+- [ ] Criar prévia separada, mantendo todas as músicas e atividades atuais.
+- [ ] Cadastrar clipe oficial, letra autorizada bilíngue e tempos por linha no Admin.
+- [ ] Implementar quatro opções, lacunas aleatórias, pontuação por tentativa e avanço sincronizado sem timer.
+- [ ] Verificar regras e fluxo de cadastro/leitura/jogo; migração depende de aprovação e letras/clipes preparados.
+
 - [x] Plano PRO recorrente mensal (2026-10-17): produtos pro_mensal_adultos (R$147) e pro_mensal_kids_teens (R$126) ligados aos links ASAAS de assinatura; conversão Experiência→PRO automática (aviso de experiência some para assinantes); lembretes de mensalidade por e-mail (D-3, D-1, D0 e atraso) via subscription-reminders diário; página Admin "Assinaturas PRO" (/admin/subscriptions) com ativos, recebíveis e arquivo morto; os 4 sócios são admins.
 - [x] Pix Automático habilitado nos dois links de assinatura PRO (confirmado por prints do ASAAS em 2026-10-17); cliente escolhe Pix Automático ou cartão.
 - [ ] Teste ponta a ponta do Plano PRO recorrente com compra real (R$147 ou R$126): confirmar liberação, renovação mensal e lembretes.
