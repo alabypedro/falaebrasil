@@ -442,6 +442,9 @@ export default function MusicLabManager() {
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{s.title}</p>
                 </div>
+                <Button variant="outline" size="sm" onClick={() => setLyricsSong(s)} title="Nova atividade (letra sincronizada)">
+                  <FileMusic className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => openEdit(s)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
