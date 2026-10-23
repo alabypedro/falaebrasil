@@ -31,3 +31,16 @@ describe('Cantaê activity rules', () => {
     expect(readLyricsActivity({ youtube_url: 'x', lines: [...lines, ...lines] })).toBeNull();
   });
 });
+import { pairPastedLyrics } from './cantaeGame';
+describe('Cantaê pasted lyrics', () => {
+  it('pairs English and Portuguese line by line, ignoring blank lines', () => {
+    const result = pairPastedLyrics('Imagine there\'s no heaven\n\nIt\'s easy if you try', 'Imagine que não existe paraíso\nÉ fácil, se você tentar');
+    expect(result).toEqual({ lines: [
+      { en: "Imagine there's no heaven", pt: 'Imagine que não existe paraíso', start: 0 },
+      { en: "It's easy if you try", pt: 'É fácil, se você tentar', start: 5 },
+    ] });
+  });
+  it('refuses when line counts differ', () => {
+    expect('error' in pairPastedLyrics('a\nb', 'x')).toBe(true);
+  });
+});
