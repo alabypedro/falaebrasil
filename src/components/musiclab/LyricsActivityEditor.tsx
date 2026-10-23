@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Trash2, Save, Loader2, Timer, ClipboardPaste } from 'lucide-react';
 import LyricsSyncPanel from './LyricsSyncPanel';
 import { toast } from 'sonner';
-import { readLyricsActivity, type LyricsActivity, type LyricLine } from '@/lib/cantaeGame';
+import { readLyricsActivity, pairPastedLyrics, type LyricsActivity, type LyricLine } from '@/lib/cantaeGame';
 import { youtubeId } from '@/lib/musicMedia';
 
 export default function LyricsActivityEditor({ song, onClose, onSaved }: { song: { id: string; title: string; lyrics_activity?: unknown }; onClose: () => void; onSaved: () => void }) {
@@ -20,7 +20,16 @@ export default function LyricsActivityEditor({ song, onClose, onSaved }: { song:
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteEn, setPasteEn] = useState('');
+  const [pastePt, setPastePt] = useState('');
   const changeLines = (next: LyricLine[]) => { setLines(next); setDirty(true); };
+  const applyPaste = () => {
+    const result = pairPastedLyrics(pasteEn, pastePt);
+    if ('error' in result) return toast.error(result.error);
+    changeLines(result.lines); setPasteOpen(false);
+    toast.success(`${result.lines.length} linhas criadas. Agora sincronize os tempos com o vídeo.`);
+  };
   const update = (i: number, patch: Partial<LyricLine>) => { setLines(previous => previous.map((line, index) => index === i ? { ...line, ...patch } : line)); setDirty(true); };
   const save = async (current: LyricLine[] = lines) => {
     const activity: LyricsActivity = { youtube_url: url.trim(), lines: current };
