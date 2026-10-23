@@ -15,6 +15,7 @@ export default {
     extend: {
       colors: {
         border: "hsl(var(--border))",
+        "lyric-frame": { DEFAULT: "hsl(var(--lyric-frame))", foreground: "hsl(var(--lyric-frame-foreground))" },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
