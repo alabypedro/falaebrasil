@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { prepareLines, makeOptions, pointsForAttempt, readLyricsActivity, applyReplayPenalty } from './cantaeGame';
 describe('Cantaê replay', () => {
-  it('costs 10 points per replay and never goes negative', () => {
-    expect(applyReplayPenalty(500)).toBe(490);
+  it('costs 5 points per replay and never goes negative', () => {
+    expect(applyReplayPenalty(500)).toBe(495);
+    expect(applyReplayPenalty(8)).toBe(3);
     expect(applyReplayPenalty(5)).toBe(0);
+    expect(applyReplayPenalty(3)).toBe(0);
   });
 });
 describe('Cantaê activity rules', () => {
