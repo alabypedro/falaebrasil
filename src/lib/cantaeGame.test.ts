@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { prepareLines, makeOptions, pointsForAttempt, readLyricsActivity } from './cantaeGame';
+import { prepareLines, makeOptions, pointsForAttempt, readLyricsActivity, applyReplayPenalty } from './cantaeGame';
+describe('Cantaê replay', () => {
+  it('costs 10 points per replay and never goes negative', () => {
+    expect(applyReplayPenalty(500)).toBe(490);
+    expect(applyReplayPenalty(5)).toBe(0);
+  });
+});
 describe('Cantaê activity rules', () => {
   const lines = [{ en: 'Our little birds sing today', pt: 'Nossos passarinhos cantam hoje', start: 0 }];
   it('uses one or two missing words per line', () => {
