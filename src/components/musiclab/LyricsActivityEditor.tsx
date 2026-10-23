@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, Loader2, Timer } from 'lucide-react';
+import LyricsSyncPanel from './LyricsSyncPanel';
 import { toast } from 'sonner';
 import { readLyricsActivity, type LyricsActivity, type LyricLine } from '@/lib/cantaeGame';
 import { youtubeId } from '@/lib/musicMedia';
@@ -17,6 +18,7 @@ export default function LyricsActivityEditor({ song, onClose, onSaved }: { song:
   const [lines, setLines] = useState<LyricLine[]>(existing?.lines ?? [{ en: '', pt: '', start: 0 }]);
   const [authorized, setAuthorized] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const update = (i: number, patch: Partial<LyricLine>) => setLines(previous => previous.map((line, index) => index === i ? { ...line, ...patch } : line));
   const save = async () => {
     const activity: LyricsActivity = { youtube_url: url.trim(), lines };
@@ -31,6 +33,8 @@ export default function LyricsActivityEditor({ song, onClose, onSaved }: { song:
   };
   return <Dialog open onOpenChange={value => { if (!value && !saving) onClose(); }}><DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Nova atividade — {song.title}</DialogTitle></DialogHeader>
     <div className="space-y-2"><Label htmlFor="official-clip">Clipe oficial do YouTube (sem vídeo de letras)</Label><Input id="official-clip" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." /></div>
+    {syncing ? <LyricsSyncPanel url={url} lines={lines} onChange={setLines} onDone={() => setSyncing(false)} /> :
+      <Button variant="secondary" disabled={!youtubeId(url) || lines.length === 0} onClick={() => setSyncing(true)}><Timer className="h-4 w-4 mr-2" />Sincronizar tempos com o vídeo</Button>}
     <div className="space-y-4">{lines.map((line, i) => <div key={i} className="border-b border-border pb-4 space-y-2">
       <div className="flex items-center justify-between"><Label>Linha {i + 1}</Label><Button size="icon" variant="ghost" aria-label={`Excluir linha ${i + 1}`} onClick={() => setLines(prev => prev.filter((_, index) => index !== i))}><Trash2 className="h-4 w-4" /></Button></div>
       <Label htmlFor={`lyric-time-${i}`}>Início no clipe (segundos)</Label><Input id={`lyric-time-${i}`} type="number" min="0" step="0.1" value={line.start} onChange={e => update(i, { start: Number(e.target.value) })} />
