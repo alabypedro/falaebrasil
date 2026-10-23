@@ -87,6 +87,7 @@ export default function MusicLabManager() {
   const [vocab, setVocab] = useState<Vocab[]>([]);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [lyricsSong, setLyricsSong] = useState<Song | null>(null);
   const [ytQuery, setYtQuery] = useState("");
   const [ytLoading, setYtLoading] = useState(false);
   const [ytResults, setYtResults] = useState<
