@@ -1,31 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { BookOpen, Loader2, RotateCcw, Trophy, ExternalLink } from 'lucide-react';
+import { BookOpen, Loader2, RotateCcw, Trophy, ExternalLink, Undo2 } from 'lucide-react';
 import { youtubeId, youtubeWatch } from '@/lib/musicMedia';
-import { cleanWord, makeOptions, pointsForAttempt, prepareLines, wordKey, type LyricsActivity } from '@/lib/cantaeGame';
-
-interface Player {
-  getCurrentTime(): number; getPlayerState(): number;
-  pauseVideo(): void; playVideo(): void; seekTo(seconds: number, allow: boolean): void; destroy(): void;
-}
-interface YouTubeAPI { Player: new (element: HTMLElement, config: Record<string, unknown>) => Player }
-type YouTubeWindow = Window & { YT?: YouTubeAPI; onYouTubeIframeAPIReady?: () => void };
-let apiPromise: Promise<YouTubeAPI> | undefined;
-function loadApi() {
-  if (apiPromise) return apiPromise;
-  apiPromise = new Promise<YouTubeAPI>((resolve, reject) => {
-    const win = window as YouTubeWindow;
-    if (win.YT?.Player) { resolve(win.YT); return; }
-    const previous = win.onYouTubeIframeAPIReady;
-    win.onYouTubeIframeAPIReady = () => { previous?.(); if (win.YT) resolve(win.YT); };
-    const script = document.createElement('script');
-    script.src = 'https://www.youtube.com/iframe_api';
-    script.onerror = () => { apiPromise = undefined; reject(new Error('YouTube indisponível')); };
-    document.head.appendChild(script);
-  });
-  return apiPromise;
-}
+import { cleanWord, makeOptions, pointsForAttempt, prepareLines, wordKey, applyReplayPenalty, REPLAY_PENALTY, type LyricsActivity } from '@/lib/cantaeGame';
+import { loadYouTubeApi as loadApi, type YTPlayer as Player } from '@/lib/youtubeApi';
 
 export default function LyricsGame({ activity, title }: { activity: LyricsActivity; title: string }) {
   const [lines, setLines] = useState(() => prepareLines(activity.lines));

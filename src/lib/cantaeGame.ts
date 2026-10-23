@@ -38,6 +38,11 @@ export function prepareLines(lines: LyricLine[], random = Math.random): GameLine
 export function pointsForAttempt(attempt: number): number {
   return [100, 60, 30, 0][Math.min(3, Math.max(0, attempt - 1))] ?? 0;
 }
+/** Each "listen again" costs a few points, never going below zero. */
+export const REPLAY_PENALTY = 10;
+export const applyReplayPenalty = (score: number) => Math.max(0, score - REPLAY_PENALTY);
+/** Small lead so a line marked on tap starts just before the singer. */
+export const markedStart = (seconds: number) => Math.max(0, Math.round((seconds - 0.3) * 10) / 10);
 export function makeOptions(answer: string, upcoming: string[], random = Math.random): string[] {
   const pool = [...upcoming, 'love', 'time', 'night', 'heart', 'world', 'dream'];
   const unique = new Map<string, string>();
