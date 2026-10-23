@@ -150,3 +150,10 @@ export default function MusicLab() {
     </div>
   );
 }
+
+export const VOCAB_KINDS: { value: string; label: string }[] = [
+  { value: "slang", label: "Gíria" },
+  { value: "phrasal_verb", label: "Phrasal verb" },
+  { value: "phonetics", label: "Fonética" },
+  { value: "expression", label: "Expressão" },
+];
