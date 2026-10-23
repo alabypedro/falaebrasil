@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2, Save, Loader2, Timer } from 'lucide-react';
+import { Plus, Trash2, Save, Loader2, Timer, ClipboardPaste } from 'lucide-react';
 import LyricsSyncPanel from './LyricsSyncPanel';
 import { toast } from 'sonner';
 import { readLyricsActivity, type LyricsActivity, type LyricLine } from '@/lib/cantaeGame';
