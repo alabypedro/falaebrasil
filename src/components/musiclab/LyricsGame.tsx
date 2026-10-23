@@ -42,6 +42,8 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
   const player = useRef<Player | null>(null);
   const progress = useRef({ lineIndex, finished: false });
   const clickLock = useRef(false);
+  const linesRef = useRef(activity.lines);
+  linesRef.current = activity.lines;
   const finished = lineIndex >= lines.length;
   progress.current = { lineIndex, finished };
   const current = lines[lineIndex];
@@ -73,13 +75,13 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
         const seconds = instance.getCurrentTime();
         setTime(seconds);
         const state = progress.current;
-        const next = activity.lines[state.lineIndex + 1];
+        const next = linesRef.current[state.lineIndex + 1];
         // Hold playback instead of skipping an unanswered sentence; no timed penalty.
         if (!state.finished && next && seconds >= next.start && instance.getPlayerState() === 1) instance.pauseVideo();
       }, 150);
     }).catch(() => { if (!cancelled) setError(true); });
     return () => { cancelled = true; if (interval) clearInterval(interval); player.current?.destroy(); player.current = null; };
-  }, [videoId, activity.lines]);
+  }, [videoId]);
 
   useEffect(() => { clickLock.current = false; }, [lineIndex, gapIndex]);
   const choose = (word: string) => {
