@@ -246,12 +246,11 @@ export default function MusicLabManager() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return songs.filter((s) => {
-      const okLevel = levelFilter === "all" || s.level === levelFilter;
+      const okLevel = true;
       const okQ =
         !q ||
         s.title.toLowerCase().includes(q) ||
-        s.artist.toLowerCase().includes(q) ||
-        s.level.toLowerCase().includes(q);
+        s.artist.toLowerCase().includes(q) ;
       return okLevel && okQ;
     });
   }, [songs, search, levelFilter]);
@@ -398,23 +397,10 @@ export default function MusicLabManager() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por música, banda/artista ou nível"
+            placeholder="Buscar por música, banda/artista"
             className="pl-9"
           />
         </div>
-        <Select value={levelFilter} onValueChange={setLevelFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Nível" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os níveis</SelectItem>
-            {LEVELS.map((l) => (
-              <SelectItem key={l} value={l}>
-                {l}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {loading ? (
@@ -431,9 +417,6 @@ export default function MusicLabManager() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground truncate">{s.artist}</span>
-                    <Badge variant="secondary" className="text-[10px]">
-                      {s.level}
-                    </Badge>
                     {!s.active && (
                       <Badge variant="outline" className="text-[10px]">
                         inativa
@@ -478,21 +461,6 @@ export default function MusicLabManager() {
                   value={form.artist}
                   onChange={(e) => setForm((f) => ({ ...f, artist: e.target.value }))}
                 />
-              </div>
-              <div className="space-y-1">
-                <Label>Nível CEFR</Label>
-                <Select value={form.level} onValueChange={(v) => setForm((f) => ({ ...f, level: v }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LEVELS.map((l) => (
-                      <SelectItem key={l} value={l}>
-                        {l}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="space-y-1">
                 <Label>Ordem</Label>
