@@ -1,6 +1,7 @@
 # School automation
 
 ## Cantaê — nova abordagem
+- [x] Adicionar clipe independente em Lyrics, letra rolável e conferir abertura/rolagem/retorno ao jogo em desktop, tablet e celular; reprodução completa do YouTube não verificada no navegador de teste.
 - [ ] Criar prévia separada, mantendo todas as músicas e atividades atuais.
 - [ ] Cadastrar clipe oficial, letra autorizada bilíngue e tempos por linha no Admin.
 - [ ] Implementar quatro opções, lacunas aleatórias, pontuação por tentativa e avanço sincronizado sem timer.
