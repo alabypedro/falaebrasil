@@ -19,6 +19,10 @@
 }
 
 @media (max-width: 767px) {
+  .lyrics-practice-dialog {
+    grid-template-rows: 3rem min(75dvh, calc(100dvh - 21rem)) minmax(18rem, 1fr);
+  }
+
   .cantae-game-video {
     height: min(28dvh, 15rem);
   }
