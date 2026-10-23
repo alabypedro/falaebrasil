@@ -99,7 +99,7 @@ export default function LyricsGame({ activity, title }: { activity: LyricsActivi
 
   const openLyrics = (open: boolean) => {
     practiceOpen.current = open;
-    if (open) player.current?.pauseVideo();
+    if (open) player.current?.pauseVideo?.();
     setLyricsOpen(open);
   };
 
