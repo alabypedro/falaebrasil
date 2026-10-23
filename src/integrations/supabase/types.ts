@@ -1824,6 +1824,7 @@ export type Database = {
           display_order: number
           id: string
           level: string
+          lyrics_activity: Json | null
           media_id: string | null
           media_type: string
           spotify_url: string | null
@@ -1840,6 +1841,7 @@ export type Database = {
           display_order?: number
           id?: string
           level?: string
+          lyrics_activity?: Json | null
           media_id?: string | null
           media_type?: string
           spotify_url?: string | null
@@ -1856,6 +1858,7 @@ export type Database = {
           display_order?: number
           id?: string
           level?: string
+          lyrics_activity?: Json | null
           media_id?: string | null
           media_type?: string
           spotify_url?: string | null
